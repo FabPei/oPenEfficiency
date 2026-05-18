@@ -1,0 +1,14 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-clipboard-icon lucide-clipboard" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <g>
+   <path d="m10.5,14l10,0"/>
+   <path d="m15.5,4l2,0a2,2 0 0 1 2,2l0,1.344"/>
+   <path d="m16.5,18l4,-4l-4,-4"/>
+   <path d="m7.5,4l-2,0a2,2 0 0 0 -2,2l0,14a2,2 0 0 0 2,2l12,0a2,2 0 0 0 1.793,-1.113"/>
+   <rect rx="1" height="4" width="8" y="2" x="7.5"/>
+  </g>
+  <text font-weight="bold" transform="matrix(0.491148, 0, 0, 0.491148, 2.46155, 7.45474)" xml:space="preserve" text-anchor="start" font-family="'Inter'" font-size="10" id="svg_3" y="7.67579" x="7.88337" stroke-width="0" stroke="#000" fill="#000000">x  y</text>
+ </g>
+</svg>

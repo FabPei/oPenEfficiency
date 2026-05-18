@@ -1,0 +1,149 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.TableHeatmapDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Table Heatmap" Height="680" Width="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="TABLE HEATMAP" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Apply color scaling to table cells." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="CancelButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,10,0">
+                    <!-- Scope Selection -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Comparison Scope" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ScopeRowRadio" Content="Row-wise" IsChecked="True" Margin="0,0,16,0" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="ScopeColRadio" Content="Column-wise" Margin="0,0,16,0" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="ScopeTableRadio" Content="Entire Table" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Apply Formatting To -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Apply Formatting To" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="ApplyFillRadio" Content="Background (Fill)" IsChecked="True" Margin="0,0,16,0" Checked="ApplyType_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="ApplyFontRadio" Content="Font Color" Margin="0,0,16,0" Checked="ApplyType_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="ApplyIconsRadio" Content="Icon Sets" Checked="ApplyType_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Data Handling Options -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Data Handling" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <CheckBox x:Name="ExcludeHeaderCheckBox" Content="Exclude top row (header) from calculations" IsChecked="True" Margin="0,0,0,10" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <CheckBox x:Name="IgnoreEmptyCheckBox" Content="Ignore cells that cannot be evaluated as numbers" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Color Scales and Icons -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Formatting Scheme" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            
+                            <ComboBox x:Name="ColorPresetsComboBox" SelectedIndex="0" Margin="0,0,0,15" SelectionChanged="ColorPresetsComboBox_SelectionChanged">
+                                <ComboBoxItem Content="3-Color: Red to Yellow to Green"/>
+                                <ComboBoxItem Content="3-Color: Green to Yellow to Red"/>
+                                <ComboBoxItem Content="3-Color: Red to White to Green"/>
+                                <ComboBoxItem Content="3-Color: Green to White to Red"/>
+                                <ComboBoxItem Content="3-Color: Red to White to Blue"/>
+                                <ComboBoxItem Content="3-Color: Blue to White to Red"/>
+                                <ComboBoxItem Content="2-Color: White to Red"/>
+                                <ComboBoxItem Content="2-Color: Red to White"/>
+                                <ComboBoxItem Content="2-Color: White to Green"/>
+                                <ComboBoxItem Content="2-Color: Green to White"/>
+                                <ComboBoxItem Content="2-Color: Yellow to Green"/>
+                                <ComboBoxItem Content="2-Color: Green to Yellow"/>
+                                <ComboBoxItem Content="Custom..."/>
+                            </ComboBox>
+
+                            <ComboBox x:Name="IconPresetsComboBox" SelectedIndex="0" Margin="0,0,0,15" Visibility="Collapsed">
+                                <ComboBoxItem Content="3 Directional Arrows (▲ ▶ ▼)"/>
+                                <ComboBoxItem Content="4 Directional Arrows (▲ ↗ ↘ ▼)"/>
+                                <ComboBoxItem Content="3 Traffic Lights (● ● ●)"/>
+                                <ComboBoxItem Content="3 Indicators (✔ ❗ ✖)"/>
+                                <ComboBoxItem Content="3 Ratings (★)"/>
+                            </ComboBox>
+
+                            <Grid x:Name="CustomColorPanel" Visibility="Collapsed">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Lowest Value" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnLowColor" Content="Pick Color" Click="BtnLowColor_Click" Style="{StaticResource OutlineButton}" Height="28"/>
+                                    <Border x:Name="RectLowColor" Height="10" Margin="0,8,0,0" Background="#F87171" CornerRadius="2"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Mid Value (Opt.)" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnMidColor" Content="Pick Color" Click="BtnMidColor_Click" Style="{StaticResource OutlineButton}" Height="28"/>
+                                    <Border x:Name="RectMidColor" Height="10" Margin="0,8,0,0" Background="#FBBF24" CornerRadius="2"/>
+                                    <Button x:Name="BtnClearMidColor" Content="Clear" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Background="Transparent" BorderThickness="0" Margin="0,4,0,0" Click="BtnClearMidColor_Click" Cursor="Hand"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="Highest Value" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                    <Button x:Name="BtnHighColor" Content="Pick Color" Click="BtnHighColor_Click" Style="{StaticResource OutlineButton}" Height="28"/>
+                                    <Border x:Name="RectHighColor" Height="10" Margin="0,8,0,0" Background="#34D399" CornerRadius="2"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button x:Name="CancelBtn" Content="Cancel" Style="{StaticResource SecondaryButton}" Width="80" Height="32" Margin="0,0,10,0" Click="CancelButton_Click"/>
+                <Button x:Name="ApplyButton" Content="Apply Heatmap" Style="{StaticResource AccentButton}" Width="120" Height="32" Click="ApplyButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

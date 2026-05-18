@@ -1,0 +1,11 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-sticky-note-icon lucide-sticky-note" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_1" d="m21,9a2.4,2.4 0 0 0 -0.706,-1.706l-3.588,-3.588a2.4,2.4 0 0 0 -1.706,-0.706l-10,0a2,2 0 0 0 -2,2l0,14a2,2 0 0 0 2,2l14,0a2,2 0 0 0 2,-2l0,-10z"/>
+  <path id="svg_2" d="m15,3l0,5a1,1 0 0 0 1,1l5,0"/>
+  <rect id="svg_3" height="3.35327" width="0.8982" y="3.85635" x="15.73252" stroke="#000" fill="#fff"/>
+  <rect id="svg_4" height="0.77844" width="1.31736" y="6.61082" x="17.46903" stroke="#000" fill="#fff"/>
+  <text xml:space="preserve" text-anchor="start" font-family="'Inter'" font-size="2" stroke-width="0" id="svg_8" y="14.87423" x="5.91223" stroke="#000" fill="#000000">dolor ipsum</text>
+ </g>
+</svg>

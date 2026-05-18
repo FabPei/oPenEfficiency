@@ -1,0 +1,102 @@
+<Window x:Class="oPenEfficiency.UI.NumerationToolbar"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Numeration" Height="50" Width="420"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False"
+        MouseDown="Window_MouseDown"
+        Deactivated="Window_Deactivated">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="6,2"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="11" />
+            </Style>
+
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="4,2" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
+            <Style TargetType="ComboBox">
+                <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="FontSize" Value="12"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.4" Color="Black"/>
+        </Border.Effect>
+        
+        <StackPanel Orientation="Horizontal" Margin="10,0" VerticalAlignment="Center">
+            
+            <!-- Number Input -->
+            <TextBox x:Name="TxtNumber" Width="30" Height="28" Text="1" KeyDown="Input_KeyDown" LostFocus="Input_LostFocus"/>
+            
+            <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="10,0"/>
+
+            <!-- Shape Selector -->
+            <ComboBox x:Name="CmbShape" Width="80" Height="28" SelectionChanged="Setting_Changed">
+                <ComboBoxItem Content="● Circle" Tag="Circle" IsSelected="True"/>
+                <ComboBoxItem Content="■ Square" Tag="Square"/>
+                <ComboBoxItem Content="◆ Diamond" Tag="Diamond"/>
+                <ComboBoxItem Content="⬡ Hexagon" Tag="Hexagon"/>
+            </ComboBox>
+
+            <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="10,0"/>
+
+            <!-- Diameter (Size) -->
+            <TextBlock Text="d=" Margin="0,0,5,0"/>
+            <TextBox x:Name="TxtSize" Width="35" Height="28" Text="22" KeyDown="Input_KeyDown" LostFocus="Input_LostFocus"/>
+            
+            <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="10,0"/>
+
+            <!-- Color Palette -->
+            <Button x:Name="BtnColorWell" Width="24" Height="24" Background="#005C94" Click="BtnColorWell_Click">
+                <Border CornerRadius="2" BorderThickness="1" BorderBrush="{DynamicResource BorderLightBrush}"/>
+            </Button>
+
+            <Rectangle Width="1" Height="20" Fill="{DynamicResource BorderBrush}" Margin="10,0"/>
+
+        </StackPanel>
+    </Border>
+</Window>

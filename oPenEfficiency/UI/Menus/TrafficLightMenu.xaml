@@ -1,0 +1,72 @@
+<Window x:Class="oPenEfficiency.UI.TrafficLightMenu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Traffic Light Menu"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" SizeToContent="WidthAndHeight"
+        Deactivated="Window_Deactivated" MouseDown="Window_MouseDown">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Themes/Dark.xaml"/>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+
+        <StackPanel Orientation="Horizontal" Margin="6,4">
+
+            <!-- Red -->
+            <Button x:Name="BtnRed" Margin="2" Padding="6,4" Click="BtnRed_Click" ToolTip="Red" Background="Transparent" BorderThickness="0">
+                <Ellipse x:Name="IconRed" Width="16" Height="16" Fill="#E83232"/>
+            </Button>
+
+            <!-- Yellow -->
+            <Button x:Name="BtnYellow" Margin="2" Padding="6,4" Click="BtnYellow_Click" ToolTip="Yellow" Background="Transparent" BorderThickness="0">
+                <Ellipse x:Name="IconYellow" Width="16" Height="16" Fill="#F5C817"/>
+            </Button>
+
+            <!-- Green -->
+            <Button x:Name="BtnGreen" Margin="2" Padding="6,4" Click="BtnGreen_Click" ToolTip="Green" Background="Transparent" BorderThickness="0">
+                <Ellipse x:Name="IconGreen" Width="16" Height="16" Fill="#4CAF3E"/>
+            </Button>
+
+            <!-- Off -->
+            <Button x:Name="BtnOff" Margin="2" Padding="6,4" Click="BtnOff_Click" ToolTip="Off" Background="Transparent" BorderThickness="0">
+                <Ellipse x:Name="IconOff" Width="16" Height="16" Fill="#CCCCCC" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1"/>
+            </Button>
+
+            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
+
+            <!-- Orientation -->
+            <Button x:Name="BtnOrientation" Margin="2" Padding="8,4" Click="BtnOrientation_Click" ToolTip="Toggle Horizontal/Vertical" Background="Transparent" BorderThickness="0">
+                <TextBlock x:Name="TxtOrientation" Text="Horiz." Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/>
+            </Button>
+
+            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
+
+            <!-- Border Toggle -->
+            <Button x:Name="BtnBorder" Margin="2" Padding="8,4" Click="BtnBorder_Click" ToolTip="Toggle Outline Frame" Background="Transparent" BorderThickness="0">
+                <TextBlock x:Name="TxtBorder" Text="Frame" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+            </Button>
+
+            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
+
+            <ComboBox x:Name="ComboWeight" Width="50" Margin="2" DropDownClosed="ComboWeight_DropDownClosed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ComboBoxItem Content="0.5"/>
+                <ComboBoxItem Content="1"/>
+                <ComboBoxItem Content="1.5"/>
+                <ComboBoxItem Content="2"/>
+                <ComboBoxItem Content="3"/>
+                <ComboBoxItem Content="4"/>
+            </ComboBox>
+
+        </StackPanel>
+    </Border>
+</Window>

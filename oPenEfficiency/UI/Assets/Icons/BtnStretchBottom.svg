@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-icon lucide-square-dashed">
+  <rect id="svg_7" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" transform="matrix(0, -1, 1, 0, 3.964061, -5.5945)" rx="1" y="-0.964" x="-15.588" height="7" width="7" style="stroke-width: 2px;"/>
+  <g transform="matrix(1, 0, 0, 1, -0.63394, 0)">
+    <path id="svg_3" stroke=" rgba(0, 0, 0, 0.9)" d="M 4.647 20.57 L 5.647 20.57" style="stroke-width: 2px; transform-origin: 5.147px 20.57px 0px;"/>
+    <path id="svg_14" stroke=" rgba(0, 0, 0, 0.9)" d="M 8.621 20.63 L 9.621 20.63" style="stroke-width: 2px; transform-origin: 9.121px 20.63px 0px;"/>
+  </g>
+  <rect transform="matrix(0, -1, 1, 0, 0.020997, -4.9805)" id="svg_8" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" rx="1" y="13.979" x="-25.974" height="7" width="18" style="stroke-width: 2px;"/>
+  <g id="svg_16" style="" transform="matrix(1, 0, 0, 1, -18.02125, 8.994647)">
+    <path id="svg_5" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,8.10488l0,1"/>
+    <path id="svg_6" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,4.09619l0,1"/>
+  </g>
+  <g id="group-1" style="" transform="matrix(1, 0, 0, 1, -11.02119, 8.994647)">
+    <path id="path-1" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,8.10488l0,1"/>
+    <path id="path-2" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,4.09619l0,1"/>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 0, -0.952902)">
+    <path d="M 6.551 18.402 L 6.551 13.602" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 0.933px; transform-origin: 6.551px 16.002px 0px;"/>
+    <path d="M 8.291 16.662 L 6.551 18.402 L 4.811 16.662" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 0.933px;"/>
+  </g>
+</svg>

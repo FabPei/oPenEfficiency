@@ -1,0 +1,55 @@
+<Window x:Class="oPenEfficiency.UI.ExcelLinkManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Excel Link Manager" Width="700" Height="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="CenterOwner"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="EXCEL LINK MANAGER" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Manage, refresh, and inspect external data connections." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,15,0,10">
+                <CheckBox Content="Relative Paths" IsChecked="{Binding UseRelativePaths}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,15,0"/>
+                <CheckBox Content="Auto-Refresh on Open" IsChecked="{Binding AutoRefresh}" Foreground="{DynamicResource TextPrimaryBrush}"/>
+            </StackPanel>
+            <DataGrid Grid.Row="2" ItemsSource="{Binding Links}" AutoGenerateColumns="False" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" RowBackground="Transparent" AlternatingRowBackground="#0AFFFFFF" Foreground="{DynamicResource TextPrimaryBrush}" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}" SelectionMode="Extended">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40"/>
+                    <DataGridTextColumn Header="Slide" Binding="{Binding SlideNumber}" Width="60" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Shape" Binding="{Binding ShapeName}" Width="150" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Source" Binding="{Binding SourcePath}" Width="*" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80" IsReadOnly="True"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button Content="Link as Image" Click="LinkAsImage_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                <Button Content="Split Screen" Click="SplitScreen_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                <Button Content="Break Link" Click="BreakLink_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                <Button Content="Refresh Selected" Click="Refresh_Click" Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

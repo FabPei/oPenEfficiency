@@ -1,0 +1,98 @@
+<Window x:Class="oPenEfficiency.UI.ObjectConnectorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Object Connector" Height="380" Width="400"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="CenterScreen"
+        MouseDown="Window_MouseDown" Deactivated="Window_Deactivated"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="OBJECT CONNECTOR" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Draw a smart connection line between two shapes." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Content -->
+            <StackPanel Grid.Row="1">
+                <Border Style="{StaticResource SettingCard}">
+                    <StackPanel>
+                        <TextBlock Text="Connection Points" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="FROM SHAPE 1" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="ComboSide1" Height="32" VerticalContentAlignment="Center">
+                                    <ComboBoxItem Content="Right" Tag="Right" IsSelected="True"/>
+                                    <ComboBoxItem Content="Left" Tag="Left"/>
+                                    <ComboBoxItem Content="Bottom" Tag="Bottom"/>
+                                    <ComboBoxItem Content="Top" Tag="Top"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="TO SHAPE 2" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <ComboBox x:Name="ComboSide2" Height="32" VerticalContentAlignment="Center">
+                                    <ComboBoxItem Content="Left" Tag="Left" IsSelected="True"/>
+                                    <ComboBoxItem Content="Right" Tag="Right"/>
+                                    <ComboBoxItem Content="Top" Tag="Top"/>
+                                    <ComboBoxItem Content="Bottom" Tag="Bottom"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <Border Style="{StaticResource SettingCard}">
+                    <StackPanel>
+                        <TextBlock Text="Connection Behavior" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                        <CheckBox x:Name="ChkAuto" Content="Auto-detect closest sides" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <CheckBox x:Name="ChkSmart" Content="Follow shape silhouette (Smart Connect)" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="80" Height="32" Click="BtnCancel_Click" Margin="0,0,10,0"/>
+                <Button Content="Connect" Style="{StaticResource AccentButton}" Width="100" Height="32" Click="BtnConnect_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

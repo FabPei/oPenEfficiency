@@ -1,0 +1,109 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.TableBrandingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Table Branding" Height="500" Width="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown" Loaded="Window_Loaded"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="TABLE BRANDING" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Save and apply custom table formatting styles." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="CancelButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Save New Style Section -->
+            <Border Grid.Row="1" Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <TextBlock Text="Save Current Table Style" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" x:Name="StyleNameTextBox" Margin="0,0,10,0" Padding="8,4" ToolTip="Enter a name for the new style" VerticalContentAlignment="Center" Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1"/>
+                        <Button Grid.Column="1" x:Name="SaveNewButton" Content="Save Style" Width="100" Height="32" Click="SaveNewButton_Click" Style="{StaticResource OutlineButton}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Saved Styles List -->
+            <Border Grid.Row="2" Style="{StaticResource SettingCard}" Margin="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Saved Styles" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                    <ListBox Grid.Row="1" x:Name="StylesListBox" SelectionChanged="StylesListBox_SelectionChanged" MouseDoubleClick="StylesListBox_MouseDoubleClick" Background="Transparent" BorderBrush="{DynamicResource BorderLightBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="10,6"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="4" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="#1AFFFFFF"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                    <TextBlock Grid.Row="2" Text="Double-click a style to apply it instantly." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" FontStyle="Italic"/>
+                </Grid>
+            </Border>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button x:Name="DeleteButton" Content="Delete" Width="80" Height="32" Margin="0,0,10,0" Click="DeleteButton_Click" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource SecondaryButton}" Width="80" Height="32" Margin="0,0,10,0" Click="CancelButton_Click"/>
+                <Button x:Name="ApplyButton" Content="Apply Selected" Style="{StaticResource AccentButton}" Width="120" Height="32" Click="ApplyButton_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

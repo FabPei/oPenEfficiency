@@ -1,0 +1,58 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.EditAssetDetailsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edit Asset Details"
+        Width="400" Height="300"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Border Background="{DynamicResource SurfaceLightBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0" Text="Edit Asset Details" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
+
+            <!-- Inputs -->
+            <StackPanel Grid.Row="1">
+                <TextBlock Text="Asset Name" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtName" FontSize="13" Padding="8,6"
+                         Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Tags (separate with commas)" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtTags" FontSize="13" Padding="8,6" Height="60" TextWrapping="Wrap" AcceptsReturn="True"
+                             Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                    <Button Grid.Column="1" x:Name="BtnAutoTag" Content="Auto-assign" VerticalAlignment="Top" Margin="10,0,0,0" Padding="8,5"
+                            Background="{DynamicResource SurfaceHoverBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            Click="BtnAutoTag_Click" ToolTip="Identify tags from slide content"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="90" Height="32" Margin="0,0,10,0" Click="BtnCancel_Click"/>
+                <Button Content="Save Changes" Style="{StaticResource AccentButton}" Width="120" Height="32" Click="BtnSave_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

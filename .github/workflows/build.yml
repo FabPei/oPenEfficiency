@@ -1,0 +1,58 @@
+name: Build VSTO Add-in
+
+on:
+  push:
+    branches: [ main, master, Refactor, dev ]
+  pull_request:
+    branches: [ main, master, Refactor, dev ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore oPenEfficiency.slnx
+
+    - name: Decode and Import PFX
+      shell: pwsh
+      env:
+        CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+      run: |
+        if ([string]::IsNullOrEmpty($env:CERTIFICATE_BASE64)) {
+          Write-Error "GitHub Secret 'CERTIFICATE_BASE64' is empty or not found. Please check your repository secrets."
+          exit 1
+        }
+        
+        $pfx_cert_byte = [System.Convert]::FromBase64String($env:CERTIFICATE_BASE64)
+        $current_directory = Get-Location
+        $certificate_path = Join-Path -Path $current_directory -ChildPath "oPenEfficiency\oPenEfficiency_TemporaryKey.pfx"
+        [System.IO.File]::WriteAllBytes($certificate_path, $pfx_cert_byte)
+        
+        # Import to certificate store to fix MSB3327
+        $cert = Import-PfxCertificate -FilePath $certificate_path -CertStoreLocation Cert:\CurrentUser\My
+        
+        # Write thumbprint to environment for the build step
+        echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+
+    - name: Build solution
+      run: msbuild oPenEfficiency.slnx /p:Configuration=Release /p:Platform="Any CPU" /p:SignManifests=true /p:ManifestKeyFile="oPenEfficiency_TemporaryKey.pfx" /p:ManifestCertificateThumbprint=$env:CERT_THUMBPRINT
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: oPenEfficiency-Build
+        path: |
+          oPenEfficiency/bin/Release/oPenEfficiency.dll
+          oPenEfficiency/bin/Release/oPenEfficiency.vsto
+          oPenEfficiency/bin/Release/oPenEfficiency.dll.manifest
+          oPenEfficiency/bin/Release/*.dll

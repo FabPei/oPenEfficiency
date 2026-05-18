@@ -1,0 +1,79 @@
+<Window x:Class="oPenEfficiency.UI.ApplyTextWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:oPenEfficiency.UI"
+        Title="Apply Text to Selection" Width="420" SizeToContent="Height" MinHeight="240"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="Auto"/>    <!-- Content -->
+                <RowDefinition Height="Auto"/> <!-- Footer -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="APPLY TEXT TOOL" Style="{StaticResource DialogTitleText}"/>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Input Area -->
+            <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                <Border Style="{StaticResource SettingCard}" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Text to Apply" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                        <Grid>
+                            <TextBlock Text="Enter text to apply..." Foreground="{DynamicResource TextMutedBrush}" IsHitTestVisible="False" VerticalAlignment="Center" FontSize="13" Margin="10,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text, ElementName=TxtValue}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBox x:Name="TxtValue" 
+                                     Style="{StaticResource InlineTextBoxStyle}"
+                                     FontSize="13" MinHeight="36"
+                                     KeyDown="TxtValue_KeyDown"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,5,0,0">
+                <Button x:Name="BtnMaster" Content="Take text from Master" Style="{StaticResource SecondaryButton}" Height="34" Width="150" Margin="0,0,10,0" Click="BtnMaster_Click" Cursor="Hand"/>
+                <Button x:Name="BtnApply" Content="Apply Text" Style="{StaticResource AccentButton}" Height="34" Width="100" Click="BtnApply_Click" Cursor="Hand"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

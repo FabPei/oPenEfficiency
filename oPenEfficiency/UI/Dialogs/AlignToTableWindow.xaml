@@ -1,0 +1,98 @@
+<Window x:Class="oPenEfficiency.UI.AlignToTableWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Align to Table Cell" Width="140" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="Manual"
+        MouseDown="Window_MouseDown">
+        <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+            
+            
+
+            
+
+            
+            
+            <Style x:Key="AlignButton" TargetType="Button">
+                <Setter Property="Background" Value="#2D2D2D"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#3D3D3D"/>
+                <Setter Property="Width" Value="34"/>
+                <Setter Property="Height" Value="34"/>
+                <Setter Property="Margin" Value="1"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    BorderBrush="{TemplateBinding BorderBrush}" 
+                                    BorderThickness="{TemplateBinding BorderThickness}" 
+                                    CornerRadius="4" x:Name="border">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="#3D3D3D"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="#4D4D4D"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border CornerRadius="8" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Padding="8">
+        <StackPanel>
+            <Grid Margin="0,0,0,6">
+                <TextBlock Text="ALIGN TO CELL" Style="{StaticResource DialogTitleText}" VerticalAlignment="Center" />
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" />
+            </Grid>
+
+            <UniformGrid Columns="3" Rows="3" HorizontalAlignment="Center">
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="TOP_LEFT" ToolTip="Top Left">
+                    <Path Data="M0,0 L8,0 L8,1.5 L1.5,1.5 L1.5,8 L0,8 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="TOP_CENTER" ToolTip="Top Center">
+                    <Path Data="M0,0 L10,0 L10,1.5 L0,1.5 Z M4,3 L6,3 L6,10 L4,10 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="TOP_RIGHT" ToolTip="Top Right">
+                    <Path Data="M0,0 L10,0 L10,10 L8.5,10 L8.5,1.5 L0,1.5 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="MIDDLE_LEFT" ToolTip="Middle Left">
+                    <Path Data="M0,0 L1.5,0 L1.5,10 L0,10 Z M3,4.25 L10,4.25 L10,5.75 L3,5.75 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="CENTER" ToolTip="Center">
+                    <Rectangle Width="6" Height="6" Fill="{DynamicResource TextPrimaryBrush}"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="MIDDLE_RIGHT" ToolTip="Middle Right">
+                    <Path Data="M8.5,0 L10,0 L10,10 L8.5,10 Z M0,4.25 L7,4.25 L7,5.75 L0,5.75 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="BOTTOM_LEFT" ToolTip="Bottom Left">
+                    <Path Data="M0,0 L1.5,0 L1.5,8.5 L10,8.5 L10,10 L0,10 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="BOTTOM_CENTER" ToolTip="Bottom Center">
+                    <Path Data="M0,8.5 L10,8.5 L10,10 L0,10 Z M4,0 L6,0 L6,7 L4,7 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+                <Button Style="{StaticResource AlignButton}" Click="Align_Click" Tag="BOTTOM_RIGHT" ToolTip="Bottom Right">
+                    <Path Data="M8.5,0 L10,0 L10,10 L0,10 L0,8.5 L8.5,8.5 Z" Fill="{DynamicResource TextPrimaryBrush}" Width="10" Height="10" Stretch="Uniform"/>
+                </Button>
+            </UniformGrid>
+        </StackPanel>
+    </Border>
+</Window>

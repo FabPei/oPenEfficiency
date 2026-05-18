@@ -1,0 +1,115 @@
+<Window x:Class="oPenEfficiency.UI.ArrangeGridWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Arrange in Grid" Height="220" Width="440"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        MouseDown="Window_MouseDown">
+        <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+
+            <Style x:Key="NumericBtn" TargetType="Button">
+                <Setter Property="Width" Value="32"/>
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="*"/>    <!-- Content area with some flex -->
+                <RowDefinition Height="Auto"/> <!-- Footer -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="ARRANGE IN GRID" Style="{StaticResource DialogTitleText}"/>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Inputs Area (Grid in Row 1) -->
+            <Grid Grid.Row="1" VerticalAlignment="Center" Margin="0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Columns Input Group -->
+                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                    <TextBlock Text="Columns" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="-" Style="{StaticResource NumericBtn}" Click="BtnDecCols_Click"/>
+                        <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtColumns" Width="40" Height="32" Margin="6,0" Text="3" PreviewTextInput="NumberValidationTextBox" HorizontalContentAlignment="Center"/>
+                        <Button Content="+" Style="{StaticResource NumericBtn}" Click="BtnIncCols_Click"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Rows Input Group -->
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                    <TextBlock Text="Rows" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="-" Style="{StaticResource NumericBtn}" Click="BtnDecRows_Click"/>
+                        <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtRows" Width="40" Height="32" Margin="6,0" Text="3" PreviewTextInput="NumberValidationTextBox" HorizontalContentAlignment="Center"/>
+                        <Button Content="+" Style="{StaticResource NumericBtn}" Click="BtnIncRows_Click"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Spacing Input Group -->
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                    <TextBlock Text="Spacing" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8" HorizontalAlignment="Center"/>
+                    <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtSpacing" Text="10" Height="32" Width="74" PreviewTextInput="DecimalValidationTextBox" HorizontalContentAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Footer Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button x:Name="BtnArrange" Content="OK" Width="90" Height="34" Style="{StaticResource AccentButton}" Click="BtnArrange_Click" Cursor="Hand"/>
+                <Button Content="Close" Width="90" Height="34" Margin="12,0,0,0" Style="{StaticResource SecondaryButton}" Click="BtnCancel_Click" Cursor="Hand"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,409 @@
+<Window x:Class="oPenEfficiency.AgendaWizard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:oPenEfficiency"
+        Title="Agenda Creator" Height="680" Width="1200"
+        FontFamily="Segoe UI" FontSize="12"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent" 
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="CenterScreen" 
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:LevelToFontWeightConverter x:Key="LevelToFontWeightConverter"/>
+
+            <!-- Notion-like TextBox Style -->
+            <Style x:Key="InlineTextBoxStyle" TargetType="TextBox">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#1AFFFFFF"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsFocused" Value="True">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- Vector Icon Buttons -->
+            <Style x:Key="VectorIconToggleButton" TargetType="ToggleButton">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            
+            <Style x:Key="InlineActionButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="350"/>
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" Margin="0,0,20,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 1. Header -->
+                <Grid Margin="0,0,0,10" Background="Transparent">
+                    <StackPanel>
+                        <TextBlock Text="AGENDA CREATOR" Style="{StaticResource DialogTitleText}"/>
+                        <TextBlock Text="Design and synchronize your presentation structure." Style="{StaticResource DialogSubtitleText}" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Import Layouts" Style="{StaticResource OutlineButton}" Width="110" Height="28" Padding="6,1" Click="BtnImportLayouts_Click" Margin="0,0,10,0" FontSize="11"/>
+                        <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- 2. Progressive Disclosure Settings -->
+                <Expander Grid.Row="1" Header="Agenda Settings &amp; Configuration" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="0,0,0,12" Padding="12" IsExpanded="True">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/> <!-- Label Left -->
+                                <ColumnDefinition Width="*"/>    <!-- Control Left -->
+                                <ColumnDefinition Width="30"/>   <!-- Gap -->
+                                <ColumnDefinition Width="Auto"/> <!-- Label Right -->
+                                <ColumnDefinition Width="*"/>    <!-- Control Right -->
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Row 0: Presets & Setup -->
+                            <TextBlock Text="Saved:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="CboSavedAgendas" Grid.Column="1" Height="30" SelectionChanged="CboSavedAgendas_SelectionChanged">
+                                <ComboBoxItem Content="New Agenda"/>
+                            </ComboBox>
+                            
+                            <TextBlock Grid.Column="3" Text="Layout:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,10,0"/>
+                            <ComboBox x:Name="CboLayout" Grid.Column="4" Height="30" SelectionChanged="CboLayout_SelectionChanged">
+                                <ComboBoxItem Content="-- Select Layout --"/>
+                            </ComboBox>
+
+                            <!-- Row 1: Content Info -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Title:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,10,0"/>
+                            <TextBox x:Name="TxtTitle" Grid.Row="1" Grid.Column="1" Text="Agenda" Height="30" Style="{StaticResource StandardTextBox}" Margin="0,10,0,0" Padding="5,0" VerticalContentAlignment="Center" TextChanged="TxtTitle_TextChanged"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="3" Text="Subtitle:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,10,0"/>
+                            <TextBox x:Name="TxtSubtitle" Grid.Row="1" Grid.Column="4" Height="30" Style="{StaticResource StandardTextBox}" Tag="Subtitle (Optional)" Margin="0,10,0,0" Padding="5,0" VerticalContentAlignment="Center" TextChanged="TxtSubtitle_TextChanged"/>
+
+                            <!-- Row 2: Technicals -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Start #:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,10,0"/>
+                            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBox x:Name="TxtStartNumber" Text="1" Height="30" Width="50" Style="{StaticResource StandardTextBox}" Padding="5,0" VerticalContentAlignment="Center" TextChanged="TxtStartNumber_TextChanged"/>
+                                <TextBlock Text="Time:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="15,0,10,0"/>
+                                <TextBox x:Name="TxtStartTime" Text="09:00" Height="30" Width="80" Style="{StaticResource StandardTextBox}" Padding="5,0" VerticalContentAlignment="Center" TextChanged="TxtStartTime_TextChanged"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="2" Grid.Column="3" Text="Format:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,10,0"/>
+                            <ComboBox x:Name="CboTimeFormat" Grid.Row="2" Grid.Column="4" Height="30" Margin="0,10,0,0" SelectionChanged="CboTimeFormat_SelectionChanged">
+                                <ComboBoxItem Content="HH:mm"/>
+                                <ComboBoxItem Content="h:mm tt"/>
+                            </ComboBox>
+
+                            <!-- Row 3: Generation Options -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Options:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,12,10,0"/>
+                            <StackPanel Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4" Orientation="Horizontal" Margin="0,12,0,0">
+                                <CheckBox x:Name="ChkSeparatingSlides" Content="Dividers" Margin="0,0,15,0" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
+                                <CheckBox x:Name="ChkSections" Content="Sections" Margin="0,0,15,0" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
+                                <CheckBox x:Name="ChkHighlightCurrent" Content="Highlight" Margin="0,0,15,0" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
+                                <CheckBox x:Name="ChkBackupSlide" Content="Backup" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+
+                <!-- 3. The Grid (Main Workspace) -->
+                <Border Grid.Row="2" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" ClipToBounds="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30"/> <!-- Grip -->
+                                    <ColumnDefinition Width="40"/> <!-- Index -->
+                                    <ColumnDefinition Width="*"/>  <!-- Topic -->
+                                    <ColumnDefinition Width="100"/> <!-- Resp -->
+                                    <ColumnDefinition Width="60"/> <!-- Dur -->
+                                    <ColumnDefinition Width="90"/> <!-- Time -->
+                                    <ColumnDefinition Width="100"/> <!-- Toggles -->
+                                    <ColumnDefinition Width="80"/> <!-- Hover Actions -->
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="1" Text="#" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="2" Text="Topic" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="3" Text="Speaker" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="4" Text="Mins" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="5" Text="Schedule" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <TextBlock Grid.Column="6" Text="Visibility" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- List -->
+                        <ListView Grid.Row="1" x:Name="AgendaListView" ItemsSource="{Binding Items}"
+                                  Background="Transparent" BorderThickness="0"
+                                  ScrollViewer.CanContentScroll="False"
+                                  AllowDrop="True" PreviewMouseLeftButtonDown="AgendaListView_PreviewMouseLeftButtonDown" MouseMove="AgendaListView_MouseMove" Drop="AgendaListView_Drop">
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListViewItem">
+                                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#0AFFFFFF"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="10,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="90"/>
+                                            <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="80"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Grip Icon -->
+                                        <TextBlock Grid.Column="0" Text="≡" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="16" Cursor="SizeAll"/>
+                                        
+                                        <!-- Index -->
+                                        <TextBlock Grid.Column="1" Text="{Binding DisplayIndex}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                                        <!-- Topic (Notion-like) -->
+                                        <TextBox Grid.Column="2" Text="{Binding Topic, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InlineTextBoxStyle}"
+                                                 Margin="{Binding IndentPadding}"
+                                                 FontWeight="{Binding Level, Converter={StaticResource LevelToFontWeightConverter}}"/>
+
+                                        <!-- Responsible -->
+                                        <TextBox Grid.Column="3" Text="{Binding Responsible, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InlineTextBoxStyle}" Margin="0,0,10,0"/>
+
+                                        <!-- Duration -->
+                                        <TextBox Grid.Column="4" Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
+                                                 Style="{StaticResource InlineTextBoxStyle}" Margin="0,0,10,0"/>
+
+                                        <!-- Time Slot -->
+                                        <TextBlock Grid.Column="5" Text="{Binding TimeSlot}" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                                        <!-- Toggles (SVG Icons) -->
+                                        <StackPanel Grid.Column="6" Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <ToggleButton IsChecked="{Binding ShouldGenerate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VectorIconToggleButton}" ToolTip="Visibility">
+                                                <Path Data="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </ToggleButton>
+                                            <ToggleButton IsChecked="{Binding ShowMinutes, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VectorIconToggleButton}" Margin="4,0" ToolTip="Show Minutes">
+                                                <Path Data="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Stretch="Uniform" Width="12" Height="12"/>
+                                            </ToggleButton>
+                                            <ToggleButton IsChecked="{Binding IsBreak, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource VectorIconToggleButton}" ToolTip="Break (Pause)">
+                                                <Path Data="M2,21H20V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Stretch="Uniform" Width="12" Height="12"/>
+                                            </ToggleButton>
+                                        </StackPanel>
+
+                                        <!-- Hover Actions -->
+                                        <StackPanel x:Name="HoverActions" Grid.Column="7" Orientation="Horizontal" HorizontalAlignment="Right" Visibility="Hidden">
+                                            <Button Click="BtnOutdentInline_Click" Tag="{Binding}" Style="{StaticResource InlineActionButton}" ToolTip="Outdent">
+                                                <Path Data="M20,12l-4-4v3H4v2h12v3Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="12" Height="12" RenderTransformOrigin="0.5 0.5">
+                                                    <Path.RenderTransform><ScaleTransform ScaleX="-1"/></Path.RenderTransform>
+                                                </Path>
+                                            </Button>
+                                            <Button Click="BtnIndentInline_Click" Tag="{Binding}" Style="{StaticResource InlineActionButton}" Margin="2,0" ToolTip="Indent">
+                                                <Path Data="M20,12l-4-4v3H4v2h12v3Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="12" Height="12"/>
+                                            </Button>
+                                            <Button Click="BtnDeleteInline_Click" Tag="{Binding}" Style="{StaticResource InlineActionButton}" ToolTip="Delete">
+                                                <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="#EF4444" Stretch="Uniform" Width="12" Height="12"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsMouseOver}" Value="True">
+                                            <Setter TargetName="HoverActions" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        
+                        <!-- Ghost Add Row -->
+                        <Button Grid.Row="2" Content="+ Click here or press Enter to add a new topic" 
+                                HorizontalContentAlignment="Left" Foreground="{DynamicResource TextMutedBrush}" 
+                                Background="Transparent" BorderThickness="0" Padding="40,10" 
+                                Click="BtnAdd_Click" Cursor="Hand"/>
+                    </Grid>
+                </Border>
+
+                <!-- 4. Footer -->
+                <Grid Grid.Row="3" Margin="0,15,0,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <Button Content="Extract from Slide" Style="{StaticResource OutlineButton}" Width="150" Height="32" Click="BtnReadFromPres_Click" Margin="0,0,10,0"/>
+                        <Button Content="Save Agenda" Style="{StaticResource SecondaryButton}" Width="110" Height="32" Click="BtnSaveAgenda_Click" Margin="0,0,10,0"/>
+                        <Button x:Name="BtnOk" Content="Create Agenda" Style="{StaticResource AccentButton}" Width="150" Height="36" FontSize="14" FontWeight="SemiBold" Click="BtnOk_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+            
+            <Border Grid.Column="1" Background="#F3F4F6" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" ClipToBounds="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="180"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="15,10">
+                        <TextBlock Text="LIVE PREVIEW: FULL SLIDE" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                    </Border>
+                    
+                    <Viewbox Grid.Row="1" Margin="15" Stretch="Uniform" VerticalAlignment="Top">
+                        <Border Width="960" Height="540" Background="White" CornerRadius="4">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.1" Color="Black"/>
+                            </Border.Effect>
+                            <ItemsControl ItemsSource="{Binding PreviewShapes}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas Width="960" Height="540" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="{Binding W}" Height="{Binding H}" Background="{Binding BgColor}" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="2">
+                                            <TextBlock Text="{Binding Text}" Foreground="{Binding FgColor}" FontSize="{Binding FontSize}" FontWeight="{Binding FontWeight}" FontStyle="{Binding FontStyle}" VerticalAlignment="Center" Margin="5,0" TextTrimming="CharacterEllipsis" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Viewbox>
+
+                    <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,1" Padding="15,10">
+                        <TextBlock Text="LIVE PREVIEW: HIGHLIGHT" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11"/>
+                    </Border>
+
+                    <Viewbox Grid.Row="3" Margin="15" Stretch="Uniform" VerticalAlignment="Center">
+                        <Border Width="960" Height="120" Background="White" CornerRadius="4">
+                             <ItemsControl ItemsSource="{Binding HighlightPreviewShapes}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Canvas Width="960" Height="120" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                                        <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="{Binding W}" Height="{Binding H}" Background="{Binding BgColor}" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="2">
+                                            <TextBlock Text="{Binding Text}" Foreground="{Binding FgColor}" FontSize="{Binding FontSize}" FontWeight="{Binding FontWeight}" FontStyle="{Binding FontStyle}" VerticalAlignment="Center" Margin="5,0" TextTrimming="CharacterEllipsis" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </Viewbox>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

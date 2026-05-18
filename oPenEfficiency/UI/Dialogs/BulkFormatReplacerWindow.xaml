@@ -1,0 +1,350 @@
+<Window x:Class="oPenEfficiency.UI.BulkFormatReplacerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:oPenEfficiency.UI"
+        xmlns:controls="clr-namespace:oPenEfficiency.UI.Controls"
+        Title="Bulk Format Replacer" Height="650" Width="550"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterScreen" Topmost="True" ShowInTaskbar="False">
+    
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="SectionLabel" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+
+            <Style x:Key="ReplacerRow" TargetType="Grid">
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+
+            <!-- Shared Icon Data -->
+            <Geometry x:Key="IconTarget">M12,2L12,4 M12,20L12,22 M2,12L4,12 M20,12L22,12 M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7Z</Geometry>
+            <Geometry x:Key="IconPipette">M19.35,11.72l-2.12,2.12c-0.2,0.2-0.51,0.2-0.71,0l-1.41-1.41c-0.2-0.2-0.2-0.51,0-0.71l2.12-2.12L19.35,11.72z M15.11,12.43l1.41,1.41c0.2,0.2,0.2,0.51,0,0.71l-6.36,6.36c-0.68,0.68-1.57,1.06-2.52,1.06c-1.95,0-3.53-1.58-3.53-3.53c0-0.95,0.38-1.84,1.06-2.52l6.36-6.36c0.2-0.2,0.51-0.2,0.71,0l1.41,1.41c0.2,0.2,0.51,0.2,0.71,0l2.12-2.12c0.2-0.2,0.2-0.51,0-0.71l-2.12-2.12c-0.2-0.2-0.51-0.2-0.71,0l-2.12,2.12c-0.2,0.2-0.2,0.51,0,0.71H9l-2.12-2.12c-0.2-0.2-0.2-0.51,0-0.71L10.41,3.4l2.12,2.12C12.72,5.72,13.03,5.72,13.23,5.52l2.12-2.12c0.2-0.2,0.2-0.51,0-0.71l-2.12-2.12C13.03,0.38,12.72,0.38,12.52,0.58l-2.12,2.12c-0.2,0.2-0.2,0.51,0,0.71L6.17,7.66C5.49,8.34,5.11,9.23,5.11,10.18c0,1.95,1.58,3.53,3.53,3.53c0.95,0,1.84-0.38,2.52-1.06l6.36-6.36c0.2-0.2,0.2-0.51,0-0.71L15.11,12.43z</Geometry>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" MouseLeftButtonDown="Border_MouseLeftButtonDown">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="25">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="*"/>    <!-- Content -->
+                <RowDefinition Height="Auto"/> <!-- Footer -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,25">
+                <StackPanel Orientation="Horizontal">
+                    <controls:FeatureIcon Width="20" Height="20" Margin="0,0,12,0" FeatureId="BtnReplaceFont" IconColor="{StaticResource AccentBrush}"/>
+                    <TextBlock Text="Bulk Format Replacer" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="18" FontWeight="SemiBold"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click"/>
+            </Grid>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,10,0">
+                    
+                    <!-- Font Family -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="CheckFont" Content="Replace Font Family" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=CheckFont}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="AS-IS (FIND)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboFontFind" Uid="Font" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboFontFind" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                            <StackPanel Grid.Column="2">
+                                <Grid>
+                                    <TextBlock Text="TO-BE (REPLACE)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboFontReplace" Uid="Font" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboFontReplace" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+
+                    <!-- Font Size -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="CheckSize" Content="Replace Font Size" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=CheckSize}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="AS-IS (FIND)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboSizeFind" Uid="Size" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboSizeFind" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                            <StackPanel Grid.Column="2">
+                                <Grid>
+                                    <TextBlock Text="TO-BE (REPLACE)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboSizeReplace" Uid="Size" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboSizeReplace" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+
+                    <!-- Text Color -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="CheckTextColor" Content="Replace Text Color" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=CheckTextColor}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="AS-IS (FIND)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboTextColorFind" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathTextColorFind" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboTextColorFind" Uid="TextColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboTextColorFind" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                            <StackPanel Grid.Column="2">
+                                <Grid>
+                                    <TextBlock Text="TO-BE (REPLACE)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboTextColorReplace" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathTextColorReplace" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboTextColorReplace" Uid="TextColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboTextColorReplace" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+
+                    <!-- Fill Color -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="CheckFillColor" Content="Replace Shape Fill Color" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=CheckFillColor}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="AS-IS (FIND)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboFillColorFind" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathFillColorFind" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboFillColorFind" Uid="FillColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboFillColorFind" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                            <StackPanel Grid.Column="2">
+                                <Grid>
+                                    <TextBlock Text="TO-BE (REPLACE)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboFillColorReplace" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathFillColorReplace" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboFillColorReplace" Uid="FillColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboFillColorReplace" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+
+                    <!-- Line Color -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <CheckBox x:Name="CheckLineColor" Content="Replace Shape Line Color" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <Grid Grid.Row="1" IsEnabled="{Binding IsChecked, ElementName=CheckLineColor}" Margin="20,0,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <Grid>
+                                    <TextBlock Text="AS-IS (FIND)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboLineColorFind" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathLineColorFind" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboLineColorFind" Uid="LineColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboLineColorFind" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="1" Text="→" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,8" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                            <StackPanel Grid.Column="2">
+                                <Grid>
+                                    <TextBlock Text="TO-BE (REPLACE)" Style="{StaticResource SectionLabel}"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Height="24" Padding="8,0" Click="Pick_Click" Tag="ComboLineColorReplace" ToolTip="Pick from screen" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,4,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path x:Name="PathLineColorReplace" Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Height="24" Padding="8,0" Click="Assign_Click" Tag="ComboLineColorReplace" Uid="LineColor" ToolTip="Assign from selection" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path Fill="{StaticResource AccentBrush}" Stretch="Uniform" Width="14" Height="14" Data="{StaticResource IconTarget}" Margin="0,0,4,0"/>
+                                                <TextBlock Text="From Shape" FontSize="10" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <ComboBox x:Name="ComboLineColorReplace" IsEditable="True" Height="34"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                    </Border>
+
+                    <!-- Scope -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="REPLACEMENT SCOPE" Style="{StaticResource SectionLabel}" Margin="0,0,0,10"/>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="RadioScopeCurrent" Content="Current Slide" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,20,0"/>
+                                <RadioButton x:Name="RadioScopeSelected" Content="Selected Slides" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,20,0"/>
+                                <RadioButton x:Name="RadioScopeEntire" Content="Entire Presentation" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <Button Grid.Row="2" Content="Execute Batch Replacement" Style="{StaticResource AccentButton}" 
+                    HorizontalAlignment="Right" Click="Replace_Click" Margin="0,10,0,0" Height="40" Padding="25,0"/>
+        </Grid>
+    </Border>
+</Window>

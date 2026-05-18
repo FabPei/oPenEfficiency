@@ -1,0 +1,12 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-thermometer-icon lucide-thermometer" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <path id="svg_1" d="m14,4l0,10.54a4,4 0 1 1 -4,0l0,-10.54a2,2 0 0 1 4,0z"/>
+  <ellipse ry="2.38532" rx="2.53823" id="svg_2" cy="17.07441" cx="11.92865" stroke="#000" fill="#fff"/>
+  <ellipse ry="1.16208" rx="0.88685" id="svg_3" cy="17.56575" cx="12.11214" stroke="#000" fill="#fff"/>
+  <ellipse ry="1.40673" rx="1.9266" id="svg_4" cy="19.03364" cx="11.92865" stroke="#000" fill="#fff"/>
+  <ellipse ry="0.85627" rx="1.10092" id="svg_5" cy="17.13761" cx="12.20388" stroke="#000" fill="#fff"/>
+  <ellipse ry="0.6422" rx="1.37615" id="svg_6" cy="18.14679" cx="12.6626" stroke="#000" fill="#fff"/>
+ </g>
+</svg>

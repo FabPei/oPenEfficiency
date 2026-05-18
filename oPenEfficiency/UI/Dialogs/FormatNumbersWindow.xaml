@@ -1,0 +1,187 @@
+<Window x:Class="oPenEfficiency.UI.FormatNumbersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Number Formatter" Width="360" SizeToContent="Height"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="Manual"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+
+            <Style x:Key="ModernActionButton" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="Padding" Value="8,4"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" x:Name="border">
+                                <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" Margin="8,0"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="CurrencyButton" TargetType="Button" BasedOn="{StaticResource ModernActionButton}">
+                <Setter Property="Width" Value="38"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="Margin" Value="0,0,4,4"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" x:Name="border">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="OptionHeader" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Margin" Value="0,0,0,12"/>
+            </Style>
+
+            <Style x:Key="RadioStyle" TargetType="RadioButton" BasedOn="{StaticResource {x:Type RadioButton}}">
+                <Setter Property="Margin" Value="0,0,12,0"/>
+                <Setter Property="FontSize" Value="11"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Padding="15">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="15" ShadowDepth="2" Opacity="0.4" Color="Black"/>
+        </Border.Effect>
+        <StackPanel>
+            <!-- Header -->
+            <Grid Margin="0,0,0,12">
+                <TextBlock Text="NUMBER FORMATTER" Style="{StaticResource DialogTitleText}" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" />
+            </Grid>
+
+            <TextBlock Text="Select standard to apply:" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,8"/>
+
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource OptionHeader}" Text="Grouping &amp; Separators" />
+                    <UniformGrid Columns="1">
+                <Button Style="{StaticResource ModernActionButton}" Click="Format_Click" Tag="COMMA" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Comma Grouping " FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="(US, UK: 1,234.56)" VerticalAlignment="Center" Style="{StaticResource DialogSubtitleText}"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ModernActionButton}" Click="Format_Click" Tag="PERIOD" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Period Grouping " FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="(DE, IT: 1.234,56)" VerticalAlignment="Center" Style="{StaticResource DialogSubtitleText}"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ModernActionButton}" Click="Format_Click" Tag="SPACE" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Space Grouping " FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="(FR, SE: 1 234,56)" VerticalAlignment="Center" Style="{StaticResource DialogSubtitleText}"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ModernActionButton}" Click="Format_Click" Tag="APOSTROPHE" Margin="0,0,0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Apostrophe Grouping " FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="(CH, LI: 1'234.56)" VerticalAlignment="Center" Style="{StaticResource DialogSubtitleText}"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource ModernActionButton}" Click="Format_Click" Tag="INDIAN">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Indian Numbering " FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Text="(IN: 1,23,456.78)" VerticalAlignment="Center" Style="{StaticResource DialogSubtitleText}"/>
+                    </StackPanel>
+                </Button>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource OptionHeader}" Text="Currency Placement" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <RadioButton x:Name="RadioPrefix" Content="Prefix" Style="{StaticResource RadioStyle}" IsChecked="True" Checked="Placement_Changed" />
+                <RadioButton x:Name="RadioSuffix" Content="Suffix" Style="{StaticResource RadioStyle}" Checked="Placement_Changed" />
+                <RadioButton x:Name="RadioInPlace" Content="In-place" Style="{StaticResource RadioStyle}" Checked="Placement_Changed" />
+                <RadioButton x:Name="RadioRemove" Content="Remove" Style="{StaticResource RadioStyle}" Checked="Placement_Changed" />
+            </StackPanel>
+            
+            <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="6" Padding="10,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <TextBlock x:Name="TxtPlacementInfo" Text="Common in English-speaking countries ($100.00)." 
+                                   Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" TextWrapping="Wrap" MinHeight="24" FontStyle="Italic" LineHeight="14"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource OptionHeader}" Text="Target Currency" />
+                    <TextBox x:Name="TxtCurrency" Style="{StaticResource {x:Type TextBox}}" Height="32" Padding="8,4" FontSize="12" Margin="0,0,0,8" TextAlignment="Left"/>
+            
+            <WrapPanel Margin="0,2,0,0">
+                <Button Content="$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="€" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="¥" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="£" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="A$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="C$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="Fr" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="HK$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="S$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="kr" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="₩" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="NZ$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="₹" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="Mex$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="NT$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="R" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="R$" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="₽" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="₺" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+                <Button Content="zł" Click="QuickCurrency_Click" Style="{StaticResource CurrencyButton}"/>
+            </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="Preserves styling. Window auto-sizes to content." Foreground="{DynamicResource TextMutedBrush}" FontSize="9" Margin="0,0,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,103 @@
+<Window x:Class="oPenEfficiency.UI.SplitShapeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Split Shape" SizeToContent="Height" Width="330" MinHeight="220"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        Opacity="0.95"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+                
+
+        
+
+        
+        
+        
+    </Window.Resources>
+    
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.5" Color="#000000"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="*"/>    <!-- Content -->
+                <RowDefinition Height="Auto"/> <!-- Footer -->
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="Split Shape" FontSize="20" FontWeight="SemiBold" FontFamily="Segoe UI Variable Display" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Width="30" Height="30" Background="Transparent" BorderThickness="0" Click="BtnCancel_Click" Cursor="Hand">
+                    <Path Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" Fill="{DynamicResource TextSecondaryBrush}" Stretch="Uniform" Width="12" Height="12"/>
+                </Button>
+            </Grid>
+
+            <!-- Inputs -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="8"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Labels -->
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Columns" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="Rows" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <TextBlock Grid.Row="0" Grid.Column="4" Text="Spacing (pt)" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+
+                <!-- TextBoxes -->
+                <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtColumns" Grid.Row="1" Grid.Column="0" Text="2" PreviewTextInput="NumberValidationTextBox"/>
+                <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtRows" Grid.Row="1" Grid.Column="2" Text="2" PreviewTextInput="NumberValidationTextBox"/>
+                <TextBox Style="{StaticResource InlineTextBoxStyle}" x:Name="TxtSpacing" Grid.Row="1" Grid.Column="4" Text="10" PreviewTextInput="DecimalValidationTextBox"/>
+
+                <!-- Options -->
+                <StackPanel Grid.Row="3" Grid.ColumnSpan="5">
+                    <TextBlock Text="Options" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+                    <CheckBox x:Name="ChkHorizontalLines" Content="Add horizontal lines"/>
+                    <CheckBox x:Name="ChkVerticalLines" Content="Add vertical lines"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Footer -->
+            <Grid Grid.Row="2" Margin="0,15,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="BtnClose" Grid.Column="0" Content="Close" Style="{DynamicResource WindowButtonStyle}" Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Height="40" Click="BtnClose_Click" Cursor="Hand"/>
+                <Button x:Name="BtnSplit" Grid.Column="2" Content="Split Shape" Style="{StaticResource AccentButton}" Height="40" Click="BtnSplit_Click" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bdr" Property="Background" Value="#B71C1C"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="bdr" Property="Background" Value="#880E4F"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

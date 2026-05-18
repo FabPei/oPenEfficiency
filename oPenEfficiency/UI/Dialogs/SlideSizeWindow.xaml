@@ -1,0 +1,56 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.SlideSizeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Slide Size Analysis" Height="460" Width="480"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="SLIDE SIZE ANALYSIS" Style="{StaticResource DialogTitleText}"/>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnClose_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="15"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Slide Heaviness Analysis (Approximation via Export Sandbox):" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Grid.Row="0"/>
+                
+                <DataGrid x:Name="DgSlideSizes" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" 
+                          Background="{DynamicResource SurfaceBrush}" RowBackground="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                          Foreground="{DynamicResource TextPrimaryBrush}" RowHeaderWidth="0">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Slide" Binding="{Binding SlideNumber}" Width="60"/>
+                        <DataGridTextColumn Header="Size (MB)" Binding="{Binding SizeMB, StringFormat=F2}" Width="80"/>
+                        <DataGridTextColumn Header="Details (Count)" Binding="{Binding Details}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BtnShowLabels" Content="Create On-Slide Labels" Click="BtnShowLabels_Click" Style="{StaticResource AccentButton}" Width="160" Height="32" Margin="0,0,10,0"/>
+                    <Button x:Name="BtnClose" Content="Close" Click="BtnClose_Click" Style="{StaticResource SecondaryButton}" Width="80" Height="32"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

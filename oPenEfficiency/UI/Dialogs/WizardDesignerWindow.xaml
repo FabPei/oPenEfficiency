@@ -1,0 +1,58 @@
+<Window x:Class="oPenEfficiency.UI.WizardDesignerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Wizard Designer" Width="600" Height="500"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="CenterOwner"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="WIZARD DESIGNER" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Configure inputs for Document Automation." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+            <ScrollViewer Grid.Row="1" Margin="0,15">
+                <ItemsControl ItemsSource="{Binding Questions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox SelectedItem="{Binding Type}" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=QuestionTypes}" Width="120" Margin="0,0,10,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Prompt}" Style="{StaticResource StandardTextBox}" Margin="0,0,10,0"/>
+                                    <Button Grid.Column="2" Content="×" Click="RemoveQuestion_Click" Tag="{Binding}" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Cursor="Hand" FontWeight="Bold"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Add Question" Click="AddQuestion_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                <Button Content="Save to Template" Click="Save_Click" Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

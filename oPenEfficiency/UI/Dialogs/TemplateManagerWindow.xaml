@@ -1,0 +1,247 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.TemplateManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:oPenEfficiency.UI.Dialogs"
+        mc:Ignorable="d"
+        Title="Template Manager"
+        Width="900" Height="650"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        ShowInTaskbar="False">
+    
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="8"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            
+            <Style x:Key="DangerBtnStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Background" Value="#1AFF0000"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="ActionBtnStyle" TargetType="Button" BasedOn="{StaticResource AccentButton}"/>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <DockPanel Margin="0,0,0,15">
+                <TextBlock Text="Template Manager" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button x:Name="BtnClose" Style="{StaticResource WindowCloseButton}" Click="Close_Click" DockPanel.Dock="Right"/>
+            </DockPanel>
+
+            <!-- Content -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+                <TabItem Header="Templates">
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1"/>
+                            <ColumnDefinition Width="1.5*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left Side: List -->
+                        <Grid Grid.Column="0" Margin="0,0,10,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+                                    <Grid>
+                                        <TextBox x:Name="SearchBox" Padding="8,5" Background="Transparent" BorderThickness="0" 
+                                                 Foreground="{DynamicResource TextPrimaryBrush}"
+                                                 CaretBrush="{DynamicResource AccentBrush}"
+                                                 TextChanged="SearchBox_TextChanged"/>
+                                        <TextBlock IsHitTestVisible="False" Text="Search templates..." VerticalAlignment="Center" 
+                                                   HorizontalAlignment="Left" Margin="10,0,0,0" Foreground="{DynamicResource TextMutedBrush}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Grid>
+                                </Border>
+                                <Button Grid.Column="1" Content="Add Template..." Click="AddTemplate_Click" 
+                                        Style="{StaticResource SecondaryButton}" Margin="10,0,0,0" Padding="12,0" Height="30"/>
+                            </Grid>
+
+                            <ListBox Grid.Row="1" x:Name="TemplatesList" 
+                                     Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" 
+                                     HorizontalContentAlignment="Stretch"
+                                     SelectionChanged="TemplatesList_SelectionChanged"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="5,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <StackPanel VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                    <TextBlock Text="{Binding Path}" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" 
+                                                               TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="Open" Click="OpenTemplate_Click" 
+                                                            Style="{StaticResource ActionBtnStyle}" 
+                                                            Padding="12,4" Height="30" Margin="4,0"/>
+                                                    
+                                                    <Button Click="HideTemplate_Click" 
+                                                            ToolTip="Hide template (don't see it anymore)"
+                                                            Style="{StaticResource ToolbarButton}" 
+                                                            Width="30" Height="30" Padding="0" Margin="2,0">
+                                                        <Viewbox Width="14" Height="14">
+                                                            <Path Data="M18 6 6 18 M6 6 12 12 18 18" 
+                                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                                                  StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        </Viewbox>
+                                                    </Button>
+                                                    
+                                                    <Button Click="DeleteTemplate_Click" 
+                                                            ToolTip="Permanently delete file from disk"
+                                                            Style="{StaticResource DangerBtnStyle}" 
+                                                            Width="30" Height="30" Padding="0" Margin="2,0">
+                                                        <Viewbox Width="14" Height="14">
+                                                            <Path Data="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6" 
+                                                                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                                                  StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                        </Viewbox>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Grid>
+
+                        <!-- Divider -->
+                        <Rectangle Grid.Column="1" Fill="{DynamicResource BorderBrush}" VerticalAlignment="Stretch"/>
+
+                        <!-- Right Side: Preview Pane -->
+                        <Grid Grid.Column="2" Margin="15,0,0,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Background="{DynamicResource SurfaceBrush}">
+                                <Grid>
+                                    <!-- Placeholder when nothing selected -->
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="NoPreviewPanel">
+                                        <TextBlock Text="Select a template" Foreground="{DynamicResource TextMutedBrush}" FontSize="16"/>
+                                        <TextBlock Text="to see a preview" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- Actual Preview -->
+                                    <Image x:Name="TemplatePreviewImage" Stretch="Uniform" Margin="10" Visibility="Collapsed"/>
+                                </Grid>
+                            </Border>
+
+                            <StackPanel Grid.Row="1" Margin="0,15,0,0" x:Name="DetailsPanel" Visibility="Collapsed">
+                                <TextBlock x:Name="TxtSelectedName" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="TxtSelectedPath" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                                <Button Content="Open Template" Click="OpenTemplate_Click" 
+                                        Style="{StaticResource ActionBtnStyle}" Margin="0,15,0,0" Height="36" FontSize="14"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Configuration">
+                    <ScrollViewer Margin="0,10,0,0">
+                        <StackPanel>
+                            <TextBlock Text="General Settings" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <CheckBox x:Name="CbHideDefault" Content="Hide default Windows/Office template locations" 
+                                      Checked="CbHideDefault_Changed" Unchecked="CbHideDefault_Changed" Margin="0,0,0,10"/>
+                            
+                            <Button Content="Restore Hidden Templates" Click="RestoreHidden_Click" 
+                                    Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Padding="15,5" Margin="0,0,0,20"/>
+
+                            <Separator Background="{DynamicResource BorderBrush}" Margin="0,10"/>
+
+                            <TextBlock Text="Watched Folders" FontWeight="SemiBold" Margin="0,10,0,5"/>
+                            <TextBlock Text="Add directories to automatically scan for .potx and .pptx files." 
+                                       FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,10"/>
+                            
+                            <ListBox x:Name="DirectoriesList" Height="200" 
+                                     Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="5">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                            <Button Grid.Column="1" Click="RemoveDirectory_Click" 
+                                                    Style="{StaticResource ToolbarButton}" Width="24" Height="24" Margin="10,0,0,0">
+                                                <Viewbox Width="10" Height="10">
+                                                    <Path Data="M18 6 6 18 M6 6 12 12 18 18" 
+                                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                                          StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                                </Viewbox>
+                                            </Button>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Button Content="Add Folder..." Click="AddDirectory_Click" 
+                                    HorizontalAlignment="Left" Margin="0,10,0,20" Padding="15,5" Style="{StaticResource SecondaryButton}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- Footer -->
+            <DockPanel Grid.Row="2" Margin="0,15,0,0">
+                <Button Content="Close" Click="Close_Click" HorizontalAlignment="Right" Padding="25,8" 
+                        Style="{StaticResource ActionBtnStyle}"/>
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>

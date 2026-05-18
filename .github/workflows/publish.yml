@@ -1,0 +1,186 @@
+name: Create Published Release (setup.exe)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_override:
+        description: 'Manual version override (e.g. 1.2.3.4). If empty, extracts from csproj.'
+        required: false
+        default: ''
+  push:
+    branches: [ main, master, Refactor, dev ]
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore oPenEfficiency.slnx
+
+    - name: Prepare Certificate
+      id: cert
+      shell: pwsh
+      env:
+        CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+      run: |
+        $cert_file = "oPenEfficiency\oPenEfficiency_TemporaryKey.pfx"
+        if ([string]::IsNullOrEmpty($env:CERTIFICATE_BASE64)) {
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "CERT_EXISTS=false"
+          Write-Host "No certificate found. MSBuild will run without signing."
+        } else {
+          $pfx_cert_byte = [System.Convert]::FromBase64String($env:CERTIFICATE_BASE64)
+          [System.IO.File]::WriteAllBytes($cert_file, $pfx_cert_byte)
+          
+          # Import and get the actual thumbprint of the imported certificate
+          $imported_cert = Import-PfxCertificate -FilePath $cert_file -CertStoreLocation Cert:\CurrentUser\My
+          $thumbprint = $imported_cert.Thumbprint
+          
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "CERT_EXISTS=true"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "THUMBPRINT=$thumbprint"
+          Write-Host "Certificate imported successfully. Thumbprint: $thumbprint"
+        }
+
+    - name: Determine Version
+      id: versioning
+      shell: pwsh
+      run: |
+        $version = "${{ github.event.inputs.version_override }}"
+        if ([string]::IsNullOrEmpty($version)) {
+            if ("${{ github.ref_type }}" -eq "tag") {
+                $version = "${{ github.ref_name }}".TrimStart('v')
+            } else {
+                # Auto-generate version based on Date and GitHub Run Number
+                $version = (Get-Date).ToString("yyyy.MM.dd") + "." + "${{ github.run_number }}"
+            }
+        }
+        $tag = "v$version"
+        Write-Host "Target Version: $version"
+        Write-Host "Target Tag: $tag"
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "VERSION=$version"
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "TAG=$tag"
+
+    - name: Inject Version into Project Files
+      shell: pwsh
+      run: |
+        $v = "${{ steps.versioning.outputs.VERSION }}"
+        Write-Host "Updating project files to version: $v"
+        
+        $csproj = "oPenEfficiency/oPenEfficiency.csproj"
+        (Get-Content $csproj) -replace "<ApplicationVersion>.*?</ApplicationVersion>", "<ApplicationVersion>$v</ApplicationVersion>" | Set-Content $csproj
+        
+        $assemblyInfo = "oPenEfficiency/Properties/AssemblyInfo.cs"
+        (Get-Content $assemblyInfo) -replace '\[assembly: AssemblyVersion\(".*?"\)\]', "[assembly: AssemblyVersion(""$v"")]" | Set-Content $assemblyInfo
+        (Get-Content $assemblyInfo) -replace '\[assembly: AssemblyFileVersion\(".*?"\)\]', "[assembly: AssemblyFileVersion(""$v"")]" | Set-Content $assemblyInfo
+
+    - name: Generate Changelog
+      id: changelog
+      shell: pwsh
+      run: |
+        try {
+            $prevTag = git describe --tags --abbrev=0 HEAD^ 2>$null
+            if ($null -eq $prevTag) {
+                $commits = git log --pretty=format:"* %s (%h)"
+            } else {
+                $commits = git log --pretty=format:"* %s (%h)" "$prevTag..HEAD"
+            }
+            if ([string]::IsNullOrEmpty($commits)) {
+                $commits = "No changes since last release."
+            }
+        } catch {
+            $commits = "Initial Release"
+        }
+        
+        $log = $commits
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "LOG<<EOF"
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "$log"
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "EOF"
+
+    - name: Build and Publish
+      shell: pwsh
+      run: |
+        $sign = if ("${{ steps.cert.outputs.CERT_EXISTS }}" -eq "true") { "true" } else { "false" }
+        $v = "${{ steps.versioning.outputs.VERSION }}"
+        
+        $args = @(
+            "oPenEfficiency/oPenEfficiency.csproj", 
+            "/t:Publish", 
+            "/p:Configuration=Release", 
+            "/p:Platform=AnyCPU", 
+            "/p:ApplicationVersion=$v",
+            "/p:SignManifests=$sign"
+        )
+        
+        if ($sign -eq "true") {
+            $args += "/p:ManifestKeyFile=oPenEfficiency_TemporaryKey.pfx"
+            $args += "/p:ManifestCertificateThumbprint=${{ steps.cert.outputs.THUMBPRINT }}"
+        } else {
+            $args += "/p:ManifestCertificateThumbprint="
+            $args += "/p:ManifestKeyFile="
+        }
+        
+        $args += "/p:PublishDir=bin\Release\app.publish\"
+        
+        Write-Host "Running: msbuild $args"
+        msbuild $args
+
+    - name: Prepare Release Artifacts
+      id: artifacts
+      shell: pwsh
+      run: |
+        $v = "${{ steps.versioning.outputs.VERSION }}"
+        $pubPath = "oPenEfficiency/bin/Release/app.publish"
+        
+        if (-Not (Test-Path $pubPath)) {
+            Write-Error "CRITICAL: Publish directory not found at $pubPath."
+            exit 1
+        }
+        
+        mkdir -Force release
+        
+        # ClickOnce Installer Package (Everything in app.publish)
+        Compress-Archive -Path "$pubPath/*" -DestinationPath "release/oPenEfficiency-Installer-v$v.zip" -Force
+        
+        # Standalone Setup.exe (for convenience)
+        if (Test-Path "$pubPath/setup.exe") {
+            Copy-Item "$pubPath/setup.exe" -Destination "release/oPenEfficiency-Setup-v$v.exe"
+            Write-Host "Found setup.exe and copied to release folder."
+        }
+        
+        Add-Content -Path $env:GITHUB_OUTPUT -Value "HAS_FILES=true"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      if: steps.artifacts.outputs.HAS_FILES == 'true'
+      with:
+        tag_name: ${{ steps.versioning.outputs.TAG }}
+        name: Release ${{ steps.versioning.outputs.TAG }}
+        body: |
+          ## Changes in this version:
+          ${{ steps.changelog.outputs.LOG }}
+          
+          ---
+          *Automated Release for version ${{ steps.versioning.outputs.VERSION }}*
+        generate_release_notes: false
+        draft: false
+        prerelease: false
+        files: |
+          release/*.zip
+          release/*.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,51 @@
+<Window x:Class="oPenEfficiency.UI.AutomationWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Automation Wizard" Width="500" Height="400"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="CenterOwner"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="DOCUMENT AUTOMATION" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Fill in the details to generate the presentation." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+            <StackPanel Grid.Row="1" Margin="0,20">
+                <TextBlock Text="Client Name:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <TextBox Style="{StaticResource StandardTextBox}" Margin="0,0,0,15" Text="Acme Corp"/>
+
+                <TextBlock Text="Project Scope:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
+                <ComboBox Margin="0,0,0,15">
+                    <ComboBoxItem Content="Phase 1 - Audit" IsSelected="True"/>
+                    <ComboBoxItem Content="Phase 2 - Implementation"/>
+                </ComboBox>
+
+                <CheckBox Content="Include Appendix Slides" Foreground="{DynamicResource TextPrimaryBrush}" IsChecked="True" Margin="0,0,0,15"/>
+                
+                <TextBlock Text="Note: This UI dynamically generates based on the Wizard Designer schema stored in the template." Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" FontStyle="Italic"/>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Generate Presentation" Click="Generate_Click" Style="{StaticResource PrimaryButton}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

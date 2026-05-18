@@ -1,0 +1,22 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-case-sensitive-icon lucide-case-sensitive" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <g id="svg_24">
+   <path id="svg_22" d="m10.41031,9l0,7"/>
+   <circle id="svg_23" r="3.5" cy="12.5" cx="6.91031"/>
+  </g>
+  <g id="svg_20">
+   <path id="svg_18" d="m36.30382,9l0,7"/>
+   <circle id="svg_19" r="3.5" cy="12.5" cx="32.80382"/>
+  </g>
+  <g id="svg_21">
+   <path id="svg_9" d="m13.01574,16l4.039,-9.69a0.5,0.5 0 0 1 0.923,0l4.038,9.69"/>
+   <path id="svg_10" d="m14.31974,13l6.392,0"/>
+   <path id="svg_11" d="m13.01574,16l4.039,-9.69a0.5,0.5 0 0 1 0.923,0l4.038,9.69"/>
+   <path id="svg_12" d="m13.01574,16l4.039,-9.69a0.5,0.5 0 0 1 0.923,0l4.038,9.69"/>
+   <path id="svg_13" d="m14.31974,13l6.392,0"/>
+   <path id="svg_14" d="m13.01574,16l4.039,-9.69a0.5,0.5 0 0 1 0.923,0l4.038,9.69"/>
+  </g>
+ </g>
+</svg>

@@ -1,0 +1,191 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.MapWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Map Wizard" Height="580" Width="700"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+
+            <Style x:Key="ColorSwatch" TargetType="Button">
+                <Setter Property="Width" Value="24"/>
+                <Setter Property="Height" Value="24"/>
+                <Setter Property="Margin" Value="8,0,0,0"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bd" CornerRadius="4"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource TextPrimaryBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="MAP WIZARD" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Bind data to shapes and apply heatmaps." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnClose_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Content -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Border Style="{StaticResource SettingCard}" Height="380" Padding="15">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Text="1. Paste Region Data" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            
+                            <!-- Dashed Drop Zone / Paste Area -->
+                            <Border Grid.Row="1" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1.5" CornerRadius="6" Background="{DynamicResource WindowBackgroundBrush}" Margin="0,0,0,15" Padding="2">
+                                
+                                <Grid>
+                                    <TextBox x:Name="TxtPasteArea" Background="Transparent" BorderThickness="0" AcceptsReturn="True" Foreground="{DynamicResource TextPrimaryBrush}" Padding="8" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="TxtPasteArea_TextChanged"/>
+                                    <TextBlock IsHitTestVisible="False" Text="Paste Excel Data Here!&#x0a;Format: Region [TAB] Value" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=TxtPasteArea}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <Button Grid.Row="2" x:Name="BtnParseData" Content="Parse Data →" Click="BtnParseData_Click" Style="{StaticResource OutlineButton}" Height="32"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <Border Style="{StaticResource SettingCard}" Padding="15" Margin="0,0,0,15" Height="210">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Data Preview &amp; Matches" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                            
+                            <DataGrid x:Name="DgDataPreview" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                                      Background="Transparent" RowBackground="Transparent" BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="1"
+                                      Foreground="{DynamicResource TextPrimaryBrush}" RowHeaderWidth="0" HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Region" Binding="{Binding Region}" Width="*"/>
+                                    <DataGridTextColumn Header="Value" Binding="{Binding RawValue}" Width="70"/>
+                                    <DataGridCheckBoxColumn Header="Matched" Binding="{Binding IsMatched}" Width="60"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingCard}" Padding="15">
+                        <StackPanel>
+                            <TextBlock Text="2. Color Configuration" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Mode:" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,15,0"/>
+                                <ComboBox x:Name="CmbMode" Grid.Column="1" SelectionChanged="CmbMode_SelectionChanged">
+                                    <ComboBoxItem Content="Continuous (Heatmap)" Tag="Continuous" IsSelected="True"/>
+                                    <ComboBoxItem Content="Categorical (Exact Label)" Tag="Categorical"/>
+                                </ComboBox>
+                            </Grid>
+
+                            <!-- Heatmap Config -->
+                            <StackPanel x:Name="SpHeatmap">
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Low Value Color:" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,15,0" Width="100"/>
+                                    <TextBox x:Name="TxtLowColor" Grid.Column="1" Text="#E3F2FD" VerticalContentAlignment="Center" Padding="4,2"/>
+                                    <Button x:Name="BtnPickLow" Grid.Column="2" Style="{StaticResource ColorSwatch}" Background="#E3F2FD" Click="BtnPickLowColor_Click"/>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="High Value Color:" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,15,0" Width="100"/>
+                                    <TextBox x:Name="TxtHighColor" Grid.Column="1" Text="#0D47A1" VerticalContentAlignment="Center" Padding="4,2"/>
+                                    <Button x:Name="BtnPickHigh" Grid.Column="2" Style="{StaticResource ColorSwatch}" Background="#0D47A1" Click="BtnPickHighColor_Click"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <TextBlock x:Name="TxtCategoricalNotice" Text="Colors will be auto-assigned. Custom pickers not yet visually implemented, defaults will be mapped." Foreground="{DynamicResource TextMutedBrush}" FontStyle="Italic" Visibility="Collapsed" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="80" Height="32" Click="BtnClose_Click" Margin="0,0,10,0"/>
+                <Button Content="Apply to Map" Style="{StaticResource AccentButton}" Width="130" Height="32" Click="BtnApply_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock-icon lucide-lock">
+  <g transform="matrix(1.021349, 0, 0, 1.021349, -0.853167, 0.407179)" style="">
+    <rect width="19.169" height="11.715" x="3" y="10.285" rx="2" ry="2" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+    <path d="M 7.26 10.285 L 7.26 6.026 C 7.26 3.085 9.644 0.701 12.585 0.701 C 15.525 0.701 17.909 3.085 17.909 6.026 L 17.909 10.285" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+  </g>
+  <g transform="matrix(1, 0, 0, 1, 0.194125, 0)">
+    <path d="M 15.882 18.366 C 16.08 18.563 16.191 18.831 16.191 19.111 C 16.191 19.39 16.08 19.659 15.882 19.856 L 14.742 20.996 C 14.544 21.194 14.277 21.305 13.997 21.305 C 13.717 21.305 13.449 21.194 13.252 20.996 L 7.729 15.473 C 7.318 15.06 7.318 14.394 7.729 13.982 L 8.868 12.843 C 9.28 12.432 9.946 12.432 10.359 12.843 L 15.882 18.366 Z" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+    <path d="M 12.901 17.138 L 13.778 16.262" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+    <path d="M 11.586 15.823 L 12.463 14.947" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+    <path d="M 10.271 14.508 L 11.148 13.632" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+    <path d="M 14.216 18.453 L 15.093 17.577" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 1px;"/>
+  </g>
+</svg>

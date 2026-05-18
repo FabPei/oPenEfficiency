@@ -1,0 +1,113 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.ChartOverlayDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Analytical Chart Overlay" Height="580" Width="480"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="CHART OVERLAY" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Add analytical overlays to native charts." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="CancelButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,10,0">
+                    <!-- Overlay Type -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Overlay Type" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <RadioButton x:Name="OverlayDeltaRadio" Content="Delta (Abs)" IsChecked="True" Margin="0,0,16,0" Checked="OverlayType_Checked" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="OverlayCagrRadio" Content="CAGR (%)" Margin="0,0,16,0" Checked="OverlayType_Checked" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="OverlayPercentRadio" Content="Growth (%)" Checked="OverlayType_Checked" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="OverlayReferenceRadio" Content="Average Level Line" Margin="0,0,16,0" Checked="OverlayType_Checked" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <RadioButton x:Name="OverlayOutlierRadio" Content="Highlight Outliers" Checked="OverlayType_Checked" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Data Points -->
+                    <Border x:Name="PointsGroupBox" Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Select Data Points (Indices)" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="20" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Start Point:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="StartPointCombo" SelectedIndex="0" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="End Point:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                                    <ComboBox x:Name="EndPointCombo" SelectedIndex="0" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Display Format -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Visual Settings" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                            <StackPanel x:Name="BracketStylePanel" Orientation="Horizontal" Margin="0,0,0,12">
+                                <TextBlock Text="Bracket Style:" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                <ComboBox x:Name="BracketStyleCombo" Width="180" SelectedIndex="0">
+                                    <ComboBoxItem Content="Line with Drops"/>
+                                    <ComboBoxItem Content="Square Brackets"/>
+                                    <ComboBoxItem Content="Curved Arrows"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <CheckBox x:Name="ColorCodeCheckBox" Content="Auto-Color (Green for positive, Red for negative)" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10" />
+                            <CheckBox x:Name="InsertRoundedCheckBox" Content="Round number display" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button x:Name="CancelBtn" Content="Cancel" Width="80" Height="32" Margin="0,0,10,0" Style="{StaticResource SecondaryButton}" Click="CancelButton_Click" />
+                <Button x:Name="ApplyBtn" Content="Insert Overlay" Width="120" Height="32" Style="{StaticResource AccentButton}" Click="ApplyButton_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

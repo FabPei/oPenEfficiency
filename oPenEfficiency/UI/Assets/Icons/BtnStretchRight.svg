@@ -1,0 +1,24 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-square-dashed-icon lucide-square-dashed" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <g id="svg_18">
+   <path id="svg_1" stroke=" rgba(0, 0, 0, 0.9)" d="m12.8279,3.16136l1,0"/>
+   <path id="svg_3" stroke=" rgba(0, 0, 0, 0.9)" d="m12.8279,10.10053l1,0"/>
+   <rect id="svg_7" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" transform="matrix(0, -1, 1, 0, 5.5, 5.5)" rx="1" y="-2.47875" x="-15.58832" height="18" width="7"/>
+   <path id="svg_14" stroke=" rgba(0, 0, 0, 0.9)" d="m17.1705,10.16136l1,0"/>
+   <path id="svg_15" stroke=" rgba(0, 0, 0, 0.9)" d="m17.1705,3.16136l1,0"/>
+   <g id="svg_17">
+    <rect transform="matrix(0, -1, 1, 0, -11, 0)" id="svg_8" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" rx="1" y="13.97875" x="-10.10053" height="7" width="7"/>
+    <g id="svg_13">
+     <path id="svg_9" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 1.166px" d="m12.91721,6.60053l3.498,0"/>
+     <path id="svg_10" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 1.166px" d="m15.75611,8.35003l1.75,-1.75l-1.75,-1.749"/>
+    </g>
+    <g id="svg_16">
+     <path id="svg_5" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,8.10488l0,1"/>
+     <path id="svg_6" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,4.09619l0,1"/>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

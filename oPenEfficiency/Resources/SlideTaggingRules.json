@@ -1,0 +1,171 @@
+{
+  "structural_tags": {
+    "agenda_slide": {
+      "keywords": ["agenda", "contents", "overview", "roadmap", "topics", "structure", "outline", "table of contents", "itinerary", "on the menu", "session plan"],
+      "patterns": ["01", "02", "03", "section", "part", "track", "step [0-9]"]
+    },
+    "title_slide": {
+      "keywords": ["confidential", "presented by", "date", "prepared for", "version", "strictly confidential", "author", "deck title", "copy number", "internal use only"],
+      "logic": "Check for very low word count (under 15 words) and existence of a date/year format"
+    },
+    "section_header": {
+      "keywords": ["chapter", "section", "part", "appendix", "divider", "breakout", "intermission", "volume", "module"],
+      "patterns": ["section [0-9]", "part [ivx]", "chapter [0-9]"]
+    },
+    "navigation_tracker": {
+      "keywords": ["you are here", "current progress", "module tracker", "session map"],
+      "logic": "Slides that repeat the agenda but highlight a specific section"
+    },
+    "break_slide": {
+      "keywords": ["coffee break", "lunch", "networking", "reception", "intermission", "refreshments", "bio break", "pause", "recharge", "comfort break", "breakout session", "resuming at"],
+      "logic": "Search for specific time formats like 'hh:mm' or 'back in 15'"
+    },
+    "speaker_introduction": {
+      "keywords": ["keynote", "moderator", "panelist", "guest speaker", "opening remarks", "introduction of", "biography"],
+      "logic": "Look for names followed by professional suffixes like PhD, CEO, MD, VP"
+    },
+    "interviewer_qa_panel": {
+      "keywords": ["meet the panel", "interviewer", "selection committee", "jury", "q&a panel"],
+      "logic": "List of names and professional titles without extensive bios"
+    },
+    "quote_overlay": {
+      "keywords": ["insight", "key quote", "statement", "perspective"],
+      "logic": "Single short sentence in quotation marks, very low word count, high impact"
+    },
+    "safety_moment": {
+      "keywords": ["safety moment", "hse tip", "safety first", "emergency procedures", "incident-free", "safety alert"],
+      "logic": "Standard logistical safety slide at the start of industrial presentations"
+    },
+    "workshop_interaction": {
+      "keywords": ["icebreaker", "brainstorming", "group exercise", "polling", "mentimeter", "slido", "breakout session", "sticky notes", "whiteboard", "live poll", "jam board", "mural", "miro", "collaboration", "scan the qr"],
+      "logic": "Instructional verbs like 'Join', 'Discuss', 'Vote', 'Participate'"
+    },
+    "thank_you_slide": {
+      "keywords": ["thank you", "questions", "contact", "q&a", "feedback", "reach out", "appendix", "backup", "closing remarks", "get in touch", "follow-up", "any questions?"],
+      "patterns": ["@", "www.", ".com", ".org", "linkedin.com/in/"]
+    },
+    "backup_appendix_divider": {
+      "keywords": ["backup slides", "appendix", "additional material", "supporting data", "supplementary", "annex"],
+      "logic": "Divider slide placed before deep-dive technical data"
+    },
+    "glossary_references": {
+      "keywords": ["glossary", "definitions", "abbreviations", "acronyms", "bibliography", "references", "sources", "index", "endnotes", "citations", "literature", "appendix a", "list of terms"],
+      "logic": "Look for colon-separated lines or parenthetical abbreviations like 'KPI (Key Performance Indicator)'"
+    }
+  },
+  "content_tags": {
+    "executive_summary": {
+      "keywords": ["executive summary", "key takeaways", "at a glance", "highlights", "bottom line", "summary of findings", "tldr", "synopsis", "strategic overview", "the 'so what'", "call to action", "management summary"],
+      "logic": "Highest weight if occurring on slide 2 or 3"
+    },
+    "strategic_pillars_vision": {
+      "keywords": ["strategic pillars", "mission statement", "vision", "core values", "north star", "strategic priorities", "guiding principles", "our ambition", "long-term objectives", "strategic intent"],
+      "logic": "High-level abstract nouns (e.g., Excellence, Growth, Innovation)"
+    },
+    "value_proposition": {
+      "keywords": ["value prop", "unique selling point", "usp", "benefits", "why us", "differentiators", "customer value", "solving for"],
+      "logic": "Focused on 'Pain Points' vs 'Solutions'"
+    },
+    "maturity_assessment": {
+      "keywords": ["maturity model", "cmmi", "as-is vs to-be", "current state", "target state", "level 1", "level 5", "optimization", "readiness level"],
+      "logic": "Categorization of processes into levels of evolution"
+    },
+    "capability_heatmap": {
+      "keywords": ["capability map", "heat map", "skill gap", "competency", "proficiency", "tech stack", "functional coverage"],
+      "logic": "Evaluation of strengths/weaknesses across a grid of functions"
+    },
+    "strategic_options_analysis": {
+      "keywords": ["strategic options", "option a", "option b", "recommendation", "trade-offs", "pros and cons", "scenario analysis", "alternative", "do nothing scenario", "decision matrix"],
+      "logic": "Comparison of different paths or investment choices"
+    },
+    "investment_committee_vc": {
+      "keywords": ["deal flow", "term sheet", "valuation cap", "exit strategy", "portfolio company", "pre-money", "post-money", "liquidation preference", "follow-on", "pro-rata", "investment thesis"],
+      "logic": "Focus on deal mechanics and ownership structures"
+    },
+    "risk_assessment": {
+      "keywords": ["risk", "mitigation", "contingency", "probability", "impact", "severity", "residual risk", "risk appetite", "heatmap", "exposure", "vulnerability", "threats", "risk register", "black swan", "fmea", "early warning signs"],
+      "logic": "Look for specific scoring ranges like '(1-5)' or 'High/Medium/Low'"
+    },
+    "crisis_response": {
+      "keywords": ["incident report", "containment plan", "reputation management", "legal hold", "compliance breach", "remediation steps", "crisis communication", "escalation protocol"],
+      "logic": "Urgent tone, focus on 'Damage Control' and 'Recovery'"
+    },
+    "product_marketing_gtm": {
+      "keywords": ["go-to-market", "gtm", "product-market fit", "ideal customer profile", "icp", "value proposition", "messaging house", "competitive battlecard", "product positioning", "launch plan", "sales enablement"],
+      "logic": "Terms relating to external market entry and customer perception"
+    },
+    "mergers_acquisitions": {
+      "keywords": ["m&a", "due diligence", "synergy", "target profile", "valuation", "post-merger integration", "pmi", "deal structure", "equity", "asset purchase", "consolidation", "buy-side", "sell-side", "integration management office", "imo", "clean room", "loi", "conditions precedent"],
+      "logic": "Phrases like 'Value Creation', 'Integration Plan', 'Day 1 Readiness'"
+    },
+    "governance_raci": {
+      "keywords": ["raci matrix", "accountability", "responsibility", "consulted", "informed", "reporting lines", "decision rights", "charter", "steering committee", "steecco"],
+      "logic": "Focus on roles and organizational structure"
+    },
+    "stakeholder_map": {
+      "keywords": ["stakeholder analysis", "influence vs interest", "engagement plan", "key stakeholders", "buy-in", "alignment map"],
+      "logic": "Identification of individuals/groups and their impact on a project"
+    },
+    "cost_transformation": {
+      "keywords": ["zero-based budgeting", "zbb", "cost reduction", "efficiency", "sg&a", "headcount reduction", "synergy targets", "operational leverage", "procurement savings", "outsourcing", "right-sizing", "cost avoidance"],
+      "logic": "Terms like 'Run-rate', 'Savings Potential', 'Baseline'"
+    },
+    "data_analysis": {
+      "keywords": ["growth", "revenue", "margin", "kpi", "performance", "metric", "forecast", "historical", "quarterly", "yoy", "benchmark", "variance", "trend", "correlation", "regression", "outlier", "mom", "ytd"],
+      "logic": "Frequent use of percentage signs (%) and currency markers ($, €, £)"
+    },
+    "timeline_roadmap": {
+      "keywords": ["roadmap", "timeline", "milestones", "q1", "q2", "q3", "q4", "phases", "delivery", "implementation", "launch date", "schedule", "horizon", "critical path", "gantt", "go-live"],
+      "patterns": ["202[0-9]", "january", "february", "month [0-9]", "week [0-9]", "q[1-4] 20"]
+    },
+    "user_research_ux": {
+      "keywords": ["pain points", "usability", "user persona", "journey map", "empathy", "friction", "accessibility", "user feedback", "prototyping", "wireframe", "information architecture", "click-through"],
+      "logic": "Qualitative descriptions of user behavior and technical design terms"
+    },
+    "post_mortem_retrospective": {
+      "keywords": ["lessons learned", "retrospective", "post-mortem", "what went well", "even better if", "root cause", "rca", "incident report", "remediation", "action plan", "success/failure analysis"],
+      "logic": "Past tense verbs like 'achieved', 'missed', 'occurred', 'resolved'"
+    },
+    "market_analysis": {
+      "keywords": ["tam", "sam", "som", "market share", "competitor landscape", "trends", "market growth", "penetration", "cagr", "pestel", "market sizing", "segmentation", "white space", "landscape scan", "relative market position"],
+      "logic": "Terms like 'Market Leader', 'Challenger', 'Niche Player'"
+    },
+    "supply_chain_optimization": {
+      "keywords": ["inventory turnover", "safety stock", "bullwhip effect", "just-in-time", "jit", "lead time reduction", "last-mile delivery", "sourcing strategy", "vendor risk", "circularity", "traceability"],
+      "logic": "Numerical focus on logistics efficiency and vendor reliability"
+    },
+    "governance_board": {
+      "keywords": ["board of directors", "fiduciary duty", "committee update", "statutory", "governance report", "proxy statement", "resolution", "approval required", "board deck", "minutes of meeting", "steecco", "raci"],
+      "logic": "Formal language like 'Pursuant to', 'In accordance with', 'Resolved that'"
+    },
+    "legal_compliance": {
+      "keywords": ["regulatory framework", "compliance audit", "sanctions", "nda", "contractual obligations", "privacy policy", "gdpr", "liability", "indemnification", "jurisdiction", "statute"],
+      "logic": "High density of legal jargon and regulatory acronyms"
+    },
+    "swot_analysis": {
+      "keywords": ["swot", "strengths", "weaknesses", "opportunities", "threats"],
+      "logic": "Look for these 4 specific words appearing together on one slide"
+    },
+    "call_to_action_next_steps": {
+      "keywords": ["next steps", "action items", "recommendation", "decision required", "proposal", "get started", "sign up", "immediate actions", "responsibilities", "to-do", "deadlines", "owners", "milestones", "way forward", "immediate next steps"],
+      "logic": "Action-oriented verbs at the start of bullets (e.g., 'Draft', 'Finalize', 'Send')"
+    }
+  },
+  "industry_context": {
+    "financial": ["ebitda", "p&l", "equity", "asset", "liability", "cash flow", "valuation", "opex", "capex", "balance sheet", "solvency", "liquidity", "capital ratio", "tier 1 capital"],
+    "marketing": ["brand", "campaign", "reach", "conversion", "lead", "persona", "funnel", "customer journey", "cpc", "roi", "attribution", "awareness", "mql/sql", "ctr"],
+    "project_management": ["stakeholder", "resource", "risk", "mitigation", "scrum", "sprint", "agile", "gantt", "wbs", "critical path", "sprint burndown", "velocity", "kanban", "pmo", "jira"],
+    "it_software": ["api", "cloud", "deployment", "stack", "frontend", "backend", "saas", "cybersecurity", "devops", "microservices", "on-premise", "latency", "tech debt", "ci/cd", "scalability"],
+    "hr_legal": ["onboarding", "recruitment", "talent", "retention", "compliance", "policy", "nda", "contract", "labor laws", "arbitration", "workforce planning", "benefits", "diversity", "inclusion"],
+    "operations_manufacturing": ["lean", "six sigma", "kaizen", "jit", "oee", "throughput", "bottleneck", "cycle time", "5s", "fishbone", "ishikawa", "tqm", "poka-yoke", "gemba", "andon", "shop floor"],
+    "healthcare_pharma": ["clinical trial", "fda", "patient journey", "efficacy", "dosage", "compliance", "hcp", "provider", "payer", "formulary", "biotech", "ema", "pharmacovigilance", "r&d"],
+    "retail_ecommerce": ["sku", "inventory", "gmv", "average order value", "churn", "marketplace", "omnichannel", "pos", "dropshipping", "m-commerce", "last mile", "basket size", "stockout"],
+    "energy_utilities": ["renewables", "grid", "decarbonization", "upstream", "downstream", "generation", "transmission", "utility", "lng", "photovoltaic", "net zero", "microgrid", "carbon credits"],
+    "public_sector_nonprofit": ["policy", "citizen", "public service", "ngo", "grants", "social impact", "governance", "public-private partnership", "lobbying", "fundraising", "constituent"],
+    "automotive_mobility": ["oem", "tier 1", "ev", "autonomous", "mobility", "aftermarket", "powertrain", "chassis", "infotainment", "connected car", "v2x"],
+    "aerospace_defense": ["mro", "avionics", "offset", "procurement", "uas/uav", "defense spending", "payload", "propulsion", "itaf", "mil-std"],
+    "real_estate": ["cap rate", "noi", "occupancy", "tenant improvement", "zoning", "lease", "portfolio", "reit", "sqft", "appraisal"],
+    "travel_hospitality": ["revpar", "adr", "occupancy rate", "booking engine", "ancillary revenue", "gds", "loyalty program", "itinerary", "concierge"],
+    "media_entertainment": ["dau", "mau", "arpu", "subscriber churn", "content library", "licensing", "syndication", "impressions", "streaming"]
+  }
+}

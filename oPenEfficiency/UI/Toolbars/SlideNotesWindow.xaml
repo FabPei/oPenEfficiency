@@ -1,0 +1,51 @@
+<Window x:Class="oPenEfficiency.UI.Toolbars.SlideNotesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Developer Notes" 
+        Height="350" Width="300"
+        WindowStyle="None" 
+        AllowsTransparency="True" 
+        Background="Transparent"
+        Topmost="True" 
+        ShowInTaskbar="False"
+        MouseDown="Window_MouseDown"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <StackPanel>
+                    <TextBlock Text="SLIDE NOTES" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Capture developer notes for this slide." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Click="BtnClose_Click" ToolTip="Close"/>
+            </Grid>
+
+            <!-- Content -->
+            <TextBox Grid.Row="1" x:Name="NotesTextBox" 
+                     TextWrapping="Wrap" AcceptsReturn="True" 
+                     Style="{StaticResource InlineTextBoxStyle}"
+                     VerticalContentAlignment="Top"
+                     Padding="10" FontSize="13" 
+                     TextChanged="NotesTextBox_TextChanged"/>
+        </Grid>
+    </Border>
+</Window>

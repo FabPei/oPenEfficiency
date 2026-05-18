@@ -1,0 +1,9 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-clipboard-icon lucide-clipboard" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <rect id="svg_1" ry="1" rx="1" y="2" x="8" height="4" width="8"/>
+  <path id="svg_2" d="m16,4l2,0a2,2 0 0 1 2,2l0,14a2,2 0 0 1 -2,2l-12,0a2,2 0 0 1 -2,-2l0,-14a2,2 0 0 1 2,-2l2,0"/>
+  <text style="cursor: move;" transform="matrix(0.7375, 0, 0, 0.7375, 1.33445, 4.36978)" xml:space="preserve" text-anchor="start" font-family="Noto Sans JP" font-size="10" id="svg_3" y="13.31352" x="7.11746" stroke-width="0" stroke="#000" fill="#000000">x  y</text>
+ </g>
+</svg>

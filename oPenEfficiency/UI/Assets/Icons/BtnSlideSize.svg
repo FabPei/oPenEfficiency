@@ -1,0 +1,9 @@
+<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" class="lucide lucide-weight-icon lucide-weight" stroke-linejoin="round" stroke-linecap="round" stroke-width="2" stroke="currentColor" fill="none">
+
+ <g>
+  <title>Layer 1</title>
+  <circle id="svg_1" r="3" cy="5" cx="12"/>
+  <path id="svg_2" d="m6.5,8a2,2 0 0 0 -1.905,1.46l-2.495,9.04a2,2 0 0 0 1.9,2.5l16,0a2,2 0 0 0 1.925,-2.54l-2.525,-8.96a2,2 0 0 0 -1.92,-1.5l-10.98,0z"/>
+  <text style="cursor: move;" transform="matrix(1.46974, 0, 0, 1.46974, -2.5054, -7.24413)" xml:space="preserve" text-anchor="start" font-family="'Inter'" font-size="2" id="svg_3" y="16.72343" x="5.20601" stroke-width="0" stroke="#000" fill="#000000">megabyte</text>
+ </g>
+</svg>

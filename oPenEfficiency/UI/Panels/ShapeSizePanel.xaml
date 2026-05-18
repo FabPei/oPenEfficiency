@@ -1,0 +1,163 @@
+<UserControl x:Class="oPenEfficiency.UI.ShapeSizePanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             HorizontalAlignment="Stretch"
+             Margin="0,0,0,4">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Spin arrow button style -->
+            <Style x:Key="SpinBtn" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Width" Value="12"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FontSize" Value="7"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <!-- cm text input -->
+            <Style x:Key="CmInput" TargetType="TextBox">
+                <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="Padding" Value="2,1"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Height" Value="18"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="2">
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsFocused" Value="True">
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Row icon -->
+            <Style x:Key="DimIcon" TargetType="Path">
+                <Setter Property="Fill" Value="{DynamicResource TextSecondaryBrush}"/>
+                <Setter Property="Stretch" Value="Uniform"/>
+                <Setter Property="Width" Value="14"/>
+                <Setter Property="Height" Value="14"/>
+                <Setter Property="Margin" Value="0,0,2,0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Width row -->
+        <Border Grid.Column="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="3"
+                Padding="2,1"
+                Margin="0,0,3,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>  <!-- icon -->
+                    <ColumnDefinition Width="*"/>  <!-- text box -->
+                    <ColumnDefinition Width="Auto"/>  <!-- spinners -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Width icon -->
+                <Path Grid.Column="0" Style="{StaticResource DimIcon}"
+                      ToolTip="Width"
+                      Data="M18,11H14.82C14.4,9.84 13.3,9 12,9C10.7,9 9.6,9.84 9.18,11H6V9L3,12L6,15V13H9.18C9.6,14.16 10.7,15 12,15C13.3,15 14.4,14.16 14.82,13H18V15L21,12L18,9V11Z"/>
+
+                <TextBox x:Name="TxtWidth"
+                         Grid.Column="1"
+                         Style="{StaticResource CmInput}"
+                         ToolTip="Width (cm) — press Enter to apply"
+                         KeyDown="TxtWidth_KeyDown"
+                         LostFocus="TxtWidth_LostFocus"/>
+
+                <!-- Up / Down spinners for width -->
+                <StackPanel Grid.Column="2" Orientation="Vertical" VerticalAlignment="Center" Margin="1,0,0,0">
+                    <Button Style="{StaticResource SpinBtn}" Content="▲"
+                            Click="BtnWidthUp_Click" ToolTip="+0.1 cm"/>
+                    <Button Style="{StaticResource SpinBtn}" Content="▼"
+                            Click="BtnWidthDown_Click" ToolTip="-0.1 cm"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Height row -->
+        <Border Grid.Column="1"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="3"
+                Padding="2,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Height icon -->
+                <Path Grid.Column="0" Style="{StaticResource DimIcon}"
+                      ToolTip="Height"
+                      Data="M13,18.17V14.82C14.16,14.4 15,13.3 15,12C15,10.7 14.16,9.6 13,9.18V6H15L12,3L9,6H11V9.18C9.84,9.6 9,10.7 9,12C9,13.3 9.84,14.4 11,14.82V18.17L9,18.17L12,21L15,18.17H13Z"/>
+
+                <TextBox x:Name="TxtHeight"
+                         Grid.Column="1"
+                         Style="{StaticResource CmInput}"
+                         ToolTip="Height (cm) — press Enter to apply"
+                         KeyDown="TxtHeight_KeyDown"
+                         LostFocus="TxtHeight_LostFocus"/>
+
+                <!-- Up / Down spinners for height -->
+                <StackPanel Grid.Column="2" Orientation="Vertical" VerticalAlignment="Center" Margin="1,0,0,0">
+                    <Button Style="{StaticResource SpinBtn}" Content="▲"
+                            Click="BtnHeightUp_Click" ToolTip="+0.1 cm"/>
+                    <Button Style="{StaticResource SpinBtn}" Content="▼"
+                            Click="BtnHeightDown_Click" ToolTip="-0.1 cm"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

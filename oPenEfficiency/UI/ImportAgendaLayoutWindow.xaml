@@ -1,0 +1,131 @@
+<Window x:Class="oPenEfficiency.UI.ImportAgendaLayoutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Import Agenda Layouts"
+        Width="600" Height="450"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="Border" x:Key="SettingCard">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Padding" Value="16"/>
+                <Setter Property="Margin" Value="0,0,0,15"/>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,15" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" Background="Transparent">
+                <StackPanel>
+                    <TextBlock Text="IMPORT AGENDA LAYOUTS" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Import AgendaCreator.xml configurations." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                </StackPanel>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnClose_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <!-- Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="0,0,10,0">
+                    <!-- Import from file -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Import from XML File" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Select an AgendaCreator.xml file from other PowerPoint tools"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="TxtXmlPath" Grid.Column="0" Height="32" Style="{StaticResource InlineTextBoxStyle}"/>
+
+                                <Button Grid.Column="1" Content="Browse..." Width="80" Height="32" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryButton}" Click="BtnBrowseFile_Click"/>
+
+                                <Button Grid.Column="2" Content="Import" Width="80" Height="32" Margin="8,0,0,0"
+                                        Style="{StaticResource AccentButton}" Click="BtnImportFile_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Import from folder -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Import from Folder" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Scan a folder for all AgendaCreator.xml files (including subfolders)"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBox x:Name="TxtFolderPath" Grid.Column="0" Height="32" Style="{StaticResource InlineTextBoxStyle}"/>
+
+                                <Button Grid.Column="1" Content="Browse..." Width="80" Height="32" Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryButton}" Click="BtnBrowseFolder_Click"/>
+
+                                <Button Grid.Column="2" Content="Import All" Width="100" Height="32" Margin="8,0,0,0"
+                                        Style="{StaticResource AccentButton}" Click="BtnImportFolder_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Auto-detect -->
+                    <Border Style="{StaticResource SettingCard}">
+                        <StackPanel>
+                            <TextBlock Text="Auto-Detect" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Automatically find and import AgendaCreator.xml files from other tools"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                            <Button x:Name="BtnAutoDetect" Content="Search and Import" Width="160" Height="32" HorizontalAlignment="Left"
+                                    Style="{StaticResource AccentButton}" Click="BtnAutoDetect_Click" Background="#107C10"/>
+
+                            <TextBlock x:Name="TxtAutoDetectStatus" Margin="0,12,0,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Results -->
+                    <Border x:Name="ResultBorder" Background="#1D3A1E" BorderBrush="#2D5A2E" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,15" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="Import Results" FontSize="14" FontWeight="SemiBold" Foreground="#70AD47" Margin="0,0,0,8"/>
+                            <TextBlock x:Name="TxtResult" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                <Button Content="Close" Width="100" Height="32" Style="{StaticResource SecondaryButton}" Click="BtnClose_Click"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

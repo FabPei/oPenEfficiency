@@ -1,0 +1,1295 @@
+<Project ToolsVersion="18.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ProjectTypeGuids>{BAA0C2D2-18E2-41B9-852F-F413020CAA33};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BF57575A-1358-4B3D-919F-B95B476CC610}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <RootNamespace>oPenEfficiency</RootNamespace>
+    <AssemblyName>oPenEfficiency</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <DefineConstants>VSTO40</DefineConstants>
+    <ResolveComReferenceSilent>true</ResolveComReferenceSilent>
+    <IsWebBootstrapper>False</IsWebBootstrapper>
+    <EnableWpfTempProjectReferences>true</EnableWpfTempProjectReferences>
+    <WpfTempProjectUseHostEnvironment>true</WpfTempProjectUseHostEnvironment>
+    <PackageId>oPenEfficiency</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/FabPei/oPenEfficiency</PackageProjectUrl>
+    <PackageTags>powerpoint;office-addin;vsto;productivity</PackageTags>
+    <RepositoryUrl>https://github.com/FabPei/oPenEfficiency</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <PublishUrl>Publish\</PublishUrl>
+    <InstallUrl />
+    <TargetCulture>de</TargetCulture>
+    <ApplicationVersion>2026.05.14.1145</ApplicationVersion>
+    <AutoIncrementApplicationRevision>false</AutoIncrementApplicationRevision>
+    <UpdateEnabled>true</UpdateEnabled>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>days</UpdateIntervalUnits>
+    <ProductName>oPenEfficiency</ProductName>
+    <PublisherName />
+    <SupportUrl>https://github.com/FabPei/oPenEfficiency/issues</SupportUrl>
+    <FriendlyName>oPenEfficiency</FriendlyName>
+    <OfficeApplicationDescription />
+    <LoadBehavior>3</LoadBehavior>
+  </PropertyGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 und x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.VSTORuntime.4.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft Visual Studio 2010-Tools für Office-Laufzeit %28x86 und x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <PropertyGroup>
+    <OfficeApplication>PowerPoint</OfficeApplication>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Accessibility" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Office.Tools.v4.0.Framework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Tools.Applications.Runtime, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Office.Tools.Common.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Office.Interop.PowerPoint" Version="15.0.4420.1018">
+      <Private>true</Private>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001">
+      <Private>true</Private>
+    </PackageReference>
+    <PackageReference Include="MicrosoftOfficeCore" Version="15.0.0">
+      <Private>true</Private>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="oPenEfficiency_TemporaryKey.pfx" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="ThisAddIn.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <None Include="ThisAddIn.Designer.xml">
+      <DependentUpon>ThisAddIn.cs</DependentUpon>
+    </None>
+    <Compile Include="ThisAddIn.Designer.cs">
+      <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
+    </Compile>
+    <Compile Include="Features\Alignment\AlignShapesFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstBottomFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstCenterHorizontalFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstCenterVerticalFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstLeftFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstRightFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToFirstTopFeature.cs" />
+    <Compile Include="Features\Alignment\AlignToTableCellFeature.cs" />
+    <Compile Include="Features\Alignment\AlignmentHelpers.cs" />
+    <Compile Include="Features\Alignment\ArrangeGridFeature.cs" />
+    <Compile Include="Features\Alignment\ArrangeInShapeFeature.cs" />
+    <Compile Include="Features\Alignment\ArrangeProFeature.cs" />
+    <Compile Include="Features\Alignment\DiagonalAlignFeature.cs" />
+    <Compile Include="Features\Alignment\DistributeFeatures.cs" />
+    <Compile Include="Features\Alignment\DockToFirstBottomFeature.cs" />
+    <Compile Include="Features\Alignment\DockToFirstLeftFeature.cs" />
+    <Compile Include="Features\Alignment\DockToFirstRightFeature.cs" />
+    <Compile Include="Features\Alignment\DockToFirstTopFeature.cs" />
+    <Compile Include="Features\Alignment\MatchHeightToFirstFeature.cs" />
+    <Compile Include="Features\Alignment\MatchSizeFeature.cs" />
+    <Compile Include="Features\Alignment\MatchWidthToFirstFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstBottomEdgeFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstBottomFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstLeftEdgeFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstLeftFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstRightEdgeFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstRightFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstTopEdgeFeature.cs" />
+    <Compile Include="Features\Alignment\StretchToFirstTopFeature.cs" />
+    <Compile Include="Features\Alignment\SwapPositionsFeature.cs" />
+    <Compile Include="Features\Alignment\SwapPositionsHorizontalFeature.cs" />
+    <Compile Include="Features\Alignment\SwapPositionsVerticalFeature.cs" />
+    <Compile Include="Features\Charts\ChartOverlayFeature.cs" />
+    <Compile Include="Features\Charts\HarveyBallFeature.cs" />
+    <Compile Include="Features\Charts\ProgressSeriesFeature.cs" />
+    <Compile Include="Features\Charts\StarRatingFeature.cs" />
+    <Compile Include="Features\Charts\ThermometerFeature.cs" />
+    <Compile Include="Features\Charts\TrafficLightFeature.cs" />
+    <Compile Include="Features\Shapes\AlignShapeAdjustmentsFeature.cs" />
+    <Compile Include="Features\Shapes\CreateMotionPathFeature.cs" />
+    <Compile Include="Features\Shapes\ImageLibraryManager.cs" />
+    <Compile Include="Features\Shapes\LibraryModels.cs" />
+    <Compile Include="Features\Shapes\MatchAnglesFeature.cs" />
+    <Compile Include="Features\Shapes\OptimizeFreeFormFeature.cs" />
+    <Compile Include="Features\Shapes\ShapeLibraryManager.cs" />
+    <Compile Include="Features\Shapes\SlideLibraryManager.cs" />
+    <Compile Include="Features\Shapes\SmartCornersFeature.cs" />
+    <Compile Include="Features\Shapes\ZOrderFeatures.cs" />
+    <Compile Include="Features\Tables\ConvertShapesToTableFeature.cs" />
+    <Compile Include="Features\Tables\ConvertTableToShapesFeature.cs" />
+    <Compile Include="Features\Tables\InsertTableColumnLeftFeature.cs" />
+    <Compile Include="Features\Tables\InsertTableColumnRightFeature.cs" />
+    <Compile Include="Features\Tables\InsertTableRowBottomFeature.cs" />
+    <Compile Include="Features\Tables\InsertTableRowTopFeature.cs" />
+    <Compile Include="Features\Tables\TableBrandingFeature.cs" />
+    <Compile Include="Features\Tables\TableColumnInsertionFeature.cs" />
+    <Compile Include="Features\Tables\TableColumnWidthFeature.cs" />
+    <Compile Include="Features\Tables\TableDimensionsFeature.cs" />
+    <Compile Include="Features\Tables\TableFormatPainterFeature.cs" />
+    <Compile Include="Features\Tables\TableHeatmapFeature.cs" />
+    <Compile Include="Features\Tables\TableHelper.cs" />
+    <Compile Include="Features\Tables\TableRowHeightFeature.cs" />
+    <Compile Include="Features\Tables\TableRowInsertionFeature.cs" />
+    <Compile Include="Features\Tables\TableSortFeature.cs" />
+    <Compile Include="Features\Tables\TableSplitFeature.cs" />
+    <Compile Include="Features\Tables\TableSumFeature.cs" />
+    <Compile Include="Features\Tables\TableTransposeFeature.cs" />
+    <Compile Include="Features\Text\BulkFormatReplacerFeature.cs" />
+    <Compile Include="Features\Text\DeleteTextFeature.cs" />
+    <Compile Include="Features\Text\FitFormToTextFeature.cs" />
+    <Compile Include="Features\Text\FormatNumbersFeature.cs" />
+    <Compile Include="Features\Text\InsertTextAtCursorFeature.cs" />
+    <Compile Include="Features\Text\SpellCheckLanguageFeature.cs" />
+    <Compile Include="Features\Text\SplitByParagraphsFeature.cs" />
+    <Compile Include="Features\Text\SwapTextFormattedFeature.cs" />
+    <Compile Include="Features\Text\SwapTextPlainFeature.cs" />
+    <Compile Include="Features\Text\TextFormatFeatures.cs" />
+    <Compile Include="Features\Text\TranslationFeatures.cs" />
+    <Compile Include="Features\Utilities\StorylineFeature.cs" />
+    <Compile Include="Features\Utilities\AgendaWizardFeature.cs" />
+    <Compile Include="Features\Utilities\AnonymizeFeature.cs" />
+    <Compile Include="Features\Utilities\CleanerFeature.cs" />
+    <Compile Include="Features\Utilities\ConsolidateMastersFeature.cs" />
+    <Compile Include="Features\Utilities\CopyCoordinatesFeature.cs" />
+    <Compile Include="Features\Utilities\DimensionLockFeature.cs" />
+    <Compile Include="Features\Utilities\DocumentAutomationFeature.cs" />
+    <Compile Include="Features\Utilities\ExcelLinkManagerFeature.cs" />
+    <Compile Include="Features\Utilities\FlightModeFeature.cs" />
+    <Compile Include="Features\Utilities\FormatShapeDialogFeature.cs" />
+    <Compile Include="Features\Utilities\HideMasterObjectsFeature.cs" />
+    <Compile Include="Features\Utilities\HideSelectedFeature.cs" />
+    <Compile Include="Features\Utilities\LotteryFeature.cs" />
+    <Compile Include="Features\Utilities\MoveToBackupFeature.cs" />
+    <Compile Include="Features\Utilities\NumerationFeature.cs" />
+    <Compile Include="Features\Utilities\PasteCoordinatesFeature.cs" />
+    <Compile Include="Features\Utilities\PropertyExtractionFeature.cs" />
+    <Compile Include="Features\Utilities\QRCodeFeature.cs" />
+    <Compile Include="Features\Utilities\SaveAgendaLayoutFeature.cs" />
+    <Compile Include="Features\Utilities\SelectSameTypeFeature.cs" />
+    <Compile Include="Features\Utilities\SeriesGeneratorFeature.cs" />
+    <Compile Include="Features\Utilities\ShapeLockingFeature.cs" />
+    <Compile Include="Features\Utilities\ShowHiddenFeature.cs" />
+    <Compile Include="Features\Utilities\SlideGuidelinesFeature.cs" />
+    <Compile Include="Features\Utilities\SlideNotesFeature.cs" />
+    <Compile Include="Features\Utilities\SlidePasteFeature.cs" />
+    <Compile Include="Features\Utilities\SlideSizeFeature.cs" />
+    <Compile Include="Features\Utilities\SnapToGridFeature.cs" />
+    <Compile Include="Features\Utilities\SnapToObjectsFeature.cs" />
+    <Compile Include="Features\Utilities\StickyNoteFeature.cs" />
+    <Compile Include="Features\Utilities\StickyNoteManagerFeature.cs" />
+    <Compile Include="Features\Utilities\TagInspectorFeature.cs" />
+    <Compile Include="Features\Utilities\UpdateExcelChartsFeature.cs" />
+    <Compile Include="Features\Utilities\VisibilityFeature.cs" />
+    <Compile Include="Features\Visuals\AddStickerFeature.cs" />
+    <Compile Include="Features\Visuals\AdjustHorizontalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\AdjustSpacingFeatureHelper.cs" />
+    <Compile Include="Features\Visuals\AdjustVerticalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\AdvancedSelectionFeature.cs" />
+    <Compile Include="Features\Visuals\CheckboxFeature.cs" />
+    <Compile Include="Features\Visuals\IllustrativeStickerFeature.cs" />
+    <Compile Include="Features\Visuals\LearnMarginFeature.cs" />
+    <Compile Include="Features\Visuals\MapWizardFeature.cs" />
+    <Compile Include="Features\Visuals\ObjectConnectorFeature.cs" />
+    <Compile Include="Features\Visuals\ObjectTransformFeatures.cs" />
+    <Compile Include="Features\Visuals\PickColorFeature.cs" />
+    <Compile Include="Features\Visuals\PickFillColorFeature.cs" />
+    <Compile Include="Features\Visuals\PickLineColorFeature.cs" />
+    <Compile Include="Features\Visuals\PickTextColorFeature.cs" />
+    <Compile Include="Features\Visuals\PositionPainterFeature.cs" />
+    <Compile Include="Features\Visuals\RectifyRotationFeature.cs" />
+    <Compile Include="Features\Visuals\RemoveGapsFeatureHelper.cs" />
+    <Compile Include="Features\Visuals\RemoveHorizontalGapsFeature.cs" />
+    <Compile Include="Features\Visuals\RemoveVerticalGapsFeature.cs" />
+    <Compile Include="Features\Visuals\RepeatShapeFeature.cs" />
+    <Compile Include="Features\Visuals\SetMarginFeature.cs" />
+    <Compile Include="Features\Visuals\SplitShapeToGridFeature.cs" />
+    <Compile Include="Features\Visuals\StyleCheckFeature.cs" />
+    <Compile Include="Features\Visuals\SyncObjectsFeature.cs" />
+    <Compile Include="Features\Visuals\ThemeColorPickerFeature.cs" />
+    <Compile Include="Features\Visuals\TransparencyFeature.cs" />
+    <Compile Include="Features\Visuals\TransparentColorFeature.cs" />
+    <Compile Include="Models\AgendaLayoutConfig.cs" />
+    <Compile Include="Models\MapWizardConfig.cs" />
+    <Compile Include="Models\SavedAgenda.cs" />
+    <Compile Include="Models\SeriesConfig.cs" />
+    <Compile Include="Models\SidebarConfig.cs" />
+    <Compile Include="Models\TemplateConfig.cs" />
+    <Compile Include="Models\\SlideTemplate.cs" />
+    <Compile Include="Services\AgendaGenerationService.cs" />
+    <Compile Include="Services\AgendaService.cs" />
+    <Compile Include="Services\AssetCacheService.cs" />
+    <Compile Include="Services\Attributes\FeatureMetadataAttribute.cs" />
+    <Compile Include="Services\AutoTaggingService.cs" />
+    <Compile Include="Services\ConsistencyScanner.cs" />
+    <Compile Include="Services\DataEditor.cs" />
+    <Compile Include="Services\DataStoreManager.cs" />
+    <Compile Include="Services\DeepLService.cs" />
+    <Compile Include="Services\ExternalAgendaImportService.cs" />
+    <Compile Include="Services\FeatureDiscovery.cs" />
+    <Compile Include="Services\FeatureWrapper.cs" />
+    <Compile Include="Services\IconService.cs" />
+    <Compile Include="Services\JsonService.cs" />
+    <Compile Include="Services\LLMTranslationService.cs" />
+    <Compile Include="Services\LibreTranslateService.cs" />
+    <Compile Include="Services\LocalAssetService.cs" />
+    <Compile Include="Services\NativeChartDataSyncManager.cs" />
+    <Compile Include="Services\PowerPointManager.cs" />
+    <Compile Include="Services\ShapeMetadataService.cs" />
+    <Compile Include="Services\ShortcutManager.cs" />
+    <Compile Include="Services\SnapToGridManager.cs" />
+    <Compile Include="Services\SnapToObjectsManager.cs" />
+    <Compile Include="Services\StyleScanner.cs" />
+    <Compile Include="Services\TemplateService.cs" />
+    <Compile Include="Services\ThemeManager.cs" />
+    <Compile Include="UI\Controls\FeatureIcon.xaml.cs">
+      <DependentUpon>UI\Controls\FeatureIcon.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\FontControl.xaml.cs">
+      <DependentUpon>UI\Controls\FontControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\SearchBarControl.xaml.cs">
+      <DependentUpon>UI\Controls\SearchBarControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\FontSizeControl.xaml.cs">
+      <DependentUpon>UI\Controls\FontSizeControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\SizeAdjustControl.xaml.cs">
+      <DependentUpon>UI\Controls\SizeAdjustControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\ThemeColorControl.xaml.cs">
+      <DependentUpon>UI\Controls\ThemeColorControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Controls\ThermometerAdorner.xaml.cs">
+      <DependentUpon>UI\Controls\ThermometerAdorner.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Converters\ColorToSolidBrushConverter.cs" />
+    <Compile Include="UI\Converters\Converters.cs" />
+    <Compile Include="UI\Converters\FeatureIconConverter.cs" />
+    <Compile Include="UI\Dialogs\StorylineDialog.xaml.cs">
+      <DependentUpon>StorylineDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\AlignToTableWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\AlignToTableWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ApplyTextWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ApplyTextWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ArrangeGridWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ArrangeGridWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ArrangeProWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ArrangeProWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\AutomationWizardWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\AutomationWizardWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\BulkFormatReplacerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\BulkFormatReplacerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ChartOverlayDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\ChartOverlayDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\CreateFolderDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\CreateFolderDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\EditAssetDetailsDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\EditAssetDetailsDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ExcelLinkManagerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ExcelLinkManagerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\FeatureExplorerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\FeatureExplorerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\FormatNumbersWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\FormatNumbersWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\LotteryWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\LotteryWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\MagicResizerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\MagicResizerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\MapWizardWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\MapWizardWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ObjectConnectorWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ObjectConnectorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\PositionPainterWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\PositionPainterWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\QRCodeWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\QRCodeWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SaveAgendaLayoutWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SaveAgendaLayoutWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SaveToMyAssetsDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\SaveToMyAssetsDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SeriesGeneratorWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SeriesGeneratorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SettingsWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ShortcutConfigWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ShortcutConfigWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SlidePasteWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SlidePasteWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SlideSizeWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SlideSizeWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SpecialCharactersWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SpecialCharactersWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SpellCheckLanguageWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SpellCheckLanguageWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SplitShapeWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SplitShapeWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\StyleCheckWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\StyleCheckWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\SyncObjectsWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\SyncObjectsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TableBrandingDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\TableBrandingDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TableFormatPainterWindow.xaml.cs">
+      <DependentUpon>TableFormatPainterWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TableHeatmapDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\TableHeatmapDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TemplateManagerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\TemplateManagerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TagInspectorWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\TagInspectorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\ThemeColorWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\ThemeColorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\TransparentColorWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\TransparentColorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\WizardDesignerWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\WizardDesignerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Dialogs\WpfColorPickerDialog.xaml.cs">
+      <DependentUpon>UI\Dialogs\WpfColorPickerDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\FeatureLibrary.cs" />
+    <Compile Include="UI\ImportAgendaLayoutWindow.xaml.cs">
+      <DependentUpon>UI\ImportAgendaLayoutWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\MainRibbon.cs" />
+    <Compile Include="UI\Menus\TrafficLightMenu.xaml.cs">
+      <DependentUpon>UI\Menus\TrafficLightMenu.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Panels\AssetManagerHost.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Panels\AssetManagerView.xaml.cs">
+      <DependentUpon>UI\Panels\AssetManagerView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Panels\FontPanel.xaml.cs">
+      <DependentUpon>UI\Panels\FontPanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Panels\MainSidebar.xaml.cs">
+      <DependentUpon>UI\Panels\MainSidebar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Panels\ShapeSizePanel.xaml.cs">
+      <DependentUpon>UI\Panels\ShapeSizePanel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Panels\SidebarTaskPaneHost.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\Panels\ThemeColorPaneHost.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\RelayCommand.cs" />
+    <Compile Include="UI\SettingsViewModel.cs" />
+    <Compile Include="UI\Tabs\FavoritesTab.xaml.cs">
+      <DependentUpon>UI\Tabs\FavoritesTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Tabs\ImageLibraryTab.xaml.cs">
+      <DependentUpon>UI\Tabs\ImageLibraryTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Tabs\ShapeLibraryTab.xaml.cs">
+      <DependentUpon>UI\Tabs\ShapeLibraryTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Tabs\SlideLibraryTab.xaml.cs">
+      <DependentUpon>UI\Tabs\SlideLibraryTab.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\CheckboxToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\CheckboxToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\DiagonalAlignToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\DiagonalAlignToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\FloatingToolbar.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\Toolbars\NumerationToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\NumerationToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\ProgressSeriesToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\ProgressSeriesToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\ProgressSeriesToolbar_Simple.xaml.cs">
+      <DependentUpon>UI\Toolbars\ProgressSeriesToolbar_Simple.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\RatingToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\RatingToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\SlideNotesWindow.xaml.cs">
+      <DependentUpon>UI\Toolbars\SlideNotesWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Toolbars\TransparencyToolbar.xaml.cs">
+      <DependentUpon>UI\Toolbars\TransparencyToolbar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Wizards\AgendaWizard.xaml.cs">
+      <DependentUpon>UI\Wizards\AgendaWizard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UI\Wizards\ExportWizard.xaml.cs">
+      <DependentUpon>UI\Wizards\ExportWizard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Utils\ColorConstants.cs" />
+    <Compile Include="Utils\ColorMath.cs" />
+    <Compile Include="Utils\ExceptionLogger.cs" />
+    <Compile Include="Utils\SvgParser.cs" />
+    <Compile Include="Utils\Utils.cs" />
+    <Compile Include="Utils\Win32MouseHook.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="UI\Controls\FeatureIcon.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\FontControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\FontSizeControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\SearchBarControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\SizeAdjustControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\ThemeColorControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Controls\ThermometerAdorner.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\StorylineDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\AlignToTableWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ApplyTextWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ArrangeGridWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ArrangeProWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\AutomationWizardWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\BulkFormatReplacerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ChartOverlayDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\CreateFolderDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\EditAssetDetailsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ExcelLinkManagerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\FeatureExplorerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\FormatNumbersWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\LotteryWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\MagicResizerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\MapWizardWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ObjectConnectorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\PositionPainterWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\QRCodeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SaveAgendaLayoutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SaveToMyAssetsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SeriesGeneratorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ShortcutConfigWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SlidePasteWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SlideSizeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SpecialCharactersWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SpellCheckLanguageWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SplitShapeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\StyleCheckWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\SyncObjectsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TableBrandingDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TableFormatPainterWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TableHeatmapDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TemplateManagerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TagInspectorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\ThemeColorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\TransparentColorWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\WizardDesignerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\WpfColorPickerDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\ImportAgendaLayoutWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Menus\TrafficLightMenu.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Panels\AssetManagerView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Panels\FontPanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Panels\MainSidebar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Panels\ShapeSizePanel.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Styles\Controls.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Styles\Themes\Dark.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Styles\Themes\Light.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Tabs\FavoritesTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Tabs\ImageLibraryTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Tabs\ShapeLibraryTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Tabs\SlideLibraryTab.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\CheckboxToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\DiagonalAlignToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\NumerationToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\ProgressSeriesToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\ProgressSeriesToolbar_Simple.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\RatingToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\SlideNotesWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Toolbars\TransparencyToolbar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Wizards\AgendaWizard.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Wizards\ExportWizard.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="UI\MainRibbon.xml" />
+    <AppDesigner Include="Properties\" />
+    <Content Include="Resources\SlideTaggingRules.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="UI\Assets\Icons\arrow-fat-lines-right.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\arrow-fat-lines-up.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStoryline.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAddSticker.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAgendaWizard.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignBottom.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignCenter.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignCenterVertical.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignLeft.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignRight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignShapeAdjustments.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignTop.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignToTable.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignToTableCell.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnApplyTextTool.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnArrangeCircle.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnArrangePro.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAssetManager.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnBringForward.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnBringToFront.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnChangeCase.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnCharacterSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnCheckbox.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnCleaner.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnConvertTableToShapes.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnCopyXY.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnCreateMotionPath.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDecreaseFontSize.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDecreaseHorizontalSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDecreaseVerticalSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDeleteText.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDiagonalAlign.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDistributeHorizontal.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDistributeVertical.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDockBottom.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDockLeft.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDockRight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnDockTop.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnExploreFeatures.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnExportWizard.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFitFormToText.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFlightMode.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFontPanel.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFormatBold.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFormatNumbers.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFormatStrikethrough.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFormatSubscript.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnFormatSuperscript.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnHarveyBall.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnHideSelected.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnIllustrativeSticker.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnIncreaseFontSize.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnIncreaseHorizontalSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnIncreaseVerticalSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnInsertColumnLeft.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnInsertColumnRight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnInsertRowBottom.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnInsertRowTop.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnLockDimensions.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnMagicResizer.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnMatchHeight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnMatchSize.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnMatchWidth.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnNumeration.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnOptimizeFreeForm.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnParagraphDialog.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnPickColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnPickFillColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnPickLineColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnPickTextColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnProgressSeries.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnQRCode.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnRectifyRotation.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnRemoveHorizontalGaps.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnRemoveVerticalGaps.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnReplaceFont.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnReplaceShape.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnRotateShape.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSaveAgendaLayout.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSelectSameType.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSendBackward.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSendToBack.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSettings.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnShapeLock.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnShowHidden.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSizePanel.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSlideGuidelines.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSlideSize.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSnapShape.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSnapToGrid.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSnapToObjects.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSpecialChars.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSpellCheck.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSplitShape.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStarRating.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStickyNote.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchBottom.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchBottomEdge.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchLeft.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchLeftEdge.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchRight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchRightEdge.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchTop.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStretchTopEdge.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStyleCheck.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSwapPositions.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSwapText.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSwapTextFormatted.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSwapTextPlain.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSyncObjects.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableBranding.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableDimensions.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableFormatPainter.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableSort.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableSplit.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableSum.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableTranspose.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTemplateManager.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnThemeColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnThermometer.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnToggleSidebar.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTrafficLight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTranslate.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTransparentColor.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnUpdateExcelCharts.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnWinnerPicker.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\colorpalette.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\columns-3-cog.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\DecreaseParagraphSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\Gridlines.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\increaseParagraphSpacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\replace-all.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\sendoneback.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\sendonefront.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\SlideTaggingRules.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <VSToolsPath Condition="!Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v17.0</VSToolsPath>
+    <VSToolsPath Condition="!Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v16.0</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>oPenEfficiency_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>CA0718748DF1D14D5F4F520F7D66A82B95FC42A1</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets" Condition="Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{BAA0C2D2-18E2-41B9-852F-F413020CAA33}">
+        <ProjectProperties HostName="PowerPoint" HostPackage="{29A7B9D7-A7F1-4328-8EF0-6B2D1A56B2C1}" OfficeVersion="15.0" VstxVersion="4.0" ApplicationType="PowerPoint" Language="cs" TemplatesPath="" DebugInfoExeName="#Software\Microsoft\Office\16.0\PowerPoint\InstallRoot\Path#powerpnt.exe" AddItemTemplatesGuid="{51063C3A-E220-4D12-8922-BDA915ACD783}" />
+        <Host Name="PowerPoint" GeneratedCodeNamespace="oPenEfficiency" PublishedHash="69C324AB27932AA2FBF2B7EA72250886FF164DE6" IconIndex="0">
+          <HostItem Name="ThisAddIn" Code="ThisAddIn.cs" CanonicalName="AddIn" PublishedHash="4E33E5BB66CF1F5CE33B02B5430E64A5D986468F" CanActivate="false" IconIndex="1" Blueprint="ThisAddIn.Designer.xml" GeneratedCode="ThisAddIn.Designer.cs" />
+        </Host>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

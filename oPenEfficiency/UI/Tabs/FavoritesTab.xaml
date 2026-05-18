@@ -1,0 +1,248 @@
+<UserControl x:Class="oPenEfficiency.UI.Tabs.FavoritesTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:features="clr-namespace:oPenEfficiency.Features"
+             xmlns:local="clr-namespace:oPenEfficiency.UI"
+             xmlns:tabs="clr-namespace:oPenEfficiency.UI.Tabs"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800"
+             Background="{DynamicResource WindowBackgroundBrush}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Themes/Dark.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <local:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <local:InverseBooleanToVisibilityConverter x:Key="InvBoolToVis"/>
+
+            <ContextMenu x:Key="LibraryItemContextMenu">
+                <ContextMenu.Resources>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Padding" Value="10,5"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="MenuItem">
+                                    <Border x:Name="Bd" Background="Transparent" BorderThickness="0" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ContextMenu.Resources>
+                <MenuItem Header="Insert" Click="BtnInsertContext_Click"/>
+                <Separator/>
+                <MenuItem Header="Remove from Favorites" Click="BtnRemoveFavorite_Click" Foreground="Red"/>
+            </ContextMenu>
+
+            <Style x:Key="LibraryItemStyle" TargetType="ListBoxItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Background" Value="{DynamicResource SurfaceLightBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="ContextMenu" Value="{StaticResource LibraryItemContextMenu}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsSelected" Value="true">
+                                    <Setter Property="Background" TargetName="Bd" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter Property="BorderBrush" TargetName="Bd" Value="{DynamicResource AccentHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" MinWidth="150" MaxWidth="400"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceHoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="BtnShowAll" Padding="10,6" Cursor="Hand" MouseLeftButtonUp="BtnShowAll_Click">
+                                <TextBlock Text="⭐ All Favorites" FontSize="11" Foreground="{DynamicResource AccentHoverBrush}" FontWeight="SemiBold"/>
+                            </Border>
+                            <Button Grid.Column="1" Content="📁+" ToolTip="Create New Folder" Click="BtnNewFolder_Click" 
+                                    Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextPrimaryBrush}" 
+                                    Padding="8,4" Cursor="Hand" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        </Grid>
+                    </Border>
+
+                    <TreeView x:Name="FolderTree" Background="Transparent" BorderThickness="0" Padding="5" SelectedItemChanged="FolderTree_SelectedItemChanged"
+                              AllowDrop="True" PreviewMouseLeftButtonDown="FolderTree_PreviewMouseLeftButtonDown" PreviewMouseMove="FolderTree_PreviewMouseMove"
+                              DragOver="FolderTree_DragOver" Drop="FolderTree_Drop">
+                        <TreeView.Resources>
+                            <HierarchicalDataTemplate DataType="{x:Type features:FolderTreeNode}" ItemsSource="{Binding Children}">
+                                <StackPanel Orientation="Horizontal" Margin="2,1" ToolTip="{Binding StatusTooltip}">
+                                    <TextBlock Text="{Binding Icon}" Margin="0,0,5,0" Foreground="{Binding IconColor}"/>
+                                    <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                </StackPanel>
+                            </HierarchicalDataTemplate>
+                        </TreeView.Resources>
+                    </TreeView>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="{DynamicResource SurfaceHoverBrush}" Cursor="SizeWE"/>
+
+            <!-- Main Content: Galleries -->
+            <ScrollViewer Grid.Column="2" x:Name="MainGalleryScroll" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="20">
+                    <TextBlock x:Name="TitleSlides" Text="⭐ Favorite Slides" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,15"/>
+                    <ListBox x:Name="SlideGallery" 
+                             PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource LibraryItemStyle}"
+                             BorderThickness="0" Background="Transparent"
+                             SelectionMode="Extended">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="160" Height="130">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="{DynamicResource SurfaceLightBrush}" Margin="0,0,0,4">
+                                        <Image Source="{Binding ThumbnailSource}" Stretch="Uniform"/>
+                                    </Border>
+                                    <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
+                                        <Button Content="Insert" Click="BtnInsertSlide_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock x:Name="TitleShapes" Text="⭐ Favorite Objects" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,30,0,15"/>
+                    <ListBox x:Name="ShapeGallery" 
+                             PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource LibraryItemStyle}"
+                             BorderThickness="0" Background="Transparent"
+                             SelectionMode="Extended">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="160" Height="130">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="{DynamicResource SurfaceLightBrush}" Margin="0,0,0,4">
+                                        <Image Source="{Binding ThumbnailSource}" Stretch="Uniform"/>
+                                    </Border>
+                                    <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
+                                        <Button Content="Insert" Click="BtnInsertShape_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock x:Name="TitleImages" Text="⭐ Favorite Pictures" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,30,0,15"/>
+                    <ListBox x:Name="ImageGallery" 
+                             PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource LibraryItemStyle}"
+                             BorderThickness="0" Background="Transparent"
+                             SelectionMode="Extended">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="160" Height="130">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Border Grid.Row="0" Background="{DynamicResource SurfaceLightBrush}" Margin="0,0,0,4">
+                                        <Image Source="{Binding ThumbnailSource}" Stretch="Uniform"/>
+                                    </Border>
+                                    <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
+                                        <Button Content="Insert" Click="BtnInsertImage_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
+                                    </Border>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                </Grid>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="1" Padding="12,8" Background="{DynamicResource SurfaceBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="TxtStatus" Text="Ready" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border x:Name="LoadingOverlay" Grid.RowSpan="2" Background="#80000000" Visibility="Collapsed">
+            <ProgressBar IsIndeterminate="True" Width="150" Height="4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>

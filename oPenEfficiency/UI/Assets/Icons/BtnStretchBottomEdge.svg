@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-icon lucide-square-dashed">
+  <g style="" transform="matrix(1, 0, 0, -1, 0, 24.1882)">
+    <rect id="svg_7" stroke=" rgba(0, 0, 0, 0.9)" transform="matrix(0, 1, 1, 0, 3.049496, 28.314446)" rx="1" y="-0.964" x="-11.5" height="7" width="5.164" style=""/>
+    <rect transform="matrix(0, 1, 1, 0, -4.922768, 10.903707)" id="svg_8" stroke=" rgba(0, 0, 0, 0.9)" rx="1" y="17.739" x="-8.694" height="8.883" width="6.024" style=""/>
+    <path id="path-1" stroke=" rgba(0, 0, 0, 0.9)" d="M 2.085 11.144 L 2.085 11.18" style=""/>
+    <path id="path-4" stroke=" rgba(0, 0, 0, 0.9)" d="M 2.085 14.146 L 2.085 14.182" style=""/>
+    <path id="path-2" stroke=" rgba(0, 0, 0, 0.9)" d="M 9.085 11.144 L 9.085 11.18" style=""/>
+    <path id="path-3" stroke=" rgba(0, 0, 0, 0.9)" d="M 9.085 14.146 L 9.085 14.182" style=""/>
+    <path id="svg_14" stroke=" rgba(0, 0, 0, 0.9)" d="M 6.928 8.234 L 7.928 8.234" style="stroke-width: 2px; transform-origin: 7.428px 8.234px 0px;"/>
+    <path id="path-5" stroke=" rgba(0, 0, 0, 0.9)" d="M 3.243 8.234 L 4.243 8.234" style="stroke-width: 2px;"/>
+  </g>
+</svg>

@@ -1,0 +1,48 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.SpellCheckLanguageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Spell Check Language" Height="340" Width="380"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            
+            <Grid Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="SPELL CHECK LANGUAGE" Style="{StaticResource DialogTitleText}"/>
+                <Button Style="{StaticResource WindowCloseButton}" Click="BtnClose_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </Grid>
+
+            <StackPanel Grid.Row="1">
+                <TextBlock Text="Target Scope:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                <RadioButton x:Name="RadioWholePres" Content="Entire Presentation" IsChecked="True" GroupName="Scope" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <RadioButton x:Name="RadioSelectedSlides" Content="Selected Slides only" GroupName="Scope" Margin="0,0,0,5" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <RadioButton x:Name="RadioSelectedShapes" Content="Selected Shapes only" GroupName="Scope" Margin="0,0,0,15" Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                <TextBlock Text="Select Language:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                <ComboBox x:Name="CmbLanguages" DisplayMemberPath="Key" SelectedValuePath="Value" Height="32" VerticalContentAlignment="Center" MaxDropDownHeight="200" IsEditable="True" TextBoxBase.TextChanged="CmbLanguages_TextChanged"/>
+                <TextBlock Text="Search or select from the list." FontSize="10" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                <Button Content="Cancel" Click="BtnClose_Click" Style="{StaticResource SecondaryButton}" Width="80" Height="32" Margin="0,0,10,0"/>
+                <Button x:Name="BtnApply" Content="Apply" Click="BtnApply_Click" Style="{StaticResource AccentButton}" Width="100" Height="32" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

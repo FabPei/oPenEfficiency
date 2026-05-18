@@ -1,0 +1,80 @@
+<Window x:Class="oPenEfficiency.UI.Toolbars.TransparencyToolbar"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Transparency" Height="65" Width="320"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False"
+        MouseDown="Window_MouseDown"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="ToggleButton" x:Key="PresetToggleButtonStyle">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="border" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.4" Color="Black"/>
+        </Border.Effect>
+        
+        <Grid Margin="15,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Button Content="✕" Width="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-5,-10,0" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextSecondaryBrush}" Cursor="Hand" Click="BtnClose_Click" FontWeight="Bold" ToolTip="Close" Grid.RowSpan="2" Panel.ZIndex="10"/>
+
+            <!-- Presets -->
+            <StackPanel x:Name="PresetsPanel" Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,8">
+                <ToggleButton Content="0%" Width="45" Height="22" Click="BtnPreset_Click" Tag="0" Style="{StaticResource PresetToggleButtonStyle}"/>
+                <ToggleButton Content="25%" Width="45" Height="22" Click="BtnPreset_Click" Tag="25" Style="{StaticResource PresetToggleButtonStyle}"/>
+                <ToggleButton Content="50%" Width="45" Height="22" Click="BtnPreset_Click" Tag="50" Style="{StaticResource PresetToggleButtonStyle}"/>
+                <ToggleButton Content="75%" Width="45" Height="22" Click="BtnPreset_Click" Tag="75" Style="{StaticResource PresetToggleButtonStyle}"/>
+                <ToggleButton Content="100%" Width="45" Height="22" Click="BtnPreset_Click" Tag="100" Style="{StaticResource PresetToggleButtonStyle}"/>
+            </StackPanel>
+
+            <!-- Slider -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="TransparencySlider" Minimum="0" Maximum="100" Value="0" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,0,10,0" ValueChanged="TransparencySlider_ValueChanged" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TransparencyValueText" Grid.Column="1" Text="0%" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Width="35" TextAlignment="Right" FontSize="12" FontWeight="SemiBold"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
