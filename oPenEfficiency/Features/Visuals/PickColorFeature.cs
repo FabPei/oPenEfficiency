@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
@@ -24,12 +24,13 @@ namespace oPenEfficiency.Features
     {
         public enum ApplyTarget
         {
+            Auto,
             Fill,
             Line,
             Text
         }
 
-        public static bool Execute(PowerPointManager manager, ApplyTarget target = ApplyTarget.Fill)
+        public static bool Execute(PowerPointManager manager, ApplyTarget target = ApplyTarget.Auto)
         {
             if (manager == null) return false;
 
@@ -57,67 +58,84 @@ namespace oPenEfficiency.Features
             {
                 try
                 {
+                    overlay.Hide(); // Hide overlay before capture so it doesn't tint the pixel
                     var point = System.Windows.Forms.Control.MousePosition;
-                    bool colorApplied = false;
 
-                    // 1. Try to get the exact color from a PowerPoint shape using RangeFromPoint
-                    try
+                    // 1. Pixel-perfect screen color picking
+                    int pptColor;
+                    using (Bitmap bmp = new Bitmap(1, 1))
                     {
-                        var activeWin = manager.GetApplication().ActiveWindow;
-                        if (activeWin != null)
+                        using (Graphics g = Graphics.FromImage(bmp))
                         {
-                            // RangeFromPoint expects screen coordinates in pixels
-                            object hitObject = activeWin.RangeFromPoint(point.X, point.Y);
-                            if (hitObject is Microsoft.Office.Interop.PowerPoint.Shape hitShape)
+                            g.CopyFromScreen(point, new System.Drawing.Point(0, 0), new System.Drawing.Size(1, 1));
+                        }
+                        System.Drawing.Color color = bmp.GetPixel(0, 0);
+                        pptColor = color.R | (color.G << 8) | (color.B << 16);
+                    }
+
+                    ApplyTarget finalTarget = target;
+                    int finalColor = pptColor;
+
+                    // 2. Smart Detection for Auto mode
+                    if (target == ApplyTarget.Auto)
+                    {
+                        finalTarget = ApplyTarget.Fill; // Default fallback
+                        try
+                        {
+                            var activeWin = manager.GetApplication().ActiveWindow;
+                            if (activeWin != null)
                             {
-                                int rgb = 0;
-                                bool found = false;
+                                object hitObject = activeWin.RangeFromPoint(point.X, point.Y);
+                                if (hitObject is Microsoft.Office.Interop.PowerPoint.Shape hitShape)
+                                {
+                                    int fillDist = int.MaxValue;
+                                    int lineDist = int.MaxValue;
+                                    int textDist = int.MaxValue;
 
-                                if (target == ApplyTarget.Fill && hitShape.Fill.Visible == Office.MsoTriState.msoTrue)
-                                {
-                                    rgb = hitShape.Fill.ForeColor.RGB;
-                                    found = true;
-                                }
-                                else if (target == ApplyTarget.Line && hitShape.Line.Visible == Office.MsoTriState.msoTrue)
-                                {
-                                    rgb = hitShape.Line.ForeColor.RGB;
-                                    found = true;
-                                }
-                                else if (target == ApplyTarget.Text && hitShape.HasTextFrame == Office.MsoTriState.msoTrue)
-                                {
-                                    rgb = hitShape.TextFrame.TextRange.Font.Color.RGB;
-                                    found = true;
-                                }
+                                    int fillRgb = -1, lineRgb = -1, textRgb = -1;
 
-                                if (found)
-                                {
-                                    ApplyColorToSelection(manager, rgb, target);
-                                    colorApplied = true;
-                                    success = true;
+                                    try {
+                                        if (hitShape.Fill.Visible == Office.MsoTriState.msoTrue) {
+                                            fillRgb = hitShape.Fill.ForeColor.RGB;
+                                            fillDist = ColorDistance(pptColor, fillRgb);
+                                        }
+                                    } catch { }
+
+                                    try {
+                                        if (hitShape.Line.Visible == Office.MsoTriState.msoTrue) {
+                                            lineRgb = hitShape.Line.ForeColor.RGB;
+                                            lineDist = ColorDistance(pptColor, lineRgb);
+                                        }
+                                    } catch { }
+
+                                    try {
+                                        if (hitShape.HasTextFrame == Office.MsoTriState.msoTrue) {
+                                            textRgb = hitShape.TextFrame.TextRange.Font.Color.RGB;
+                                            textDist = ColorDistance(pptColor, textRgb);
+                                        }
+                                    } catch { }
+
+                                    int minDist = Math.Min(fillDist, Math.Min(lineDist, textDist));
+                                    
+                                    // Tolerance to account for anti-aliasing. If the clicked pixel 
+                                    // is completely different (e.g. an image), we fall back to pure pixel -> fill.
+                                    if (minDist < 150)
+                                    {
+                                        if (minDist == textDist) { finalTarget = ApplyTarget.Text; finalColor = textRgb; }
+                                        else if (minDist == lineDist) { finalTarget = ApplyTarget.Line; finalColor = lineRgb; }
+                                        else { finalTarget = ApplyTarget.Fill; finalColor = fillRgb; }
+                                    }
                                 }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        ExceptionLogger.Log(ex, "PickColorFeature.HitTest");
-                    }
-
-                    // 2. Fallback: Pixel-perfect screen color picking
-                    if (!colorApplied)
-                    {
-                        using (Bitmap bmp = new Bitmap(1, 1))
+                        catch (Exception ex)
                         {
-                            using (Graphics g = Graphics.FromImage(bmp))
-                            {
-                                g.CopyFromScreen(point, new System.Drawing.Point(0, 0), new System.Drawing.Size(1, 1));
-                            }
-                            System.Drawing.Color color = bmp.GetPixel(0, 0);
-                            int pptColor = color.R | (color.G << 8) | (color.B << 16);
-                            ApplyColorToSelection(manager, pptColor, target);
-                            success = true;
+                            ExceptionLogger.Log(ex, "PickColorFeature.AutoTarget");
                         }
                     }
+
+                    ApplyColorToSelection(manager, finalColor, finalTarget);
+                    success = true;
                 }
                 catch (Exception ex)
                 {
@@ -140,6 +158,19 @@ namespace oPenEfficiency.Features
 
             overlay.ShowDialog();
             return success;
+        }
+
+        private static int ColorDistance(int rgb1, int rgb2)
+        {
+            int r1 = rgb1 & 0xFF;
+            int g1 = (rgb1 >> 8) & 0xFF;
+            int b1 = (rgb1 >> 16) & 0xFF;
+
+            int r2 = rgb2 & 0xFF;
+            int g2 = (rgb2 >> 8) & 0xFF;
+            int b2 = (rgb2 >> 16) & 0xFF;
+
+            return Math.Abs(r1 - r2) + Math.Abs(g1 - g2) + Math.Abs(b1 - b2);
         }
 
         private static bool ApplyColorToSelection(PowerPointManager manager, int rgbColor, ApplyTarget target)

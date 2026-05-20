@@ -973,6 +973,18 @@
 
                                     <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
 
+                                    <TextBlock Text="What's New in this Version" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="• Split Shape: Fixed bug where splitting labels caused an error.&#x0A;• Magic Resizer: Enabled usage for single grouped shapes.&#x0A;• Export Wizard: Single slide PPTX export now correctly saves only the selected slides.&#x0A;• Match Size: Fixed Master option not being respected.&#x0A;• Clone Selection: Added new tool to clone objects perfectly adjacent in all 4 directions.&#x0A;• Smart Eyedropper: Automatically detects and applies color to Fill, Line, or Text."
+                                               Foreground="{DynamicResource TextPrimaryBrush}" FontSize="13" TextWrapping="Wrap" LineHeight="20"/>
+
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
+
+                                    <TextBlock Text="Source Code" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="Origin of the Add-in: https://github.com/FabPei/oPenEfficiency"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" FontSize="14" TextWrapping="Wrap" LineHeight="22"/>
+
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
+
                                     <TextBlock Text="Disclaimer" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
                                     <TextBlock Text="This is a hobby project and not a commercial product. It is provided WITHOUT ANY WARRANTY, express or implied. The author assumes no liability for any data loss or issues caused by the use of this software." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" FontStyle="Italic"/>
                                     </StackPanel>

@@ -280,6 +280,7 @@
     <Compile Include="Features\Visuals\AdjustSpacingFeatureHelper.cs" />
     <Compile Include="Features\Visuals\AdjustVerticalSpacingFeature.cs" />
     <Compile Include="Features\Visuals\AdvancedSelectionFeature.cs" />
+    <Compile Include="Features\Visuals\CloneSelectionFeature.cs" />
     <Compile Include="Features\Visuals\CheckboxFeature.cs" />
     <Compile Include="Features\Visuals\IllustrativeStickerFeature.cs" />
     <Compile Include="Features\Visuals\LearnMarginFeature.cs" />

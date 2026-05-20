@@ -1403,6 +1403,10 @@ namespace oPenEfficiency
                 case "BtnDockRight": DockToFirstRightFeature.Execute(manager); break;
                 case "BtnDockTop": DockToFirstTopFeature.Execute(manager); break;
                 case "BtnDockBottom": DockToFirstBottomFeature.Execute(manager); break;
+                case "BtnCloneLeft": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Left); break;
+                case "BtnCloneRight": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Right); break;
+                case "BtnCloneTop": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Top); break;
+                case "BtnCloneBottom": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Bottom); break;
                 case "BtnRectifyRotation": RectifyRotationFeature.Execute(manager); break;
                 case "BtnArrangeCircle": ArrangeInShapeFeature.Execute(manager, "circle"); break;
                 case "BtnArrangePro": ToggleFloatingWindow("BtnArrangePro", () => new UI.ArrangeProWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;

@@ -174,7 +174,19 @@ namespace oPenEfficiency.UI
                 string pdfPath = Path.Combine(baseFolder, finalName + ".pdf");
 
                 PpPrintRangeType rangeType = PpPrintRangeType.ppPrintAll;
-                if (ScopeSelected.IsChecked == true) rangeType = PpPrintRangeType.ppPrintSelection;
+                var selectedSlideIds = new System.Collections.Generic.List<int>();
+                if (ScopeSelected.IsChecked == true)
+                {
+                    rangeType = PpPrintRangeType.ppPrintSelection;
+                    try
+                    {
+                        foreach (PowerPoint.Slide s in Globals.ThisAddIn.Application.ActiveWindow.Selection.SlideRange)
+                        {
+                            selectedSlideIds.Add(s.SlideID);
+                        }
+                    }
+                    catch { }
+                }
 
                 bool exportPpt = FormatPPTX.IsChecked == true || FormatBoth.IsChecked == true;
                 bool exportPdf = FormatPDF.IsChecked == true || FormatBoth.IsChecked == true || FormatProtected.IsChecked == true;
@@ -184,9 +196,9 @@ namespace oPenEfficiency.UI
                     pres.SaveCopyAs(pptPath);
                     if (ChkCleanComments.IsChecked == true || ChkCleanHiddenSlides.IsChecked == true || 
                         ChkCleanNotes.IsChecked == true || ChkCleanMetadata.IsChecked == true || 
-                        ChkCleanDeveloperNotes.IsChecked == true)
+                        ChkCleanDeveloperNotes.IsChecked == true || ScopeSelected.IsChecked == true)
                     {
-                        ProcessCleanup(pptPath);
+                        ProcessCleanup(pptPath, selectedSlideIds);
                     }
                 }
 
@@ -240,7 +252,7 @@ namespace oPenEfficiency.UI
             }
         }
 
-        private void ProcessCleanup(string filePath)
+        private void ProcessCleanup(string filePath, System.Collections.Generic.List<int> keepSlideIds = null)
         {
             try
             {
@@ -248,6 +260,18 @@ namespace oPenEfficiency.UI
                 // Open saved copy silently
                 var tempPres = app.Presentations.Open(filePath, WithWindow: Office.MsoTriState.msoFalse);
                 bool changed = false;
+
+                if (keepSlideIds != null && keepSlideIds.Count > 0)
+                {
+                    for (int i = tempPres.Slides.Count; i >= 1; i--)
+                    {
+                        if (!keepSlideIds.Contains(tempPres.Slides[i].SlideID))
+                        {
+                            tempPres.Slides[i].Delete();
+                        }
+                    }
+                    changed = true;
+                }
 
                 if (ChkCleanComments.IsChecked == true)
                 {

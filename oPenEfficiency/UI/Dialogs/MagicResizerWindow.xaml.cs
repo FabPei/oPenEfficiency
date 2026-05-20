@@ -145,47 +145,43 @@ namespace oPenEfficiency.UI
                     }
 
                     // 2. Text Properties
-                    if (shp.HasTextFrame == Office.MsoTriState.msoTrue && shp.TextFrame.HasText == Office.MsoTriState.msoTrue)
+                    try
                     {
-                        var textRange = shp.TextFrame.TextRange;
-                        
-                        // Font Size
-                        if (scaleFont)
+                        if (shp.HasTextFrame == Office.MsoTriState.msoTrue && shp.TextFrame.HasText == Office.MsoTriState.msoTrue)
                         {
-                            // Ideally iterate runs if mixed sizes, but simplistic approach first:
-                            float newSize = textRange.Font.Size * (float)avgFactor;
-                            if (newSize < 1) newSize = 1;
-                            textRange.Font.Size = newSize;
-                        }
+                            var textRange = shp.TextFrame.TextRange;
 
-                        // Margins
-                        if (scaleMargin)
-                        {
-                            shp.TextFrame.MarginLeft *= (float)scaleX;
-                            shp.TextFrame.MarginRight *= (float)scaleX;
-                            shp.TextFrame.MarginTop *= (float)scaleY;
-                            shp.TextFrame.MarginBottom *= (float)scaleY;
-                        }
-
-                        // Indents & Bullets
-                        if (scaleIndent)
-                        {
-                            try
+                            // Font Size
+                            if (scaleFont)
                             {
-                                // Apply to the whole range's format directly
-                                textRange.ParagraphFormat.Bullet.RelativeSize *= (float)avgFactor;
-
-                                // For indents (LeftIndent, FirstLineIndent), we might need to iterate paragraphs
-                                // For Indents, PowerPoint doesn't expose strict LeftIndent/FirstLineIndent on ParagraphFormat easily 
-                                // without going through complex Ruler objects or IndentLevels.
-                                // We will skip specific indent scaling for now to fix compilation.
-                                // textRange.ParagraphFormat.LeftIndent *= (float)scaleX; // Not available
-                                // textRange.ParagraphFormat.FirstLineIndent *= (float)scaleX; // Not available
+                                // Ideally iterate runs if mixed sizes, but simplistic approach first:
+                                float newSize = textRange.Font.Size * (float)avgFactor;
+                                if (newSize < 1) newSize = 1;
+                                textRange.Font.Size = newSize;
                             }
-                            catch { } 
+
+                            // Margins
+                            if (scaleMargin)
+                            {
+                                shp.TextFrame.MarginLeft *= (float)scaleX;
+                                shp.TextFrame.MarginRight *= (float)scaleX;
+                                shp.TextFrame.MarginTop *= (float)scaleY;
+                                shp.TextFrame.MarginBottom *= (float)scaleY;
+                            }
+
+                            // Indents & Bullets
+                            if (scaleIndent)
+                            {
+                                try
+                                {
+                                    // Apply to the whole range's format directly
+                                    textRange.ParagraphFormat.Bullet.RelativeSize *= (float)avgFactor;
+                                }
+                                catch { }
+                            }
                         }
                     }
-                }
+                    catch { }                }
                 
                 // Optional: Close or keep open?
                 // this.Close(); 

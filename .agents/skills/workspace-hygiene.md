@@ -41,3 +41,9 @@ Whenever an agent finishes a multi-turn task, they MUST:
 1. Verify if they created any temporary files or scripts to execute the task.
 2. Delete them immediately via `run_shell_command` using `Remove-Item -Force`.
 3. Inform the user that the temporary workspace artifacts have been cleaned up.
+
+## 5. Changelog & Wiki Updates
+
+**Rule:** Documentation must evolve alongside the code.
+- Whenever a feature is added or a bug is fixed, the agent MUST update CHANGELOG.md with the new changes before committing.
+- The internal Wiki (if any) and GitHub Wiki must be kept up-to-date with these changes during the commit phase.

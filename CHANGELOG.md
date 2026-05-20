@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.4.25] - 2026-05-20
+
+### Added
+- Clone Selection: Added new tool to clone objects perfectly adjacent in all 4 directions.
+
+### Fixed
+- Split Shape: Fixed bug where splitting labels caused an error.
+- Magic Resizer: Enabled usage for single grouped shapes.
+- Export Wizard: Single slide PPTX export now correctly saves only the selected slides.
+- Match Size: Fixed Master option not being respected.
+- Smart Eyedropper: Automatically detects and applies color to Fill, Line, or Text.
+
 ## [2026.05.11.1000] - 2026-05-11
 
 ### Added
@@ -95,3 +107,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Visual enhancements (Pick Color, Theme Color Picker, Remove Gaps)
 - Productivity tools (Agenda Wizard, Sticky Notes, Shape Locking, QR Code)
 - Asset libraries (Shape, Slide, and Image Library management)
+

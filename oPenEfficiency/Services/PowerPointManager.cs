@@ -106,12 +106,24 @@ namespace oPenEfficiency
         }
 
         /// <summary>
-        /// Retrieves the first selected shape as the "Reference" shape for alignment and spacing.
+        /// Retrieves the Reference shape for alignment and spacing.
+        /// Priority: First locked shape in selection -> First selected shape.
         /// </summary>
         public Shape GetReferenceShape()
         {
             var selection = GetSelectedShapes();
             if (selection == null || selection.Count == 0) return null;
+
+            // 1. Check if any shape in the selection is locked (Master shape)
+            for (int i = 1; i <= selection.Count; i++)
+            {
+                if (Features.ShapeLockingFeature.IsShapeLocked(selection[i]))
+                {
+                    return selection[i];
+                }
+            }
+
+            // 2. Fallback to the first selected shape
             return selection[1];
         }
 

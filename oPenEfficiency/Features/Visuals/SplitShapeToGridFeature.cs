@@ -60,10 +60,14 @@ namespace oPenEfficiency.Features
                         var dupRange = original.Duplicate();
                         var dup = dupRange[1];
                         
-                        if (dup.HasTextFrame == Office.MsoTriState.msoTrue)
+                        try
                         {
-                            dup.TextFrame.DeleteText();
+                            if (dup.HasTextFrame == Office.MsoTriState.msoTrue)
+                            {
+                                dup.TextFrame.DeleteText();
+                            }
                         }
+                        catch { }
 
                         // Position
                         dup.Left = origLeft + (c * (newWidth + (float)spacingPoints));
