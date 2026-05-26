@@ -985,6 +985,17 @@
 
                                     <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
 
+                                    <TextBlock Text="Feedback &amp; Support" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
+                                    <TextBlock Text="Found a bug or have an idea? Let us know on GitHub." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="🐞 Report a Bug" Command="{Binding ReportBugCommand}" 
+                                                Background="#C62828" Foreground="White" BorderThickness="0" Padding="15,8" Margin="0,0,10,0" Cursor="Hand" FontWeight="SemiBold"/>
+                                        <Button Content="💡 Request a Feature" Command="{Binding RequestFeatureCommand}" 
+                                                Background="#059669" Foreground="White" BorderThickness="0" Padding="15,8" Cursor="Hand" FontWeight="SemiBold"/>
+                                    </StackPanel>
+
+                                    <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20"/>
+
                                     <TextBlock Text="Disclaimer" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,12"/>
                                     <TextBlock Text="This is a hobby project and not a commercial product. It is provided WITHOUT ANY WARRANTY, express or implied. The author assumes no liability for any data loss or issues caused by the use of this software." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" Margin="0,0,0,8" TextWrapping="Wrap" FontStyle="Italic"/>
                                     </StackPanel>

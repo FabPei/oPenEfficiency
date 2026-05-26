@@ -634,6 +634,9 @@ namespace oPenEfficiency.UI
         public ICommand ApplyPresetCommand { get; private set; }
         public ICommand ExportLayoutOnlyCommand { get; private set; }
         public ICommand ImportLayoutOnlyCommand { get; private set; }
+        
+        public ICommand ReportBugCommand { get; }
+        public ICommand RequestFeatureCommand { get; }
 
         public SettingsViewModel()
         {
