@@ -509,7 +509,10 @@
                                                     </Grid>
                                                     <ListBox ItemsSource="{Binding Features}"
                                                              AllowDrop="True" Drop="SectionListBox_Drop"
-                                                             Background="{DynamicResource SurfaceBrush}" BorderThickness="0" MinHeight="40">
+                                                             Background="{DynamicResource SurfaceBrush}" BorderThickness="0" MinHeight="40"
+                                                             VirtualizingStackPanel.IsVirtualizing="True"
+                                                             VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                                             ScrollViewer.CanContentScroll="True">
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Grid Margin="4,2">
