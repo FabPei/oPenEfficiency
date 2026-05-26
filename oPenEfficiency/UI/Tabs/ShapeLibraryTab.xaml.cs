@@ -450,12 +450,12 @@ namespace oPenEfficiency.UI.Tabs
             // Run COM on UI Thread using Dispatcher.BeginInvoke to not freeze everything synchronously,
             // but COM calls themselves will still block the UI thread unfortunately unless we start a new PPT instance. 
             // For now, this is inline with our other library managers.
-            Dispatcher.BeginInvoke(new Action(() =>
+            Dispatcher.BeginInvoke(new Action(async () =>
             {
                 try
                 {
                     int count = 0;
-                    _libraryManager.GenerateThumbnailCache(filePath, (item, img) => {
+                    await _libraryManager.GenerateThumbnailCache(filePath, (item, img) => {
                         
                         var sf = _scannedFiles.FirstOrDefault(f => f.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
                         string category = sf != null ? sf.FolderName : "Generated";

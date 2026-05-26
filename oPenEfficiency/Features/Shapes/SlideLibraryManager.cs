@@ -284,7 +284,7 @@ namespace oPenEfficiency.Features
                     {
                         // Run on UI thread but yield slightly to not completely freeze the app
                         await Task.Delay(100);
-                        GenerateThumbnailCache(file.FilePath);
+                        await GenerateThumbnailCache(file.FilePath);
                     }
                 }
             }

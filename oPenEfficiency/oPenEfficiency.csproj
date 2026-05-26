@@ -410,7 +410,7 @@
       <DependentUpon>UI\Dialogs\MagicResizerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\CrashReportWindow.xaml.cs">
-      <DependentUpon>CrashReportWindow.xaml</DependentUpon>
+      <DependentUpon>UI\Dialogs\CrashReportWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\MapWizardWindow.xaml.cs">
       <DependentUpon>UI\Dialogs\MapWizardWindow.xaml</DependentUpon>
@@ -632,6 +632,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="UI\Dialogs\CreateFolderDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\CrashReportWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
