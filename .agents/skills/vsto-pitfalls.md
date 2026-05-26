@@ -244,6 +244,25 @@ Data consistency across windows depends on unified path resolution.
 - **SYMPTOM:** Data saved in one window doesn't appear in another.
 - **FIX:** Always use `JsonService` with a **unified relative path string** (e.g., `@"AgendaLayouts\agenda_layouts.json"`) across all components.
 
+## 22. Exception Handling & UI Dispatching
+
+VSTO Add-ins run inside the PowerPoint host process. Unhandled exceptions or improperly threaded UI calls can instantly crash the entire application.
+
+### The Problem: Cross-Thread UI Crashes
+- **PITFALL:** Attempting to open a WPF Window (like an error dialog or progress bar) directly from a background thread or a raw COM event handler without using the Dispatcher.
+- **SYMPTOM:** `System.InvalidOperationException: The calling thread must be STA, because many UI components require this.` Or a silent, hard crash of PowerPoint.
+
+### The Rule: Use ExceptionLogger and Dispatcher
+1. **Always Catch:** Every feature's `Execute` method must be wrapped in a `try-catch` block.
+2. **Central Logging:** Use `ExceptionLogger.Log(ex, "Feature.Context", showErrorUI: true)` for user-facing actions.
+3. **Dispatcher Safety:** If you must show custom UI from a background task, always wrap it:
+   ```csharp
+   System.Windows.Application.Current.Dispatcher.Invoke(() => {
+       var myWindow = new CustomWindow();
+       myWindow.ShowDialog();
+   });
+   ```
+
 ---
 
 ## Summary Checklist for VSTO Stability

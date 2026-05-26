@@ -19,8 +19,9 @@ namespace oPenEfficiency.Utils
 
         /// <summary>
         /// Logs an exception to the error log file and debug output.
+        /// Can optionally display a user-friendly error dialog.
         /// </summary>
-        public static void Log(Exception ex, string context = null)
+        public static void Log(Exception ex, string context = null, bool showErrorUI = false)
         {
             var message = FormatException(ex, context);
 
@@ -38,6 +39,22 @@ namespace oPenEfficiency.Utils
             {
                 // If logging fails, at least we have Debug output
                 Debug.WriteLine($"Failed to write to log file: {logEx.Message}");
+            }
+
+            if (showErrorUI)
+            {
+                try
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var errorWindow = new UI.Dialogs.CrashReportWindow(ex, context);
+                        errorWindow.ShowDialog();
+                    });
+                }
+                catch (Exception uiEx)
+                {
+                    Debug.WriteLine($"Failed to show error UI: {uiEx.Message}");
+                }
             }
         }
 

@@ -81,11 +81,8 @@ namespace oPenEfficiency.Features.Alignment
             }
             catch (System.Exception ex)
             {
-                ExceptionLogger.Log(ex, "AlignCenterFeature.Execute");
-                System.Windows.Forms.MessageBox.Show(
-                    $"Error: {ex.Message}", "Error",
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                // MANDATORY: Use showErrorUI: true for user-initiated actions so the Crash Reporter appears!
+                ExceptionLogger.Log(ex, "AlignCenterFeature.Execute", showErrorUI: true);
                 return false;
             }
         }
@@ -368,36 +365,9 @@ if (widgetTag == "YourFeature")
 
 ---
 
-## Legacy Pattern (Still Supported)
+## Legacy Pattern (DEPRECATED)
 
-Features without `[FeatureMetadata]` still work via manual registration:
-
-```csharp
-// Old pattern - still functional for backward compatibility
-// 1. Add to FeatureLibrary.AllFeatures
-// NOTE: Always keep this list sorted alphabetically by Name!
-new SidebarFeature { Id = "BtnLegacyFeature", Name = "Legacy" },
-
-// 2. Add to FeatureLibrary.GetFeatureInfo()
-case "BtnLegacyFeature":
-    return new FeatureDisplayInfo { Tooltip = "...", Icon = "...", ... };
-
-// 3. Add execution in MainSidebar.xaml.cs
-case "BtnLegacyFeature":
-    LegacyFeature.Execute(manager);
-    break;
-```
-
-**IMPORTANT:** When adding a new feature (even via auto-discovery), ensure it is added to the `FeatureLibrary.AllFeatures` list in **alphabetical order by Name**. This ensures the "Available Features" list in the Settings menu remains organized.
-
-**CRITICAL PITFALL - Duplicate Registrations & Missing Features:**
-- **Missing Features:** Features that are auto-discovered via `[FeatureMetadata]` but *never added* to `FeatureLibrary.AllFeatures` will be completely missing from the Settings search pool and dynamic layouts like `GetAllFeaturesLayout()`. Always append new features to `FeatureLibrary.AllFeatures`.
-- **Duplicate Features:** Do NOT add the same feature to `FeatureLibrary.AllFeatures` multiple times. Duplicate entries in this list will cause the feature to appear multiple times in the UI. Always search the list first to ensure the feature isn't already registered!
-- **MANDATORY AI VALIDATION:** AI Agents are prone to "silent failures" when using text replacement tools on large lists like `AllFeatures`. After attempting to add a feature to `FeatureLibrary.AllFeatures`, the agent **MUST immediately use `grep_search` or `read_file`** to explicitly verify the string was injected correctly. Do not assume the edit succeeded.
-
-**Recommendation:** Use attribute-based pattern for all new features. Keep legacy pattern only for:
-- Features being migrated gradually
-- Complex features with custom registration needs
+Manual registration in `FeatureLibrary.cs` is strictly deprecated. The project now uses 100% Auto-Discovery. You do **not** need to manually add features to the `AllFeatures` list. Just use the `[FeatureMetadata]` attribute and `FeatureDiscovery.cs` will automatically inject it into the Settings search pool and layout manager on startup.
 
 ---
 

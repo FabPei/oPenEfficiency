@@ -1,0 +1,79 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.CrashReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="oPenEfficiency - Error Report" 
+        Height="450" Width="600"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="ToolWindow"
+        ResizeMode="NoResize"
+        Topmost="True"
+        Background="#1E1E1E">
+    
+    <Window.Resources>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F3F4F6"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#2D2D30"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#F43F5E"/>
+        <SolidColorBrush x:Key="AccentHover" Color="#E11D48"/>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
+            <Path Data="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" 
+                  Fill="{StaticResource AccentBrush}" Width="32" Height="32" Stretch="Uniform"/>
+            <StackPanel Margin="15,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="Something went wrong." FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                <TextBlock Text="An unexpected error occurred while executing the feature." FontSize="12" Foreground="{StaticResource TextMuted}" Margin="0,2,0,0"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Context Info -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" CornerRadius="4" Padding="10" Margin="0,0,0,15">
+            <StackPanel>
+                <TextBlock x:Name="ContextTextBlock" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" Margin="0,0,0,5"/>
+                <TextBlock x:Name="ErrorMessageBlock" TextWrapping="Wrap" Foreground="{StaticResource TextPrimary}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Stack Trace (Expandable) -->
+        <Expander Grid.Row="2" Header="Technical Details (Stack Trace)" Foreground="{StaticResource TextMuted}">
+            <Border Background="#111111" CornerRadius="4" Margin="0,10,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <TextBox x:Name="StackTraceBox" IsReadOnly="True" TextWrapping="Wrap" 
+                             Background="Transparent" Foreground="#A3BE8C" BorderThickness="0" 
+                             FontFamily="Consolas" FontSize="11" Padding="10"/>
+                </ScrollViewer>
+            </Border>
+        </Expander>
+
+        <!-- Actions -->
+        <Grid Grid.Row="3" Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="Copy Error Details" Click="CopyError_Click" 
+                    Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextPrimary}" 
+                    BorderThickness="0" Padding="15,8" Cursor="Hand"/>
+
+            <Button Grid.Column="2" Content="Report on GitHub" Click="ReportBug_Click" 
+                    Background="{StaticResource AccentBrush}" Foreground="White" 
+                    BorderThickness="0" Padding="15,8" Margin="0,0,10,0" Cursor="Hand" FontWeight="Bold"/>
+                    
+            <Button Grid.Column="3" Content="Dismiss" Click="Close_Click" 
+                    Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextPrimary}" 
+                    BorderThickness="0" Padding="20,8" Cursor="Hand"/>
+        </Grid>
+    </Grid>
+</Window>

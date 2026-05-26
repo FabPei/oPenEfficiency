@@ -409,6 +409,9 @@
     <Compile Include="UI\Dialogs\MagicResizerWindow.xaml.cs">
       <DependentUpon>UI\Dialogs\MagicResizerWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Dialogs\CrashReportWindow.xaml.cs">
+      <DependentUpon>CrashReportWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Dialogs\MapWizardWindow.xaml.cs">
       <DependentUpon>UI\Dialogs\MapWizardWindow.xaml</DependentUpon>
     </Compile>

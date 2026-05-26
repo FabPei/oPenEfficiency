@@ -44,6 +44,9 @@ namespace oPenEfficiency
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            // Register global exception handlers for unhandled crashes
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            
             using (System.Drawing.Graphics g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
             {
                 _dpiX = g.DpiX;
@@ -143,6 +146,20 @@ namespace oPenEfficiency
                     System.Diagnostics.Debug.WriteLine($"Error loading global resources: {ex.Message}");
                 }
             }
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (e.ExceptionObject is Exception ex)
+            {
+                ExceptionLogger.Log(ex, "Global.UnhandledException", showErrorUI: true);
+            }
+        }
+
+        private void Wpf_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            ExceptionLogger.Log(e.Exception, "WPF.DispatcherCrash", showErrorUI: true);
+            e.Handled = true; // Prevent the app from crashing entirely if possible
         }
         
         private void Application_WindowActivate(PowerPoint.Presentation Pres, PowerPoint.DocumentWindow Wn)
