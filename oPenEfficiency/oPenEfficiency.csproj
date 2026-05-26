@@ -412,6 +412,9 @@
     <Compile Include="UI\Dialogs\CrashReportWindow.xaml.cs">
       <DependentUpon>CrashReportWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Dialogs\MapWizardWindow.xaml.cs">
+      <DependentUpon>UI\Dialogs\MapWizardWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Dialogs\ObjectConnectorWindow.xaml.cs">
       <DependentUpon>UI\Dialogs\ObjectConnectorWindow.xaml</DependentUpon>
     </Compile>
