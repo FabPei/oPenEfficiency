@@ -531,12 +531,12 @@ namespace oPenEfficiency
                         var featureInfo = UI.FeatureLibrary.GetFeatureInfo(feature.Id);
                         if (featureInfo.IsToggle)
                         {
-                            var toggleBtn = CreateToggleButton(feature.Id, section.Color, iconSize);
+                            var toggleBtn = CreateToggleButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
                             btn = toggleBtn;
                         }
                         else
                         {
-                            btn = CreateFeatureButton(feature.Id, section.Color, iconSize);
+                            btn = CreateFeatureButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
                         }
 
                         if (btn != null)
@@ -687,12 +687,12 @@ namespace oPenEfficiency
                         var featureInfo = UI.FeatureLibrary.GetFeatureInfo(feature.Id);
                         if (featureInfo.IsToggle)
                         {
-                            var toggleBtn = CreateToggleButton(feature.Id, section.Color, iconSize);
+                            var toggleBtn = CreateToggleButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
                             btn = toggleBtn;
                         }
                         else
                         {
-                            btn = CreateFeatureButton(feature.Id, section.Color, iconSize);
+                            btn = CreateFeatureButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
                         }
 
                         if (btn != null)

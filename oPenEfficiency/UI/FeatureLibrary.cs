@@ -25,178 +25,42 @@ namespace oPenEfficiency.UI
 
     public static class FeatureLibrary
     {
-        public static List<SidebarFeature> AllFeatures = new List<SidebarFeature>
+                private static List<SidebarFeature> _allFeatures;
+        public static List<SidebarFeature> AllFeatures
         {
-            new SidebarFeature { Id = "BtnSearchBar", Name = "Search Command Palette" },
-            new SidebarFeature { Id = "BtnSizePanel", Name = "Shape Size Panel" },
-            new SidebarFeature { Id = "BtnMatchSize", Name = "Match Size" },
-            new SidebarFeature { Id = "BtnMatchWidth", Name = "Match Width" },
-            new SidebarFeature { Id = "BtnMultiSwap", Name = "Multi-Swap" },
-            new SidebarFeature { Id = "BtnMatchHeight", Name = "Match Height" },
-            new SidebarFeature { Id = "BtnLockDimensions", Name = "Lock Aspect Ratio" },
-            new SidebarFeature { Id = "BtnShapeLock", Name = "Shape Locking" },
-            new SidebarFeature { Id = "BtnSlideSize", Name = "Slide Size Analysis" },
-            new SidebarFeature { Id = "BtnAlignLeft", Name = "Align Left" },
-            new SidebarFeature { Id = "BtnAlignCenter", Name = "Align Center" },
-            new SidebarFeature { Id = "BtnAlignRight", Name = "Align Right" },
-            new SidebarFeature { Id = "BtnAlignTop", Name = "Align Top" },
-            new SidebarFeature { Id = "BtnAlignCenterVertical", Name = "Align Middle" },
-            new SidebarFeature { Id = "BtnAlignBottom", Name = "Align Bottom" },
-            new SidebarFeature { Id = "BtnDiagonalAlign", Name = "Diagonal Alignment" },
-            new SidebarFeature { Id = "BtnDistributeHorizontal", Name = "Distribute Horizontal" },
-            new SidebarFeature { Id = "BtnDistributeVertical", Name = "Distribute Vertical" },
-            new SidebarFeature { Id = "BtnRemoveHorizontalGaps", Name = "Remove Horiz Gaps" },
-            new SidebarFeature { Id = "BtnRemoveVerticalGaps", Name = "Remove Vert Gaps" },
-            new SidebarFeature { Id = "BtnIncreaseHorizontalSpacing", Name = "Incr Horiz Spacing" },
-            new SidebarFeature { Id = "BtnDecreaseHorizontalSpacing", Name = "Decr Horiz Spacing" },
-            new SidebarFeature { Id = "BtnIncreaseVerticalSpacing", Name = "Incr Vert Spacing" },
-            new SidebarFeature { Id = "BtnDecreaseVerticalSpacing", Name = "Decr Vert Spacing" },
-            new SidebarFeature { Id = "BtnAdjustSpacing", Name = "Advanced Spacing" },
-            new SidebarFeature { Id = "BtnStretchLeft", Name = "Stretch Left" },
-            new SidebarFeature { Id = "BtnStretchRight", Name = "Stretch Right" },
-            new SidebarFeature { Id = "BtnStretchTop", Name = "Stretch Top" },
-            new SidebarFeature { Id = "BtnStretchBottom", Name = "Stretch Bottom" },
-            new SidebarFeature { Id = "BtnStretchLeftEdge", Name = "Stretch to Left Edge" },
-            new SidebarFeature { Id = "BtnStretchRightEdge", Name = "Stretch to Right Edge" },
-            new SidebarFeature { Id = "BtnStretchTopEdge", Name = "Stretch to Top Edge" },
-            new SidebarFeature { Id = "BtnStretchBottomEdge", Name = "Stretch to Bottom Edge" },
-            new SidebarFeature { Id = "BtnDockLeft", Name = "Dock Left" },
-            new SidebarFeature { Id = "BtnDockRight", Name = "Dock Right" },
-            new SidebarFeature { Id = "BtnDockTop", Name = "Dock Top" },
-            new SidebarFeature { Id = "BtnDockBottom", Name = "Dock Bottom" },
-            new SidebarFeature { Id = "BtnCloneLeft", Name = "Clone Left" },
-            new SidebarFeature { Id = "BtnCloneRight", Name = "Clone Right" },
-            new SidebarFeature { Id = "BtnCloneTop", Name = "Clone Top" },
-            new SidebarFeature { Id = "BtnCloneBottom", Name = "Clone Bottom" },
-            new SidebarFeature { Id = "BtnSwapPositions", Name = "Swap Positions" },
-            new SidebarFeature { Id = "BtnCopyXY", Name = "Copy Coordinates" },
-            new SidebarFeature { Id = "BtnPasteXY", Name = "Paste Coordinates" },
-            new SidebarFeature { Id = "BtnSelectSameType", Name = "Select Same Type" },
-            new SidebarFeature { Id = "BtnSyncObjects", Name = "Sync Across Slides" },
-            new SidebarFeature { Id = "BtnArrangeCircle", Name = "Arrange in Circle" },
-            new SidebarFeature { Id = "BtnArrangePro", Name = "Arrange Pro" },
-            new SidebarFeature { Id = "BtnRectifyRotation", Name = "Rectify Rotation" },
-            new SidebarFeature { Id = "BtnAlignShapeAdjustments", Name = "Align Handles" },
-            new SidebarFeature { Id = "BtnHideSelected", Name = "Hide Selected" },
-            new SidebarFeature { Id = "BtnShowHidden", Name = "Show All Hidden" },
-            new SidebarFeature { Id = "BtnHideMasterObjects", Name = "Hide Master Background" },
-            new SidebarFeature { Id = "BtnCreateMotionPath", Name = "Create Motion Path" },
-            new SidebarFeature { Id = "BtnBringToFront", Name = "Bring to Front" },
-            new SidebarFeature { Id = "BtnBringForward", Name = "Bring Forward" },
-            new SidebarFeature { Id = "BtnSendBackward", Name = "Send Backward" },
-            new SidebarFeature { Id = "BtnSendToBack", Name = "Send to Back" },
-            new SidebarFeature { Id = "BtnSnapShape", Name = "Snap Shape to Object" },
-            new SidebarFeature { Id = "BtnSnapToGrid", Name = "Snap to Grid" },
-            new SidebarFeature { Id = "BtnSnapToObjects", Name = "Snap to Objects" },
-            new SidebarFeature { Id = "BtnFontPanel", Name = "Quick Font Panel" },
-            new SidebarFeature { Id = "BtnApplyTextTool", Name = "Apply Text Formatting" },
-            new SidebarFeature { Id = "BtnFitFormToText", Name = "Fit Shape to Text" },
-            new SidebarFeature { Id = "BtnTranslate", Name = "Translate Text" },
-            new SidebarFeature { Id = "BtnReplaceFont", Name = "Bulk Format Replacer" },
-            new SidebarFeature { Id = "BtnParagraphDialog", Name = "Paragraph Dialog" },
-            new SidebarFeature { Id = "BtnSpecialChars", Name = "Insert Special Chars" },
-            new SidebarFeature { Id = "BtnFormatNumbers", Name = "Format Numbers" },
-            new SidebarFeature { Id = "BtnAlignText", Name = "Align Text in Box" },
-            new SidebarFeature { Id = "BtnTextDirection", Name = "Change Text Direction" },
-            new SidebarFeature { Id = "BtnChangeCase", Name = "Change Case" },
-            new SidebarFeature { Id = "BtnCharacterSpacing", Name = "Character Spacing" },
-            new SidebarFeature { Id = "BtnSpellCheck", Name = "Spell Check Language" },
-            new SidebarFeature { Id = "BtnDeleteText", Name = "Clear Shape Text" },
-            new SidebarFeature { Id = "BtnSwapTextFormatted", Name = "Swap Text (Styles)" },
-            new SidebarFeature { Id = "BtnSwapTextPlain", Name = "Swap Text (Plain)" },
-            new SidebarFeature { Id = "BtnPickColor", Name = "Color Picker" },
-            new SidebarFeature { Id = "BtnPickFillColor", Name = "Pick Fill Color" },
-            new SidebarFeature { Id = "BtnPickLineColor", Name = "Pick Line Color" },
-            new SidebarFeature { Id = "BtnPickTextColor", Name = "Pick Text Color" },
-            new SidebarFeature { Id = "BtnThemeColor", Name = "Absolute Theme Colors" },
-            new SidebarFeature { Id = "BtnTransparentColor", Name = "Set Transparency" },
-            new SidebarFeature { Id = "BtnFormatShapeDialog", Name = "Format Shape Dialog" },
-            new SidebarFeature { Id = "BtnOptimizeFreeForm", Name = "Optimize Freeform" },
-            new SidebarFeature { Id = "BtnStyleCheck", Name = "Presentation Style Check" },
-            new SidebarFeature { Id = "BtnCleaner", Name = "Deep Presentation Cleaner" },
-            new SidebarFeature { Id = "BtnAnonymize", Name = "Anonymize Presentation" },
-            new SidebarFeature { Id = "BtnChartOverlay", Name = "Chart Target Line Overlay" },
-            new SidebarFeature { Id = "BtnNewSlide", Name = "New Slide" },
-            new SidebarFeature { Id = "BtnFormatBold", Name = "Bold" },
-            new SidebarFeature { Id = "BtnFormatItalic", Name = "Italic" },
-            new SidebarFeature { Id = "BtnFormatUnderline", Name = "Underline" },
-            new SidebarFeature { Id = "BtnFormatStrikethrough", Name = "Strikethrough" },
-            new SidebarFeature { Id = "BtnFormatSuperscript", Name = "Superscript" },
-            new SidebarFeature { Id = "BtnFormatSubscript", Name = "Subscript" },
-            new SidebarFeature { Id = "BtnInsertColumnLeft", Name = "Insert Column Left" },
-            new SidebarFeature { Id = "BtnInsertColumnRight", Name = "Insert Column Right" },
-            new SidebarFeature { Id = "BtnInsertRowTop", Name = "Insert Row Top" },
-            new SidebarFeature { Id = "BtnInsertRowBottom", Name = "Insert Row Bottom" },
-            new SidebarFeature { Id = "BtnTableTranspose", Name = "Transpose Table" },
-            new SidebarFeature { Id = "BtnTableSplit", Name = "Split Table" },
-            new SidebarFeature { Id = "BtnConvertTableToShapes", Name = "Convert Table to Shapes" },
-            new SidebarFeature { Id = "BtnTableDimensions", Name = "Table Size Manager" },
-            new SidebarFeature { Id = "BtnTableFormatPainter", Name = "Table Format Painter" },
-            new SidebarFeature { Id = "BtnTableSort", Name = "Table Sorting" },
-            new SidebarFeature { Id = "BtnTableSum", Name = "Table Auto-Sum" },
-            new SidebarFeature { Id = "BtnTableBranding", Name = "Table Branding" },
-            new SidebarFeature { Id = "BtnAlignToTableCell", Name = "Align to Cell" },
-            new SidebarFeature { Id = "BtnIllustrativeSticker", Name = "Status Stickers" },
-            new SidebarFeature { Id = "BtnAddSticker", Name = "Illustrative Stickers" },
-            new SidebarFeature { Id = "BtnHarveyBall", Name = "Harvey Ball" },
-            new SidebarFeature { Id = "BtnTrafficLight", Name = "Traffic Light" },
-            new SidebarFeature { Id = "BtnThermometer", Name = "Thermometer Chart" },
-            new SidebarFeature { Id = "BtnStarRating", Name = "Star Rating" },
-            new SidebarFeature { Id = "BtnGlassHide", Name = "Glass Hide" },
-            new SidebarFeature { Id = "BtnCheckbox", Name = "Vector Checkbox" },
-            new SidebarFeature { Id = "BtnNumeration", Name = "Auto Numeration" },
-            new SidebarFeature { Id = "BtnProgressSeries", Name = "Progress Series" },
-            new SidebarFeature { Id = "BtnRepeatShape", Name = "Repeat Shape" },
-            new SidebarFeature { Id = "BtnSplitShape", Name = "Split Shape to Grid" },
-            new SidebarFeature { Id = "BtnSplitByParagraphs", Name = "Split by Paragraphs" },
-            new SidebarFeature { Id = "BtnAgendaWizard", Name = "Agenda Wizard" },
-            new SidebarFeature { Id = "BtnSaveAgendaLayout", Name = "Save Agenda Layout" },
-            new SidebarFeature { Id = "BtnStoryline", Name = "Storyline" },
-            new SidebarFeature { Id = "BtnSlideGuidelines", Name = "Slide Grid Guidelines" },
-            new SidebarFeature { Id = "BtnConsolidateMasters", Name = "Consolidate Masters" },
-            new SidebarFeature { Id = "BtnAssetManager", Name = "Asset Library" },
-            new SidebarFeature { Id = "BtnWinnerPicker", Name = "Lottery / Winner Picker" },
-            new SidebarFeature { Id = "BtnUpdateExcelCharts", Name = "Update Excel Data" },
-            new SidebarFeature { Id = "BtnQRCode", Name = "QR Code Generator" },
-            new SidebarFeature { Id = "BtnExportWizard", Name = "Export Wizard" },
-            new SidebarFeature { Id = "BtnSettings", Name = "oPenEfficiency Settings" },
-            new SidebarFeature { Id = "BtnTemplateManager", Name = "Template Library" },
-            new SidebarFeature { Id = "BtnStickyNote", Name = "Sticky Note" },
-            new SidebarFeature { Id = "BtnSlidePaste", Name = "Smart Slide Paste" },
-            new SidebarFeature { Id = "BtnArrangeGrid", Name = "Arrange in Grid" },
-            new SidebarFeature { Id = "BtnArrangeInShape", Name = "Arrange in Shape" },
-            new SidebarFeature { Id = "BtnMatchAngles", Name = "Match Angles" },
-            new SidebarFeature { Id = "BtnSmartCorners", Name = "Smart Corners" },
-            new SidebarFeature { Id = "BtnConvertToTable", Name = "Convert Shapes to Table" },
-            new SidebarFeature { Id = "BtnConvertToShapes", Name = "Convert Table to Shapes" },
-            new SidebarFeature { Id = "BtnTableColumnInsertion", Name = "Insert Column Dialog" },
-            new SidebarFeature { Id = "BtnTableColumnWidth", Name = "Table Column Width" },
-            new SidebarFeature { Id = "BtnTableHeatmap", Name = "Table Heatmap" },
-            new SidebarFeature { Id = "BtnTableRowHeight", Name = "Table Row Height" },
-            new SidebarFeature { Id = "BtnTableRowInsertion", Name = "Insert Row Dialog" },
-            new SidebarFeature { Id = "BtnTableSortAZ", Name = "Table Sorting" },
-            new SidebarFeature { Id = "BtnInsertText", Name = "Insert Text at Cursor" },
-            new SidebarFeature { Id = "BtnIncreaseFontSize", Name = "Increase Font Size" },
-            new SidebarFeature { Id = "BtnDecreaseFontSize", Name = "Decrease Font Size" },
-            new SidebarFeature { Id = "BtnDocumentAutomation", Name = "Document Automation" },
-            new SidebarFeature { Id = "BtnExcelLinkManager", Name = "Excel Link Manager" },
-            new SidebarFeature { Id = "BtnFlightMode", Name = "Flight Mode" },
-            new SidebarFeature { Id = "BtnMoveToBackup", Name = "Move to Backup" },
-            new SidebarFeature { Id = "BtnPropertyExtraction", Name = "Property Extraction" },
-            new SidebarFeature { Id = "BtnSeriesGenerator", Name = "Series Generator" },
-            new SidebarFeature { Id = "BtnSlideNotes", Name = "Slide Notes" },
-            new SidebarFeature { Id = "BtnStickyNoteManager", Name = "Sticky Note Manager" },
-            new SidebarFeature { Id = "BtnTagInspector", Name = "Tag Inspector" },
-            new SidebarFeature { Id = "BtnLearnMargin", Name = "Learn Margin" },
-            new SidebarFeature { Id = "BtnMapWizard", Name = "Map Wizard" },
-            new SidebarFeature { Id = "BtnObjectConnector", Name = "Object Connector" },
-            new SidebarFeature { Id = "BtnFlipHorizontal", Name = "Flip Horizontal" },
-            new SidebarFeature { Id = "BtnFlipVertical", Name = "Flip Vertical" },
-            new SidebarFeature { Id = "BtnRotateShape", Name = "Rotate Shape" },
-            new SidebarFeature { Id = "BtnPositionPainter", Name = "Position Painter" },
-            new SidebarFeature { Id = "BtnSetMargin", Name = "Set Margin" },
-            new SidebarFeature { Id = "BtnTransparency", Name = "Set Transparency" }
-        };
+            get
+            {
+                if (_allFeatures == null)
+                {
+                    _allFeatures = new List<SidebarFeature>();
+                    
+                    // 1. Add all unmigrated legacy features explicitly
+                    string[] legacyIds = { "BtnCloneLeft", "BtnCloneRight", "BtnCloneTop", "BtnCloneBottom", "BtnTableFormatPainter", "BtnSearchBar", "BtnExportWizard", "BtnTemplateManager", "BtnParagraphDialog", "BtnSpecialChars", "BtnFlightMode", "BtnSizePanel", "BtnStoryline", "BtnStickyNote", "BtnIllustrativeSticker", "BtnAssetManager", "BtnCopyXY", "BtnPasteXY", "BtnConsolidateMasters", "BtnHarveyBall", "BtnHideSelected", "BtnShowHidden", "BtnCheckbox", "BtnMagicResizer", "BtnSplitByParagraphs", "BtnDeleteText", "BtnSwapTextFormatted", "BtnSwapTextPlain", "BtnTrafficLight", "BtnStarRating", "BtnExploreFeatures", "BtnSettings" };
+                    foreach (var id in legacyIds)
+                    {
+                        var info = GetFeatureInfo(id);
+                        _allFeatures.Add(new SidebarFeature { Id = id, Name = info.Tooltip ?? id.Replace("Btn", "") });
+                    }
+
+                    // 2. Auto-discover all other features
+                    var autoFeatures = FeatureDiscovery.AllFeatures;
+                    if (autoFeatures != null)
+                    {
+                        foreach (var f in autoFeatures)
+                        {
+                            if (!_allFeatures.Any(x => x.Id == f.Id))
+                            {
+                                _allFeatures.Add(new SidebarFeature { Id = f.Id, Name = f.Name });
+                            }
+                        }
+                    }
+
+                    // 3. Sort alphabetically for UI consistency
+                    _allFeatures = _allFeatures.OrderBy(f => f.Name).ToList();
+                }
+                return _allFeatures;
+            }
+        }
 
         public static SidebarConfig GetEmergencyDefault() => GetStandardLayout();
 
@@ -313,3 +177,4 @@ namespace oPenEfficiency.UI
         }
     }
 }
+
