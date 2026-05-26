@@ -1079,7 +1079,7 @@ namespace oPenEfficiency
 
                 // Show description and separator after a longer delay
                 var timer = new System.Windows.Threading.DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(1.5);
+                timer.Interval = TimeSpan.FromSeconds(0.5);
                 timer.Tick += (s, e) =>
                 {
                     descBlock.Visibility = Visibility.Visible;
@@ -1242,7 +1242,7 @@ namespace oPenEfficiency
                 tooltipPanel.Children.Add(descBlock);
 
                 var timer = new System.Windows.Threading.DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(1.5);
+                timer.Interval = TimeSpan.FromSeconds(0.5);
                 timer.Tick += (s, e) =>
                 {
                     descBlock.Visibility = Visibility.Visible;
