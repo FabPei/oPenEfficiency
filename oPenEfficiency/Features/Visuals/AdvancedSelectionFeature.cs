@@ -2,23 +2,12 @@
 using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
-using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features
 {
     /// <summary>
-    /// Feature: Select multiple shapes on a slide based on criteria matching a reference shape.
+    /// Selection engine used by SelectSameTypeFeature. Not registered as a sidebar button directly.
     /// </summary>
-    [FeatureMetadata(
-        Id = "BtnSelectSameType",
-        Name = "Select Same Type",
-        Tooltip = "Select same type",
-        IconData = "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z",
-        Color = "#FBBF24",
-        Description = "Select all shapes on the slide that match the type of the first selected shape.",
-        DetailedHelpText = "### Advanced Selection\nAdvanced selection engine to find and select all shapes on the slide matching composite criteria including shape type, fill color, font size, and border style.",
-        MinSelection = 1,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AdvancedSelectionFeature
     {
         public enum SelectSameCriteria

@@ -34,6 +34,7 @@
 
             <local:FeatureIconConverter x:Key="IconConverter"/>
             <local:ColorToSolidBrushConverter x:Key="ColorBrushConverter"/>
+            <local:FeatureIdToDescriptionConverter x:Key="FeatureDescriptionConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
             <!-- Colour swatch button -->
@@ -428,8 +429,42 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="5">
-                                            <controls:FeatureIcon Width="16" Height="16" Margin="0,0,10,0" 
-                                                                  FeatureId="{Binding Id}" 
+                                            <StackPanel.ToolTip>
+                                                <ToolTip>
+                                                    <StackPanel MaxWidth="260">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,4,0,4">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}" Value="{x:Null}">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}"
+                                                                   TextWrapping="Wrap" FontSize="11"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}" Value="{x:Null}">
+                                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </ToolTip>
+                                            </StackPanel.ToolTip>
+                                            <controls:FeatureIcon Width="16" Height="16" Margin="0,0,10,0"
+                                                                  FeatureId="{Binding Id}"
                                                                   IconColor="{Binding Id, Converter={StaticResource IconConverter}, ConverterParameter=Color}"/>
                                             <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -516,6 +551,40 @@
                                                         <ListBox.ItemTemplate>
                                                             <DataTemplate>
                                                                 <Grid Margin="4,2">
+                                                                    <Grid.ToolTip>
+                                                                        <ToolTip>
+                                                                            <StackPanel MaxWidth="260">
+                                                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12"
+                                                                                           Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,4,0,4">
+                                                                                    <Border.Style>
+                                                                                        <Style TargetType="Border">
+                                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}" Value="{x:Null}">
+                                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </Border.Style>
+                                                                                </Border>
+                                                                                <TextBlock Text="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}"
+                                                                                           TextWrapping="Wrap" FontSize="11"
+                                                                                           Foreground="{DynamicResource TextSecondaryBrush}">
+                                                                                    <TextBlock.Style>
+                                                                                        <Style TargetType="TextBlock">
+                                                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding Id, Converter={StaticResource FeatureDescriptionConverter}}" Value="{x:Null}">
+                                                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </TextBlock.Style>
+                                                                                </TextBlock>
+                                                                            </StackPanel>
+                                                                        </ToolTip>
+                                                                    </Grid.ToolTip>
                                                                     <Grid.ColumnDefinitions>
                                                                         <ColumnDefinition Width="*"/>
                                                                         <ColumnDefinition Width="Auto"/>

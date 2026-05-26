@@ -6,9 +6,20 @@ using System.Threading.Tasks;
 using Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
+using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features.Text
 {
+    [FeatureMetadata(
+        Id = "BtnTranslate",
+        Name = "Translate",
+        Tooltip = "Translate text in selected shapes",
+        IconData = "M5 8l6 6 M4 14h7 M2 5h12 M7 2l3 3-3 3 M22 22l-5-10-5 10 M14 18h6",
+        Color = "#EAB308",
+        Description = "Opens PowerPoint's built-in Translator pane to translate text in selected shapes.",
+        DetailedHelpText = "### Translate\nOpens the Microsoft Translator pane integrated in PowerPoint. Select shapes or text and use this feature to translate content into any supported language.\n\nFor AI-powered translation (DeepL, OpenAI, Claude, LibreTranslate), configure the translation provider in Settings.",
+        MinSelection = 0,
+        RequiredType = PpSelectionType.ppSelectionNone)]
     public static class TranslationFeatures
     {
         private class TextTranslationRequest

@@ -198,6 +198,10 @@
     <Compile Include="Features\Alignment\SwapPositionsVerticalFeature.cs" />
     <Compile Include="Features\Charts\ChartOverlayFeature.cs" />
     <Compile Include="Features\Charts\HarveyBallFeature.cs" />
+    <Compile Include="Features\Visuals\CloneBottomFeature.cs" />
+    <Compile Include="Features\Visuals\CloneLeftFeature.cs" />
+    <Compile Include="Features\Visuals\CloneRightFeature.cs" />
+    <Compile Include="Features\Visuals\CloneTopFeature.cs" />
     <Compile Include="Features\Charts\ProgressSeriesFeature.cs" />
     <Compile Include="Features\Charts\StarRatingFeature.cs" />
     <Compile Include="Features\Charts\ThermometerFeature.cs" />
@@ -231,6 +235,9 @@
     <Compile Include="Features\Tables\TableSplitFeature.cs" />
     <Compile Include="Features\Tables\TableSumFeature.cs" />
     <Compile Include="Features\Tables\TableTransposeFeature.cs" />
+    <Compile Include="Features\Text\ApplyTextFeature.cs" />
+    <Compile Include="Features\Text\ParagraphDialogFeature.cs" />
+    <Compile Include="Features\Text\SpecialCharsFeature.cs" />
     <Compile Include="Features\Text\BulkFormatReplacerFeature.cs" />
     <Compile Include="Features\Text\DeleteTextFeature.cs" />
     <Compile Include="Features\Text\FitFormToTextFeature.cs" />
@@ -246,12 +253,21 @@
     <Compile Include="Features\Utilities\AgendaWizardFeature.cs" />
     <Compile Include="Features\Utilities\AnonymizeFeature.cs" />
     <Compile Include="Features\Utilities\CleanerFeature.cs" />
+    <Compile Include="Features\Utilities\AssetManagerFeature.cs" />
     <Compile Include="Features\Utilities\ConsolidateMastersFeature.cs" />
+    <Compile Include="Features\Utilities\ExploreFeaturesFeature.cs" />
+    <Compile Include="Features\Utilities\ExportWizardFeature.cs" />
+    <Compile Include="Features\Utilities\MagicResizerFeature.cs" />
+    <Compile Include="Features\Utilities\SearchBarFeature.cs" />
+    <Compile Include="Features\Utilities\SettingsFeature.cs" />
+    <Compile Include="Features\Utilities\SizePanelFeature.cs" />
+    <Compile Include="Features\Utilities\TemplateManagerFeature.cs" />
     <Compile Include="Features\Utilities\CopyCoordinatesFeature.cs" />
     <Compile Include="Features\Utilities\DimensionLockFeature.cs" />
     <Compile Include="Features\Utilities\DocumentAutomationFeature.cs" />
     <Compile Include="Features\Utilities\ExcelLinkManagerFeature.cs" />
     <Compile Include="Features\Utilities\FlightModeFeature.cs" />
+    <Compile Include="Features\Utilities\FontPanelFeature.cs" />
     <Compile Include="Features\Utilities\FormatShapeDialogFeature.cs" />
     <Compile Include="Features\Utilities\HideMasterObjectsFeature.cs" />
     <Compile Include="Features\Utilities\HideSelectedFeature.cs" />
@@ -265,6 +281,7 @@
     <Compile Include="Features\Utilities\SelectSameTypeFeature.cs" />
     <Compile Include="Features\Utilities\SeriesGeneratorFeature.cs" />
     <Compile Include="Features\Utilities\ShapeLockingFeature.cs" />
+    <Compile Include="Features\Utilities\SnapShapeFeature.cs" />
     <Compile Include="Features\Utilities\ShowHiddenFeature.cs" />
     <Compile Include="Features\Utilities\SlideGuidelinesFeature.cs" />
     <Compile Include="Features\Utilities\SlideNotesFeature.cs" />
@@ -279,6 +296,10 @@
     <Compile Include="Features\Utilities\VisibilityFeature.cs" />
     <Compile Include="Features\Visuals\AddStickerFeature.cs" />
     <Compile Include="Features\Visuals\AdjustHorizontalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\DecreaseHorizontalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\DecreaseVerticalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\IncreaseHorizontalSpacingFeature.cs" />
+    <Compile Include="Features\Visuals\IncreaseVerticalSpacingFeature.cs" />
     <Compile Include="Features\Visuals\AdjustSpacingFeatureHelper.cs" />
     <Compile Include="Features\Visuals\AdjustVerticalSpacingFeature.cs" />
     <Compile Include="Features\Visuals\AdvancedSelectionFeature.cs" />
@@ -364,6 +385,7 @@
     <Compile Include="UI\Converters\ColorToSolidBrushConverter.cs" />
     <Compile Include="UI\Converters\Converters.cs" />
     <Compile Include="UI\Converters\FeatureIconConverter.cs" />
+    <Compile Include="UI\Converters\FeatureIdToDescriptionConverter.cs" />
     <Compile Include="UI\Dialogs\StorylineDialog.xaml.cs">
       <DependentUpon>StorylineDialog.xaml</DependentUpon>
     </Compile>

@@ -1405,10 +1405,6 @@ namespace oPenEfficiency
                 case "BtnDockRight": DockToFirstRightFeature.Execute(manager); break;
                 case "BtnDockTop": DockToFirstTopFeature.Execute(manager); break;
                 case "BtnDockBottom": DockToFirstBottomFeature.Execute(manager); break;
-                case "BtnCloneLeft": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Left); break;
-                case "BtnCloneRight": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Right); break;
-                case "BtnCloneTop": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Top); break;
-                case "BtnCloneBottom": oPenEfficiency.Features.CloneSelectionFeature.Execute(manager, oPenEfficiency.Features.CloneSelectionFeature.Direction.Bottom); break;
                 case "BtnRectifyRotation": RectifyRotationFeature.Execute(manager); break;
                 case "BtnArrangeCircle": ArrangeInShapeFeature.Execute(manager, "circle"); break;
                 case "BtnArrangePro": ToggleFloatingWindow("BtnArrangePro", () => new UI.ArrangeProWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
@@ -1432,25 +1428,11 @@ namespace oPenEfficiency
 
                 case "BtnThemeColor": ThemeColorPickerFeature.Execute(manager); break;
                 
-                case "BtnIllustrativeSticker": IllustrativeStickerFeature.Execute(manager); break;
-                case "BtnAssetManager": Globals.ThisAddIn.ToggleAssetManager(); break;
-                case "BtnCopyXY": CopyCoordinatesFeature.Execute(manager); break;
-                case "BtnPasteXY": PasteCoordinatesFeature.Execute(manager); break;
                 case "BtnAddSticker": AddStickerFeature.Execute(manager); break;
-                case "BtnHarveyBall": PerformHarveyBallCycle(); break;
-                case "BtnHideSelected": HideSelectedFeature.Execute(manager); break;
-                case "BtnShowHidden": ShowHiddenFeature.Execute(manager); break;
-                case "BtnCheckbox": CheckboxFeature.Execute(manager, CheckboxFeature.CheckboxState.Tick, true, 32f, -1); break;
                 case "BtnMagicResizer": ToggleFloatingWindow("BtnMagicResizer", () => new UI.MagicResizerWindow(), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnSplitByParagraphs": SplitByParagraphsFeature.Execute(manager); break;
-                case "BtnDeleteText": DeleteTextFeature.Execute(manager); break;
                 case "BtnSpecialChars": 
                     OpenSpecialCharactersWindow(null);
                     break;
-                case "BtnSwapTextFormatted": SwapTextFormattedFeature.Execute(manager); break;
-                case "BtnSwapTextPlain": SwapTextPlainFeature.Execute(manager); break;
-                case "BtnTrafficLight": TrafficLightFeature.Execute(manager); break;
-                case "BtnStarRating": new UI.RatingToolbar(manager).Show(); break;
                 case "BtnThermometer": ThermometerFeature.Execute(manager); break;
                 case "BtnSelectSameType": SelectSameTypeFeature.Execute(manager); break;
                 case "BtnSnapToObjects":
@@ -1485,11 +1467,6 @@ namespace oPenEfficiency
                     // Open context menu on click
                     if (targetBtn != null && targetBtn.ContextMenu != null) targetBtn.ContextMenu.IsOpen = true;
                     break;
-                case "BtnTableFormatPainter": TableFormatPainterFeature.Execute(manager); break;
-                case "BtnStoryline": StorylineFeature.Execute(manager); break;
-                case "BtnFlightMode":
-                    FlightModeFeature.Toggle(manager);
-                    break;
                 case "BtnSlidePaste":
                     ToggleFloatingWindow("BtnSlidePaste", () => new UI.SlidePasteWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton);
                     break;
@@ -1513,8 +1490,6 @@ namespace oPenEfficiency
                 case "BtnProgressSeries": oPenEfficiency.Features.ProgressSeriesFeature.Create(manager); break;
                 case "BtnCleaner": // By default, maybe do nothing or show context menu? 
                 case "BtnSettings": OpenSettings(); break;
-                case "BtnTemplateManager": OpenTemplateManager(); break;
-                case "BtnExploreFeatures": Globals.ThisAddIn.OpenFeatureExplorer(); break;
                 case "BtnConvertTableToShapes": ConvertTableToShapesFeature.Execute(manager); break;
                 case "BtnInsertColumnLeft": InsertTableColumnLeftFeature.Execute(manager, false); break;
                 case "BtnInsertColumnRight": InsertTableColumnRightFeature.Execute(manager, false); break;
@@ -1528,51 +1503,6 @@ namespace oPenEfficiency
                 case "BtnTableDimensions":
                     if (targetBtn != null && targetBtn.ContextMenu != null) targetBtn.ContextMenu.IsOpen = true;
                     break;
-                case "BtnParagraphDialog":
-                    try
-                    {
-                        var app = manager.GetApplication();
-                        if (app == null)
-                        {
-                            System.Windows.Forms.MessageBox.Show(
-                                "Cannot access PowerPoint application.", "Error",
-                                System.Windows.Forms.MessageBoxButtons.OK,
-                                System.Windows.Forms.MessageBoxIcon.Error);
-                            break;
-                        }
-
-                        if (app.CommandBars != null)
-                        {
-                            app.CommandBars.ExecuteMso("ParagraphDialog");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine("ParagraphDialog: CommandBars is not available");
-                            System.Windows.Forms.MessageBox.Show(
-                                "Cannot open Paragraph dialog. Please try again.", "Error",
-                                System.Windows.Forms.MessageBoxButtons.OK,
-                                System.Windows.Forms.MessageBoxIcon.Error);
-                        }
-                    }
-                    catch (System.Runtime.InteropServices.COMException ex)
-                    {
-                        // Log the COM exception but don't crash
-                        System.Diagnostics.Debug.WriteLine($"COMException in ParagraphDialog: {ex.Message}");
-                        System.Windows.Forms.MessageBox.Show(
-                            $"Cannot open Paragraph dialog: {ex.Message}", "Error",
-                            System.Windows.Forms.MessageBoxButtons.OK,
-                            System.Windows.Forms.MessageBoxIcon.Error);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Handle any other exceptions
-                        System.Diagnostics.Debug.WriteLine($"Exception in ParagraphDialog: {ex.Message}");
-                        System.Windows.Forms.MessageBox.Show(
-                            $"Cannot open Paragraph dialog: {ex.Message}", "Error",
-                            System.Windows.Forms.MessageBoxButtons.OK,
-                            System.Windows.Forms.MessageBoxIcon.Error);
-                    }
-                    break;
                 case "BtnApplyTextTool":
                     ToggleFloatingWindow("BtnApplyTextTool", () => new UI.ApplyTextWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton);
                     break;
@@ -1585,14 +1515,6 @@ namespace oPenEfficiency
         {
             var win = new UI.SettingsWindow(GetManager());
             win.SettingsApplied += (s, args) => RebuildUI();
-            win.ShowDialog();
-        }
-
-        private void OpenTemplateManager()
-        {
-            var manager = GetManager();
-            if (manager == null) return;
-            var win = new UI.Dialogs.TemplateManagerWindow(manager);
             win.ShowDialog();
         }
 
@@ -2558,24 +2480,6 @@ namespace oPenEfficiency
                     btn.ContextMenu.Items.Add(mi);
                 }
             }
-        }
-
-        private void PerformHarveyBallCycle()
-        {
-            var manager = GetManager();
-            var selection = manager.GetSelectedShapes();
-            float nextPercentage = 0.25f;
-            if (selection != null && selection.Count == 1)
-            {
-                var selected = selection[1];
-                if (HarveyBallFeature.IsHarveyBall(selected))
-                {
-                    float current = HarveyBallFeature.GetCurrentPercentage(selected);
-                    nextPercentage = current + 0.25f;
-                    if (nextPercentage > 1.01f) nextPercentage = 0f;
-                }
-            }
-            HarveyBallFeature.Execute(manager, nextPercentage);
         }
 
         private void OpenSpecialCharactersWindow(string selection)

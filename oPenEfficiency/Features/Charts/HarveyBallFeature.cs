@@ -33,11 +33,24 @@ namespace oPenEfficiency.Features
         private const string HarveyBallTag = "oPE_HarveyBall";
 
         /// <summary>
-        /// Wrapper for auto-discovery - inserts Harvey Ball with default 25% fill.
+        /// Cycles through 0 → 25 → 50 → 75 → 100 → 0% when a Harvey Ball is selected;
+        /// inserts a new 25% ball otherwise.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Execute(manager, 0.25f);
+            var selection = manager?.GetSelectedShapes();
+            float nextPercentage = 0.25f;
+            if (selection != null && selection.Count == 1)
+            {
+                var selected = selection[1];
+                if (IsHarveyBall(selected))
+                {
+                    float current = GetCurrentPercentage(selected);
+                    nextPercentage = current + 0.25f;
+                    if (nextPercentage > 1.01f) nextPercentage = 0f;
+                }
+            }
+            return Execute(manager, nextPercentage);
         }
 
         public static bool Execute(PowerPointManager manager, float percentage = 0.25f)
