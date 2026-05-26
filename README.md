@@ -36,6 +36,7 @@ Built on the .NET Framework and deep PowerPoint COM integration, oPenEfficiency 
 - **Stack & Dock** - Instantly stack shapes adjacent to each other or dock them to slide/shape edges.
 - **Stretch & Match** - Stretch shape edges to match an anchor or standardize Width/Height across a selection.
 - **Swap Positions** - Swap locations of two shapes relative to customizable anchor points (Center, Top-Left, etc.).
+- **Multi-Swap** - Swap multiple shapes based on selection order and direction (Top-Down, Bottom-Up, etc.).
 - **Arrange Tools** - Arrange shapes in perfect grids, circles, triangles, or complex "Pro" patterns (spirals, concentrics).
 - **Precision Spacing** - Increase/decrease horizontal/vertical gaps by fixed increments or remove gaps entirely.
 - **Diagonal Align** - Position shapes along a diagonal axis.
@@ -45,6 +46,7 @@ Built on the .NET Framework and deep PowerPoint COM integration, oPenEfficiency 
 
 ### 🎨 Visual Elements & Formatting
 - **Infographics** - Generate and manage **Harvey Balls**, **Star Ratings**, **Thermometers**, **Traffic Lights**, and **Checkboxes**.
+- **Glass Hide** - Create semi-transparent overlays to obscure content or add frosted glass effects.
 - **Progress Series** - Create automated chevron/arrow sequences for process steps.
 - **Smart Components** - Synchronized **Smart Corners** for multiple shapes and **Align Shape Proportions** for consistency.
 - **Color Tools** - High-speed **Theme Color Palette**, global **Color Picker (Eyedropper)**, and **Color Eraser** (Transparency).

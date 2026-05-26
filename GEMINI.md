@@ -25,5 +25,6 @@ Before starting any task, you **MUST** consult the AI Agent index:
 2. **Checkpoint Files:** For multi-step tasks, write progress state to a file (e.g., `_temp_scripts/checkpoint.md`) instead of relying on chat history.
 3. **Explicit Summarization:** Ask the user to summarize before context compresses.
 4. **Document Bugs:** If you resolve a complex VSTO/WPF bug, you **MUST** document the root cause and the permanent fix in `.agents/skills/vsto-pitfalls.md`. Never let a hard-won lesson be lost.
+5. **Feature Documentation:** For every new feature or modification to an existing one, you **MUST** update `CHANGELOG.md`, `README.md` (if applicable), and ensure the `DetailedHelpText` in the `[FeatureMetadata]` attribute is accurate and comprehensive.
 
 Always ask questions if the input from the user is unclear or ambiguous. Always answer with "Okay chef".

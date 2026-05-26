@@ -42,8 +42,10 @@ Whenever an agent finishes a multi-turn task, they MUST:
 2. Delete them immediately via `run_shell_command` using `Remove-Item -Force`.
 3. Inform the user that the temporary workspace artifacts have been cleaned up.
 
-## 5. Changelog & Wiki Updates
+## 5. Changelog & Documentation Updates
 
-**Rule:** Documentation must evolve alongside the code.
-- Whenever a feature is added or a bug is fixed, the agent MUST update CHANGELOG.md with the new changes before committing.
-- The internal Wiki (if any) and GitHub Wiki must be kept up-to-date with these changes during the commit phase.
+**Rule:** Documentation must evolve alongside the code. **A feature is not "done" until it is documented.**
+- **Changelog:** Whenever a feature is added or a bug is fixed, the agent MUST update `CHANGELOG.md` with the new changes.
+- **Readme:** New features MUST be added to the feature lists in `README.md`.
+- **Internal Wiki:** The `DetailedHelpText` in the code's `[FeatureMetadata]` must be updated to reflect any changes in functionality or new right-click options.
+- **GitHub Wiki:** GitHub Wiki pages must be kept up-to-date with these changes during the commit phase.

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2026.05.25] - 2026-05-25
+
+### Added
+- **Multi-Swap:** New feature to swap multiple shapes based on selection order. Supports Top-Down, Bottom-Up, Left-Right, and Right-Left directions via right-click context menu.
+- **Glass Hide:** New visual feature to overlay shapes with semi-transparent "glass" rectangles. Supports "Single Bounding Box" or "Individual Shapes" modes via right-click context menu.
+
 ## [2026.4.25] - 2026-05-20
 
 ### Added

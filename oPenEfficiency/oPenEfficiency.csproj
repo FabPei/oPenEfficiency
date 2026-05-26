@@ -144,6 +144,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="oPenEfficiency_1_TemporaryKey.pfx" />
     <None Include="oPenEfficiency_TemporaryKey.pfx" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -183,6 +184,7 @@
     <Compile Include="Features\Alignment\MatchHeightToFirstFeature.cs" />
     <Compile Include="Features\Alignment\MatchSizeFeature.cs" />
     <Compile Include="Features\Alignment\MatchWidthToFirstFeature.cs" />
+    <Compile Include="Features\Alignment\MultiSwapFeature.cs" />
     <Compile Include="Features\Alignment\StretchToFirstBottomEdgeFeature.cs" />
     <Compile Include="Features\Alignment\StretchToFirstBottomFeature.cs" />
     <Compile Include="Features\Alignment\StretchToFirstLeftEdgeFeature.cs" />
@@ -282,6 +284,7 @@
     <Compile Include="Features\Visuals\AdvancedSelectionFeature.cs" />
     <Compile Include="Features\Visuals\CloneSelectionFeature.cs" />
     <Compile Include="Features\Visuals\CheckboxFeature.cs" />
+    <Compile Include="Features\Visuals\GlassHideFeature.cs" />
     <Compile Include="Features\Visuals\IllustrativeStickerFeature.cs" />
     <Compile Include="Features\Visuals\LearnMarginFeature.cs" />
     <Compile Include="Features\Visuals\MapWizardFeature.cs" />
@@ -1276,10 +1279,10 @@
   <PropertyGroup>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>oPenEfficiency_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>oPenEfficiency_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>CA0718748DF1D14D5F4F520F7D66A82B95FC42A1</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>34B3A518A4AE73743FF3E52FFC862BD0531E1F51</ManifestCertificateThumbprint>
   </PropertyGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets" Condition="Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')" />

@@ -1380,6 +1380,8 @@ namespace oPenEfficiency
                 case "BtnMatchSize": MatchSizeFeature.Execute(manager); break;
                 case "BtnMatchWidth": MatchWidthToFirstFeature.Execute(manager); break;
                 case "BtnMatchHeight": MatchHeightToFirstFeature.Execute(manager); break;
+                case "BtnGlassHide": GlassHideFeature.Execute(manager); break;
+                case "BtnMultiSwap": MultiSwapFeature.Execute(manager); break;
                 case "BtnSwapPositions": SwapPositionsFeature.Execute(manager); break;
                 case "BtnStretchLeft": StretchToFirstLeftFeature.Execute(manager); break;
                 case "BtnStretchRight": StretchToFirstRightFeature.Execute(manager); break;

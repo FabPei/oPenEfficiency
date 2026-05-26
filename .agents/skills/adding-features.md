@@ -391,8 +391,9 @@ case "BtnLegacyFeature":
 **IMPORTANT:** When adding a new feature (even via auto-discovery), ensure it is added to the `FeatureLibrary.AllFeatures` list in **alphabetical order by Name**. This ensures the "Available Features" list in the Settings menu remains organized.
 
 **CRITICAL PITFALL - Duplicate Registrations & Missing Features:**
-- **Missing Features:** Features that are auto-discovered via `[FeatureMetadata]` but *never added* to `FeatureLibrary.AllFeatures` will be completely missing from dynamic layouts like `GetAllFeaturesLayout()`, because those layouts iterate over the hardcoded list. Always append new features to `FeatureLibrary.AllFeatures`.
-- **Duplicate Features:** Do NOT add the same feature to `FeatureLibrary.AllFeatures` multiple times. Duplicate entries in this list will cause the feature to appear multiple times in the UI (e.g., duplicate buttons in the "All Features" sidebar layout). Always search the list first to ensure the feature isn't already registered!
+- **Missing Features:** Features that are auto-discovered via `[FeatureMetadata]` but *never added* to `FeatureLibrary.AllFeatures` will be completely missing from the Settings search pool and dynamic layouts like `GetAllFeaturesLayout()`. Always append new features to `FeatureLibrary.AllFeatures`.
+- **Duplicate Features:** Do NOT add the same feature to `FeatureLibrary.AllFeatures` multiple times. Duplicate entries in this list will cause the feature to appear multiple times in the UI. Always search the list first to ensure the feature isn't already registered!
+- **MANDATORY AI VALIDATION:** AI Agents are prone to "silent failures" when using text replacement tools on large lists like `AllFeatures`. After attempting to add a feature to `FeatureLibrary.AllFeatures`, the agent **MUST immediately use `grep_search` or `read_file`** to explicitly verify the string was injected correctly. Do not assume the edit succeeded.
 
 **Recommendation:** Use attribute-based pattern for all new features. Keep legacy pattern only for:
 - Features being migrated gradually
@@ -473,8 +474,26 @@ public static class Feature
 
 ---
 
-## Related Documentation
+## Step 5: Documentation (MANDATORY)
 
+Every feature implementation or modification is **INCOMPLETE** until you have updated the project documentation. Documentation is critical for feature discoverability and maintainability.
+
+### 1. Update In-App "Wiki" (Metadata)
+Ensure the `[FeatureMetadata]` attribute in your feature class has accurate and comprehensive text:
+- **`Description`**: A clear, 1-2 sentence summary of what the feature does.
+- **`DetailedHelpText`**: A detailed explanation of the feature's logic. You **MUST** document any right-click Context Menu options here (e.g., "Right-click options:\n• Top-Down: Sorts...").
+
+### 2. Update Project History (Changelog)
+Add an entry to `CHANGELOG.md` under the latest date heading. Be concise but descriptive.
+
+### 3. Update Feature Discoverability (README)
+Add the feature to the appropriate category in the `Features` section of `README.md`. Ensure the name matches what's in the Sidebar.
+
+---
+
+## Related Documentation & Context Compression
+- [Workspace Hygiene](./workspace-hygiene.md) - Repository cleanup rules and changelog standards
+- [VSTO Pitfalls](./vsto-pitfalls.md) - Handling COM objects and threading in WPF windows
 - [UI Development Guide](./ui-development.md) - Creating dialogs and floating windows
 - [Floating Window Creation](./floating-window-creation.md) - WPF window patterns
 - [Project Overview](./project-overview.md) - Architecture and patterns

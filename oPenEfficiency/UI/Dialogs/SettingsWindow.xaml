@@ -471,7 +471,7 @@
                                                         <Grid Grid.Column="0">
                                                             <TextBox x:Name="SectionNameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                                                      Background="{DynamicResource SurfaceLightBrush}" Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                     BorderThickness="0" Padding="5" FontWeight="Bold"/>
+                                                                     BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}" Padding="5" FontWeight="Bold"/>
                                                             <TextBlock IsHitTestVisible="False" Text="Section Name" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0" Foreground="{DynamicResource TextMutedBrush}" FontWeight="Bold">
                                                                 <TextBlock.Style>
                                                                     <Style TargetType="TextBlock">

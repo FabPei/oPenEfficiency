@@ -31,6 +31,7 @@ namespace oPenEfficiency.UI
             new SidebarFeature { Id = "BtnSizePanel", Name = "Shape Size Panel" },
             new SidebarFeature { Id = "BtnMatchSize", Name = "Match Size" },
             new SidebarFeature { Id = "BtnMatchWidth", Name = "Match Width" },
+            new SidebarFeature { Id = "BtnMultiSwap", Name = "Multi-Swap" },
             new SidebarFeature { Id = "BtnMatchHeight", Name = "Match Height" },
             new SidebarFeature { Id = "BtnLockDimensions", Name = "Lock Aspect Ratio" },
             new SidebarFeature { Id = "BtnShapeLock", Name = "Shape Locking" },
@@ -113,6 +114,9 @@ namespace oPenEfficiency.UI
             new SidebarFeature { Id = "BtnOptimizeFreeForm", Name = "Optimize Freeform" },
             new SidebarFeature { Id = "BtnStyleCheck", Name = "Presentation Style Check" },
             new SidebarFeature { Id = "BtnCleaner", Name = "Deep Presentation Cleaner" },
+            new SidebarFeature { Id = "BtnAnonymize", Name = "Anonymize Presentation" },
+            new SidebarFeature { Id = "BtnChartOverlay", Name = "Chart Target Line Overlay" },
+            new SidebarFeature { Id = "BtnNewSlide", Name = "New Slide" },
             new SidebarFeature { Id = "BtnFormatBold", Name = "Bold" },
             new SidebarFeature { Id = "BtnFormatItalic", Name = "Italic" },
             new SidebarFeature { Id = "BtnFormatUnderline", Name = "Underline" },
@@ -138,6 +142,7 @@ namespace oPenEfficiency.UI
             new SidebarFeature { Id = "BtnTrafficLight", Name = "Traffic Light" },
             new SidebarFeature { Id = "BtnThermometer", Name = "Thermometer Chart" },
             new SidebarFeature { Id = "BtnStarRating", Name = "Star Rating" },
+            new SidebarFeature { Id = "BtnGlassHide", Name = "Glass Hide" },
             new SidebarFeature { Id = "BtnCheckbox", Name = "Vector Checkbox" },
             new SidebarFeature { Id = "BtnNumeration", Name = "Auto Numeration" },
             new SidebarFeature { Id = "BtnProgressSeries", Name = "Progress Series" },
@@ -157,7 +162,40 @@ namespace oPenEfficiency.UI
             new SidebarFeature { Id = "BtnSettings", Name = "oPenEfficiency Settings" },
             new SidebarFeature { Id = "BtnTemplateManager", Name = "Template Library" },
             new SidebarFeature { Id = "BtnStickyNote", Name = "Sticky Note" },
-            new SidebarFeature { Id = "BtnSlidePaste", Name = "Smart Slide Paste" }
+            new SidebarFeature { Id = "BtnSlidePaste", Name = "Smart Slide Paste" },
+            new SidebarFeature { Id = "BtnArrangeGrid", Name = "Arrange in Grid" },
+            new SidebarFeature { Id = "BtnArrangeInShape", Name = "Arrange in Shape" },
+            new SidebarFeature { Id = "BtnMatchAngles", Name = "Match Angles" },
+            new SidebarFeature { Id = "BtnSmartCorners", Name = "Smart Corners" },
+            new SidebarFeature { Id = "BtnConvertToTable", Name = "Convert Shapes to Table" },
+            new SidebarFeature { Id = "BtnConvertToShapes", Name = "Convert Table to Shapes" },
+            new SidebarFeature { Id = "BtnTableColumnInsertion", Name = "Insert Column Dialog" },
+            new SidebarFeature { Id = "BtnTableColumnWidth", Name = "Table Column Width" },
+            new SidebarFeature { Id = "BtnTableHeatmap", Name = "Table Heatmap" },
+            new SidebarFeature { Id = "BtnTableRowHeight", Name = "Table Row Height" },
+            new SidebarFeature { Id = "BtnTableRowInsertion", Name = "Insert Row Dialog" },
+            new SidebarFeature { Id = "BtnTableSortAZ", Name = "Table Sorting" },
+            new SidebarFeature { Id = "BtnInsertText", Name = "Insert Text at Cursor" },
+            new SidebarFeature { Id = "BtnIncreaseFontSize", Name = "Increase Font Size" },
+            new SidebarFeature { Id = "BtnDecreaseFontSize", Name = "Decrease Font Size" },
+            new SidebarFeature { Id = "BtnDocumentAutomation", Name = "Document Automation" },
+            new SidebarFeature { Id = "BtnExcelLinkManager", Name = "Excel Link Manager" },
+            new SidebarFeature { Id = "BtnFlightMode", Name = "Flight Mode" },
+            new SidebarFeature { Id = "BtnMoveToBackup", Name = "Move to Backup" },
+            new SidebarFeature { Id = "BtnPropertyExtraction", Name = "Property Extraction" },
+            new SidebarFeature { Id = "BtnSeriesGenerator", Name = "Series Generator" },
+            new SidebarFeature { Id = "BtnSlideNotes", Name = "Slide Notes" },
+            new SidebarFeature { Id = "BtnStickyNoteManager", Name = "Sticky Note Manager" },
+            new SidebarFeature { Id = "BtnTagInspector", Name = "Tag Inspector" },
+            new SidebarFeature { Id = "BtnLearnMargin", Name = "Learn Margin" },
+            new SidebarFeature { Id = "BtnMapWizard", Name = "Map Wizard" },
+            new SidebarFeature { Id = "BtnObjectConnector", Name = "Object Connector" },
+            new SidebarFeature { Id = "BtnFlipHorizontal", Name = "Flip Horizontal" },
+            new SidebarFeature { Id = "BtnFlipVertical", Name = "Flip Vertical" },
+            new SidebarFeature { Id = "BtnRotateShape", Name = "Rotate Shape" },
+            new SidebarFeature { Id = "BtnPositionPainter", Name = "Position Painter" },
+            new SidebarFeature { Id = "BtnSetMargin", Name = "Set Margin" },
+            new SidebarFeature { Id = "BtnTransparency", Name = "Set Transparency" }
         };
 
         public static SidebarConfig GetEmergencyDefault() => GetStandardLayout();
@@ -192,7 +230,7 @@ namespace oPenEfficiency.UI
             config.Sections.Add(textSection);
 
             var formatSection = new SidebarSection { Name = "FORMAT & STYLE", Color = "#06B6D4" };
-            string[] formatIds = { "BtnPickColor", "BtnPickFillColor", "BtnPickLineColor", "BtnPickTextColor", "BtnThemeColor", "BtnTransparentColor", "BtnFormatShapeDialog", "BtnOptimizeFreeForm", "BtnStyleCheck", "BtnCleaner", "BtnFormatBold", "BtnFormatItalic", "BtnFormatUnderline", "BtnFormatStrikethrough", "BtnFormatSuperscript", "BtnFormatSubscript" };
+            string[] formatIds = { "BtnPickColor", "BtnPickFillColor", "BtnPickLineColor", "BtnPickTextColor", "BtnThemeColor", "BtnTransparentColor", "BtnGlassHide", "BtnFormatShapeDialog", "BtnOptimizeFreeForm", "BtnStyleCheck", "BtnCleaner", "BtnFormatBold", "BtnFormatItalic", "BtnFormatUnderline", "BtnFormatStrikethrough", "BtnFormatSuperscript", "BtnFormatSubscript" };
             foreach (var id in formatIds) formatSection.Features.Add(AllFeatures.Find(f => f.Id == id));
             config.Sections.Add(formatSection);
 
@@ -202,7 +240,7 @@ namespace oPenEfficiency.UI
             config.Sections.Add(tablesSection);
 
             var visualsSection = new SidebarSection { Name = "VISUAL ELEMENTS", Color = "#EF4444" };
-            string[] visualsIds = { "BtnIllustrativeSticker", "BtnAddSticker", "BtnHarveyBall", "BtnTrafficLight", "BtnThermometer", "BtnStarRating", "BtnCheckbox", "BtnNumeration", "BtnProgressSeries", "BtnRepeatShape", "BtnSplitShape", "BtnSplitByParagraphs" };
+            string[] visualsIds = { "BtnIllustrativeSticker", "BtnAddSticker", "BtnHarveyBall", "BtnTrafficLight", "BtnThermometer", "BtnStarRating", "BtnCheckbox", "BtnNumeration", "BtnProgressSeries", "BtnGlassHide", "BtnRepeatShape", "BtnSplitShape", "BtnSplitByParagraphs" };
             foreach (var id in visualsIds) visualsSection.Features.Add(AllFeatures.Find(f => f.Id == id));
             config.Sections.Add(visualsSection);
 

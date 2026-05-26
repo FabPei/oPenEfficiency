@@ -15,11 +15,11 @@ namespace oPenEfficiency.Features.Utilities
     [FeatureMetadata(
         Id = "BtnFlightMode",
         Name = "Flight Mode",
-        Tooltip = "Flight mode",
+        Tooltip = "Flight Mode (Privacy)",
         IconData = "M21,16V4H13L11,2H3V16H11L13,18H21M19,14H13.8L12.8,12H5V4H9.2L10.2,6H19V14M17,18V20H7V18H17Z",
         Color = "#F43F5E",
         Description = "Toggles flight mode to obscure sensitive content when presenting in public.",
-        DetailedHelpText = "### Flight Mode\nDisables all COM event listeners and UI state updates in the Add-in for maximum performance during intensive editing sessions. Re-enable to restore full functionality.",
+        DetailedHelpText = "### Flight Mode\nToggles privacy overlays to hide sensitive company branding or logos when presenting in public spaces.\n\n**Right-Click Options:**\n* **Cover Logos Only:** Identifies picture shapes in the slide master and covers them with white rectangles.\n* **Light Overlay:** Adds a 5% semi-transparent white overlay over the entire slide.\n* **Heavy Overlay:** Adds a 15% semi-transparent white overlay over the entire slide.\n* **Disable:** Removes all privacy overlays.",
         MinSelection = 0,
         IsToggle = true,
         RequiredType = PpSelectionType.ppSelectionNone)]
@@ -39,14 +39,11 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Wrapper for auto-discovery - toggles flight mode (cover logos).
-        /// Note: This feature requires ToggleButton state management, handled by manual switch.
+        /// Toggles flight mode (defaults to cover logos).
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            // Toggle feature - requires ToggleButton parameter for state sync
-            // Handled by manual switch in MainSidebar.xaml.cs
-            return false;
+            return Toggle(manager);
         }
 
         /// <summary>
@@ -186,19 +183,30 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Enables Flight Mode - Hide Master Background (native method).
-        /// Currently not used - overlay methods are preferred.
+        /// Enables Flight Mode - Hide Master Background.
+        /// Iterates all slides and sets FollowMasterBackground to false.
         /// </summary>
         public static bool EnableHideBackground(PowerPointManager manager)
         {
-            // Placeholder - PowerPoint doesn't have a simple ShowBackground property
-            // Use overlay methods instead
-            System.Windows.Forms.MessageBox.Show(
-                "Hide Master Background is not available. Please use Cover Logos or Overlay methods.",
-                "Flight Mode",
-                System.Windows.Forms.MessageBoxButtons.OK,
-                System.Windows.Forms.MessageBoxIcon.Information);
-            return false;
+            try
+            {
+                var pres = manager.GetApplication().ActivePresentation;
+                
+                // Disable other modes first
+                Disable(pres);
+
+                foreach (Slide slide in pres.Slides)
+                {
+                    try { slide.FollowMasterBackground = Office.MsoTriState.msoFalse; } catch { }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "FlightModeFeature.EnableHideBackground");
+                return false;
+            }
         }
 
         /// <summary>
@@ -274,6 +282,12 @@ namespace oPenEfficiency.Features.Utilities
         private static void Disable(Presentation pres)
         {
             DisableOverlays(pres);
+            
+            // Re-enable background graphics
+            foreach (Slide slide in pres.Slides)
+            {
+                try { slide.FollowMasterBackground = Office.MsoTriState.msoTrue; } catch { }
+            }
         }
 
         private static void DisableOverlays(Presentation pres)
@@ -310,39 +324,58 @@ namespace oPenEfficiency.Features.Utilities
         {
             try
             {
+                var pres = shapes.Parent as Presentation;
+                // If parent isn't presentation (e.g. Layout/Master), get it via application
+                if (pres == null)
+                {
+                    try 
+                    { 
+                        var app = shapes.Application as Microsoft.Office.Interop.PowerPoint.Application;
+                        if (app != null) pres = app.ActivePresentation; 
+                    } 
+                    catch { }
+                }
+
+                float slideWidth = pres?.PageSetup.SlideWidth ?? 0;
+                float slideHeight = pres?.PageSetup.SlideHeight ?? 0;
+
                 for (int i = 1; i <= shapes.Count; i++)
                 {
                     Shape shape = shapes[i];
-                    if (shape.Type == Office.MsoShapeType.msoPicture ||
-                        shape.Type == Office.MsoShapeType.msoLinkedPicture)
-                    {
-                        results.Add(shape);
-                    }
-                    else if (shape.Type == Office.MsoShapeType.msoGroup)
-                    {
-                        // Recurse into groups - GroupItems returns GroupShapes which can be iterated
-                        try
-                        {
-                            foreach (Shape groupShape in shape.GroupItems)
-                            {
-                                if (groupShape.Type == Office.MsoShapeType.msoPicture ||
-                                    groupShape.Type == Office.MsoShapeType.msoLinkedPicture)
-                                {
-                                    results.Add(groupShape);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                            // Skip groups that can't be accessed
-                        }
-                    }
+                    ProcessShape(shape, results, slideWidth, slideHeight);
                 }
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "FlightModeFeature.FindImageShapes");
             }
+        }
+
+        private static void ProcessShape(Shape shape, List<Shape> results, float slideWidth, float slideHeight)
+        {
+            try
+            {
+                if (shape.Type == Office.MsoShapeType.msoPicture ||
+                    shape.Type == Office.MsoShapeType.msoLinkedPicture)
+                {
+                    // Ignore full-slide background images (anything > 95% of slide dimensions)
+                    bool isFullWidth = slideWidth > 0 && shape.Width >= (slideWidth * 0.95f);
+                    bool isFullHeight = slideHeight > 0 && shape.Height >= (slideHeight * 0.95f);
+
+                    if (!isFullWidth && !isFullHeight)
+                    {
+                        results.Add(shape);
+                    }
+                }
+                else if (shape.Type == Office.MsoShapeType.msoGroup)
+                {
+                    foreach (Shape groupShape in shape.GroupItems)
+                    {
+                        ProcessShape(groupShape, results, slideWidth, slideHeight);
+                    }
+                }
+            }
+            catch { }
         }
 
         private static string GetTagValue(Shape shape, string tagName)
