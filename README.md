@@ -1,6 +1,6 @@
 # oPenEfficiency
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Build](https://github.com/FabPei/oPenEfficiency/actions/workflows/build.yml/badge.svg)](https://github.com/FabPei/oPenEfficiency/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/FabPei/oPenEfficiency)](https://github.com/FabPei/oPenEfficiency/releases)
 
@@ -171,7 +171,7 @@ oPenEfficiency/
 
 ## License
 
-This project is licensed under the GNU GPL 3.0 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU AGPL 3.0 License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
