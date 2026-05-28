@@ -296,13 +296,12 @@ When the user asks to "create a floating window for X":
 12. Test that all text is readable and follows the dark theme patterns
 13. **IMPORTANT:** If the window is part of a new feature, ensure the feature is added to the `FeatureLibrary.AllFeatures` static list in **alphabetical order by Name** so it appears correctly in the Settings menu.
 14. **IMPORTANT:** If the floating window is a tool/palette that should only exist once at any given time, register it as `IsToggle = true` in the `FeatureLibrary` and use the `ToggleFloatingWindow` helper in `MainSidebar.xaml.cs` to launch it.
-order` style with appropriate shadow settings
-5. Use proper layout patterns (DockPanel for header/footer, TabControl for complex content)
-6. Apply color guidelines (White for headers, #AAA for labels, StaticResource for theme colors)
-7. Use SettingCard style for content organization
-8. Implement proper button styling with CornerRadius="4"
-9. Add ScrollViewer for scrollable content areas
-10. Implement `Window_MouseDown` for dragging
-11. If it needs to act on a PowerPoint shape, pass `PowerPoint.Shape` via the constructor
-12. Test that all text is readable and follows the dark theme patterns
-13. **IMPORTANT:** If the window is part of a new feature, ensure the feature is added to the `FeatureLibrary.AllFeatures` static list in **alphabetical order by Name** so it appears correctly in the Settings menu.
+
+## Future Architecture Roadmap (Pending Refactor)
+
+**Problem Statement:** The current implementation of context-aware toolbars (Rating, Numeration, Progress Series, etc.) inside `ThisAddIn.cs` uses a large `if/else` block based on tag prefixes, manually tracks window instances (`_ratingToolbar`, etc.), and duplicates `Window_Deactivated` lifecycle logic across multiple window classes.
+
+**Proposed Solution:**
+1. **`SmartShapeToolbar` Base Class:** All context toolbars should inherit from a common base class instead of `Window`. This class will encapsulate `WindowStyle="None"`, `Topmost="True"`, and provide standardized auto-close logic (e.g., an `IsSubDialogOpen` property to prevent closing when color pickers are used).
+2. **`FloatingToolbarService`:** A centralized manager that tracks exactly one `_activeToolbar`. It will handle replacing/closing old toolbars automatically.
+3. **Auto-Discovery for Shapes:** Use an interface or dictionary mapping `Tag Prefix` -> `Window Type`, so `ThisAddIn.cs` can delegate instantiation via reflection without hardcoded `if/else` statements.
