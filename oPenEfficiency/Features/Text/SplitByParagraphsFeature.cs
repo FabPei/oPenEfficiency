@@ -12,12 +12,12 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnSplitByParagraphs",
-        Name = "Split by Paragraphs",
-        Tooltip = "Split by paragraphs",
+        Name = "Split / Merge Text",
+        Tooltip = "Split shape at cursor, by paragraphs, or merge multiple shapes",
         IconData = "M3,13H2V11H3V13M3,7H2V5H3V7M3,19H2V17H3V19M21,11H5V13H21V11M21,5H5V7H21V5M21,17H5V19H21V17Z",
         Color = "#FBBF24",
-        Description = "Splits a textbox into multiple shapes by paragraph, or merges multiple shapes into one.",
-        DetailedHelpText = "### Split by Paragraphs\nSplits a multi-paragraph text box into individual separate text boxes, one per paragraph, while preserving font, size, and color of each line.",
+        Description = "Splits a shape at the cursor, by paragraphs, or merges multiple shapes into one.",
+        DetailedHelpText = "### Split by Paragraphs\n**Split at cursor:** Click inside a text box to place the cursor, then press Split — the shape is divided at that exact position into two shapes (text before cursor / text after cursor).\n\n**Split selected paragraphs:** Select one or more paragraphs in a text box — each selected paragraph is extracted into its own new shape.\n\n**Split all paragraphs:** Select the whole shape (not in edit mode) with one shape — every paragraph becomes a separate shape.\n\n**Merge:** Select multiple shapes — their text is merged into one shape sorted top-to-bottom, left-to-right.",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SplitByParagraphsFeature
@@ -32,20 +32,64 @@ namespace oPenEfficiency.Features
             var sel = activeWindow.Selection;
             if (sel == null) return false;
 
-            // Handle Text Selection (Partial Split)
+            // Handle Text Edit Mode (cursor blinking or text selected)
             if (sel.Type == PpSelectionType.ppSelectionText)
             {
+                var textRange = sel.TextRange;
+                var shape = sel.ShapeRange[1];
+
+                // Cursor blinking with no selection — split at exact cursor position
+                if (textRange.Length == 0)
+                {
+                    try
+                    {
+                        int cursorStart = textRange.Start;
+                        int fullLen = shape.TextFrame.TextRange.Length;
+
+                        // Nothing meaningful to split if cursor is at the very start or end
+                        if (cursorStart <= 1 || cursorStart > fullLen) return false;
+
+                        float originalLeft = shape.Left;
+                        float originalTop = shape.Top;
+                        const float spacing = 5f;
+
+                        // Duplicate for the "after" part (Duplicate() offsets by ~10pt, so fix position)
+                        var shapeAfter = shape.Duplicate()[1];
+                        shapeAfter.Left = originalLeft;
+                        shapeAfter.Top = originalTop;
+
+                        // Remove text from cursorStart onward in original (keep "before")
+                        int afterLen = fullLen - cursorStart + 1;
+                        if (afterLen > 0)
+                            shape.TextFrame.TextRange.Characters(cursorStart, afterLen).Delete();
+
+                        // Remove text before cursorStart in duplicate (keep "after")
+                        int beforeLen = cursorStart - 1;
+                        if (beforeLen > 0)
+                            shapeAfter.TextFrame.TextRange.Characters(1, beforeLen).Delete();
+
+                        // Stack duplicate directly below original (which may have shrunk)
+                        shapeAfter.Top = shape.Top + shape.Height + spacing;
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "SplitByParagraphsFeature.Execute.splitAtCursor", showErrorUI: true);
+                        return false;
+                    }
+                }
+
+                // Text selected — extract each selected paragraph into its own shape
                 try
                 {
-                    var textRange = sel.TextRange;
-                    var shape = sel.ShapeRange[1];
                     int count = textRange.Paragraphs().Count;
                     if (count == 0) return false;
 
                     float top = textRange.BoundTop;
-                    float spacing = 5f;
+                    const float spacing = 5f;
 
-                    // Collect paragraph texts first
+                    // Collect paragraph texts before mutating the range
                     var texts = new List<string>();
                     for (int i = 1; i <= count; i++)
                     {
@@ -55,10 +99,8 @@ namespace oPenEfficiency.Features
 
                     if (texts.Count == 0) return false;
 
-                    // Delete the selected text from original shape
                     textRange.Delete();
 
-                    // Create new shapes for each selected paragraph
                     foreach (var t in texts)
                     {
                         var newShape = shape.Duplicate()[1];
@@ -100,16 +142,29 @@ namespace oPenEfficiency.Features
                         return true;
                     }
 
-                    float top = shape.Top;
-                    float spacing = 5f; // Small gap between split objects
+                    // Use each paragraph's visual BoundTop so shapes land exactly
+                    // where the text was, not stacked with artificial gaps.
+                    float marginTop;
+                    try { marginTop = shape.TextFrame.MarginTop; }
+                    catch { marginTop = 0f; }
+
+                    float fallbackTop = shape.Top;
+                    const float fallbackSpacing = 5f;
 
                     for (int i = 1; i <= count; i++)
                     {
                         var para = textRange.Paragraphs(i, 1);
+                        string paraText = para.Text.TrimEnd('\r', '\n');
+
+                        float paraTop;
+                        try { paraTop = para.BoundTop - marginTop; }
+                        catch { paraTop = fallbackTop; }
+
                         var newShape = shape.Duplicate()[1];
-                        newShape.Top = top;
-                        newShape.TextFrame.TextRange.Text = para.Text.TrimEnd('\r', '\n');
-                        top += newShape.Height + spacing;
+                        newShape.Top = paraTop;
+                        newShape.TextFrame.TextRange.Text = paraText;
+
+                        fallbackTop = paraTop + newShape.Height + fallbackSpacing;
                     }
 
                     shape.Delete();

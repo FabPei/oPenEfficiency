@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2026.05.28] - 2026-05-28
+
+### Added
+- **Color Overlay:** New shapes feature that creates a compound shape from two selected objects. The bottom shape retains its color where it does not overlap, but takes the color of the top shape where they overlap.
+
+### Changed
+- **Swap Positions:** Right-click context menu options for the rotation anchor are now toggleable and persist as the default behavior for subsequent clicks on the main button.
+
 ## [2026.05.26] - 2026-05-26
 
 ### Changed

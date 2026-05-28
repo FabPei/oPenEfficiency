@@ -1608,18 +1608,30 @@ namespace oPenEfficiency
                     ("Top Center", SwapPositionsFeature.SwapAnchor.Top),
                     ("Top Right", SwapPositionsFeature.SwapAnchor.TopRight),
                     ("Left Center", SwapPositionsFeature.SwapAnchor.Left),
-                    ("Center (Default)", SwapPositionsFeature.SwapAnchor.Center),
+                    ("Center", SwapPositionsFeature.SwapAnchor.Center),
                     ("Right Center", SwapPositionsFeature.SwapAnchor.Right),
                     ("Bottom Left", SwapPositionsFeature.SwapAnchor.BottomLeft),
                     ("Bottom Center", SwapPositionsFeature.SwapAnchor.Bottom),
                     ("Bottom Right", SwapPositionsFeature.SwapAnchor.BottomRight)
                 };
 
+                var miList = new System.Collections.Generic.List<MenuItem>();
                 foreach (var anchorInfo in anchors)
                 {
-                    var mi = new MenuItem { Header = anchorInfo.Item1 };
+                    var mi = new MenuItem { Header = anchorInfo.Item1, IsCheckable = true };
                     var anchorVal = anchorInfo.Item2;
-                    mi.Click += (s, e) => SwapPositionsFeature.Execute(GetManager(), anchorVal);
+                    mi.Tag = anchorVal;
+                    
+                    btn.ContextMenu.Opened += (s, e) => {
+                        mi.IsChecked = SwapPositionsFeature.DefaultAnchor == (SwapPositionsFeature.SwapAnchor)mi.Tag;
+                    };
+
+                    mi.Click += (s, e) => {
+                        SwapPositionsFeature.DefaultAnchor = anchorVal;
+                        foreach (var m in miList) m.IsChecked = ((SwapPositionsFeature.SwapAnchor)m.Tag == anchorVal);
+                        SwapPositionsFeature.Execute(GetManager(), anchorVal);
+                    };
+                    miList.Add(mi);
                     btn.ContextMenu.Items.Add(mi);
                 }
             }

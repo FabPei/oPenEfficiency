@@ -33,12 +33,14 @@ namespace oPenEfficiency.Features
             Left
         }
 
+        public static SwapAnchor DefaultAnchor { get; set; } = SwapAnchor.Center;
+
         /// <summary>
-        /// Wrapper for auto-discovery - uses Center anchor (default behavior).
+        /// Wrapper for auto-discovery - uses default anchor.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Execute(manager, SwapAnchor.Center);
+            return Execute(manager, DefaultAnchor);
         }
 
         /// <summary>

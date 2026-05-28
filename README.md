@@ -46,6 +46,7 @@ Built on the .NET Framework and deep PowerPoint COM integration, oPenEfficiency 
 
 ### 🎨 Visual Elements & Formatting
 - **Infographics** - Generate and manage **Harvey Balls**, **Star Ratings**, **Thermometers**, **Traffic Lights**, and **Checkboxes**.
+- **Color Overlay** - Combines two shapes into a single colored overlay geometry based on their intersection.
 - **Glass Hide** - Create semi-transparent overlays to obscure content or add frosted glass effects.
 - **Progress Series** - Create automated chevron/arrow sequences for process steps.
 - **Smart Components** - Synchronized **Smart Corners** for multiple shapes and **Align Shape Proportions** for consistency.
