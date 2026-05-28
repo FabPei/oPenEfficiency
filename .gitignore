@@ -376,3 +376,5 @@ setup.zip
 *.log
 Publish/
 Application Files/
+# AI Agent Files
+CLAUDE.md
