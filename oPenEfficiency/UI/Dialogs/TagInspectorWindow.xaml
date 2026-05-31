@@ -99,6 +99,8 @@
             <!-- Actions -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,15,0,0">
                 <Button Content="Delete Selected" Click="BtnDelete_Click" Style="{StaticResource SecondaryButton}" Width="120" Margin="0,0,10,0"/>
+                <Button Content="Tags to Stickies" Click="BtnTagToSticky_Click" Style="{StaticResource SecondaryButton}" Width="130" Margin="0,0,10,0" ToolTip="Convert selected tags back to visible sticky notes"/>
+                <Button Content="Stickies to Tags" Click="BtnStickyToTags_Click" Style="{StaticResource SecondaryButton}" Width="130" Margin="0,0,10,0" ToolTip="Convert sticky notes on selected slides to hidden tags"/>
                 <Button Content="Refresh" Click="BtnRefresh_Click" Style="{StaticResource SecondaryButton}" Width="80"/>
             </StackPanel>
 
