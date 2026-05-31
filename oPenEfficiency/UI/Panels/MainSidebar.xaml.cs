@@ -1974,12 +1974,12 @@ namespace oPenEfficiency
                         }
                         else if (app.ActiveWindow.View.Slide is PowerPoint.Slide slide) slides.Add(slide);
 
-                        foreach (var s in slides)
+                        foreach (var slideItem in slides)
                         {
                             int count = 0;
-                            for (int i = 1; i <= s.Shapes.Count; i++)
+                            for (int i = 1; i <= slideItem.Shapes.Count; i++)
                             {
-                                var shape = s.Shapes[i];
+                                var shape = slideItem.Shapes[i];
                                 if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
                                 {
                                     string text = "";
@@ -1987,7 +1987,7 @@ namespace oPenEfficiency
                                     if (!string.IsNullOrEmpty(text))
                                     {
                                         count++;
-                                        s.Tags.Add($"OE_STICKY_NOTE_{count}", text);
+                                        slideItem.Tags.Add($"OE_STICKY_NOTE_{count}", text);
                                     }
                                 }
                             }
