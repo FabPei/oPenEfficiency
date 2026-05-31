@@ -1956,6 +1956,53 @@ namespace oPenEfficiency
                 var mi9 = new MenuItem { Header = "Convert selected shapes to StickyNotes (Add prefix)" };
                 mi9.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.PrefixName, StickyNoteManagerFeature.Scope.ThisSlide);
                 btn.ContextMenu.Items.Add(mi9);
+
+                btn.ContextMenu.Items.Add(new Separator());
+                var miT = new MenuItem { Header = "Convert Sticky Notes to Tags (Selected Slides)" };
+                miT.Click += (s, e) => {
+                    // Similar logic as in TagInspectorWindow
+                    try {
+                        var app = GetManager().GetApplication();
+                        int totalCount = 0;
+                        PowerPoint.SlideRange slideRange = null;
+                        try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
+                        
+                        var slides = new List<PowerPoint.Slide>();
+                        if (slideRange != null && slideRange.Count > 0)
+                        {
+                            for (int x = 1; x <= slideRange.Count; x++) slides.Add(slideRange[x]);
+                        }
+                        else if (app.ActiveWindow.View.Slide is PowerPoint.Slide slide) slides.Add(slide);
+
+                        foreach (var s in slides)
+                        {
+                            int count = 0;
+                            for (int i = 1; i <= s.Shapes.Count; i++)
+                            {
+                                var shape = s.Shapes[i];
+                                if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    string text = "";
+                                    try { text = shape.TextFrame.TextRange.Text; } catch { }
+                                    if (!string.IsNullOrEmpty(text))
+                                    {
+                                        count++;
+                                        s.Tags.Add($"OE_STICKY_NOTE_{count}", text);
+                                    }
+                                }
+                            }
+                            totalCount += count;
+                        }
+                        MessageBox.Show($"Converted {totalCount} sticky note(s) to tags.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    } catch (Exception ex) {
+                        MessageBox.Show("Error converting sticky notes: " + ex.Message);
+                    }
+                };
+                btn.ContextMenu.Items.Add(miT);
+
+                var miM = new MenuItem { Header = "Manage Tags..." };
+                miM.Click += (s, e) => oPenEfficiency.Features.Utilities.TagInspectorFeature.Execute(GetManager());
+                btn.ContextMenu.Items.Add(miM);
             }
             else if (btn.Name == "BtnTableSort")
             {
