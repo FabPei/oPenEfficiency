@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [2026.05.29] - 2026-05-29
+
+### Changed
+- **Sidebar Layout:** Restructured the sidebar logic into a curated "Standard Layout" (focused for daily use) and a comprehensive "All Features Layout" (containing every available tool, including over 40 previously "orphaned" features).
+- **Stability:** Enhanced the sidebar initialization with graceful null handling in the `FeatureLibrary` to prevent potential crashes during UI population.
+
 ## [2026.05.28] - 2026-05-28
 
 ### Added

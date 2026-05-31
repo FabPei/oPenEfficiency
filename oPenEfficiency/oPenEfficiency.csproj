@@ -1,4 +1,5 @@
-<Project ToolsVersion="18.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version='1.0' encoding='utf-8'?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="18.0" DefaultTargets="Build">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <ProjectTypeGuids>{BAA0C2D2-18E2-41B9-852F-F413020CAA33};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -163,178 +164,14 @@
     <Compile Include="ThisAddIn.Designer.cs">
       <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
     </Compile>
-    <Compile Include="Features\Alignment\AlignShapesFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstBottomFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstCenterHorizontalFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstCenterVerticalFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstLeftFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstRightFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToFirstTopFeature.cs" />
-    <Compile Include="Features\Alignment\AlignToTableCellFeature.cs" />
-    <Compile Include="Features\Alignment\AlignmentHelpers.cs" />
-    <Compile Include="Features\Alignment\ArrangeGridFeature.cs" />
-    <Compile Include="Features\Alignment\ArrangeInShapeFeature.cs" />
-    <Compile Include="Features\Alignment\ArrangeProFeature.cs" />
-    <Compile Include="Features\Alignment\DiagonalAlignFeature.cs" />
-    <Compile Include="Features\Alignment\DistributeFeatures.cs" />
-    <Compile Include="Features\Alignment\DockToFirstBottomFeature.cs" />
-    <Compile Include="Features\Alignment\DockToFirstLeftFeature.cs" />
-    <Compile Include="Features\Alignment\DockToFirstRightFeature.cs" />
-    <Compile Include="Features\Alignment\DockToFirstTopFeature.cs" />
-    <Compile Include="Features\Alignment\MatchHeightToFirstFeature.cs" />
-    <Compile Include="Features\Alignment\MatchSizeFeature.cs" />
-    <Compile Include="Features\Alignment\MatchWidthToFirstFeature.cs" />
-    <Compile Include="Features\Alignment\MultiSwapFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstBottomEdgeFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstBottomFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstLeftEdgeFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstLeftFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstRightEdgeFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstRightFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstTopEdgeFeature.cs" />
-    <Compile Include="Features\Alignment\StretchToFirstTopFeature.cs" />
-    <Compile Include="Features\Alignment\SwapPositionsFeature.cs" />
-    <Compile Include="Features\Alignment\SwapPositionsHorizontalFeature.cs" />
-    <Compile Include="Features\Alignment\SwapPositionsVerticalFeature.cs" />
-    <Compile Include="Features\Charts\ChartOverlayFeature.cs" />
-    <Compile Include="Features\Charts\HarveyBallFeature.cs" />
-    <Compile Include="Features\Visuals\CloneBottomFeature.cs" />
-    <Compile Include="Features\Visuals\CloneLeftFeature.cs" />
-    <Compile Include="Features\Visuals\CloneRightFeature.cs" />
-    <Compile Include="Features\Visuals\CloneTopFeature.cs" />
-    <Compile Include="Features\Charts\ProgressSeriesFeature.cs" />
-    <Compile Include="Features\Charts\StarRatingFeature.cs" />
-    <Compile Include="Features\Charts\ThermometerFeature.cs" />
-    <Compile Include="Features\Charts\TrafficLightFeature.cs" />
-    <Compile Include="Features\Shapes\AlignShapeAdjustmentsFeature.cs" />
-    <Compile Include="Features\Shapes\CreateMotionPathFeature.cs" />
-    <Compile Include="Features\Shapes\ImageLibraryManager.cs" />
-    <Compile Include="Features\Shapes\LibraryModels.cs" />
-    <Compile Include="Features\Shapes\MatchAnglesFeature.cs" />
-    <Compile Include="Features\Shapes\OptimizeFreeFormFeature.cs" />
-    <Compile Include="Features\Shapes\ShapeLibraryManager.cs" />
-    <Compile Include="Features\Shapes\SlideLibraryManager.cs" />
-    <Compile Include="Features\Shapes\SmartCornersFeature.cs" />
-    <Compile Include="Features\Shapes\ZOrderFeatures.cs" />
-    <Compile Include="Features\Tables\ConvertShapesToTableFeature.cs" />
-    <Compile Include="Features\Tables\ConvertTableToShapesFeature.cs" />
-    <Compile Include="Features\Tables\InsertTableColumnLeftFeature.cs" />
-    <Compile Include="Features\Tables\InsertTableColumnRightFeature.cs" />
-    <Compile Include="Features\Tables\InsertTableRowBottomFeature.cs" />
-    <Compile Include="Features\Tables\InsertTableRowTopFeature.cs" />
-    <Compile Include="Features\Tables\TableBrandingFeature.cs" />
-    <Compile Include="Features\Tables\TableColumnInsertionFeature.cs" />
-    <Compile Include="Features\Tables\TableColumnWidthFeature.cs" />
-    <Compile Include="Features\Tables\TableDimensionsFeature.cs" />
-    <Compile Include="Features\Tables\TableFormatPainterFeature.cs" />
-    <Compile Include="Features\Tables\TableHeatmapFeature.cs" />
-    <Compile Include="Features\Tables\TableHelper.cs" />
-    <Compile Include="Features\Tables\TableRowHeightFeature.cs" />
-    <Compile Include="Features\Tables\TableRowInsertionFeature.cs" />
-    <Compile Include="Features\Tables\TableSortFeature.cs" />
-    <Compile Include="Features\Tables\TableSplitFeature.cs" />
-    <Compile Include="Features\Tables\TableSumFeature.cs" />
-    <Compile Include="Features\Tables\TableTransposeFeature.cs" />
-    <Compile Include="Features\Text\ApplyTextFeature.cs" />
-    <Compile Include="Features\Text\ParagraphDialogFeature.cs" />
-    <Compile Include="Features\Text\SpecialCharsFeature.cs" />
-    <Compile Include="Features\Text\BulkFormatReplacerFeature.cs" />
-    <Compile Include="Features\Text\DeleteTextFeature.cs" />
-    <Compile Include="Features\Text\FitFormToTextFeature.cs" />
-    <Compile Include="Features\Text\FormatNumbersFeature.cs" />
-    <Compile Include="Features\Text\InsertTextAtCursorFeature.cs" />
-    <Compile Include="Features\Text\SpellCheckLanguageFeature.cs" />
-    <Compile Include="Features\Text\SplitByParagraphsFeature.cs" />
-    <Compile Include="Features\Text\SwapTextFormattedFeature.cs" />
-    <Compile Include="Features\Text\SwapTextPlainFeature.cs" />
-    <Compile Include="Features\Text\TextFormatFeatures.cs" />
-    <Compile Include="Features\Text\TranslationFeatures.cs" />
-    <Compile Include="Features\Utilities\StorylineFeature.cs" />
-    <Compile Include="Features\Utilities\AgendaWizardFeature.cs" />
-    <Compile Include="Features\Utilities\AnonymizeFeature.cs" />
-    <Compile Include="Features\Utilities\CleanerFeature.cs" />
-    <Compile Include="Features\Utilities\AssetManagerFeature.cs" />
-    <Compile Include="Features\Utilities\ConsolidateMastersFeature.cs" />
-    <Compile Include="Features\Utilities\ExploreFeaturesFeature.cs" />
-    <Compile Include="Features\Utilities\ExportWizardFeature.cs" />
-    <Compile Include="Features\Utilities\MagicResizerFeature.cs" />
-    <Compile Include="Features\Utilities\SearchBarFeature.cs" />
-    <Compile Include="Features\Utilities\SettingsFeature.cs" />
-    <Compile Include="Features\Utilities\SizePanelFeature.cs" />
-    <Compile Include="Features\Utilities\TemplateManagerFeature.cs" />
-    <Compile Include="Features\Utilities\CopyCoordinatesFeature.cs" />
-    <Compile Include="Features\Utilities\DimensionLockFeature.cs" />
-    <Compile Include="Features\Utilities\DocumentAutomationFeature.cs" />
-    <Compile Include="Features\Utilities\ExcelLinkManagerFeature.cs" />
-    <Compile Include="Features\Utilities\FlightModeFeature.cs" />
-    <Compile Include="Features\Utilities\FontPanelFeature.cs" />
-    <Compile Include="Features\Utilities\FormatShapeDialogFeature.cs" />
-    <Compile Include="Features\Utilities\HideMasterObjectsFeature.cs" />
-    <Compile Include="Features\Utilities\HideSelectedFeature.cs" />
-    <Compile Include="Features\Utilities\LotteryFeature.cs" />
-    <Compile Include="Features\Utilities\MoveToBackupFeature.cs" />
-    <Compile Include="Features\Utilities\NumerationFeature.cs" />
-    <Compile Include="Features\Utilities\PasteCoordinatesFeature.cs" />
-    <Compile Include="Features\Utilities\PropertyExtractionFeature.cs" />
-    <Compile Include="Features\Utilities\QRCodeFeature.cs" />
-    <Compile Include="Features\Utilities\SaveAgendaLayoutFeature.cs" />
-    <Compile Include="Features\Utilities\SelectSameTypeFeature.cs" />
-    <Compile Include="Features\Utilities\SeriesGeneratorFeature.cs" />
-    <Compile Include="Features\Utilities\ShapeLockingFeature.cs" />
-    <Compile Include="Features\Utilities\SnapShapeFeature.cs" />
-    <Compile Include="Features\Utilities\ShowHiddenFeature.cs" />
-    <Compile Include="Features\Utilities\SlideGuidelinesFeature.cs" />
-    <Compile Include="Features\Utilities\SlideNotesFeature.cs" />
-    <Compile Include="Features\Utilities\SlidePasteFeature.cs" />
-    <Compile Include="Features\Utilities\SlideSizeFeature.cs" />
-    <Compile Include="Features\Utilities\SnapToGridFeature.cs" />
-    <Compile Include="Features\Utilities\SnapToObjectsFeature.cs" />
-    <Compile Include="Features\Utilities\StickyNoteFeature.cs" />
-    <Compile Include="Features\Utilities\StickyNoteManagerFeature.cs" />
-    <Compile Include="Features\Utilities\TagInspectorFeature.cs" />
-    <Compile Include="Features\Utilities\UpdateExcelChartsFeature.cs" />
-    <Compile Include="Features\Utilities\VisibilityFeature.cs" />
-    <Compile Include="Features\Visuals\AddStickerFeature.cs" />
-    <Compile Include="Features\Visuals\AdjustHorizontalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\DecreaseHorizontalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\DecreaseVerticalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\IncreaseHorizontalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\IncreaseVerticalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\AdjustSpacingFeatureHelper.cs" />
-    <Compile Include="Features\Visuals\AdjustVerticalSpacingFeature.cs" />
-    <Compile Include="Features\Visuals\AdvancedSelectionFeature.cs" />
-    <Compile Include="Features\Visuals\CloneSelectionFeature.cs" />
-    <Compile Include="Features\Visuals\CheckboxFeature.cs" />
-    <Compile Include="Features\Visuals\GlassHideFeature.cs" />
-    <Compile Include="Features\Visuals\IllustrativeStickerFeature.cs" />
-    <Compile Include="Features\Visuals\LearnMarginFeature.cs" />
-    <Compile Include="Features\Visuals\MapWizardFeature.cs" />
-    <Compile Include="Features\Visuals\ObjectConnectorFeature.cs" />
-    <Compile Include="Features\Visuals\ObjectTransformFeatures.cs" />
-    <Compile Include="Features\Visuals\PickColorFeature.cs" />
-    <Compile Include="Features\Visuals\PickFillColorFeature.cs" />
-    <Compile Include="Features\Visuals\PickLineColorFeature.cs" />
-    <Compile Include="Features\Visuals\PickTextColorFeature.cs" />
-    <Compile Include="Features\Visuals\PositionPainterFeature.cs" />
-    <Compile Include="Features\Visuals\RectifyRotationFeature.cs" />
-    <Compile Include="Features\Visuals\RemoveGapsFeatureHelper.cs" />
-    <Compile Include="Features\Visuals\RemoveHorizontalGapsFeature.cs" />
-    <Compile Include="Features\Visuals\RemoveVerticalGapsFeature.cs" />
-    <Compile Include="Features\Visuals\RepeatShapeFeature.cs" />
-    <Compile Include="Features\Visuals\SetMarginFeature.cs" />
-    <Compile Include="Features\Visuals\SplitShapeToGridFeature.cs" />
-    <Compile Include="Features\Visuals\StyleCheckFeature.cs" />
-    <Compile Include="Features\Visuals\SyncObjectsFeature.cs" />
-    <Compile Include="Features\Visuals\ThemeColorPickerFeature.cs" />
-    <Compile Include="Features\Visuals\TransparencyFeature.cs" />
-    <Compile Include="Features\Visuals\TransparentColorFeature.cs" />
+    <Compile Include="Features\**\*.cs" />
     <Compile Include="Models\AgendaLayoutConfig.cs" />
     <Compile Include="Models\MapWizardConfig.cs" />
     <Compile Include="Models\SavedAgenda.cs" />
     <Compile Include="Models\SeriesConfig.cs" />
     <Compile Include="Models\SidebarConfig.cs" />
     <Compile Include="Models\TemplateConfig.cs" />
-    <Compile Include="Models\\SlideTemplate.cs" />
+    <Compile Include="Models\SlideTemplate.cs" />
     <Compile Include="Services\AgendaGenerationService.cs" />
     <Compile Include="Services\AgendaService.cs" />
     <Compile Include="Services\AssetCacheService.cs" />
@@ -362,25 +199,25 @@
     <Compile Include="Services\TemplateService.cs" />
     <Compile Include="Services\ThemeManager.cs" />
     <Compile Include="UI\Controls\FeatureIcon.xaml.cs">
-      <DependentUpon>UI\Controls\FeatureIcon.xaml</DependentUpon>
+      <DependentUpon>FeatureIcon.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\FontControl.xaml.cs">
-      <DependentUpon>UI\Controls\FontControl.xaml</DependentUpon>
+      <DependentUpon>FontControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\SearchBarControl.xaml.cs">
-      <DependentUpon>UI\Controls\SearchBarControl.xaml</DependentUpon>
+      <DependentUpon>SearchBarControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\FontSizeControl.xaml.cs">
-      <DependentUpon>UI\Controls\FontSizeControl.xaml</DependentUpon>
+      <DependentUpon>FontSizeControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\SizeAdjustControl.xaml.cs">
-      <DependentUpon>UI\Controls\SizeAdjustControl.xaml</DependentUpon>
+      <DependentUpon>SizeAdjustControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\ThemeColorControl.xaml.cs">
-      <DependentUpon>UI\Controls\ThemeColorControl.xaml</DependentUpon>
+      <DependentUpon>ThemeColorControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Controls\ThermometerAdorner.xaml.cs">
-      <DependentUpon>UI\Controls\ThermometerAdorner.xaml</DependentUpon>
+      <DependentUpon>ThermometerAdorner.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Converters\ColorToSolidBrushConverter.cs" />
     <Compile Include="UI\Converters\Converters.cs" />
@@ -390,147 +227,147 @@
       <DependentUpon>StorylineDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\AlignToTableWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\AlignToTableWindow.xaml</DependentUpon>
+      <DependentUpon>AlignToTableWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ApplyTextWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ApplyTextWindow.xaml</DependentUpon>
+      <DependentUpon>ApplyTextWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ArrangeGridWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ArrangeGridWindow.xaml</DependentUpon>
+      <DependentUpon>ArrangeGridWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ArrangeProWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ArrangeProWindow.xaml</DependentUpon>
+      <DependentUpon>ArrangeProWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\AutomationWizardWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\AutomationWizardWindow.xaml</DependentUpon>
+      <DependentUpon>AutomationWizardWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\BulkFormatReplacerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\BulkFormatReplacerWindow.xaml</DependentUpon>
+      <DependentUpon>BulkFormatReplacerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ChartOverlayDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\ChartOverlayDialog.xaml</DependentUpon>
+      <DependentUpon>ChartOverlayDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\CreateFolderDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\CreateFolderDialog.xaml</DependentUpon>
+      <DependentUpon>CreateFolderDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\EditAssetDetailsDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\EditAssetDetailsDialog.xaml</DependentUpon>
+      <DependentUpon>EditAssetDetailsDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ExcelLinkManagerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ExcelLinkManagerWindow.xaml</DependentUpon>
+      <DependentUpon>ExcelLinkManagerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\FeatureExplorerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\FeatureExplorerWindow.xaml</DependentUpon>
+      <DependentUpon>FeatureExplorerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\FormatNumbersWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\FormatNumbersWindow.xaml</DependentUpon>
+      <DependentUpon>FormatNumbersWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\LotteryWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\LotteryWindow.xaml</DependentUpon>
+      <DependentUpon>LotteryWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\MagicResizerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\MagicResizerWindow.xaml</DependentUpon>
+      <DependentUpon>MagicResizerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\CrashReportWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\CrashReportWindow.xaml</DependentUpon>
+      <DependentUpon>CrashReportWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\MapWizardWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\MapWizardWindow.xaml</DependentUpon>
+      <DependentUpon>MapWizardWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ObjectConnectorWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ObjectConnectorWindow.xaml</DependentUpon>
+      <DependentUpon>ObjectConnectorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\PositionPainterWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\PositionPainterWindow.xaml</DependentUpon>
+      <DependentUpon>PositionPainterWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\QRCodeWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\QRCodeWindow.xaml</DependentUpon>
+      <DependentUpon>QRCodeWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SaveAgendaLayoutWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SaveAgendaLayoutWindow.xaml</DependentUpon>
+      <DependentUpon>SaveAgendaLayoutWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SaveToMyAssetsDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\SaveToMyAssetsDialog.xaml</DependentUpon>
+      <DependentUpon>SaveToMyAssetsDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SeriesGeneratorWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SeriesGeneratorWindow.xaml</DependentUpon>
+      <DependentUpon>SeriesGeneratorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SettingsWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SettingsWindow.xaml</DependentUpon>
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ShortcutConfigWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ShortcutConfigWindow.xaml</DependentUpon>
+      <DependentUpon>ShortcutConfigWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SlidePasteWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SlidePasteWindow.xaml</DependentUpon>
+      <DependentUpon>SlidePasteWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SlideSizeWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SlideSizeWindow.xaml</DependentUpon>
+      <DependentUpon>SlideSizeWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SpecialCharactersWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SpecialCharactersWindow.xaml</DependentUpon>
+      <DependentUpon>SpecialCharactersWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SpellCheckLanguageWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SpellCheckLanguageWindow.xaml</DependentUpon>
+      <DependentUpon>SpellCheckLanguageWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SplitShapeWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SplitShapeWindow.xaml</DependentUpon>
+      <DependentUpon>SplitShapeWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\StyleCheckWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\StyleCheckWindow.xaml</DependentUpon>
+      <DependentUpon>StyleCheckWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\SyncObjectsWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\SyncObjectsWindow.xaml</DependentUpon>
+      <DependentUpon>SyncObjectsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TableBrandingDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\TableBrandingDialog.xaml</DependentUpon>
+      <DependentUpon>TableBrandingDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TableFormatPainterWindow.xaml.cs">
       <DependentUpon>TableFormatPainterWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TableHeatmapDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\TableHeatmapDialog.xaml</DependentUpon>
+      <DependentUpon>TableHeatmapDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TemplateManagerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\TemplateManagerWindow.xaml</DependentUpon>
+      <DependentUpon>TemplateManagerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TagInspectorWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\TagInspectorWindow.xaml</DependentUpon>
+      <DependentUpon>TagInspectorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\ThemeColorWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\ThemeColorWindow.xaml</DependentUpon>
+      <DependentUpon>ThemeColorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\TransparentColorWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\TransparentColorWindow.xaml</DependentUpon>
+      <DependentUpon>TransparentColorWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\WizardDesignerWindow.xaml.cs">
-      <DependentUpon>UI\Dialogs\WizardDesignerWindow.xaml</DependentUpon>
+      <DependentUpon>WizardDesignerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Dialogs\WpfColorPickerDialog.xaml.cs">
-      <DependentUpon>UI\Dialogs\WpfColorPickerDialog.xaml</DependentUpon>
+      <DependentUpon>WpfColorPickerDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\FeatureLibrary.cs" />
     <Compile Include="UI\ImportAgendaLayoutWindow.xaml.cs">
-      <DependentUpon>UI\ImportAgendaLayoutWindow.xaml</DependentUpon>
+      <DependentUpon>ImportAgendaLayoutWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\MainRibbon.cs" />
     <Compile Include="UI\Menus\TrafficLightMenu.xaml.cs">
-      <DependentUpon>UI\Menus\TrafficLightMenu.xaml</DependentUpon>
+      <DependentUpon>TrafficLightMenu.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Panels\AssetManagerHost.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="UI\Panels\AssetManagerView.xaml.cs">
-      <DependentUpon>UI\Panels\AssetManagerView.xaml</DependentUpon>
+      <DependentUpon>AssetManagerView.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Panels\FontPanel.xaml.cs">
-      <DependentUpon>UI\Panels\FontPanel.xaml</DependentUpon>
+      <DependentUpon>FontPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Panels\MainSidebar.xaml.cs">
-      <DependentUpon>UI\Panels\MainSidebar.xaml</DependentUpon>
+      <DependentUpon>MainSidebar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Panels\ShapeSizePanel.xaml.cs">
-      <DependentUpon>UI\Panels\ShapeSizePanel.xaml</DependentUpon>
+      <DependentUpon>ShapeSizePanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Panels\SidebarTaskPaneHost.cs">
       <SubType>UserControl</SubType>
@@ -541,49 +378,49 @@
     <Compile Include="UI\RelayCommand.cs" />
     <Compile Include="UI\SettingsViewModel.cs" />
     <Compile Include="UI\Tabs\FavoritesTab.xaml.cs">
-      <DependentUpon>UI\Tabs\FavoritesTab.xaml</DependentUpon>
+      <DependentUpon>FavoritesTab.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Tabs\ImageLibraryTab.xaml.cs">
-      <DependentUpon>UI\Tabs\ImageLibraryTab.xaml</DependentUpon>
+      <DependentUpon>ImageLibraryTab.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Tabs\ShapeLibraryTab.xaml.cs">
-      <DependentUpon>UI\Tabs\ShapeLibraryTab.xaml</DependentUpon>
+      <DependentUpon>ShapeLibraryTab.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Tabs\SlideLibraryTab.xaml.cs">
-      <DependentUpon>UI\Tabs\SlideLibraryTab.xaml</DependentUpon>
+      <DependentUpon>SlideLibraryTab.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\CheckboxToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\CheckboxToolbar.xaml</DependentUpon>
+      <DependentUpon>CheckboxToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\DiagonalAlignToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\DiagonalAlignToolbar.xaml</DependentUpon>
+      <DependentUpon>DiagonalAlignToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\FloatingToolbar.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\Toolbars\NumerationToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\NumerationToolbar.xaml</DependentUpon>
+      <DependentUpon>NumerationToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\ProgressSeriesToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\ProgressSeriesToolbar.xaml</DependentUpon>
+      <DependentUpon>ProgressSeriesToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\ProgressSeriesToolbar_Simple.xaml.cs">
-      <DependentUpon>UI\Toolbars\ProgressSeriesToolbar_Simple.xaml</DependentUpon>
+      <DependentUpon>ProgressSeriesToolbar_Simple.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\RatingToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\RatingToolbar.xaml</DependentUpon>
+      <DependentUpon>RatingToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\SlideNotesWindow.xaml.cs">
-      <DependentUpon>UI\Toolbars\SlideNotesWindow.xaml</DependentUpon>
+      <DependentUpon>SlideNotesWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Toolbars\TransparencyToolbar.xaml.cs">
-      <DependentUpon>UI\Toolbars\TransparencyToolbar.xaml</DependentUpon>
+      <DependentUpon>TransparencyToolbar.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Wizards\AgendaWizard.xaml.cs">
-      <DependentUpon>UI\Wizards\AgendaWizard.xaml</DependentUpon>
+      <DependentUpon>AgendaWizard.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\Wizards\ExportWizard.xaml.cs">
-      <DependentUpon>UI\Wizards\ExportWizard.xaml</DependentUpon>
+      <DependentUpon>ExportWizard.xaml</DependentUpon>
     </Compile>
     <Compile Include="Utils\ColorConstants.cs" />
     <Compile Include="Utils\ColorMath.cs" />
@@ -882,6 +719,60 @@
     <EmbeddedResource Include="UI\MainRibbon.xml" />
     <AppDesigner Include="Properties\" />
     <Content Include="Resources\SlideTaggingRules.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignText.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnAlignText_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnChangeCase_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnPickLineColor_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSnapToGrid_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnSnapToObjects_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableFormatPainter_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnTableTranspose_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnThermometer_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\BtnStickyNote_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\SharedPipetteFill.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\SharedPipetteFill_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\SharedPipetteText.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\SharedPipetteText_hover.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\adjustspacing.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\btnweight.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\x.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="UI\Assets\Icons\trash-2.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -1286,11 +1177,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="UI\Assets\Icons\sendonefront.svg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Resources\SlideTaggingRules.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

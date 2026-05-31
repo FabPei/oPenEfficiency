@@ -25,7 +25,7 @@ namespace oPenEfficiency.UI
 
     public static class FeatureLibrary
     {
-                private static List<SidebarFeature> _allFeatures;
+        private static List<SidebarFeature> _allFeatures;
         public static List<SidebarFeature> AllFeatures
         {
             get
@@ -67,13 +67,17 @@ namespace oPenEfficiency.UI
         private static void AddById(SidebarSection section, string id)
         {
             var feature = AllFeatures.Find(f => f.Id == id);
+            if (feature != null)
+                section.Features.Add(feature);
 #if DEBUG
-            if (feature == null)
+            else
                 System.Diagnostics.Debug.WriteLine($"[oPenEfficiency] WARNING: Layout references unregistered feature ID '{id}' in section '{section.Name}'");
 #endif
-            section.Features.Add(feature);
         }
 
+        /// <summary>
+        /// Curated, focused layout for daily professional use.
+        /// </summary>
         public static SidebarConfig GetStandardLayout()
         {
             var config = new SidebarConfig();
@@ -131,7 +135,66 @@ namespace oPenEfficiency.UI
             return config;
         }
 
-        public static SidebarConfig GetAllFeaturesLayout() => GetStandardLayout();
+        /// <summary>
+        /// IMPORTANT: Comprehensive layout containing every discovered feature in the toolkit.
+        /// ALL new features should be added here during development to ensure they are accessible.
+        /// </summary>
+        public static SidebarConfig GetAllFeaturesLayout()
+        {
+            var config = new SidebarConfig();
+
+            var sizeSection = new SidebarSection { Name = "PROPERTIES & SIZE", Color = "#6366F1" };
+            string[] sizeIds = { "BtnSearchBar", "BtnSizePanel", "BtnMatchSize", "BtnMatchWidth", "BtnMatchHeight", "BtnMatchAngles", "BtnMagicResizer", "BtnLockDimensions", "BtnShapeLock", "BtnSlideSize" };
+            foreach (var id in sizeIds) AddById(sizeSection, id);
+            config.Sections.Add(sizeSection);
+
+            var alignSection = new SidebarSection { Name = "ALIGN", Color = "#10B981" };
+            string[] alignIds = { "BtnAlignLeft", "BtnAlignCenter", "BtnAlignRight", "BtnAlignTop", "BtnAlignCenterVertical", "BtnAlignBottom", "BtnDiagonalAlign", "BtnLearnMargin", "BtnSetMargin", "BtnDistributeHorizontal", "BtnDistributeVertical", "BtnRemoveHorizontalGaps", "BtnRemoveVerticalGaps", "BtnIncreaseHorizontalSpacing", "BtnDecreaseHorizontalSpacing", "BtnIncreaseVerticalSpacing", "BtnDecreaseVerticalSpacing", "BtnAdjustSpacing" };
+            foreach (var id in alignIds) AddById(alignSection, id);
+            config.Sections.Add(alignSection);
+
+            var stretchSection = new SidebarSection { Name = "DOCK", Color = "#F59E0B" };
+            string[] stretchIds = { "BtnStretchLeft", "BtnStretchRight", "BtnStretchTop", "BtnStretchBottom", "BtnStretchLeftEdge", "BtnStretchRightEdge", "BtnStretchTopEdge", "BtnStretchBottomEdge", "BtnDockLeft", "BtnDockRight", "BtnDockTop", "BtnDockBottom" };
+            foreach (var id in stretchIds) AddById(stretchSection, id);
+            config.Sections.Add(stretchSection);
+
+            var arrangeSection = new SidebarSection { Name = "ARRANGE & ORGANIZE", Color = "#FBBF24" };
+            string[] arrangeIds = { "BtnSwapPositions", "BtnCopyXY", "BtnPasteXY", "BtnSelectSameType", "BtnSyncObjects", "BtnArrangeGrid", "BtnArrangeInShape", "BtnArrangePro", "BtnMultiSwap", "BtnCloneBottom", "BtnCloneLeft", "BtnCloneRight", "BtnCloneTop", "BtnObjectConnector", "BtnRectifyRotation", "BtnAlignShapeAdjustments", "BtnFlipHorizontal", "BtnFlipVertical", "BtnRotateShape", "BtnPositionPainter", "BtnHideSelected", "BtnShowHidden", "BtnHideMasterObjects", "BtnCreateMotionPath", "BtnBringToFront", "BtnBringForward", "BtnSendBackward", "BtnSendToBack", "BtnSnapShape", "BtnSnapToGrid", "BtnSnapToObjects" };
+            foreach (var id in arrangeIds) AddById(arrangeSection, id);
+            config.Sections.Add(arrangeSection);
+
+            var textSection = new SidebarSection { Name = "TEXT & FONTS", Color = "#FDE047" };
+            string[] textIds = { "BtnFontPanel", "BtnApplyTextTool", "BtnInsertText", "BtnFitFormToText", "BtnTranslate", "BtnReplaceFont", "BtnParagraphDialog", "BtnSpecialChars", "BtnFormatNumbers", "BtnAlignText", "BtnTextDirection", "BtnChangeCase", "BtnIncreaseFontSize", "BtnDecreaseFontSize", "BtnCharacterSpacing", "BtnSpellCheck", "BtnDeleteText", "BtnSwapTextFormatted", "BtnSwapTextPlain" };
+            foreach (var id in textIds) AddById(textSection, id);
+            config.Sections.Add(textSection);
+
+            var formatSection = new SidebarSection { Name = "FORMAT & STYLE", Color = "#06B6D4" };
+            string[] formatIds = { "BtnPickColor", "BtnPickFillColor", "BtnPickLineColor", "BtnPickTextColor", "BtnThemeColor", "BtnTransparentColor", "BtnColorOverlay", "BtnSmartCorners", "BtnTransparency", "BtnGlassHide", "BtnFormatShapeDialog", "BtnOptimizeFreeForm", "BtnStyleCheck", "BtnCleaner", "BtnFormatBold", "BtnFormatItalic", "BtnFormatUnderline", "BtnFormatStrikethrough", "BtnFormatSuperscript", "BtnFormatSubscript" };
+            foreach (var id in formatIds) AddById(formatSection, id);
+            config.Sections.Add(formatSection);
+
+            var tablesSection = new SidebarSection { Name = "TABLE TOOLS", Color = "#3B82F6" };
+            string[] tablesIds = { "BtnInsertColumnLeft", "BtnInsertColumnRight", "BtnInsertRowTop", "BtnInsertRowBottom", "BtnTableTranspose", "BtnTableSplit", "BtnConvertToShapes", "BtnConvertToTable", "BtnTableColumnInsertion", "BtnTableColumnWidth", "BtnTableHeatmap", "BtnTableRowHeight", "BtnTableRowInsertion", "BtnTableDimensions", "BtnTableFormatPainter", "BtnTableSortAZ", "BtnTableSum", "BtnTableBranding", "BtnAlignToTableCell" };
+            foreach (var id in tablesIds) AddById(tablesSection, id);
+            config.Sections.Add(tablesSection);
+
+            var visualsSection = new SidebarSection { Name = "VISUAL ELEMENTS", Color = "#EF4444" };
+            string[] visualsIds = { "BtnIllustrativeSticker", "BtnAddSticker", "BtnHarveyBall", "BtnTrafficLight", "BtnThermometer", "BtnStarRating", "BtnCheckbox", "BtnNumeration", "BtnProgressSeries", "BtnChartOverlay", "BtnMapWizard", "BtnSeriesGenerator", "BtnGlassHide", "BtnRepeatShape", "BtnSplitShape", "BtnSplitByParagraphs" };
+            foreach (var id in visualsIds) AddById(visualsSection, id);
+            config.Sections.Add(visualsSection);
+
+            var storySection = new SidebarSection { Name = "STORYLINING & REVIEW", Color = "#FDE047" };
+            string[] storyIds = { "BtnAgendaWizard", "BtnSaveAgendaLayout", "BtnStoryline", "BtnAnonymize", "BtnConsolidateMasters", "BtnStyleCheck", "BtnSlideGuidelines", "BtnCleaner", "BtnFlightMode", "BtnStickyNote", "BtnStickyNoteManager", "BtnSlideNotes" };
+            foreach (var id in storyIds) AddById(storySection, id);
+            config.Sections.Add(storySection);
+
+            var utilSection = new SidebarSection { Name = "UTILITIES & WIZARDS", Color = "#10B981" };
+            string[] utilIds = { "BtnAssetManager", "BtnWinnerPicker", "BtnUpdateExcelCharts", "BtnQRCode", "BtnDocumentAutomation", "BtnExcelLinkManager", "BtnExploreFeatures", "BtnMoveToBackup", "BtnPropertyExtraction", "BtnTagInspector", "BtnNewSlide", "BtnExportWizard", "BtnSettings", "BtnTemplateManager", "BtnStickyNote", "BtnSlidePaste" };
+            foreach (var id in utilIds) AddById(utilSection, id);
+            config.Sections.Add(utilSection);
+
+            return config;
+        }
 
         public static SidebarConfig GetMinimalistLayout()
         {
@@ -156,4 +219,3 @@ namespace oPenEfficiency.UI
         }
     }
 }
-
