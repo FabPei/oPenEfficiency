@@ -54,13 +54,13 @@ namespace oPenEfficiency.Features
             }
         }
 
-        public static bool AddGreenBSticker(PowerPointManager manager, string text = null)
+        public static bool AddGreenBSticker(PowerPointManager manager, string text = null, Slide targetSlide = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null) return false;
-                var slide = app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null && targetSlide == null) return false;
+                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
@@ -225,13 +225,13 @@ namespace oPenEfficiency.Features
             }
         }
 
-        public static bool AddConsultingStickyNote(PowerPointManager manager, string text = null)
+        public static bool AddConsultingStickyNote(PowerPointManager manager, string text = null, Slide targetSlide = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null) return false;
-                var slide = app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null && targetSlide == null) return false;
+                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
