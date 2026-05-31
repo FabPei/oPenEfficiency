@@ -398,6 +398,19 @@ namespace oPenEfficiency.UI
             }
         }
 
+        public bool EnableSwapPositionsContextMenu
+        {
+            get => _config?.EnableSwapPositionsContextMenu ?? true;
+            set
+            {
+                if (_config != null && _config.EnableSwapPositionsContextMenu != value)
+                {
+                    _config.EnableSwapPositionsContextMenu = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public double IllustrativeStickerLineSize
         {
             get => _config?.IllustrativeStickerLineSize ?? 3.0;

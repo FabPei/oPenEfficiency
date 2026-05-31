@@ -76,6 +76,8 @@ namespace oPenEfficiency.Models
         [DataMember]
         public string IllustrativeStickerTexts { get; set; } = "Work in progress, Updated, For discussion, Backup, Confidential, Strictly confidential";
         [DataMember]
+        public bool EnableSwapPositionsContextMenu { get; set; } = true;
+        [DataMember]
         public string IllustrativeStickerColor { get; set; } = "#FF0000";
         [DataMember]
         public double IllustrativeStickerLineSize { get; set; } = 3.0; // Point size for line thickness (approx 3 pt ~ 0.1cm standard)

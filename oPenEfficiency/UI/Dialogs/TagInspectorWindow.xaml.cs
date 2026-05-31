@@ -90,34 +90,54 @@ namespace oPenEfficiency.UI.Dialogs
             try
             {
                 var app = _manager.GetApplication();
-                var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                if (slide == null) return;
-
-                int count = 0;
-                for (int i = 1; i <= slide.Shapes.Count; i++)
+                
+                var slides = new List<PowerPoint.Slide>();
+                PowerPoint.SlideRange slideRange = null;
+                try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
+                
+                if (slideRange != null && slideRange.Count > 0)
                 {
-                    var shape = slide.Shapes[i];
-                    if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
-                    {
-                        string text = "";
-                        try { text = shape.TextFrame.TextRange.Text; } catch { }
-                        
-                        if (!string.IsNullOrEmpty(text))
-                        {
-                            count++;
-                            slide.Tags.Add($"OE_STICKY_NOTE_{count}", text);
-                        }
-                    }
-                }
-
-                if (count > 0)
-                {
-                    RefreshTags();
-                    MessageBox.Show($"Converted {count} sticky note(s) to slide tags.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    for (int s = 1; s <= slideRange.Count; s++)
+                        slides.Add(slideRange[s]);
                 }
                 else
                 {
-                    MessageBox.Show("No sticky notes found on this slide.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                    if (slide != null) slides.Add(slide);
+                }
+
+                if (slides.Count == 0) return;
+
+                int totalCount = 0;
+                foreach (var slide in slides)
+                {
+                    int count = 0;
+                    for (int i = 1; i <= slide.Shapes.Count; i++)
+                    {
+                        var shape = slide.Shapes[i];
+                        if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string text = "";
+                            try { text = shape.TextFrame.TextRange.Text; } catch { }
+                            
+                            if (!string.IsNullOrEmpty(text))
+                            {
+                                count++;
+                                slide.Tags.Add($"OE_STICKY_NOTE_{count}", text);
+                            }
+                        }
+                    }
+                    totalCount += count;
+                }
+
+                if (totalCount > 0)
+                {
+                    RefreshTags();
+                    MessageBox.Show($"Converted {totalCount} sticky note(s) to slide tags.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("No sticky notes found on selected slide(s).", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -164,12 +184,30 @@ namespace oPenEfficiency.UI.Dialogs
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                    if (slide != null)
+                    PowerPoint.SlideRange slideRange = null;
+                    try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
+
+                    if (slideRange != null && slideRange.Count > 0)
                     {
-                        for (int i = 1; i <= slide.Tags.Count; i++)
+                        for (int s = 1; s <= slideRange.Count; s++)
                         {
-                            tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i) });
+                            var slide = slideRange[s];
+                            string sourceStr = slideRange.Count > 1 ? $"Slide {slide.SlideIndex}" : "";
+                            for (int i = 1; i <= slide.Tags.Count; i++)
+                            {
+                                tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i), Source = sourceStr, SlideId = slide.SlideID });
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                        if (slide != null)
+                        {
+                            for (int i = 1; i <= slide.Tags.Count; i++)
+                            {
+                                tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i), Source = "", SlideId = slide.SlideID });
+                            }
                         }
                     }
                 }
@@ -215,8 +253,19 @@ namespace oPenEfficiency.UI.Dialogs
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                    slide?.Tags.Add(name, val);
+                    PowerPoint.SlideRange slideRange = null;
+                    try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
+                    
+                    if (slideRange != null && slideRange.Count > 0)
+                    {
+                        for (int s = 1; s <= slideRange.Count; s++)
+                            slideRange[s].Tags.Add(name, val);
+                    }
+                    else
+                    {
+                        var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                        slide?.Tags.Add(name, val);
+                    }
                 }
                 else if (RadioShapes.IsChecked == true)
                 {
@@ -257,8 +306,27 @@ namespace oPenEfficiency.UI.Dialogs
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                    slide?.Tags.Delete(selected.Name);
+                    if (selected.SlideId > 0)
+                    {
+                        var slide = app.ActivePresentation.Slides.FindBySlideID(selected.SlideId);
+                        slide?.Tags.Delete(selected.Name);
+                    }
+                    else
+                    {
+                        PowerPoint.SlideRange slideRange = null;
+                        try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
+
+                        if (slideRange != null && slideRange.Count > 0)
+                        {
+                            for (int s = 1; s <= slideRange.Count; s++)
+                                slideRange[s].Tags.Delete(selected.Name);
+                        }
+                        else
+                        {
+                            var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                            slide?.Tags.Delete(selected.Name);
+                        }
+                    }
                 }
                 else if (RadioShapes.IsChecked == true)
                 {
@@ -284,6 +352,8 @@ namespace oPenEfficiency.UI.Dialogs
         {
             public string Name { get; set; }
             public string Value { get; set; }
+            public string Source { get; set; }
+            public int SlideId { get; set; }
         }
     }
 }

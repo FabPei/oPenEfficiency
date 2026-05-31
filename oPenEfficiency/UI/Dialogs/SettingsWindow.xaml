@@ -161,6 +161,14 @@
 
                             <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20" />
 
+                            <!-- SWAP POSITIONS CONTEXT MENU -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                                <TextBlock Text="Swap Positions Settings" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <CheckBox Content="Enable 'Swap Positions' Context Menu" IsChecked="{Binding EnableSwapPositionsContextMenu, Mode=TwoWay}" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,20"/>
+
+                            <Rectangle Height="1" Fill="{DynamicResource BorderBrush}" Margin="0,20,0,20" />
+
                             <!-- SPACING INCREMENT -->
                             <StackPanel Orientation="Horizontal" Margin="0,20,0,20">
                                 <TextBlock Text="Spacing Increment (pt)" FontSize="22" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
