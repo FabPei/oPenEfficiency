@@ -10,9 +10,20 @@ This file serves as a lightweight dispatcher for Gemini CLI when working in this
 
 Before starting any task, you **MUST** consult the AI Agent index:
 
-1. **Read `.agents/INDEX.md`** to find the correct guidelines and skills for your task.
+1. **Read `.agents/INDEX.md`** to find the correct guidelines, **Agent Profiles**, and skills for your task.
 2. **Read `.agents/core-guidelines.md`** for strict project mandates (VSTO stability, UI rules, code style).
 3. **Read `.agents/project-overview.md`** for architectural patterns.
+
+---
+
+## Agent Profile Strategy
+
+To maintain context efficiency and architectural integrity, this project uses specialized agent roles (Architect, UI Developer, VSTO Specialist, etc.) defined in **`.agents/PROFILES.md`**.
+
+**Strategy:**
+1. **Identify Roles:** Before starting a task, identify which profile(s) are required.
+2. **Assume Persona:** Explicitly state which profile you are assuming for each sub-task.
+3. **Cross-Validate:** Use the *Project Hygiene* profile to verify structural changes (.csproj, CHANGELOG.md) before final delivery.
 
 ---
 
@@ -27,4 +38,4 @@ Before starting any task, you **MUST** consult the AI Agent index:
 4. **Document Bugs:** If you resolve a complex VSTO/WPF bug, you **MUST** document the root cause and the permanent fix in `.agents/skills/vsto-pitfalls.md`. Never let a hard-won lesson be lost.
 5. **Feature Documentation:** For every new feature or modification to an existing one, you **MUST** update `CHANGELOG.md`, `README.md` (if applicable), and ensure the `DetailedHelpText` in the `[FeatureMetadata]` attribute is accurate and comprehensive.
 
-Always ask questions if the input from the user is unclear or ambiguous. Always answer with "Okay chef".
+Always ask questions if the input from the user is unclear or ambiguous.

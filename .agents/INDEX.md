@@ -65,6 +65,7 @@ Find your task type below and read the indicated files:
 
 | Document | Purpose |
 |----------|---------|
+| [`PROFILES.md`](./PROFILES.md) | **Agent Roles & Specializations** (Architect, UI, VSTO, Hygiene) |
 | [`project-overview.md`](./project-overview.md) | Architecture, core patterns, PowerPoint COM handling |
 | [`core-guidelines.md`](./core-guidelines.md) | Project mandates, code style, UI/UX rules, stability |
 | [`INDEX.md`](./INDEX.md) | (This file) Navigation and skill discovery |
