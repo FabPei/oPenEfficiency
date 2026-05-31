@@ -59,7 +59,6 @@ namespace oPenEfficiency.Features
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null && targetSlide == null) return false;
                 var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
@@ -230,7 +229,6 @@ namespace oPenEfficiency.Features
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null && targetSlide == null) return false;
                 var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 

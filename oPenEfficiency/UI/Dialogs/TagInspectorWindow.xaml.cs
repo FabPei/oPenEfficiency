@@ -148,30 +148,58 @@ namespace oPenEfficiency.UI.Dialogs
 
         private void BtnTagToSticky_Click(object sender, RoutedEventArgs e)
         {
-            var selected = TagGrid.SelectedItem as TagItem;
-            if (selected == null) return;
+            var selectedItems = TagGrid.SelectedItems;
+            if (selectedItems == null || selectedItems.Count == 0) return;
 
             try
             {
                 var app = _manager.GetApplication();
-                PowerPoint.Slide targetSlide = null;
-                if (selected.SlideId > 0)
+                int successCount = 0;
+                var tagsToDelete = new List<TagItem>();
+
+                foreach (var item in selectedItems)
                 {
-                    targetSlide = app.ActivePresentation.Slides.FindBySlideID(selected.SlideId);
-                }
-                
-                if (oPenEfficiency.Features.StickyNoteFeature.Execute(_manager, selected.Value, targetSlide))
-                {
-                    if (MessageBox.Show("Sticky note restored successfully. Do you want to remove this tag?", "Remove Tag", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                    var tagItem = item as TagItem;
+                    if (tagItem == null) continue;
+
+                    PowerPoint.Slide targetSlide = null;
+                    if (tagItem.SlideId > 0)
                     {
-                        if (targetSlide != null)
+                        try { targetSlide = app.ActivePresentation.Slides.FindBySlideID(tagItem.SlideId); } catch { }
+                    }
+
+                    if (oPenEfficiency.Features.StickyNoteFeature.Execute(_manager, tagItem.Value, targetSlide))
+                    {
+                        successCount++;
+                        tagsToDelete.Add(tagItem);
+                    }
+                }
+
+                if (successCount > 0)
+                {
+                    var result = MessageBox.Show($"Successfully created {successCount} sticky note(s).\n\nDelete the original tags?", "Cleanup", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        foreach (var tagItem in tagsToDelete)
                         {
-                            targetSlide.Tags.Delete(selected.Name);
-                        }
-                        else
-                        {
-                            var activeSlide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                            activeSlide?.Tags.Delete(selected.Name);
+                            if (tagItem.SlideId > 0)
+                            {
+                                try {
+                                    var slide = app.ActivePresentation.Slides.FindBySlideID(tagItem.SlideId);
+                                    slide.Tags.Delete(tagItem.Name);
+                                } catch { }
+                            }
+                            else if (RadioSlide.IsChecked == true)
+                            {
+                                try {
+                                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                                    slide?.Tags.Delete(tagItem.Name);
+                                } catch { }
+                            }
+                            else if (RadioPresentation.IsChecked == true)
+                            {
+                                try { app.ActivePresentation.Tags.Delete(tagItem.Name); } catch { }
+                            }
                         }
                         RefreshTags();
                     }
@@ -180,70 +208,6 @@ namespace oPenEfficiency.UI.Dialogs
             catch (Exception ex)
             {
                 MessageBox.Show("Error creating sticky note: " + ex.Message);
-            }
-        }
-
-        private void BtnRestoreAllSticky_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var app = _manager.GetApplication();
-                var tagsToProcess = new List<TagItem>();
-                
-                // Get all tags currently displayed that match the prefix
-                var currentItems = TagGrid.ItemsSource as List<TagItem>;
-                if (currentItems != null)
-                {
-                    foreach (var tag in currentItems)
-                    {
-                        if (tag.Name.StartsWith("OE_STICKY_NOTE_", StringComparison.OrdinalIgnoreCase))
-                        {
-                            tagsToProcess.Add(tag);
-                        }
-                    }
-                }
-
-                if (tagsToProcess.Count == 0)
-                {
-                    MessageBox.Show("No sticky note tags found in the current view.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
-
-                int count = 0;
-                bool shouldDelete = MessageBox.Show($"Found {tagsToProcess.Count} sticky note tag(s). Do you want to remove the tags after restoring the physical shapes?", "Remove Tags?", MessageBoxButton.YesNoCancel, MessageBoxImage.Question) == MessageBoxResult.Yes;
-
-                foreach (var tag in tagsToProcess)
-                {
-                    PowerPoint.Slide targetSlide = null;
-                    if (tag.SlideId > 0)
-                    {
-                        try { targetSlide = app.ActivePresentation.Slides.FindBySlideID(tag.SlideId); } catch { }
-                    }
-                    
-                    if (oPenEfficiency.Features.StickyNoteFeature.Execute(_manager, tag.Value, targetSlide))
-                    {
-                        count++;
-                        if (shouldDelete)
-                        {
-                            if (targetSlide != null)
-                            {
-                                targetSlide.Tags.Delete(tag.Name);
-                            }
-                            else
-                            {
-                                var activeSlide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                                activeSlide?.Tags.Delete(tag.Name);
-                            }
-                        }
-                    }
-                }
-
-                RefreshTags();
-                MessageBox.Show($"Restored {count} sticky note(s).", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error restoring sticky notes: " + ex.Message);
             }
         }
 
