@@ -34,7 +34,7 @@ namespace oPenEfficiency.Features.Shapes
                     return false;
                 }
 
-                var app = manager.Application;
+                var app = manager.GetApplication();
                 var slide = (Slide)app.ActiveWindow.View.Slide;
                 
                 var shape1 = shapes[1]; // Bottom / Base shape

@@ -23,7 +23,7 @@ namespace oPenEfficiency.Features
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StickyNoteFeature
     {
-        public static bool Execute(PowerPointManager manager, string text = null)
+        public static bool Execute(PowerPointManager manager, string text = null, Slide targetSlide = null)
         {
             if (manager == null) return false;
 
@@ -45,12 +45,12 @@ namespace oPenEfficiency.Features
             switch (style)
             {
                 case "Consulting":
-                    return AddConsultingStickyNote(manager, text);
+                    return AddConsultingStickyNote(manager, text, targetSlide);
                 case "GreenB":
-                    return AddGreenBSticker(manager, text);
+                    return AddGreenBSticker(manager, text, targetSlide);
                 case "Theme":
                 default:
-                    return InsertRealisticStickyNote(manager, text);
+                    return InsertRealisticStickyNote(manager, text, targetSlide);
             }
         }
 
@@ -130,13 +130,13 @@ namespace oPenEfficiency.Features
             return "Segoe UI";
         }
 
-        public static bool InsertRealisticStickyNote(PowerPointManager manager, string text = null)
+        public static bool InsertRealisticStickyNote(PowerPointManager manager, string text = null, Slide targetSlide = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null) return false;
-                var slide = app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null && targetSlide == null) return false;
+                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
