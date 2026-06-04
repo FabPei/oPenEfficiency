@@ -20,6 +20,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F43F5E",
         Description = "Toggles flight mode to obscure sensitive content when presenting in public.",
         DetailedHelpText = "### Flight Mode\nToggles privacy overlays to hide sensitive company branding or logos when presenting in public spaces.\n\n**Right-Click Options:**\n* **Cover Logos Only:** Identifies picture shapes in the slide master and covers them with white rectangles.\n* **Light Overlay:** Adds a 5% semi-transparent white overlay over the entire slide.\n* **Heavy Overlay:** Adds a 15% semi-transparent white overlay over the entire slide.\n* **Disable:** Removes all privacy overlays.",
+        Keywords = "privacy, obscure, hide, sensitive, public, overlay",
         MinSelection = 0,
         IsToggle = true,
         RequiredType = PpSelectionType.ppSelectionNone)]

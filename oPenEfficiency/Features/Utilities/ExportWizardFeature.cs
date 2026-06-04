@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#10B981",
         Description = "Automates the process of saving individual slides or selections as PDF, PNG, or separate PPTX files.",
         DetailedHelpText = "Automates the process of saving individual slides or selections as PDF, PNG, or separate PPTX files.",
+        Keywords = "save, pdf, png, extract, slides, convert",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ExportWizardFeature

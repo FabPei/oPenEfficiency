@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#10B981",
         Description = "Manage all Excel links with Split Screen and Relative Paths.",
         DetailedHelpText = "Manage your Excel links.",
+        Keywords = "spreadsheet, sync, update, paths, data, connection",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ExcelLinkManagerFeature

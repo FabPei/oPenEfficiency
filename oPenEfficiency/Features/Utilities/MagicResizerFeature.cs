@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#6366F1",
         Description = "Propagates a resize transformation across multiple objects relative to their individual centers, preserving layout spacing.",
         DetailedHelpText = "Propagates a resize transformation across multiple objects relative to their individual centers, preserving layout spacing.",
+        Keywords = "scale, transform, relative, individual, size, maintain",
         MinSelection = 1,
         IsToggle = true,
         RequiredType = PpSelectionType.ppSelectionShapes)]

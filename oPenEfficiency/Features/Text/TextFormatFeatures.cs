@@ -129,7 +129,7 @@ namespace oPenEfficiency.Features.Text
         }
     }
 
-    [FeatureMetadata(Id = "BtnFormatUnderline", Name = "Underline", Tooltip = "Underline (Right-click to remove)", IconData = "M12 17A6 6 0 0 0 18 11V3H15.5V11A3.5 3.5 0 0 1 12 14.5A3.5 3.5 0 0 1 8.5 11V3H6V11A6 6 0 0 0 12 17M5 19V21H19V19H5Z", Color = "#EAB308", Description = "Applies underline formatting to selected text.", DetailedHelpText = "Applies underline formatting to selected text. Use right-click to explicitly remove underline formatting.", MinSelection = 1)]
+    [FeatureMetadata(Id = "BtnFormatUnderline", Name = "Underline", Tooltip = "Underline (Right-click to remove)", IconData = "M12 17A6 6 0 0 0 18 11V3H15.5V11A3.5 3.5 0 0 1 12 14.5A3.5 3.5 0 0 1 8.5 11V3H6V11A6 6 0 0 0 12 17M5 19V21H19V19H5Z", Color = "#EAB308", Description = "Applies underline formatting to selected text.", DetailedHelpText = "Applies underline formatting to selected text. Use right-click to explicitly remove underline formatting.", Keywords = "line, below, emphasis, text, font", MinSelection = 1)]
     public static class FormatUnderlineFeature
     {
         public static bool Execute(PowerPointManager manager)
@@ -268,7 +268,7 @@ namespace oPenEfficiency.Features.Text
         }
     }
 
-    [FeatureMetadata(Id = "BtnNewSlide", Name = "New Slide", Tooltip = "New Slide (Dropdown)", IconData = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z", Color = "#10B981", Description = "Inserts a new slide into the presentation using the current layout.", DetailedHelpText = "Inserts a new slide into the presentation using the current layout. Right-click to choose from available master slide layouts.", MinSelection = 0)]
+    [FeatureMetadata(Id = "BtnNewSlide", Name = "New Slide", Tooltip = "New Slide (Dropdown)", IconData = "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2zm-3-7V3.5L18.5 9H13z", Color = "#10B981", Description = "Inserts a new slide into the presentation using the current layout.", DetailedHelpText = "Inserts a new slide into the presentation using the current layout. Right-click to choose from available master slide layouts.", Keywords = "add, insert, page, template, layout", MinSelection = 0)]
     public static class NewSlideFeature
     {
         public static bool Execute(PowerPointManager manager)

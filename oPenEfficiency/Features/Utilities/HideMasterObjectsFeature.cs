@@ -17,7 +17,8 @@ namespace oPenEfficiency.Features.Utilities
         MinSelection = 0,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionNone,
         Description = "Toggles the visibility of Slide Master shapes and backgrounds on the currently selected slides.",
-        DetailedHelpText = "### Hide / Show Master Objects\n\nToggles the visibility of Slide Master background elements on the current slide, allowing full canvas access for precise positioning."
+        DetailedHelpText = "### Hide / Show Master Objects\n\nToggles the visibility of Slide Master background elements on the current slide, allowing full canvas access for precise positioning.",
+        Keywords = "background, visibility, toggle, clean, canvas, master"
     )]
     public static class HideMasterObjectsFeature
     {

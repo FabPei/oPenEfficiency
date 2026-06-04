@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Cleans up presentations by removing hidden slides, animations, notes, and comments.",
         DetailedHelpText = "### Cleaner\nPerforms a comprehensive cleanup of the presentation. Left-click to open the main cleanup dialog.\n\n**Right-Click Options:**\n* **Remove Hidden Slides**: Deletes all slides marked as hidden.\n* **Remove Animations**: Strip all animations (All Slides / Selected).\n* **Remove Notes**: Wipe Speaker or Developer notes.\n* **Anonymize**: Remove all personal metadata and author tags.",
+        Keywords = "tidy, remove, sweep, hidden, anonymize, notes",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class CleanerFeature

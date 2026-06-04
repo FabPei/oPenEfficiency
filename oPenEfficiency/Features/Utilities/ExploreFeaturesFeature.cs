@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#6366F1",
         Description = "The Feature Explorer provides a searchable index of all features available in oPenEfficiency. It shows detailed usage instructions, animated examples, and current shortcuts.",
         DetailedHelpText = "The Feature Explorer provides a searchable index of all features available in oPenEfficiency. It shows detailed usage instructions, animated examples, and current shortcuts.",
+        Keywords = "search, index, help, discover, guide, manual",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ExploreFeaturesFeature

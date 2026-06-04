@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens the lottery window for random winner selection.",
         DetailedHelpText = "### Lottery\nAnimates a random selection from a defined list of names or items, useful for team engagement exercises and random presenter selection.",
+        Keywords = "random, winner, picker, selection, draw, chance",
         MinSelection = 0)]
     public static class LotteryFeature
     {

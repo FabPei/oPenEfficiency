@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F59E0B",
         Description = "Moves the selected slides to the end of the presentation.",
         DetailedHelpText = "Moves selected slides behind the Backup slide.",
+        Keywords = "archive, end, reorder, shift, append, tail",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionSlides)]
     public static class MoveToBackupFeature

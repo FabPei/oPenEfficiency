@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features
         Color = "#D946EF",
         Description = "Hides all currently selected shapes on the slide. Use 'Show Hidden' to make them visible again.",
         DetailedHelpText = "### Hide Selected\nTemporarily hides selected shapes without deleting them. The shapes remain recoverable via the Show Hidden feature.",
+        Keywords = "invisible, conceal, disappear, stealth, temporarily, remove",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class HideSelectedFeature

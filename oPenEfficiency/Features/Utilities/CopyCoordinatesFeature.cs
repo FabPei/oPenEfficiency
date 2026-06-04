@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Grabs the exact top-left coordinates and size of the selected object. Use 'Paste XY' to apply them to another object.",
         DetailedHelpText = "### Copy XY-Coordinates\nCopies the exact X position, Y position, Width, and Height of the selected shape to an internal clipboard. Use Paste XY-Coordinates to apply these dimensions to other shapes.",
+        Keywords = "clipboard, position, dimensions, layout, extract, transfer",
         MinSelection = 1,
         MaxSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]

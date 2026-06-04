@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#8B5CF6",
         Description = "Opens the native PowerPoint 'Format Shape' pane to adjust fill, line, and effects.",
         DetailedHelpText = "### Format Shape Dialog\nOpens a consolidated formatting dialog combining fill, line, shadow, size, and position options in a single panel.",
+        Keywords = "pane, fill, line, shadow, properties, native",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class FormatShapeDialogFeature

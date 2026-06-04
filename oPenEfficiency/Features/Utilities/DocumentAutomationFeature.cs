@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#8B5CF6",
         Description = "Launch the Document Automation Wizard or Designer.",
         DetailedHelpText = "Document Automation.",
+        Keywords = "wizard, designer, macro, template, generate, flow",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class DocumentAutomationFeature

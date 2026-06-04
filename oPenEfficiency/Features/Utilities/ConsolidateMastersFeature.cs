@@ -19,7 +19,8 @@ namespace oPenEfficiency.Features.Utilities
         MinSelection = 0,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionNone,
         Description = "A hard cleanup function that forces all slides to use the first slide master. Any other masters are deleted. Re-mapped slides get a warning sticker.",
-        DetailedHelpText = "### Consolidate Slide Masters\nDeletes all redundant Slide Masters accumulated from copy-pasting slides, keeping only the primary master. Orphaned slides are automatically remapped and visually flagged for review.")
+        DetailedHelpText = "### Consolidate Slide Masters\nDeletes all redundant Slide Masters accumulated from copy-pasting slides, keeping only the primary master. Orphaned slides are automatically remapped and visually flagged for review.",
+        Keywords = "cleanup, merge, remove, unused, templates, primary")
     ]
     public static class ConsolidateMastersFeature
     {

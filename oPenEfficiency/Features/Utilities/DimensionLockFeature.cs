@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Locks or unlocks the dimensions (width and height) of selected shapes.",
         DetailedHelpText = "### Dimension Lock\nPrevents the width and height of selected shapes from being changed while allowing them to be moved.\n**Right-Click Options:**\n* **Global Toggle**: Apply or remove dimension locks for all shapes across the entire presentation.",
+        Keywords = "freeze, aspect ratio, prevent resize, safeguard, restrict",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes,
         IsToggle = true)]
