@@ -41,5 +41,8 @@ namespace oPenEfficiency.Services.Attributes
         public bool RequiresTable { get; set; }
         public bool RequiresHiddenShapes { get; set; }
         public bool IsToggle { get; set; }
+
+        // Search
+        public string Keywords { get; set; }
     }
 }

@@ -195,38 +195,26 @@ namespace oPenEfficiency.UI
 
             try
             {
-                var shapes = _manager.GetSelectedShapes();
+                var selection = _manager.GetApplication().ActiveWindow.Selection;
+                Microsoft.Office.Interop.PowerPoint.ShapeRange shapes = null;
+                
+                if (selection != null && selection.Type == Microsoft.Office.Interop.PowerPoint.PpSelectionType.ppSelectionShapes)
+                {
+                    try { if (selection.HasChildShapeRange) shapes = selection.ChildShapeRange; } catch { }
+                    if (shapes == null) shapes = selection.ShapeRange;
+                }
+
                 if (shapes == null || shapes.Count == 0)
                 {
                     MessageBox.Show("Please select a shape first.");
                     return;
                 }
 
-                var shape = shapes[1];
                 string value = null;
-
-                switch (propertyType)
+                for (int i = 1; i <= shapes.Count; i++)
                 {
-                    case "Font":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            value = shape.TextFrame.TextRange.Font.Name;
-                        break;
-                    case "Size":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            value = shape.TextFrame.TextRange.Font.Size.ToString();
-                        break;
-                    case "TextColor":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            value = RgbToHex(shape.TextFrame.TextRange.Font.Color.RGB);
-                        break;
-                    case "FillColor":
-                        if (shape.Fill.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            value = RgbToHex(shape.Fill.ForeColor.RGB);
-                        break;
-                    case "LineColor":
-                        if (shape.Line.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            value = RgbToHex(shape.Line.ForeColor.RGB);
-                        break;
+                    value = GetPropertyValueFromShape(shapes[i], propertyType);
+                    if (value != null) break;
                 }
 
                 if (value != null) targetCombo.Text = value;
@@ -236,6 +224,48 @@ namespace oPenEfficiency.UI
             {
                 MessageBox.Show("Could not get property from selection: " + ex.Message);
             }
+        }
+
+        private string GetPropertyValueFromShape(Microsoft.Office.Interop.PowerPoint.Shape shape, string propertyType)
+        {
+            if (shape.Type == Microsoft.Office.Core.MsoShapeType.msoGroup)
+            {
+                foreach (Microsoft.Office.Interop.PowerPoint.Shape child in shape.GroupItems)
+                {
+                    string val = GetPropertyValueFromShape(child, propertyType);
+                    if (val != null) return val;
+                }
+                return null;
+            }
+
+            try
+            {
+                switch (propertyType)
+                {
+                    case "Font":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            return shape.TextFrame.TextRange.Font.Name;
+                        break;
+                    case "Size":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            return shape.TextFrame.TextRange.Font.Size.ToString();
+                        break;
+                    case "TextColor":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            return RgbToHex(shape.TextFrame.TextRange.Font.Color.RGB);
+                        break;
+                    case "FillColor":
+                        if (shape.Fill.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            return RgbToHex(shape.Fill.ForeColor.RGB);
+                        break;
+                    case "LineColor":
+                        if (shape.Line.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            return RgbToHex(shape.Line.ForeColor.RGB);
+                        break;
+                }
+            }
+            catch { }
+            return null;
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();

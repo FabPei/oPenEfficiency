@@ -244,6 +244,9 @@
     <Compile Include="UI\Dialogs\BulkFormatReplacerWindow.xaml.cs">
       <DependentUpon>BulkFormatReplacerWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="UI\Dialogs\GlassHideConfigWindow.xaml.cs">
+      <DependentUpon>GlassHideConfigWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UI\Dialogs\ChartOverlayDialog.xaml.cs">
       <DependentUpon>ChartOverlayDialog.xaml</DependentUpon>
     </Compile>
@@ -483,6 +486,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="UI\Dialogs\BulkFormatReplacerWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\Dialogs\GlassHideConfigWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

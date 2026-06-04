@@ -332,7 +332,9 @@ namespace oPenEfficiency
                 
                 string query = searchTerm.ToLower();
                 var matches = UI.FeatureLibrary.AllFeatures
-                    .Where(f => f.Name.ToLower().Contains(query) || f.Id.ToLower().Contains(query))
+                    .Where(f => f.Name.ToLower().Contains(query) || 
+                                f.Id.ToLower().Contains(query) ||
+                                (f.Keywords != null && f.Keywords.ToLower().Contains(query)))
                     .Where(f => f.Id != "BtnSearchBar") // Don't match the search bar itself
                     .ToList();
 
@@ -1652,6 +1654,22 @@ namespace oPenEfficiency
                     System.Windows.MessageBox.Show("Storyline copied to clipboard.");
                 };
                 btn.ContextMenu.Items.Add(miCopy);
+            }
+            else if (btn.Name == "BtnGlassHide")
+            {
+                btn.ContextMenu.Items.Add(new Separator());
+                var miConfig = new MenuItem { Header = "Configure Glass Overlay..." };
+                miConfig.Click += (s, e) => {
+                    var w = new oPenEfficiency.UI.Dialogs.GlassHideConfigWindow(GetManager());
+                    w.ShowDialog();
+                };
+                btn.ContextMenu.Items.Add(miConfig);
+                
+                var miIndiv = new MenuItem { Header = "Individual Shapes Overlay" };
+                miIndiv.Click += (s, e) => {
+                    GlassHideFeature.Execute(GetManager(), GlassHideFeature.GlassMode.Individual);
+                };
+                btn.ContextMenu.Items.Add(miIndiv);
             }
             else if (btn.Name == "BtnPasteXY")
             {

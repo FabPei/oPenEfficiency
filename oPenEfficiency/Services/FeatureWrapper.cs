@@ -26,6 +26,7 @@ namespace oPenEfficiency.Services
         public bool RequiresTable { get; }
         public bool RequiresHiddenShapes { get; }
         public bool IsToggle { get; }
+        public string Keywords { get; }
 
         public FeatureWrapper(Type featureType)
         {
@@ -41,6 +42,7 @@ namespace oPenEfficiency.Services
 
             Id = metadata.Id;
             Name = metadata.Name;
+            Keywords = metadata.Keywords;
             MinSelection = metadata.MinSelection;
             MaxSelection = metadata.MaxSelection;
             RequiredType = metadata.RequiredType;
@@ -62,7 +64,8 @@ namespace oPenEfficiency.Services
                 RequiredType = metadata.RequiredType,
                 RequiresTable = metadata.RequiresTable,
                 RequiresHiddenShapes = metadata.RequiresHiddenShapes,
-                IsToggle = metadata.IsToggle
+                IsToggle = metadata.IsToggle,
+                Keywords = metadata.Keywords
             };
 
             // Find Execute method (must exist)

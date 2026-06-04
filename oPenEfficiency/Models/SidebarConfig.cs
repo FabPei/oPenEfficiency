@@ -10,6 +10,8 @@ namespace oPenEfficiency.Models
         public string Id { get; set; }
         [DataMember]
         public string Name { get; set; }
+        [DataMember]
+        public string Keywords { get; set; }
 
         public override string ToString() => Name;
 

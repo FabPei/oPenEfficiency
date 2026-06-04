@@ -21,6 +21,7 @@ namespace oPenEfficiency.UI
         public bool RequiresTable { get; set; }
         public bool RequiresHiddenShapes { get; set; }
         public bool IsToggle { get; set; }
+        public string Keywords { get; set; }
     }
 
     public static class FeatureLibrary
@@ -39,7 +40,7 @@ namespace oPenEfficiency.UI
                     foreach (var id in legacyIds)
                     {
                         var info = GetFeatureInfo(id);
-                        _allFeatures.Add(new SidebarFeature { Id = id, Name = info.Tooltip ?? id.Replace("Btn", "") });
+                        _allFeatures.Add(new SidebarFeature { Id = id, Name = info.Tooltip ?? id.Replace("Btn", ""), Keywords = info.Keywords });
                     }
 
                     // 2. Auto-discover all other features
@@ -50,7 +51,7 @@ namespace oPenEfficiency.UI
                         {
                             if (!_allFeatures.Any(x => x.Id == f.Id))
                             {
-                                _allFeatures.Add(new SidebarFeature { Id = f.Id, Name = f.Name });
+                                _allFeatures.Add(new SidebarFeature { Id = f.Id, Name = f.Name, Keywords = f.Keywords });
                             }
                         }
                     }

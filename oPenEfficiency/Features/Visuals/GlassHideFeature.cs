@@ -18,6 +18,9 @@ namespace oPenEfficiency.Features
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class GlassHideFeature
     {
+        public static float DefaultTransparency { get; set; } = 0.5f;
+        public static int DefaultColorRgb { get; set; } = 0xFFFFFF;
+
         public enum GlassMode
         {
             Single,
@@ -29,14 +32,17 @@ namespace oPenEfficiency.Features
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Execute(manager, GlassMode.Single);
+            return Execute(manager, GlassMode.Single, DefaultColorRgb, DefaultTransparency);
         }
 
         /// <summary>
         /// Executes Glass Hide with specified mode.
         /// </summary>
-        public static bool Execute(PowerPointManager manager, GlassMode mode)
+        public static bool Execute(PowerPointManager manager, GlassMode mode, int colorRgb = -1, float transparency = -1f)
         {
+            if (colorRgb == -1) colorRgb = DefaultColorRgb;
+            if (transparency < 0f) transparency = DefaultTransparency;
+
             if (manager == null) return false;
             var shapeRange = manager.GetSelectedShapes();
             if (shapeRange == null || shapeRange.Count == 0) return false;
@@ -49,7 +55,7 @@ namespace oPenEfficiency.Features
 
                 if (mode == GlassMode.Single)
                 {
-                    CreateGlassShape(slide, shapeRange.Left, shapeRange.Top, shapeRange.Width, shapeRange.Height);
+                    CreateGlassShape(slide, shapeRange.Left, shapeRange.Top, shapeRange.Width, shapeRange.Height, colorRgb, transparency);
                 }
                 else
                 {
@@ -57,7 +63,7 @@ namespace oPenEfficiency.Features
                     for (int i = 1; i <= shapeRange.Count; i++)
                     {
                         var s = shapeRange[i];
-                        CreateGlassShape(slide, s.Left, s.Top, s.Width, s.Height);
+                        CreateGlassShape(slide, s.Left, s.Top, s.Width, s.Height, colorRgb, transparency);
                     }
                 }
 
@@ -70,14 +76,14 @@ namespace oPenEfficiency.Features
             }
         }
 
-        private static void CreateGlassShape(Slide slide, float left, float top, float width, float height)
+        private static void CreateGlassShape(Slide slide, float left, float top, float width, float height, int colorRgb = 0xFFFFFF, float transparency = 0.5f)
         {
             var glass = slide.Shapes.AddShape(Office.MsoAutoShapeType.msoShapeRectangle, left, top, width, height);
 
             // Configure Glass Appearance
             glass.Fill.Visible = Office.MsoTriState.msoTrue;
-            glass.Fill.ForeColor.RGB = 0xFFFFFF; // White
-            glass.Fill.Transparency = 0.1f; // 10% transparent (90% opaque)
+            glass.Fill.ForeColor.RGB = colorRgb; 
+            glass.Fill.Transparency = transparency; 
 
             glass.Line.Visible = Office.MsoTriState.msoFalse;
 

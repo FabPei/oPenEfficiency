@@ -211,21 +211,53 @@ namespace oPenEfficiency
             int hWnd = GetActiveWindowHWnd();
             if (hWnd == 0) return;
 
-            // Check if we already have a task pane for this window
+            // 1. Cleanup dead entries from our tracking dictionary
+            var deadHwnds = _windowTaskPanes.Where(kvp => {
+                try { return kvp.Value == null || kvp.Value.Window == null; }
+                catch { return true; }
+            }).Select(kvp => kvp.Key).ToList();
+            
+            foreach (var dead in deadHwnds) _windowTaskPanes.Remove(dead);
+
+            // 2. Check if we already track a pane for THIS specific window handle
             if (_windowTaskPanes.TryGetValue(hWnd, out var existingPane))
             {
-                return;
+                try
+                {
+                    // Ensure it's still healthy
+                    if (existingPane.Window != null) return;
+                }
+                catch { _windowTaskPanes.Remove(hWnd); }
             }
 
-            // Create new task pane for this window
+            // 3. Defensive check: Check the GLOBAL collection for ANY pane attached to this window
+            // This prevents duplicates if PowerPoint reused a window but changed the HWND or if events desynced
+            foreach (CustomTaskPane pane in this.CustomTaskPanes)
+            {
+                try
+                {
+                    if (pane.Title == "oPen Efficiency" && pane.Window != null)
+                    {
+                        // Match by Window equality (Interop objects)
+                        if (pane.Window.Equals(this.Application.ActiveWindow))
+                        {
+                            _windowTaskPanes[hWnd] = pane;
+                            return;
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // 4. Create new task pane only if definitely not found
             var ppManager = new PowerPointManager(this.Application);
             var host = new SidebarTaskPaneHost();
-            var taskPane = CustomTaskPanes.Add(host, "oPen Efficiency");
-            taskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
-            taskPane.Width = 300;
-            taskPane.Visible = true;
+            var newTaskPane = CustomTaskPanes.Add(host, "oPen Efficiency");
+            newTaskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
+            newTaskPane.Width = 300;
+            newTaskPane.Visible = true;
 
-            _windowTaskPanes[hWnd] = taskPane;
+            _windowTaskPanes[hWnd] = newTaskPane;
 
             if (host.Sidebar != null)
                 host.Sidebar.SetManager(ppManager);

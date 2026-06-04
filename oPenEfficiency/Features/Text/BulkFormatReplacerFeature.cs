@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Batch replace fonts, sizes, and colors (Text, Fill, Line) across all selected slides.",
         DetailedHelpText = "### Bulk Format Replacer\nFinds all text runs in the presentation matching a set of font and color criteria and replaces them with a new format in one batch operation.",
+        Keywords = "color replacement, font swap, mass format, bulk change, text style",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class BulkFormatReplacerFeature
