@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Decreases the horizontal gap between selected shapes by the configured spacing increment.",
         DetailedHelpText = "### Decrease Horizontal Spacing\nMoves selected shapes closer together horizontally by the spacing increment (configurable in Settings > Spacing Increment). Select 2 or more shapes and click to compress their spacing.",
+        Keywords = "spacing, horizontal, closer, gap, decrease",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DecreaseHorizontalSpacingFeature

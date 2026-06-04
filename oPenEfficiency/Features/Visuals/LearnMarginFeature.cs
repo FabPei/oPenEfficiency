@@ -22,6 +22,7 @@ namespace oPenEfficiency.Features.Visuals
         Color = "#3B82F6",
         Description = "Learns the internal text margins from the selected shape.",
         DetailedHelpText = "Learns the internal text margins from the selected shape so they can be applied to others.",
+        Keywords = "margin, learn, copy, text, internal spacing, padding",
         MinSelection = 1,
         MaxSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]

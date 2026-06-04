@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features
         Tooltip = "Eyedropper: Pick and apply Fill Color",
         Color = "#06B6D4",
         Description = "Sample a color from any pixel on the slide/screen and apply it as the Fill Color to selected shapes.",
+        Keywords = "color, picker, fill, eyedropper, sample",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class PickFillColorFeature

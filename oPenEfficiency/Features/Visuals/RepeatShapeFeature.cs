@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Clones the selected shape multiple times to create long sequences or grids. Default direction is Right.",
         DetailedHelpText = "### Repeat Shape\nDuplicates the selected shape a configurable number of times with automatic offset spacing, instantly generating a row or column of identical shapes.",
+        Keywords = "repeat, clone, sequence, grid, array, duplicate",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class RepeatShapeFeature

@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Increases the horizontal gap between selected shapes by the configured spacing increment.",
         DetailedHelpText = "### Increase Horizontal Spacing\nMoves selected shapes apart horizontally by the spacing increment (configurable in Settings > Spacing Increment). Select 2 or more shapes and click to spread them out.",
+        Keywords = "spacing, horizontal, apart, gap, increase",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class IncreaseHorizontalSpacingFeature

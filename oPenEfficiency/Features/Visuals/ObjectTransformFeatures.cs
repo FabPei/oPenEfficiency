@@ -6,7 +6,7 @@ using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features.Visuals
 {
-    [FeatureMetadata(Id = "BtnFlipHorizontal", Name = "Flip Horizontal", Tooltip = "Flip Horizontal", IconData = "M15 21l6-9l-6-9v18M9 21L3 12l6-9v18M12 2v20", Color = "#D946EF", Description = "Flips the selected shapes horizontally.", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
+    [FeatureMetadata(Id = "BtnFlipHorizontal", Name = "Flip Horizontal", Tooltip = "Flip Horizontal", IconData = "M15 21l6-9l-6-9v18M9 21L3 12l6-9v18M12 2v20", Color = "#D946EF", Description = "Flips the selected shapes horizontally.", Keywords = "flip, horizontal, mirror, reverse", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class FlipHorizontalFeature
     {
         public static bool Execute(PowerPointManager manager)
@@ -32,7 +32,7 @@ namespace oPenEfficiency.Features.Visuals
         }
     }
 
-    [FeatureMetadata(Id = "BtnFlipVertical", Name = "Flip Vertical", Tooltip = "Flip Vertical", IconData = "M21 9l-9-6l-9 6h18M21 15l-9 6l-9-6h18M2 12h20", Color = "#D946EF", Description = "Flips the selected shapes vertically.", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
+    [FeatureMetadata(Id = "BtnFlipVertical", Name = "Flip Vertical", Tooltip = "Flip Vertical", IconData = "M21 9l-9-6l-9 6h18M21 15l-9 6l-9-6h18M2 12h20", Color = "#D946EF", Description = "Flips the selected shapes vertically.", Keywords = "flip, vertical, mirror, reverse", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class FlipVerticalFeature
     {
         public static bool Execute(PowerPointManager manager)
@@ -58,7 +58,7 @@ namespace oPenEfficiency.Features.Visuals
         }
     }
 
-    [FeatureMetadata(Id = "BtnRotateShape", Name = "Rotate", Tooltip = "Rotate (Right-click for options)", IconData = "M12 2v3a7 7 0 0 1 7 7h3a10 10 0 0 0-10-10m7 10a7 7 0 0 1-7 7v3a10 10 0 0 0 10-10h-3M12 22v-3a7 7 0 0 1-7-7H2a10 10 0 0 0 10 10M5 12a7 7 0 0 1 7-7V2A10 10 0 0 0 2 12h3M12 2l-3 4h6l-3-4M22 12l-4-3v6l4-3M12 22l3-4H9l3 4M2 12l4 3V9l-4 3z", Color = "#D946EF", Description = "Rotates the selected shapes. Left-click to rotate 90 degrees right; right-click for custom angles.", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
+    [FeatureMetadata(Id = "BtnRotateShape", Name = "Rotate", Tooltip = "Rotate (Right-click for options)", IconData = "M12 2v3a7 7 0 0 1 7 7h3a10 10 0 0 0-10-10m7 10a7 7 0 0 1-7 7v3a10 10 0 0 0 10-10h-3M12 22v-3a7 7 0 0 1-7-7H2a10 10 0 0 0 10 10M5 12a7 7 0 0 1 7-7V2A10 10 0 0 0 2 12h3M12 2l-3 4h6l-3-4M22 12l-4-3v6l4-3M12 22l3-4H9l3 4M2 12l4 3V9l-4 3z", Color = "#D946EF", Description = "Rotates the selected shapes. Left-click to rotate 90 degrees right; right-click for custom angles.", Keywords = "rotate, turn, spin, angle", MinSelection = 1, RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class RotateShapeFeature
     {
         public static bool Execute(PowerPointManager manager)
@@ -89,3 +89,4 @@ namespace oPenEfficiency.Features.Visuals
         }
     }
 }
+

@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens the Style Check window to analyze presentation style.",
         DetailedHelpText = "### Style Check\nScans the presentation for design rule violations: incorrect fonts, off-brand colors, missing bullets, inconsistent proofing languages, and orphaned footnotes. Results are displayed in a sortable findings list.",
+        Keywords = "style, check, audit, proofing, brand, consistency",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StyleCheckFeature

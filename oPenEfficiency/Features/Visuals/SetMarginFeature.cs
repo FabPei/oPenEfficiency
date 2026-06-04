@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features.Visuals
         Color = "#3B82F6",
         Description = "Applies the learned text margins to the selected shapes.",
         DetailedHelpText = "Applies the learned text margins to the selected shapes.",
+        Keywords = "margin, set, apply, text, internal spacing, padding",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SetMarginFeature

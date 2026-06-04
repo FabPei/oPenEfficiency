@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Removes vertical gaps between selected shapes.",
         DetailedHelpText = "### Remove Vertical Gaps\nCollapses all vertical spacing between selected shapes to zero, sliding them together with no gap on the vertical axis.",
+        Keywords = "gap, remove, vertical, collapse, pack",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class RemoveVerticalGapsFeature

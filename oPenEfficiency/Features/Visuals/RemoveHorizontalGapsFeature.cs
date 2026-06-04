@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Removes horizontal gaps between selected shapes.",
         DetailedHelpText = "### Remove Horizontal Gaps\nCollapses all horizontal spacing between selected shapes to zero, sliding them together with no gap on the horizontal axis.",
+        Keywords = "gap, remove, horizontal, collapse, pack",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class RemoveHorizontalGapsFeature

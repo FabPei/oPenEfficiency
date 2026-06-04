@@ -21,6 +21,7 @@ namespace oPenEfficiency.Features.Visuals
         MinSelection = 1,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
         Description = "Links geographic vector maps to data to achieve conditional color rendering of regions natively.",
+        Keywords = "map, wizard, geography, colorizer, regions",
         DetailedHelpText = "### Map Wizard\nManages geographic vector map assets (world map, regions, countries). Allows binding Excel conditional formatting data to fill individual country shapes automatically based on data values.")
     ]
     public static class MapWizardFeature

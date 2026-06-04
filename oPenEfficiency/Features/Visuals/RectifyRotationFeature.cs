@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#D946EF",
         Description = "Resets the rotation of all selected shapes to 0 degrees. Perfect for fixing accidents after manual rotation.",
         DetailedHelpText = "### Rectify Rotation\nResets the rotation angle of all selected shapes to 0 degrees, straightening any accidentally rotated objects.",
+        Keywords = "rotate, rectify, reset, zero, straighten, fix",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class RectifyRotationFeature

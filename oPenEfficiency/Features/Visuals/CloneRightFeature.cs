@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Duplicates the selection and places the copy adjacent to the right edge.",
         DetailedHelpText = "Duplicates the selection and places the copy adjacent to the right edge.",
+        Keywords = "clone, duplicate, copy, right, beside",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class CloneRightFeature

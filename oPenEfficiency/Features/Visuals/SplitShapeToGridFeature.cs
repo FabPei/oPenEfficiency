@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Splits the selected shape into a grid of smaller shapes (default 2x2 with no spacing).",
         DetailedHelpText = "### Split to Grid\nDivides the selected shape into an N x M grid of equally-sized non-overlapping shapes, with configurable row and column counts.",
+        Keywords = "split, grid, divide, chop, partition",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SplitShapeToGridFeature

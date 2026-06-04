@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Inserts semi-transparent white overlays on top of the current selection.",
         DetailedHelpText = "### Glass Hide\nCreates semi-transparent 'glass' shapes that overlay your selection. Useful for temporarily obscuring content or creating a frosted glass effect.\n\n**Right-Click Options:**\n* **Single Bounding Box:** Creates one large shape covering the entire selection area.\n* **Individual Shapes:** Creates one overlay for each individual shape in the selection.",
+        Keywords = "glass, overlay, hide, conceal, frosted, transparent",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class GlassHideFeature

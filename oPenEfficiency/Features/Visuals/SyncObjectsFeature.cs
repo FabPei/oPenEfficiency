@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens dialog to distribute and sync shapes across multiple slides.",
         DetailedHelpText = "### Sync Objects\nSynchronizes the formatting (fill, border, font, size, or position) of all selected shapes to match the master shape's properties in one operation.",
+        Keywords = "sync, match, update, distribute, identical",
         MinSelection = 1)]
     public static class SyncObjectsFeature
     {

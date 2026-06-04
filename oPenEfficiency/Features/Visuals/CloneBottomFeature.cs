@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Duplicates the selection and places the copy adjacent to the bottom edge.",
         DetailedHelpText = "Duplicates the selection and places the copy adjacent to the bottom edge.",
+        Keywords = "clone, duplicate, copy, below, bottom",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class CloneBottomFeature

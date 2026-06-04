@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#06B6D4",
         Description = "Opens a color picker tool to select and erase (make transparent) a specific color from images in your slide.",
         DetailedHelpText = "### Color Eraser\nRemoves the fill color from all selected shapes, making them fully transparent while preserving their border and text.",
+        Keywords = "transparent, eraser, color, remove, clear, image",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class TransparentColorFeature

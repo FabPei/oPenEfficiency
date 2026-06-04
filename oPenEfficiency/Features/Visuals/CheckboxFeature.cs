@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a vector-based checkmark or cross inside a box. Default is Tick state.",
         DetailedHelpText = "### Checkbox\nInserts a styled checkbox shape (checked or unchecked) onto the slide. Clicking the button toggles the visual state between checked and unchecked.",
+        Keywords = "checkbox, tick, cross, toggle, checkmark",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class CheckboxFeature

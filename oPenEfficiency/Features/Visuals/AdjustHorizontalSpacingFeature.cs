@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Adjusts horizontal spacing between selected shapes (default increment).",
         DetailedHelpText = "### Adjust Spacing (Horizontal)\nIncrements or decrements the horizontal gap between all selected shapes by a fixed amount per button press.",
+        Keywords = "spacing, horizontal, distribute, gap, distance",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AdjustHorizontalSpacingFeature

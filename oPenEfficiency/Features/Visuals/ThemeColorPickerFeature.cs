@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#06B6D4",
         Description = "Opens the high-speed Theme Color palette. Allows applying Fill, Line, and Text colors from the current presentation theme.",
         DetailedHelpText = "### Theme Color\nOpens the theme color palette and applies the selected theme color as an absolute RGB value to selected shapes, preventing color drift when the presentation theme is changed.",
+        Keywords = "theme, color, palette, rgb, absolute",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ThemeColorPickerFeature

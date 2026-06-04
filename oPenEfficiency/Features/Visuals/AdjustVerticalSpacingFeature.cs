@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Adjusts vertical spacing between selected shapes (default increment).",
         DetailedHelpText = "### Adjust Spacing (Vertical)\nIncrements or decrements the vertical gap between all selected shapes by a fixed amount per button press.",
+        Keywords = "spacing, vertical, distribute, gap, distance",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AdjustVerticalSpacingFeature

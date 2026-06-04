@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Visuals
         Color = "#10B981",
         Description = "Learns position and dimensions of the selected shape and applies selected properties to others.",
         DetailedHelpText = "Opens the Position Painter.",
+        Keywords = "position, painter, copy, size, dimensions, format",
         MinSelection = 1,
         MaxSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]

@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Adds a small colored sticker (rounded rectangle) to the top-right corner of the slide.",
         DetailedHelpText = "### Add Sticker\nInserts one of the curated icon sticker assets from the library onto the current slide at a default size and position.",
+        Keywords = "sticker, label, tag, note, post-it",
         MinSelection = 0)]
     public static class AddStickerFeature
     {

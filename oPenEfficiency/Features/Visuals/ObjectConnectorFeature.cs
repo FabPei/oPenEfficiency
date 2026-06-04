@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#06B6D4",
         Description = "Creates a filled connector shape between two selected objects. Auto-detects closest sides.",
         DetailedHelpText = "### Object Connector\nDraws a smart connector line between two selected shapes. The connector automatically routes around other shapes and updates when the connected shapes are moved.",
+        Keywords = "connector, line, link, route, join",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class ObjectConnectorFeature

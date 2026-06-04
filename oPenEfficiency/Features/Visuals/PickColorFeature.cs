@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#06B6D4",
         Description = "Pick a color from anywhere on your screen and apply it to the Fill or Font of selected objects.",
         DetailedHelpText = "### Color Picker\nActivates a screen color picker eyedropper. Click any pixel on screen to sample its RGB color and apply it as the fill of the selected shapes.",
+        Keywords = "color, picker, eyedropper, sample, rgb",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class PickColorFeature

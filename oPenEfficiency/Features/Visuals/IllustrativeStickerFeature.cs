@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a text bracketed by two solid lines (configurable color, font, size).",
         DetailedHelpText = "### Illustrative Sticker\nInserts a pre-styled consulting sticker (ribbon) onto the slide for status indication.\n**Right-Click Options:**\n* Choose from **Preset Labels**: 'Work in progress', 'Updated', 'For discussion', 'Backup', 'Confidential', or 'Strictly confidential'.",
+        Keywords = "sticker, label, illustrative, status, ribbon",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class IllustrativeStickerFeature
