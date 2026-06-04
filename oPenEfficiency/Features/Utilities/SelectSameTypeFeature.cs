@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#8E44AD",
         Description = "Instantly selects all other objects on the slide that match the type of your current selection.",
         DetailedHelpText = "### Select Same Type\nSelects all shapes on the current slide that share the same AutoShapeType or fill color as the currently selected shape, enabling bulk formatting.",
+        Keywords = "select, similar, matching, type, format, batch",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SelectSameTypeFeature

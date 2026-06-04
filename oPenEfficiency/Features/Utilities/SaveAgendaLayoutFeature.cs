@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Saves the current agenda layout configuration.",
         DetailedHelpText = "### Save Agenda Layout\nExports the current Agenda Wizard configuration (all sections, durations, speakers) as a portable file that can be reimported into any other presentation.",
+        Keywords = "agenda, save, layout, configuration, export, toc",
         MinSelection = 0,
         RequiredType = Microsoft.Office.Interop.PowerPoint.PpSelectionType.ppSelectionNone)]
     public static class SaveAgendaLayoutFeature

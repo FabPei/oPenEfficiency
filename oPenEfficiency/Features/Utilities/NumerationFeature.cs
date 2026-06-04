@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts numbered shapes for marking and organizing content.",
         DetailedHelpText = "### Numeration\nAutomatically numbers all selected shapes sequentially by injecting or overwriting their text content with the configured prefix and number format.",
+        Keywords = "numbers, list, bullet points, numbering, sequence, step",
         MinSelection = 0)]
     public static class NumerationFeature
     {

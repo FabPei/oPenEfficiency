@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Locks or unlocks all shapes in the presentation to prevent accidental edits.",
         DetailedHelpText = "### Shape Locking\nLocks the position and size of the selected shapes to prevent accidental edits.\n**Right-Click Options:**\n* **Global Lock**: Lock all shapes on every slide in the presentation.\n* **Global Unlock**: Unlock everything in the presentation instantly for mass editing.",
+        Keywords = "lock, unlock, freeze, protect, edit prevention",
         MinSelection = 0,
         IsToggle = true)]
     public static class ShapeLockingFeature

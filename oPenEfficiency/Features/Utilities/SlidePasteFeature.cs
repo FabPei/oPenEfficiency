@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#8B5CF6",
         Description = "Opens a panel to select slides from the current deck and paste them as images on the active slide in an auto-sized grid layout. Supports optional hyperlinks and shadow backdrop.",
         DetailedHelpText = "### Slide Paste\nPastes the current clipboard content simultaneously onto all slides currently selected in the Slide Sorter view.",
+        Keywords = "slide paste, image grid, link, thumbnails, overview, reference",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SlidePasteFeature

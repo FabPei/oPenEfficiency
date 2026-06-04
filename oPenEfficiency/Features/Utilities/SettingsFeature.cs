@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#94A3B8",
         Description = "Configure your oPenEfficiency experience, including sidebar layout, spacing increments, and keyboard shortcuts.",
         DetailedHelpText = "Configure your oPenEfficiency experience, including sidebar layout, spacing increments, and keyboard shortcuts.",
+        Keywords = "settings, configuration, preferences, options, customize",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SettingsFeature

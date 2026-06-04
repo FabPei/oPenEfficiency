@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#3B82F6",
         Description = "Manage and quickly open PowerPoint templates from default locations and custom directories.",
         DetailedHelpText = "Manage and quickly open PowerPoint templates from default locations and custom directories.\n\nFeatures:\n• Discover default Windows templates\n• Add watched folders\n• Add individual template files\n• Open as new presentation",
+        Keywords = "templates, manager, open, potx, library, start",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class TemplateManagerFeature

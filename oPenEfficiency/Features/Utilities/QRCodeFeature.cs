@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features
         Color = "#22C55E",
         Description = "Generates a QR code from a URL or text. Opens a dialog to enter the QR code content.",
         DetailedHelpText = "### QR Code\nGenerates a QR code from a URL or text string and inserts it as a native PowerPoint image shape directly onto the current slide.",
+        Keywords = "qrcode, barcode, link, url, generator, code",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class QRCodeFeature

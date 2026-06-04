@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F43F5E",
         Description = "Toggles snap-to-grid functionality for precise shape positioning.",
         DetailedHelpText = "### Snap to Grid\nToggles the snap-to-grid behavior. When enabled, shapes are automatically magnetized to the nearest grid point when moved or resized.",
+        Keywords = "snap, grid, align, precision, magnet, positioning",
         MinSelection = 0,
         IsToggle = true)]
     public static class SnapToGridFeature

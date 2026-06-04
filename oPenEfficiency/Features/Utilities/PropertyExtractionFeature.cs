@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Extracts and displays unique fonts, sizes, and colors used in the selected shapes or slide.",
         DetailedHelpText = "### Property Extraction\nExtracts all formatting properties from the selected shape and displays them in a readable panel, useful for debugging or documenting style libraries.",
+        Keywords = "extract, fonts, colors, formats, style guide, debug",
         MinSelection = 0)]
     public static class PropertyExtractionFeature
     {

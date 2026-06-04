@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F43F5E",
         Description = "Toggles snap-to-objects functionality for precise shape alignment.",
         DetailedHelpText = "### Snap to Objects\nToggles smart snapping to nearby shape edges and centers, displaying alignment guides when shapes are dragged near other shapes.",
+        Keywords = "snap, objects, nearby, edges, center, alignment",
         MinSelection = 0,
         IsToggle = true)]
     public static class SnapToObjectsFeature

@@ -20,6 +20,7 @@ namespace oPenEfficiency.Features.Utilities
         MinSelection = 0,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionNone,
         Description = "An analysis tool that gauges the heaviness of media objects on each slide to identify space hogs.",
+        Keywords = "size, media, images, video, weight, bloat, heavy",
         DetailedHelpText = "### Show / Hide Slide Size\n\nToggles an overlay displaying the individual file size of every embedded media object (images, videos) on the slide, helping identify large files that bloat presentation size."
     )]
     public static class SlideSizeFeature

@@ -26,6 +26,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F43F5E",
         Description = "Creates standard slide layout guidelines for consistent positioning.",
         DetailedHelpText = "### Slide Guidelines\nInjects precision architectural guidelines into the current slide for complex layout alignment.\n\n**Right-Click Options:**\n* **3/4/5 Column Layouts**: Balanced vertical gutters for content distribution.\n* **Rule of Thirds**: 3x3 composition grid for professional image and text placement.\n* **1:2 Ratio**: Asymmetrical grid for sidebar-style slides.",
+        Keywords = "guidelines, layout, grids, align, margins, structure",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SlideGuidelinesFeature

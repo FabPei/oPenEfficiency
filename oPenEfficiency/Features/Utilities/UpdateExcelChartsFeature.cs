@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#F43F5E",
         Description = "Updates all Excel-linked charts in the selected slide.",
         DetailedHelpText = "### Update Excel Charts\nForces a data refresh on all embedded Excel-linked charts in the presentation, pulling the latest values from their source workbooks.",
+        Keywords = "excel, charts, update, refresh, data link, sync",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class UpdateExcelChartsFeature

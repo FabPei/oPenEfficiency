@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#10B981",
         Description = "Instantly find and execute any oPenEfficiency command or feature by name using a keyboard-first search bar.",
         DetailedHelpText = "Instantly find and execute any command or feature by name.",
+        Keywords = "search, command palette, find, execute, quick access",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SearchBarFeature

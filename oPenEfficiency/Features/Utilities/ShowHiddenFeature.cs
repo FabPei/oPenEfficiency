@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features
         Color = "#D946EF",
         Description = "Makes all currently hidden shapes on the slide visible again.",
         DetailedHelpText = "### Show Hidden\nRestores all shapes previously hidden by the Hide Selected feature, making them visible again at their original position and Z-order.",
+        Keywords = "show, hidden, unhide, reveal, visible",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ShowHiddenFeature

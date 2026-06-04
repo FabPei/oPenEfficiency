@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Opens the Object Connector window to snap shape edges and centers together with precision.",
         DetailedHelpText = "### Snap Shape\nOpens the Object Connector floating toolbar. Use it to precisely snap the edges or centers of shapes together and to create visual connector lines between objects.",
+        Keywords = "snap, attach, connector, link, edge to edge, joint",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone,
         IsToggle = true)]

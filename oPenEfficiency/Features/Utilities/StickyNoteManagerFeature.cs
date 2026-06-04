@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Manages sticky notes - move, delete, or convert to comments.",
         DetailedHelpText = "### Sticky Note Manager\nDisplays a consolidated list of all Sticky Notes across the entire presentation, allowing bulk review, editing, and removal.",
+        Keywords = "sticky notes, manager, comments, review, bulk edit, organize",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StickyNoteManagerFeature

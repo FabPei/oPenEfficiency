@@ -11,7 +11,7 @@ using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features.Utilities
 {
-    [FeatureMetadata(Id = "BtnSeriesGenerator", Name = "Series Generator", Tooltip = "Generate Series (Numbers, Dates, Letters)", IconData = "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-7-2h2v-2h2v-2h-2V8h-2v2h-2v2h2v2z", Color = "#3B82F6", Description = "Generates a sequence of numbers, letters, dates, or quarters based on a template shape.", MinSelection = 0, RequiredType = PpSelectionType.ppSelectionNone)]
+    [FeatureMetadata(Id = "BtnSeriesGenerator", Name = "Series Generator", Tooltip = "Generate Series (Numbers, Dates, Letters)", IconData = "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-7-2h2v-2h2v-2h-2V8h-2v2h-2v2h2v2z", Color = "#3B82F6", Description = "Generates a sequence of numbers, letters, dates, or quarters based on a template shape.", Keywords = "series, sequence, timeline, dates, quarters, generate", MinSelection = 0, RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SeriesGeneratorFeature
     {
         public const string TagSeriesId = "OPE_SERIES_ID";

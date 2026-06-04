@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Tooltip = "Storyline",
         Color = "#FBBF24",
         Description = "Consolidates all slide titles into a single narrative flow view to check the 'red thread' of your story.",
+        Keywords = "storyline, narrative, titles, flow, outline, overview",
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StorylineFeature
     {

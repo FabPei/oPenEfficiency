@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Inserts a sticky note at the top-right of the slide. Style is configurable in Settings.",
         DetailedHelpText = "### Sticky Note\nInserts a styled sticky-note annotation shape onto the slide for review comments or reminders directly on the canvas.",
+        Keywords = "sticky note, post-it, comment, reminder, review, feedback",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StickyNoteFeature

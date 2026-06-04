@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#6366F1",
         Description = "Displays and allows editing of exact Width and Height for selected shapes. Supports centimeter and point inputs.",
         DetailedHelpText = "Displays and allows editing of exact Width and Height for selected shapes. Supports centimeter and point inputs.",
+        Keywords = "size, dimensions, width, height, panel, measurements",
         MinSelection = 1,
         IsToggle = true,
         RequiredType = PpSelectionType.ppSelectionShapes)]

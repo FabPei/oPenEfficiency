@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Applies copied coordinates or size to the selected shape. Right-click for more options.",
         DetailedHelpText = "### Paste XY-Coordinates\nApplies geometric properties from the clipboard to the selection.\n\n**Usage:**\n1. Copy coordinates from a source shape using 'Copy XY'.\n2. Select target shapes.\n3. Click to paste both Position and Size.\n\n**Right-Click Options:**\n* **Paste Coordinates**: Apply X/Y position only.\n* **Paste Size**: Apply Width/Height only.",
+        Keywords = "paste, position, location, size, format painter, dimensions",
         MinSelection = 1,
         MaxSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
