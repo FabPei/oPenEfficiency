@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Stretches the left edge of selected shapes to align with the left edge of the anchor.",
         DetailedHelpText = "### Stretch to Left\nExpands dependent shapes leftward to align their left edge with the master shape's left edge.",
+        Keywords = "stretch left, expand left edge, align left stretch",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class StretchToFirstLeftFeature

@@ -20,6 +20,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Converts selected shapes into a PowerPoint table, arranging them into a grid based on their positions.",
         DetailedHelpText = "### Convert to Table\nConverts a selection of aligned rectangle shapes into a native PowerPoint table, preserving fill colors, text content, and relative grid positions.",
+        Keywords = "shapes to grid, build table from selection, auto table, group to table",
         MinSelection = 2,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes)]
     public static class ConvertShapesToTableFeature

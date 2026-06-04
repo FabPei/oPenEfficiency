@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Copies column widths from the selected table.",
         DetailedHelpText = "### Column Width\nSets all columns in the selected table to a uniform width, evenly dividing the total table width across all columns.",
+        Keywords = "width, size, copy, dimension, column, match",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableColumnWidthFeature

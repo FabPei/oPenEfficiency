@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#06B6D4",
         Description = "Quickly paint background and text formatting from selected table cells to neighboring cells in specific directions (Up, Down, Left, Right).",
         DetailedHelpText = "### Table Format Painter\nCopies the fill color, font, and text alignment from one selected table cell and applies it to all other cells in a chosen direction.",
+        Keywords = "format, paint, style, copy, cells, propagate",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableFormatPainterFeature

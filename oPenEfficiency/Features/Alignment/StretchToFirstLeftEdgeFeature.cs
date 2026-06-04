@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Extends the left edge of selected shapes to meet the right edge of the anchor.",
         DetailedHelpText = "### Stretch to Left Edge\nExpands each shape's left edge to meet the right edge of the shape directly to its left.",
+        Keywords = "stretch to left, fill gap left, expand leftwards, touch left",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class StretchToFirstLeftEdgeFeature

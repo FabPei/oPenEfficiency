@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Centers objects vertically relative to the anchor object's center point. With single selection, centers vertically on slide.",
         DetailedHelpText = "### Align Center Vertical\nCenters all selected shapes vertically relative to the vertical midpoint of the first shape.",
+        Keywords = "center vertically, middle align, vertical alignment, midpoint",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AlignToFirstCenterVerticalFeature

@@ -59,7 +59,8 @@ namespace oPenEfficiency.UI.Dialogs
                     IconData = info.IconData,
                     ColorHex = info.Color,
                     HelpImagePath = info.HelpImagePath,
-                    Category = DetermineCategory(wrapper.Id, wrapper.Name)
+                    Category = DetermineCategory(wrapper.Id, wrapper.Name),
+                    Keywords = info.Keywords
                 });
             }
 
@@ -77,7 +78,8 @@ namespace oPenEfficiency.UI.Dialogs
                         IconData = info.IconData,
                         ColorHex = info.Color,
                         HelpImagePath = info.HelpImagePath,
-                        Category = DetermineCategory(sf.Id, sf.Name)
+                        Category = DetermineCategory(sf.Id, sf.Name),
+                        Keywords = info.Keywords
                     });
                 }
             }
@@ -121,7 +123,8 @@ namespace oPenEfficiency.UI.Dialogs
                 (_currentCategory == "All" || f.Category == _currentCategory) &&
                 (string.IsNullOrEmpty(query) || 
                  f.Name.ToLowerInvariant().Contains(query) || 
-                 (f.Description != null && f.Description.ToLowerInvariant().Contains(query)))
+                 (f.Description != null && f.Description.ToLowerInvariant().Contains(query)) ||
+                 (f.Keywords != null && f.Keywords.ToLowerInvariant().Contains(query)))
             ).ToList();
         }
 
@@ -204,6 +207,7 @@ namespace oPenEfficiency.UI.Dialogs
             public string ColorHex { get; set; }
             public string HelpImagePath { get; set; }
             public string Category { get; set; }
+            public string Keywords { get; set; }
 
             private Geometry _pathData;
             private Brush _pathFill = Brushes.Transparent;

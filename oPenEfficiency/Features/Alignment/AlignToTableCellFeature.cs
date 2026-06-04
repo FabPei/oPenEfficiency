@@ -19,6 +19,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens dialog to align shapes to their containing table cell.",
         DetailedHelpText = "### Align to Cell\nAligns the selected shapes to be perfectly centered inside the underlying table cell directly beneath them. Detects the intersecting table automatically.",
+        Keywords = "table cell, center in cell, align inside table, fit to cell",
         MinSelection = 1,
         RequiresTable = true)]
     public static class AlignToTableCellFeature

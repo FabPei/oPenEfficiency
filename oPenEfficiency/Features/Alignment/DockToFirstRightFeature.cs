@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Moves selected shapes to the right side of the anchor shape, stacking them horizontally.",
         DetailedHelpText = "### Stack Right\nMoves dependent shapes rightward until their left edge touches the right edge of the master shape.",
+        Keywords = "stack horizontally, dock right, zero gap horizontal, append right",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DockToFirstRightFeature

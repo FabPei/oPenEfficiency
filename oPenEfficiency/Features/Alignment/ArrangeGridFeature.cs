@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Arranges selected shapes in a grid layout.",
         DetailedHelpText = "### Arrange Grid\nArranges all selected shapes into an evenly-spaced grid, calculating an optimal number of rows and columns based on the selection count.",
+        Keywords = "grid layout, rows and columns, matrix, spacing",
         MinSelection = 2)]
     public static class ArrangeGridFeature
     {

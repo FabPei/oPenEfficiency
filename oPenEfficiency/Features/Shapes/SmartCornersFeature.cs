@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Toggles rounded corners on selected rectangle shapes.",
         DetailedHelpText = "### Smart Corners\nApplies a mathematically uniform corner radius to all selected shapes with a configurable slider. Works independently of the native Format Shape dialog.",
+        Keywords = "round corners evenly, equal radius, uniform corners, smart rect",
         MinSelection = 1)]
     public static class SmartCornersFeature
     {

@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         IconData = "M14 2h1a2 2 0 0 1 2 2v1 M7 2H6a2 2 0 0 0-2 2v1 M2 7V6a2 2 0 0 1 2-2h1 M22 7V6a2 2 0 0 0-2-2h-1 M14 22h1a2 2 0 0 0 2-2v-1 M7 22H6a2 2 0 0 1-2-2v-1 M2 17v1a2 2 0 0 0 2 2h1 M22 17v1a2 2 0 0 1-2 2h-1 M8 8h8v8h-8z",
         Color = "#10B981",
         Description = "Brings the selected shape to the absolute front layer.",
+        Keywords = "layer to top, z-order up, stack to front",
         MinSelection = 1)]
     public static class BringToFrontFeature
     {

@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features.Tables
         Color = "#F59E0B",
         Description = "Creates a heatmap based on the values. Opens option dialog.",
         DetailedHelpText = "### Table Heatmap\nFormats the selected table as a conditional color heatmap based on numeric cell values.\n**Options:**\n- Choose from 12 Excel-style color scale presets (e.g., Green-Yellow-Red, Blue-White-Red) or define a custom gradient.\n- Apply as a smooth gradient or as icon sets (arrows, circles, flags).\n- Optionally include or exclude the header row from the analysis range.",
+        Keywords = "heatmap, colors, data, conditional, format, gradient",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableHeatmapFeature

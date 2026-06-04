@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Standardizes the height of all selected objects to match the anchor object.",
         DetailedHelpText = "### Match Height\nResizes all selected shapes to match the exact pixel height of the first shape, preserving width and position.",
+        Keywords = "same height, copy height, match size vertical",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class MatchHeightToFirstFeature

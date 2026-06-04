@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features.Shapes
         Color = "#8B5CF6", // Distinct Purple 
         Description = "Transfers exact vertex angles, shaft thicknesses, and corner radii across similar shapes.",
         DetailedHelpText = "### Match Shape Geometry\n\nPowerPoint warps shapes when you resize them — arrowheads become too big, pentagon tips become inconsistent, and rounded corners look different depending on size.\n\n**How it works:**\nSelect multiple shapes of the same type. The **first shape** in the selection is the Master. All other shapes will have their hidden `Adjustments` properties overwritten to match the Master's exact geometry — without changing their size or position.\n\n**Supported shapes:**\n- Block Arrows (normalizes shaft thickness and arrowhead size)\n- Chevrons & Pentagons (tip angle synchronization)\n- Rounded Rectangles (corner radius equalization)\n- Speech Bubbles / Callouts (tail width and angle)\n- Donut / Arc shapes (inner radius depth)\n\n*Note: Shapes must be the same AutoShapeType. Mixing an Arrow with a Pentagon will be skipped automatically.*",
+        Keywords = "clone geometry, equal angles, identical tips, match adjustments",
         MinSelection = 2)]
     public static class MatchAnglesFeature
     {

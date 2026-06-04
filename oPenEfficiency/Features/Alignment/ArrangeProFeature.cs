@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens the Arrange Pro dialog for advanced shape arrangement options.",
         DetailedHelpText = "### Arrange Pro\nAdvanced multi-axis arrangement tool combining alignment, distribution, and gap control in a single configurable operation.",
+        Keywords = "advanced arrangement, multi-axis distribute, fine-tune alignment",
         MinSelection = 1)]
     public static class ArrangeProFeature
     {

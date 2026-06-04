@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Moves selected shapes to the left side of the anchor shape, stacking them horizontally without overlapping.",
         DetailedHelpText = "### Stack Left\nMoves dependent shapes leftward until their right edge touches the left edge of the master shape.",
+        Keywords = "stack horizontally, dock left, zero gap horizontal, prepend left",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DockToFirstLeftFeature

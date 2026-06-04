@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Centers all selected objects horizontally relative to the anchor object's center point. With single selection, centers on slide.",
         DetailedHelpText = "### Align Center\nCenters all selected shapes horizontally relative to the horizontal midpoint of the first shape.",
+        Keywords = "center horizontally, midpoint, center align, horizontal alignment",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AlignToFirstCenterHorizontalFeature

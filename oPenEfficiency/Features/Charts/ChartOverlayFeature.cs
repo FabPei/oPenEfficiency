@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features.Charts
         Color = "#10B981",
         Description = "Calculates mathematical offsets over standard charts",
         DetailedHelpText = "### Analytical Chart Overlays\n\nThis feature allows you to cast mathematical VSTO shapes directly over native PowerPoint charts without distorting the layout. \n\n**Features Included:**\n- **CAGR Brackets & Deltas:** Draws precise, colored growth indicators between two targeted data points.\n- **Reference Lines:** Averages your visible chart data to draw a statistical tracking line across your entire plot area.\n- **Outlier Detection:** Highlights data points extending beyond standard deviation boundaries with red ovals.\n\n*Note: Automatically supports stacked column total aggregations.*",
+        Keywords = "cagr bracket, delta calculation, statistical line, outlier detection, chart additions",
         MinSelection = 1)]
     public static class ChartOverlayFeature
     {

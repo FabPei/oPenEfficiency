@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Multi-select: aligns bottom edges to the anchor object. Single select: snaps bottom edge to the nearest horizontal guide line (or slide edge). Right-click for 'Move Until Object'.",
         DetailedHelpText = "### Align Bottom\nAligns the bottom edges of all selected shapes to the bottom edge of the first shape in the selection.",
+        Keywords = "bottom edge, snap to bottom, align bottom, horizontal guide",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AlignToFirstBottomFeature

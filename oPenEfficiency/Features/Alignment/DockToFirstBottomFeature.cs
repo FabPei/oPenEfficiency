@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Moves selected shapes below the anchor shape, stacking them vertically.",
         DetailedHelpText = "### Stack Bottom\nMoves dependent shapes downward until their top edge touches the bottom edge of the master shape (zero gap docking).",
+        Keywords = "stack vertically, dock below, zero gap vertical, append bottom",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DockToFirstBottomFeature

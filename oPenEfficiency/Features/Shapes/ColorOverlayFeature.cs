@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features.Shapes
         Color = "#8E24AA", // Purple
         Description = "Applies color from the second shape to the overlapping area of the first shape.",
         DetailedHelpText = "This feature combines two selected shapes. The first selected shape (bottom) keeps its original color where it does not overlap, but takes the color of the second selected shape (top) where they overlap. The two resulting pieces are then grouped together.",
+        Keywords = "intersect shapes color, boolean color merge, overlay fill, subtract color",
         MinSelection = 2,
         MaxSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]

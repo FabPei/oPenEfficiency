@@ -14,6 +14,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Forces all selected objects to match the exact Width and Height of the anchor object.",
         DetailedHelpText = "### Match Size\nResizes all selected shapes to match the exact width AND height of the first shape simultaneously.",
+        Keywords = "same size, copy dimensions, identical size, match width and height",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class MatchSizeFeature

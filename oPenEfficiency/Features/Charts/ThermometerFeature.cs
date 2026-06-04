@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a thermometer visualization for project progress. Default is 50% fill.",
         DetailedHelpText = "### Thermometer\nInserts or updates a vertical thermometer-style progress bar.\n**Usage:**\n* Left-click to cycle the fill level up by 25%.\n**Right-Click Options:**\n* Set the fill level exactly (0%, 25%, 50%, 75%, 100%).",
+        Keywords = "thermometer chart, vertical progress, status indicator, level fill",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ThermometerFeature

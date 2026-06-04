@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Converts a PowerPoint table into grouped rectangular shapes, preserving text and basic formatting.",
         DetailedHelpText = "### Convert to Shapes\nDecomposes a native PowerPoint table into individually editable rectangle shapes and text boxes, one per cell, allowing independent animation and styling.",
+        Keywords = "explode table, break table, table to grid of shapes, ungroup table cells",
         MinSelection = 0,
         RequiresTable = true)]
     public static class ConvertTableToShapesFeature

@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Arranges selected shapes in a circular, triangular, or other pattern.",
         DetailedHelpText = "### Arrange in Shape\nDistributes selected shapes into a geometric pattern within their total bounding area.\n\n**Right-Click Options:**\n* **Patterns**: Choose between Circle, Triangle, Square, Star, Octagon, or Pentagon.\n* **Pro Mode**: Opens a dialog for fine-tuned control over radius, start angle, and auto-rotation towards center.",
+        Keywords = "circle layout, geometric pattern, radial arrangement, polygon",
         MinSelection = 2)]
     public static class ArrangeInShapeFeature
     {

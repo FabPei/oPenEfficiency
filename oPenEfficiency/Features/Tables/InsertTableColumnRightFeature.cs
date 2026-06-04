@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a new column to the right of the selected column.",
         DetailedHelpText = "### Insert Column Right\nInserts a new empty column immediately to the right of the currently selected table column.",
+        Keywords = "add, column, table, right, insert, grid",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableColumnRightFeature

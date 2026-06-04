@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Swaps positions of multiple shapes based on their selection order and a chosen direction.",
         DetailedHelpText = "### Multi-Swap\nSwaps the positions of multiple selected shapes. The first selected shape moves to the primary position (e.g., top-most), the second to the next, and so on.\n\n**Right-Click Options:**\n* **Top-Down:** Sorts target positions from top to bottom.\n* **Bottom-Up:** Sorts target positions from bottom to top.\n* **Left-Right:** Sorts target positions from left to right.\n* **Right-Left:** Sorts target positions from right to left.",
+        Keywords = "swap positions, rearrange, flip locations, switch places",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class MultiSwapFeature

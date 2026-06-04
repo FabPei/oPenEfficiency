@@ -27,6 +27,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Sorts table rows in ascending order (A-Z) based on selected cell column.",
         DetailedHelpText = "### Sort A-Z\nSorts the rows of the selected table alphabetically or numerically based on a chosen column, with ascending and descending support.",
+        Keywords = "sort, order, alphabet, arrange, list, organize",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableSortFeature

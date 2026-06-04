@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features.Shapes
         MinSelection = 1,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
         Description = "Traverses the path vertices of hand-drawn/freeform shapes and removes mathematical outliers and redundant points to smooth the path globally.",
+        Keywords = "simplify path, reduce vertices, smooth freehand, clean up svg",
         DetailedHelpText = "### Optimize Free Form\n\nReduces the number of vertex nodes in a freehand vector path without visually distorting the shape. Useful for cleaning up imported SVGs or hand-drawn paths."
     )]
     public static class OptimizeFreeFormFeature

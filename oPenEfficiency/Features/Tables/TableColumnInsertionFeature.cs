@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         IconData = "M3,3H21V21H3V3M9,5V19H11V5H9M13,5V19H15V5H13M7,7V17H17V7H7Z",
         Color = "#F43F5E",
         Description = "Inserts a new column into the table (left by default).",
+        Keywords = "add, column, table, insert, expand, grid",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableColumnInsertionFeature

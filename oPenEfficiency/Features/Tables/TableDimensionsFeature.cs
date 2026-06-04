@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Copies all table dimensions (column widths and row heights).",
         DetailedHelpText = "### Table Dimensions\nDisplays and allows direct numeric editing of the selected table's total width, height, column count, and row count.",
+        Keywords = "size, dimensions, width, height, copy, paste",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableDimensionsFeature

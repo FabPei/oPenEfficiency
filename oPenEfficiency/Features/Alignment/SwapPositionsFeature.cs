@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Exchanges the X/Y coordinates of two selected shapes. Ideal for reorganization.",
         DetailedHelpText = "### Swap Positions\nSwaps the positions of two or more selected shapes. If more than two are selected, they rotate positions sequentially.\n\n**Right-Click Options:**\n* Set the **Rotation Anchor** (e.g., Top Left, Center, Bottom Right) to determine which point of the shape stays consistent during the swap. The chosen anchor is saved as the new default behavior for the main button.",
+        Keywords = "exchange positions, swap locations, switch x y, rotate places",
         MinSelection = 2,
         MaxSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]

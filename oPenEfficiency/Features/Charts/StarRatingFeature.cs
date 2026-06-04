@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a sequence of stars representing a rating from 1 to 5. Default is 5 stars, 3 rating.",
         DetailedHelpText = "### Star Rating\nInserts a customizable star rating indicator (1 to 5 stars, with half-star support) as a native PowerPoint vector group.",
+        Keywords = "rating stars, 5 stars, review indicator, evaluation visual",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class StarRatingFeature

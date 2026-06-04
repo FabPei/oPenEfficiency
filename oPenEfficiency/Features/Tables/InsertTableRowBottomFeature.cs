@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a new row below the selected row.",
         DetailedHelpText = "### Insert Row Below\nInserts a new empty row directly below the currently selected table row.",
+        Keywords = "add, row, table, bottom, below, insert",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableRowBottomFeature

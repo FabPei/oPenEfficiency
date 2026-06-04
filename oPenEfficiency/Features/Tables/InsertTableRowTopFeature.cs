@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a new row above the selected row.",
         DetailedHelpText = "### Insert Row Above\nInserts a new empty row directly above the currently selected table row.",
+        Keywords = "add, row, table, top, above, insert",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableRowTopFeature

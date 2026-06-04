@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F59E0B",
         Description = "Moves selected shapes above the anchor shape, stacking them vertically.",
         DetailedHelpText = "### Stack Top\nMoves dependent shapes upward until their bottom edge touches the top edge of the master shape.",
+        Keywords = "stack vertically, dock above, zero gap vertical, prepend top",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DockToFirstTopFeature

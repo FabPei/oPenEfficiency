@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Multi-select: aligns left edges to the anchor object. Single select: snaps left edge to the nearest vertical guide line (or slide edge). Right-click for 'Move Until Object'.",
         DetailedHelpText = "### Align Left\nAligns the left edges of all selected shapes to the left edge of the first shape. Ideal for snapping columns into a clean left margin.",
+        Keywords = "left edge, snap to left, align left, vertical guide",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AlignToFirstLeftFeature

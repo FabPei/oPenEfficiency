@@ -20,6 +20,7 @@ namespace oPenEfficiency.Features.Tables
         Color = "#F43F5E",
         Description = "Save and apply table branding/styles. Opens dialog for style configuration.",
         DetailedHelpText = "### Table Branding\nApplies a predefined corporate color scheme to the selected table, including header row fill, alternating row shading, border colors, and font styles, in one click.",
+        Keywords = "style, brand, format, colors, theme, design",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableBrandingFeature

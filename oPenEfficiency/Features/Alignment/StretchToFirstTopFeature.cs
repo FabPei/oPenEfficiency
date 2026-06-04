@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Stretches the top edge of selected shapes to align with the top edge of the anchor.",
         DetailedHelpText = "### Stretch to Top\nStretches dependent shapes upward until their top edge aligns with the top edge of the master shape.",
+        Keywords = "stretch up, expand top edge, align top stretch",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class StretchToFirstTopFeature

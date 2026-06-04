@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Extends the bottom edge of selected shapes to meet the top edge of the anchor.",
         DetailedHelpText = "### Stretch to Bottom Edge\nStretches each selected shape's bottom edge to reach the top edge of the shape directly below it, removing the gap.",
+        Keywords = "stretch to bottom, fill gap down, expand downwards, touch bottom",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class StretchToFirstBottomEdgeFeature

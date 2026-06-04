@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         IconData = "M3,3H21V21H3V3M7,7V17H17V7H7M7,9H17V11H7V9M7,13H17V15H7V13Z",
         Color = "#F43F5E",
         Description = "Inserts a new row into the table (above by default).",
+        Keywords = "add, row, table, insert, expand, grid",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableRowInsertionFeature

@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a progress series visualization with configurable shape type and layout.",
         DetailedHelpText = "### Progress Series\nInserts a horizontal progress bar or segmented series bar with adjustable fill percentage. Ideal for KPI tracking slides and dashboards.",
+        Keywords = "progress bar, segmented bar, kpi tracker, linear progress",
         MinSelection = 0,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionNone)]
     public static class ProgressSeriesFeature

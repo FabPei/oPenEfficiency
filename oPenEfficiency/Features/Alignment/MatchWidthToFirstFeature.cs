@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Standardizes the width of all selected objects to match the anchor object.",
         DetailedHelpText = "### Match Width\nResizes all selected shapes to match the exact pixel width of the first shape, preserving height and position.",
+        Keywords = "same width, copy width, match size horizontal",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class MatchWidthToFirstFeature

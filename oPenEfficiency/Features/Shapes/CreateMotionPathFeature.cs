@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features.Shapes
         MinSelection = 2,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
         Description = "Generates an automatic animation. The first selected shape will move precisely to the X/Y coordinates of the second selected shape.",
+        Keywords = "animate shape to, fly to object, automatic path animation, connect visually",
         DetailedHelpText = "### Create Motion Path\n\nSelect exactly two shapes. This feature injects a PowerPoint animation path so the first shape automatically travels to the exact coordinates of the second shape when the slide is presented."
     )]
     public static class CreateMotionPathFeature

@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a new column to the left of the selected column.",
         DetailedHelpText = "### Insert Column Left\nInserts a new empty column immediately to the left of the currently selected table column, preserving all existing formatting.",
+        Keywords = "add, column, table, left, insert, grid",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableColumnLeftFeature

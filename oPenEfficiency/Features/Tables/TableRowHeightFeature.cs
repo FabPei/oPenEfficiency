@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Copies row heights from the selected table.",
         DetailedHelpText = "### Row Height\nSets all rows in the selected table to a uniform height, evenly distributing the total table height across all rows.",
+        Keywords = "height, size, copy, dimension, row, match",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableRowHeightFeature

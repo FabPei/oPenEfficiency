@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Calculates the sum of selected table cells.",
         DetailedHelpText = "### Table Sum\nInserts the calculated sum of all numeric values in the selected table column or row into a configurable target cell.",
+        Keywords = "sum, add, calculate, total, math, addition",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableSumFeature

@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features.Shapes
         MinSelection = 2,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
         Description = "Reads the exact proportions (like shaft thickness vs. head width of a Block Arrow or Pentagon) of a Master shape and forces all other selected shapes to adopt identical vertex ratios.",
+        Keywords = "copy shape proportions, match vertex, clone adjustment handles, fix yellow diamonds",
         DetailedHelpText = "### Shape Transformation / Vertex Align\n\nTransfers vertex-level adjustment values (yellow diamond handles) from the first shape to all other selected shapes of the same type, normalizing arrowhead sizes, corner radii, and tip angles."
     )]
     public static class AlignShapeAdjustmentsFeature

@@ -16,6 +16,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Splits the table into two separate tables at the selected row or column.",
         DetailedHelpText = "### Split Table\nSplits the selected table into two separate tables at the currently selected row. Upper and lower halves are repositioned automatically.",
+        Keywords = "split, divide, separate, cut, break, table",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableSplitFeature

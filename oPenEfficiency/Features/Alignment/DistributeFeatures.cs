@@ -41,7 +41,7 @@ namespace oPenEfficiency.Features.Alignment
         }
     }
 
-    [FeatureMetadata(Id = "BtnDistributeVertical", Name = "Distribute Vertically", Tooltip = "Distribute Vertically (Right-click for options)", IconData = "M22 2v2H2V2h20zm0 18v2H2v-2h20zm-4-4H6V8h12v8z", Color = "#10B981", Description = "Distributes selected shapes evenly vertically. Right-click to toggle between 'Align to Slide' or 'Align Selected Objects'.", MinSelection = 2, RequiredType = PpSelectionType.ppSelectionShapes)]
+    [FeatureMetadata(Id = "BtnDistributeVertical", Name = "Distribute Vertically", Tooltip = "Distribute Vertically (Right-click for options)", IconData = "M22 2v2H2V2h20zm0 18v2H2v-2h20zm-4-4H6V8h12v8z", Color = "#10B981", Description = "Distributes selected shapes evenly vertically. Right-click to toggle between 'Align to Slide' or 'Align Selected Objects'.", Keywords = "distribute vertical, even spacing, equal gaps", MinSelection = 2, RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DistributeVerticalFeature
     {
         public static bool Execute(PowerPointManager manager)
@@ -76,3 +76,4 @@ namespace oPenEfficiency.Features.Alignment
         }
     }
 }
+

@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#10B981",
         Description = "Multi-select: aligns right edges to the anchor object. Single select: snaps right edge to the nearest vertical guide line (or slide edge). Right-click for 'Move Until Object'.",
         DetailedHelpText = "### Align Right\nAligns the right edges of all selected shapes to the right edge of the first shape.",
+        Keywords = "right edge, snap to right, align right, vertical guide",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class AlignToFirstRightFeature

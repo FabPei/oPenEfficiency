@@ -26,6 +26,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Cycles through Harvey Ball states (0%, 25%, 50%, 75%, 100%) to represent progress or qualitative data.",
         DetailedHelpText = "### Harvey Ball\nInserts or updates a circular progress indicator (Harvey Ball).\n**Usage:**\n* Left-click to cycle through 0 -> 25 -> 50 -> 75 -> 100% fill.\n**Right-Click Options:**\n* Jump directly to a specific fill level (0%, 25%, 50%, 75%, or 100%).",
+        Keywords = "harvey balls, circular progress, qualitative data, pie chart indicator",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class HarveyBallFeature

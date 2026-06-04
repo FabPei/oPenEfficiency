@@ -7,7 +7,7 @@ using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features.Alignment
 {
-    [FeatureMetadata(Id = "BtnDiagonalAlign", Name = "Diagonal Align", Tooltip = "Align selection diagonally at a specific degree", IconData = "M21 3L3 21M21 3l-6 0M21 3l0 6", Color = "#8B5CF6", Description = "Aligns selected shapes in a diagonal line (e.g., 45 degrees). Use the right-click menu to choose specific angles.", MinSelection = 2, RequiredType = PpSelectionType.ppSelectionShapes)]
+    [FeatureMetadata(Id = "BtnDiagonalAlign", Name = "Diagonal Align", Tooltip = "Align selection diagonally at a specific degree", IconData = "M21 3L3 21M21 3l-6 0M21 3l0 6", Color = "#8B5CF6", Description = "Aligns selected shapes in a diagonal line (e.g., 45 degrees). Use the right-click menu to choose specific angles.", Keywords = "diagonal alignment, staircase layout, angular distribute", MinSelection = 2, RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DiagonalAlignFeature
     {
         public static bool Execute(PowerPointManager manager)

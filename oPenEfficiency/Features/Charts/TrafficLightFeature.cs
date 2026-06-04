@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Inserts a traffic light infographic (red/yellow/green states). Default is Green state.",
         DetailedHelpText = "### Traffic Light\nInserts a 3-state traffic light indicator (Red / Yellow / Green) as a native shape group. Used for RAG status reporting.",
+        Keywords = "traffic lights, rag status, red yellow green, status indicator",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class TrafficLightFeature

@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6366F1",
         Description = "Stretches the right edge of selected shapes to align with the right edge of the anchor.",
         DetailedHelpText = "### Stretch to Right\nExpands dependent shapes rightward to align their right edge with the master shape's right edge.",
+        Keywords = "stretch right, expand right edge, align right stretch",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class StretchToFirstRightFeature
