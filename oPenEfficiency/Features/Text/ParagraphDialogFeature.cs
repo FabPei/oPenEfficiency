@@ -13,6 +13,7 @@ namespace oPenEfficiency.Features
         Color = "#FDE047",
         Description = "Opens the native PowerPoint paragraph formatting dialog to adjust line spacing, indentation, and alignment.",
         DetailedHelpText = "Opens the native PowerPoint paragraph formatting dialog.",
+        Keywords = "line spacing, indentation, alignment, text format, native dialog",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class ParagraphDialogFeature

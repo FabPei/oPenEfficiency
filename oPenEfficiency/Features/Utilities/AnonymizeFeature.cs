@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Replaces all text in selected slides with Lorem Ipsum words, preserving word count.",
         DetailedHelpText = "### Anonymize Text\nReplaces all identifiable text across the presentation (names, emails, client references) with anonymized placeholder strings.",
+        Keywords = "lorem ipsum, fake text, sanitize text, hide text, replace content",
         MinSelection = 0)]
     public static class AnonymizeFeature
     {

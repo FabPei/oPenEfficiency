@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#EF4444",
         Description = "Clears all text from selected shapes while preserving their formatting and structure.",
         DetailedHelpText = "### Delete Text\nDeletes all text from the selected shapes, or when used with a slide selection, clears all text from all shapes on the selected slides simultaneously.",
+        Keywords = "clear text, empty shapes, remove text, clear shapes, erase content",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class DeleteTextFeature

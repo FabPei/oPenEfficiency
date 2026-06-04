@@ -11,6 +11,7 @@ namespace oPenEfficiency.Features
         Color = "#FDE047",
         Description = "Opens a specialized picker for inserting symbols, currencies, and mathematical operators not easily found on the keyboard.",
         DetailedHelpText = "Opens a specialized picker for inserting symbols and special characters.",
+        Keywords = "symbols, currency, math operators, picker, insert special",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class SpecialCharsFeature

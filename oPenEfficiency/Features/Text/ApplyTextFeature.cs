@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features
         Color = "#EAB308",
         Description = "Opens a floating input window to type text and apply it to all selected shapes at once.",
         DetailedHelpText = "### Apply Text\nOpens a compact floating window. Type your text and click Apply (or press Enter) to replace the text in every selected shape simultaneously.\n\n**Options:**\n* **Apply**: Replaces the text in all selected shapes.\n* **Apply to master**: Sets the text on the first (anchor) shape only.",
+        Keywords = "bulk text, edit text, mass text, replace text, write multiple",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes,
         IsToggle = true)]

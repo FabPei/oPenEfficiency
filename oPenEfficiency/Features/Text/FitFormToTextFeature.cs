@@ -17,7 +17,8 @@ namespace oPenEfficiency.Features.Text
         MinSelection = 1,
         RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
         Description = "Adjusts the bounding box of the selected shapes to exactly fit the text string within, removing asymmetrical margins and empty whitespace.",
-        DetailedHelpText = "### Fit Form to Text\n\nSnaps the bounding box of the selected shape exactly to the dimensions of the contained text. Eliminates unwanted whitespace padding and ensures the shape tightly wraps its content."
+        DetailedHelpText = "### Fit Form to Text\n\nSnaps the bounding box of the selected shape exactly to the dimensions of the contained text. Eliminates unwanted whitespace padding and ensures the shape tightly wraps its content.",
+        Keywords = "auto size, shrink to fit, adjust bounding box, remove padding, zero margins, tight fit"
     )]
     public static class FitFormToTextFeature
     {

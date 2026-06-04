@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features.Text
         Color = "#EAB308",
         Description = "Opens PowerPoint's built-in Translator pane to translate text in selected shapes.",
         DetailedHelpText = "### Translate\nOpens the Microsoft Translator pane integrated in PowerPoint. Select shapes or text and use this feature to translate content into any supported language.\n\nFor AI-powered translation (DeepL, OpenAI, Claude, LibreTranslate), configure the translation provider in Settings.",
+        Keywords = "translator, translation, deepL, ai translate, convert language",
         MinSelection = 0,
         RequiredType = PpSelectionType.ppSelectionNone)]
     public static class TranslationFeatures

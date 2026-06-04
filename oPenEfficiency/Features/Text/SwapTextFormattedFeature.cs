@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Swaps text between two selected shapes while preserving each shape's formatting.",
         DetailedHelpText = "### Swap Text (Formatted)\nExchanges the text content between two selected text boxes while preserving the original formatting of each destination box.",
+        Keywords = "exchange text, switch content, maintain format, keep style, swap content",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SwapTextFormattedFeature

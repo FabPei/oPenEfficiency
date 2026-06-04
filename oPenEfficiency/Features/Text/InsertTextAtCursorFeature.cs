@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Inserts text at the current cursor position in the active text box.",
         DetailedHelpText = "### Insert Text\nInserts a predefined text snippet at the current cursor position inside a text box.",
+        Keywords = "type text, paste text, insert snippet, cursor position, add text",
         MinSelection = 0)]
     public static class InsertTextAtCursorFeature
     {

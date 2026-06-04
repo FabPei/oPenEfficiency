@@ -19,7 +19,8 @@ namespace oPenEfficiency.Features.Text
         MinSelection = 0, 
         RequiredType = PowerPoint.PpSelectionType.ppSelectionNone,
         Description = "Sets the proofing dictionary language globally across all slides and master slides. Essential for keeping spell checks clean.",
-        DetailedHelpText = "### Set Spell Check Language\n\nTraverses every text range across all slides and forcefully sets the proofreading language to a single chosen locale, fixing mixed-language spell check issues from copy-pasting."
+        DetailedHelpText = "### Set Spell Check Language\n\nTraverses every text range across all slides and forcefully sets the proofreading language to a single chosen locale, fixing mixed-language spell check issues from copy-pasting.",
+        Keywords = "dictionary, proofing, locale, proofreading, spell check, language"
     )]
     public static class SpellCheckLanguageFeature
     {

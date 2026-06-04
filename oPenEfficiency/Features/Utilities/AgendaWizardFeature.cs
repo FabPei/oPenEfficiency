@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Opens the Agenda Wizard for creating structured presentations.",
         DetailedHelpText = "### Agenda Wizard\nGenerates and manages a dynamic presentation agenda. Define sections, durations, and speakers in a grid. The wizard automatically creates separator slides, calculates time slots per chapter, and synchronizes slide reordering with physical slide moves.",
+        Keywords = "presentation agenda, table of contents, TOC, agenda slides, chapter slides",
         MinSelection = 0,
         RequiredType = Microsoft.Office.Interop.PowerPoint.PpSelectionType.ppSelectionNone)]
     public static class AgendaWizardFeature

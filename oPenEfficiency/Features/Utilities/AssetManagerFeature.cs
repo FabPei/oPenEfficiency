@@ -12,6 +12,7 @@ namespace oPenEfficiency.Features.Utilities
         Color = "#8B5CF6",
         Description = "Central repository for your reusable slide templates, custom shapes, and high-quality image assets. Searchable and categorized.",
         DetailedHelpText = "Central repository for your reusable slide templates, custom shapes, and high-quality image assets. Searchable and categorized.",
+        Keywords = "templates, reusable shapes, image library, slide library, assets",
         MinSelection = 0,
         IsToggle = true,
         RequiredType = PpSelectionType.ppSelectionNone)]

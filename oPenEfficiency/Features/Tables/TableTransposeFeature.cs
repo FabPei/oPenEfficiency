@@ -17,6 +17,7 @@ namespace oPenEfficiency.Features
         Color = "#F43F5E",
         Description = "Transposes the table, swapping rows and columns.",
         DetailedHelpText = "### Transpose Table\nTransposes the selected table, converting rows to columns and columns to rows, while preserving text content and formatting.",
+        Keywords = "swap rows, columns, flip table, rotate table, matrix transpose",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableTransposeFeature

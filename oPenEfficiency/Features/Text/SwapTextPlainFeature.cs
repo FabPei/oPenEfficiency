@@ -15,6 +15,7 @@ namespace oPenEfficiency.Features
         Color = "#6B7280",
         Description = "Swaps the plain text content between two selected shapes, ignoring formatting.",
         DetailedHelpText = "### Swap Text (Plain)\nExchanges the raw text string between two selected text boxes without carrying over any formatting.",
+        Keywords = "exchange plain, switch string, raw text, ignore style, swap content",
         MinSelection = 2,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SwapTextPlainFeature

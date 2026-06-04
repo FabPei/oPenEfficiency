@@ -18,6 +18,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Splits a shape at the cursor, by paragraphs, or merges multiple shapes into one.",
         DetailedHelpText = "### Split by Paragraphs\n**Split at cursor:** Click inside a text box to place the cursor, then press Split — the shape is divided at that exact position into two shapes (text before cursor / text after cursor).\n\n**Split selected paragraphs:** Select one or more paragraphs in a text box — each selected paragraph is extracted into its own new shape.\n\n**Split all paragraphs:** Select the whole shape (not in edit mode) with one shape — every paragraph becomes a separate shape.\n\n**Merge:** Select multiple shapes — their text is merged into one shape sorted top-to-bottom, left-to-right.",
+        Keywords = "divide text, combine text, break shape, join text, separate paragraphs",
         MinSelection = 1,
         RequiredType = PpSelectionType.ppSelectionShapes)]
     public static class SplitByParagraphsFeature

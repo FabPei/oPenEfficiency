@@ -20,6 +20,7 @@ namespace oPenEfficiency.Features
         Color = "#FBBF24",
         Description = "Reformats numbers with configurable thousand/decimal separators and currency symbols.",
         DetailedHelpText = "### Number Formatter\nFormats all numeric text in the selected shapes according to a configurable pattern, including decimal places, thousands separators, currency symbols, and percentage formatting.",
+        Keywords = "decimal, thousands, separator, currency, number format",
         MinSelection = 0)]
     public static class FormatNumbersFeature
     {
