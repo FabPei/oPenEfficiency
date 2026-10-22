@@ -1,52 +1,29 @@
-# Contributing to oPenEfficiency
+# Contributing to openEfficiency
 
-Thank you for your interest in oPenEfficiency! This project is a **personal hobby project** shared with the community. While it is open-source, it is primarily maintained for personal use and experimentation.
+Bug reports, documentation corrections and focused pull requests are welcome. openEfficiency is maintained by an individual; review and support depend on availability.
 
-## Code of Conduct
+## Before opening an issue
 
-Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to maintain a welcoming and inclusive environment.
+Search [existing issues](https://github.com/FabPei/oPenEfficiency/issues) and consult the [wiki](https://github.com/FabPei/oPenEfficiency/wiki). Include the add-in version, Office version and bitness, Windows version, steps to reproduce, expected result and actual result. A small, non-confidential sample is useful when the problem depends on a presentation.
 
-## How Can I Contribute?
+Do not post credentials, confidential slides or unredacted logs. See the [Code of Conduct](CODE_OF_CONDUCT.md) for community expectations.
 
-As this is a personal project, please keep in mind that I may not be able to review or merge every suggestion or pull request immediately.
+## Suggesting a feature
 
-### Reporting Bugs
+Explain the task you are trying to complete, the current workaround and the expected result. A feature request is not a commitment to implement it or a release date.
 
-Before creating bug reports, please check the [existing issues](https://github.com/fabianminder/oPenEfficiency/issues) to see if the issue is already known.
+## Pull requests
 
-**Good bug reports include:**
-- Exact steps to reproduce the behavior.
-- Expected vs. actual behavior.
-- PowerPoint and Windows version.
-- Note: Since this is an experimental tool, some bugs are expected!
+1. Start from the public branch or release tag relevant to the change. Keep the patch focused and explain its purpose.
+2. Follow the nearby C#/WPF conventions. Use the existing PowerPoint access wrappers and take care with selection, COM object lifetimes, startup and shutdown.
+3. Keep command names, descriptions, tooltips and relevant documentation consistent. Update user-facing documentation when behavior changes.
+4. Describe the checks you actually performed and any checks you did not perform. For documentation-only changes, check links and examples; do not claim an Office test or build that was not run.
+5. Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-### Suggesting Enhancements
+See [Development](https://github.com/FabPei/oPenEfficiency/wiki/Development) for the public source layout and local prerequisites. A local development build and a packaged release are different artifacts.
 
-If you have ideas for new features, feel free to open an issue. Please describe the use case clearly.
+## Licensing contributions
 
-### Pull Requests
+The project uses **GNU AGPL v3**; read [LICENSE](LICENSE) and the [licensing guide](docs/licensing.md). Submit only material you have the right to contribute under the applicable terms. Preserve third-party authorship, copyright and license notices; document any new external source and its license.
 
-**Before submitting a pull request:**
-1. Fork the repository and create a new branch.
-2. Ensure your code follows the existing style (PascalCase for public, camelCase for private).
-3. **Test your changes thoroughly.** Broken add-ins can crash PowerPoint.
-4. Understand that by submitting a PR, you are contributing to a project provided "as-is" without warranty.
-
-## Development Setup
-
-### Prerequisites
-- Visual Studio 2022 with **Office/SharePoint development** workload.
-- .NET Framework 4.8 SDK.
-- PowerPoint 2016 or later installed.
-
-### Setup & Build
-1. Clone the repository.
-2. Open `oPenEfficiency.slnx` in Visual Studio.
-3. Build the solution in **Release** configuration.
-4. Visual Studio will handle the VSTO registration automatically for your local machine.
-
----
-
-## Disclaimer
-
-By contributing to this repository, you acknowledge that this project is a personal initiative shared under the GNU GPL 3.0 License. Contributions are voluntary, and the project remains a "best-effort" hobby project without commercial support.
+This contribution guide does not transfer copyright ownership or revoke independent licenses already validly granted. Contributions and software are supplied subject to their applicable license terms, without a promise of commercial support.

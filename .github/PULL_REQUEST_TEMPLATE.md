@@ -1,47 +1,26 @@
-<!-- Thank you for contributing to oPenEfficiency! -->
+## Purpose
 
-## Description
+Describe what changed and why. Link a related issue if there is one.
 
-<!-- Describe the changes in this pull request -->
+## Scope
 
-## Related Issue
+- [ ] Documentation only
+- [ ] Product behavior or UI
+- [ ] Build or packaging
+- [ ] Other (describe)
 
-<!-- Link to the issue this PR addresses, if applicable -->
-Fixes #
+## Verification
 
-## Type of Change
+List the checks you actually performed and their results. State what was not run and why. For documentation-only changes, include link/example checks; a product build or PowerPoint run is not automatically needed for prose.
 
-<!-- Mark relevant options with an [x] -->
+For product changes, describe the relevant selection, empty/error cases, Office version/bitness and any remaining manual checks. Do not mark an unrun check as passed.
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Documentation update
-- [ ] Code cleanup/refactoring
-- [ ] Other (please describe):
+## Documentation and licensing
 
-## Testing
+- [ ] Relevant user guidance is updated, or no change is needed (explain).
+- [ ] New external material has a recorded source/license, or none was added.
+- [ ] No credentials, confidential presentations or unredacted logs are included.
 
-<!-- Describe how you tested your changes -->
+## Screenshots or examples
 
-- [ ] Tested manually with PowerPoint
-- [ ] Added/updated unit tests
-- [ ] All existing tests pass
-
-## Checklist
-
-<!-- Mark relevant items with an [x] -->
-
-- [ ] My code follows the project's coding style
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have updated the documentation accordingly
-- [ ] My changes generate no new warnings
-- [ ] I have tested my changes with PowerPoint 2016 or later
-
-## Screenshots
-
-<!-- If applicable, add screenshots to demonstrate your changes -->
-
-## Additional Notes
-
-<!-- Any other notes for reviewers -->
+Include only when useful, with confidential data removed.

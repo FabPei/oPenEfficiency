@@ -1,12 +1,14 @@
 ---
-name: General Issue
-description: Any other issue or question
-title: "[GENERAL] "
+name: Question or documentation issue
+about: Ask about openEfficiency or report unclear documentation
+title: "[QUESTION] "
 labels: ["question"]
 ---
 
-**Description**
-A clear and concise description of your issue or question.
+## Question or unclear instruction
 
-**Context**
-Provide any relevant context that might help us understand your issue.
+Describe the question. For documentation problems, link the README/wiki page and the relevant section.
+
+## Context
+
+Include your openEfficiency version and, if relevant, your Windows/PowerPoint version and installation method. Check the wiki and existing issues first. Do not post confidential presentations or credentials.

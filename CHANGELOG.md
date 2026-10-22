@@ -3,8 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Historical release identifiers use date/build naming. [GitHub Releases](https://github.com/FabPei/oPenEfficiency/releases) is the authoritative list of published downloads; this file may not cover every release.
 
+
+## Unreleased
+
+### Documentation
+
+- Refresh README, installation guidance, contribution and issue templates, and the wiki.
+- Explain AGPL redistribution, resale and corresponding-source obligations.
+- Distinguish published downloads from the public source branch. No new installer or product version is published by this documentation update.
 
 ## [2026.05.29] - 2026-05-29
 
