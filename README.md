@@ -3,7 +3,15 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/FabPei/oPenEfficiency)](https://github.com/FabPei/oPenEfficiency/releases)
 
-PowerPoint tools for arranging shapes, formatting tables, working with text and preparing presentations. openEfficiency is a Windows desktop add-in built with VSTO and .NET Framework 4.8. It is maintained as a personal open-source project.
+## Your consulting toolkit, inside PowerPoint
+
+**Build sharper slides. Spend less time formatting.** openEfficiency is an open-source PowerPoint add-in for consultants, analysts, strategy teams and anyone who turns complex ideas into professional presentations.
+
+From the first working slide to the final client deck, it brings a broad set of presentation tools into one configurable workspace: precise alignment and spacing, table and text tools, Harvey balls and ratings, agendas, reusable assets and linked Excel chart updates. These are the small, frequently used tools that make a difference when you are structuring a recommendation, polishing a pitch or working through last-minute revisions.
+
+**Less pixel-pushing. More time for the story.** Arrange a crowded slide, make a table consistent, clean up text and keep your deck moving—all from PowerPoint's ribbon and a customizable sidebar. Choose the tools that fit your workflow and keep them close at hand.
+
+Built for Windows desktop PowerPoint with VSTO and .NET Framework 4.8. Maintained as a personal open-source project and free to use under the AGPL.
 
 [Download a release](https://github.com/FabPei/oPenEfficiency/releases) · [Installation](https://github.com/FabPei/oPenEfficiency/wiki/Installation) · [User guide](https://github.com/FabPei/oPenEfficiency/wiki/Usage) · [Feature reference](https://github.com/FabPei/oPenEfficiency/wiki/Features) · [Report a bug](https://github.com/FabPei/oPenEfficiency/issues/new/choose)
 
