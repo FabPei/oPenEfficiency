@@ -34,8 +34,8 @@ namespace oPenEfficiency.Core.Services
         }
 
         /// <summary>
-        /// Parses a shape's AlternativeText. Accepts the invariant form and the legacy
-        /// current-culture form; returns false when the text is not a Harvey Ball state.
+        /// Parses a shape's AlternativeText. Accepts the invariant form and legacy
+        /// decimal-comma forms; returns false when the text is not a Harvey Ball state.
         /// </summary>
         public static bool TryParseTag(string alternativeText, out float percentage)
         {
@@ -49,8 +49,23 @@ namespace oPenEfficiency.Core.Services
             var parts = alternativeText.Split('|');
             if (parts.Length != 2) return false;
 
-            if (float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out percentage)) return true;
-            return float.TryParse(parts[1], NumberStyles.Float, CultureInfo.CurrentCulture, out percentage);
+            string value = parts[1];
+            // Historical interpolation of a float uses its culture's decimal separator but
+            // never adds thousands separators. Accept one decimal comma regardless of the
+            // reader's culture. Legacy percentages are fractions below one; requiring that
+            // range also prevents an ambiguous value such as "1,000" being read as either 1
+            // or a thousands-grouped 1000.
+            if (value.IndexOf(',') >= 0)
+            {
+                if (value.IndexOf('.') >= 0 || value.IndexOf(',') != value.LastIndexOf(',')) return false;
+
+                string invariantValue = value.Replace(',', '.');
+                return float.TryParse(invariantValue, NumberStyles.Float, CultureInfo.InvariantCulture, out percentage) &&
+                    percentage >= 0f && percentage < 1f;
+            }
+
+            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out percentage)) return true;
+            return float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out percentage);
         }
     }
 }

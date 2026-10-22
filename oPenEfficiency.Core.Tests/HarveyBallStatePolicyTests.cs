@@ -46,10 +46,47 @@ namespace oPenEfficiency.Core.Tests
         [TestMethod]
         public void TryParseTagAcceptsLegacyCultureFormattedStates()
         {
-            Assert.IsTrue(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|0,25", out float comma));
-            Assert.AreEqual(0.25f, comma);
-            Assert.IsTrue(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|0.25", out float dot));
-            Assert.AreEqual(0.25f, dot);
+            var original = Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                foreach (var cultureName in new[] { "en-US", "de-DE" })
+                {
+                    Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureName);
+                    foreach (var value in new[] { "0,25", "0,5", "0,75" })
+                    {
+                        string invariant = value.Replace(',', '.');
+                        Assert.IsTrue(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|" + value, out float comma));
+                        Assert.AreEqual(float.Parse(invariant, CultureInfo.InvariantCulture), comma, cultureName + " comma-decimal state " + value);
+                        Assert.IsTrue(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|" + invariant, out float dot));
+                        Assert.AreEqual(float.Parse(invariant, CultureInfo.InvariantCulture), dot, cultureName + " invariant-decimal state " + invariant);
+                    }
+                }
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = original;
+            }
+        }
+
+        [TestMethod]
+        public void TryParseTagRejectsMixedOrRepeatedDecimalSeparators()
+        {
+            var original = Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                foreach (var cultureName in new[] { "en-US", "de-DE" })
+                {
+                    Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureName);
+                    Assert.IsFalse(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|0,25.0", out _), cultureName);
+                    Assert.IsFalse(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|0,25,0", out _), cultureName);
+                    Assert.IsFalse(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|1,000", out _), cultureName);
+                    Assert.IsFalse(HarveyBallStatePolicy.TryParseTag("oPE_HarveyBall|1,25", out _), cultureName);
+                }
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = original;
+            }
         }
 
         [TestMethod]
