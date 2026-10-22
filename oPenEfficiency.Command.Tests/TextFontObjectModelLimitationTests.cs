@@ -20,11 +20,14 @@ namespace oPenEfficiency.Command.Tests
         [TestMethod]
         public void PowerPointFontExposesNoStrikeThroughOrSpacingMember()
         {
-            // The test project does not reference the PIA at compile time, so the interop type is
-            // resolved from the loaded interop assembly instead.
-            var pia = AppDomain.CurrentDomain.GetAssemblies()
-                .FirstOrDefault(a => a.GetName().Name == "Microsoft.Office.Interop.PowerPoint")
-                ?? System.Reflection.Assembly.Load("Microsoft.Office.Interop.PowerPoint, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c");
+            // Require the complete test dependency set in output rather than relying on installed Office.
+            string output = AppDomain.CurrentDomain.BaseDirectory;
+            string officePath = System.IO.Path.Combine(output, "Office.dll");
+            string piaPath = System.IO.Path.Combine(output, "Microsoft.Office.Interop.PowerPoint.dll");
+            Assert.IsTrue(System.IO.File.Exists(officePath), "The test output must contain Office Core.");
+            Assert.IsTrue(System.IO.File.Exists(piaPath), "The test output must contain the PowerPoint PIA.");
+            System.Reflection.Assembly.LoadFrom(officePath);
+            var pia = System.Reflection.Assembly.LoadFrom(piaPath);
             Type fontType = pia.GetType("Microsoft.Office.Interop.PowerPoint.Font");
             Assert.IsNotNull(fontType, "The PowerPoint PIA Font type could not be resolved.");
             var names = fontType.GetProperties().Select(p => p.Name).ToArray();
