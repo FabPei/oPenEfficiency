@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
@@ -13,18 +14,18 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnTrafficLight",
         Name = "Traffic Light",
-        Tooltip = "Traffic light",
+        Tooltip = "Insert or update a traffic-light status",
         IconData = "M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M7,7H9V17H7V7M11,7H13V17H11V7M15,7H17V17H15V7Z",
         Color = "#F43F5E",
         Description = "Inserts a traffic light infographic (red/yellow/green states). Default is Green state.",
-        DetailedHelpText = "### Traffic Light\nInserts a 3-state traffic light indicator (Red / Yellow / Green) as a native shape group. Used for RAG status reporting.",
-        Keywords = "traffic lights, rag status, red yellow green, status indicator",
+        DetailedHelpText = "### Traffic Light\n\nClick to insert a green traffic light as a native PowerPoint shape group. When an existing openEfficiency traffic light is selected, clicking sets it to green while preserving its orientation, frame, and frame weight. Right-click the Sidebar button to insert or set Red, Yellow, Green, or Off directly. Select a traffic light to use the contextual controls for color, orientation, and frame settings. State and appearance settings persist when the presentation is saved, reopened, or the shape is copied.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class TrafficLightFeature
     {
         public enum TrafficLightState { Red, Yellow, Green, Off }
-        public const string TrafficLightTag = "oPE_TrafficLight";
+        public const string TrafficLightTag = oPenEfficiency.Core.Services.TrafficLightStatePolicy.TrafficLightTag;
+        public const string TrafficLightStateTag = oPenEfficiency.Core.Services.TrafficLightStatePolicy.TrafficLightStateTag;
 
         // Colors (BGR format for PowerPoint COM)
         private static readonly int TL_Red    = 0x3232E8;   // #E83232 -> BGR 0x3232E8
@@ -38,7 +39,36 @@ namespace oPenEfficiency.Features
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Execute(manager, TrafficLightState.Green, horizontal: true, hasBorder: false, borderWeight: 1f);
+            return ExecuteState(manager, TrafficLightState.Green);
+        }
+
+        public static bool ExecuteState(PowerPointManager manager, TrafficLightState state)
+        {
+            if (manager == null) return false;
+
+            try
+            {
+                var selection = manager.GetSelectedShapes();
+                if (selection != null && selection.Count == 1)
+                {
+                    var selected = selection[1];
+                    if (TryReadConfiguration(
+                        GetPersistedState(selected),
+                        out TrafficLightState ignoredState,
+                        out bool horizontal,
+                        out bool hasBorder,
+                        out float borderWeight))
+                    {
+                        return UpdateTrafficLightState(selected, state, horizontal, hasBorder, borderWeight);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TrafficLightFeature.ExecuteState.ReadExistingConfiguration");
+            }
+
+            return Execute(manager, state, horizontal: true, hasBorder: false, borderWeight: 1f);
         }
 
         public static bool Execute(PowerPointManager manager, TrafficLightState state = TrafficLightState.Green, bool horizontal = true, bool hasBorder = false, float borderWeight = 1f)
@@ -54,15 +84,14 @@ namespace oPenEfficiency.Features
                 if (selection != null && selection.Count == 1)
                 {
                     var selected = selection[1];
-                    string opeState = ShapeMetadataService.GetTag(selected, "oPE_State");
+                    string opeState = ShapeMetadataService.GetTag(selected, TrafficLightStateTag);
                     bool isOpe = (opeState != null && opeState.StartsWith(TrafficLightTag)) || 
                                  (selected.AlternativeText != null && selected.AlternativeText.StartsWith(TrafficLightTag));
                     bool isEE4P = ShapeMetadataService.GetTag(selected, "EE4P_SMART_ELEMENT") == "TrafficLight";
 
                     if (isOpe || isEE4P)
                     {
-                        UpdateTrafficLight(selected, state, horizontal, hasBorder, borderWeight);
-                        return true;
+                        return UpdateTrafficLight(selected, state, horizontal, hasBorder, borderWeight);
                     }
                 }
 
@@ -139,8 +168,7 @@ namespace oPenEfficiency.Features
                 // Group
                 var names = new[] { frame.Name, redCircle.Name, yelCircle.Name, grnCircle.Name };
                 var group = slide.Shapes.Range(names).Group();
-                string orient = horizontal ? "H" : "V";
-                group.AlternativeText = $"{TrafficLightTag}|{(int)state}|{orient}|{(hasBorder ? 1 : 0)}|{borderWeight}";
+                PersistState(group, state, horizontal, hasBorder, borderWeight);
                 group.Name = "TrafficLight_" + Guid.NewGuid().ToString().Substring(0, 8);
 
                 return true;
@@ -152,13 +180,115 @@ namespace oPenEfficiency.Features
             }
         }
 
-        private static void UpdateTrafficLight(Shape group, TrafficLightState state, bool horizontal, bool hasBorder, float borderWeight)
+        public static string GetPersistedState(Shape shape)
+        {
+            if (shape == null) return null;
+
+            try
+            {
+                string taggedState = ShapeMetadataService.GetTag(shape, TrafficLightStateTag);
+                if (!string.IsNullOrEmpty(taggedState) &&
+                    taggedState.StartsWith(TrafficLightTag, StringComparison.Ordinal))
+                {
+                    return taggedState;
+                }
+
+                string alternativeText = shape.AlternativeText;
+                return !string.IsNullOrEmpty(alternativeText) &&
+                       alternativeText.StartsWith(TrafficLightTag, StringComparison.Ordinal)
+                    ? alternativeText
+                    : null;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TrafficLightFeature.GetPersistedState");
+                return null;
+            }
+        }
+
+        private static bool TryReadConfiguration(
+            string serializedState,
+            out TrafficLightState state,
+            out bool horizontal,
+            out bool hasBorder,
+            out float borderWeight)
+        {
+            state = TrafficLightState.Green;
+            horizontal = true;
+            hasBorder = false;
+            borderWeight = 1f;
+
+            if (!oPenEfficiency.Core.Services.TrafficLightStatePolicy.TryParse(serializedState, out int stateValue, out horizontal, out hasBorder, out borderWeight))
+            {
+                return false;
+            }
+
+            if (!Enum.IsDefined(typeof(TrafficLightState), stateValue)) return false;
+
+            state = (TrafficLightState)stateValue;
+            return true;
+        }
+
+        private static bool TryParsePersistedFloat(string value, out float result)
+        {
+            return oPenEfficiency.Core.Services.TrafficLightStatePolicy.TryParsePersistedFloat(value, out result);
+        }
+
+        private static string SerializeState(
+            TrafficLightState state,
+            bool horizontal,
+            bool hasBorder,
+            float borderWeight)
+        {
+            return oPenEfficiency.Core.Services.TrafficLightStatePolicy.Serialize((int)state, horizontal, hasBorder, borderWeight);
+        }
+
+        private static void PersistState(
+            Shape group,
+            TrafficLightState state,
+            bool horizontal,
+            bool hasBorder,
+            float borderWeight)
+        {
+            string serializedState = SerializeState(state, horizontal, hasBorder, borderWeight);
+            ShapeMetadataService.SetTag(group, TrafficLightStateTag, serializedState);
+            group.AlternativeText = serializedState;
+        }
+
+        private static bool UpdateTrafficLightState(
+            Shape group,
+            TrafficLightState state,
+            bool horizontal,
+            bool hasBorder,
+            float borderWeight)
         {
             try
             {
-                if (group.Type != Office.MsoShapeType.msoGroup) return;
+                if (group.Type != Office.MsoShapeType.msoGroup) return false;
                 var items = group.GroupItems;
-                if (items.Count < 4) return;
+                if (items.Count < 4) return false;
+
+                items[2].Fill.ForeColor.RGB = state == TrafficLightState.Red ? TL_Red : TL_Dim;
+                items[3].Fill.ForeColor.RGB = state == TrafficLightState.Yellow ? TL_Yellow : TL_Dim;
+                items[4].Fill.ForeColor.RGB = state == TrafficLightState.Green ? TL_Green : TL_Dim;
+
+                PersistState(group, state, horizontal, hasBorder, borderWeight);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TrafficLightFeature.UpdateTrafficLightState");
+                return false;
+            }
+        }
+
+        private static bool UpdateTrafficLight(Shape group, TrafficLightState state, bool horizontal, bool hasBorder, float borderWeight)
+        {
+            try
+            {
+                if (group.Type != Office.MsoShapeType.msoGroup) return false;
+                var items = group.GroupItems;
+                if (items.Count < 4) return false;
 
                 var frame = items[1];
                 var red   = items[2];
@@ -210,12 +340,13 @@ namespace oPenEfficiency.Features
                     grn.Left = cx; grn.Top = frame.Top + padding + (circleSize + gap) * 2;
                 }
 
-                string orient = horizontal ? "H" : "V";
-                ShapeMetadataService.SetTag(group, "oPE_State", $"{TrafficLightTag}|{(int)state}|{orient}|{(hasBorder ? 1 : 0)}|{borderWeight}");
+                PersistState(group, state, horizontal, hasBorder, borderWeight);
+                return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"TrafficLightFeature.SetState error: {ex.Message}");
+                ExceptionLogger.Log(ex, "TrafficLightFeature.UpdateTrafficLight");
+                return false;
             }
         }
     }

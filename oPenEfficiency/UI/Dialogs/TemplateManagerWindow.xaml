@@ -54,11 +54,11 @@
             <!-- Header -->
             <DockPanel Margin="0,0,0,15">
                 <TextBlock Text="Template Manager" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <Button x:Name="BtnClose" Style="{StaticResource WindowCloseButton}" Click="Close_Click" DockPanel.Dock="Right"/>
+                <Button x:Name="BtnClose" Style="{StaticResource WindowCloseButton}" Click="Close_Click" DockPanel.Dock="Right" WindowChrome.IsHitTestVisibleInChrome="True"/>
             </DockPanel>
 
             <!-- Content -->
-            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <TabControl x:Name="MainTabs" Grid.Row="1" Background="Transparent" BorderThickness="0">
                 <TabItem Header="Templates">
                     <Grid Margin="0,10,0,0">
                         <Grid.ColumnDefinitions>
@@ -141,9 +141,18 @@
                                                     </Button>
                                                     
                                                     <Button Click="DeleteTemplate_Click" 
-                                                            ToolTip="Permanently delete file from disk"
-                                                            Style="{StaticResource DangerBtnStyle}" 
+                                                            ToolTip="Permanently delete this explicitly added file from disk"
                                                             Width="30" Height="30" Padding="0" Margin="2,0">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource DangerBtnStyle}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsCustom}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
                                                         <Viewbox Width="14" Height="14">
                                                             <Path Data="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6 M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2 M10 11v6 M14 11v6" 
                                                                   Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 

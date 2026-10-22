@@ -1,41 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using oPenEfficiency.Features;
+using oPenEfficiency.Models;
 
 namespace oPenEfficiency.UI
 {
     public partial class SpecialCharactersWindow : Window
     {
         private readonly PowerPointManager _ppManager;
-
-        public static readonly Dictionary<string, string> LanguageData = new Dictionary<string, string>
-        {
-            { "German", "äöüßÄÖÜ" },
-            { "French", "àâçéèêëîïôûùÀÂÇÉÈÊËÎÏÔÛÙ" },
-            { "Spanish", "áéíóúüñÁÉÍÓÚÜÑ¿¡" },
-            { "Italian", "àèéìòùÀÈÉÌÒÙ" },
-            { "Portuguese", "áâãàçéêíóôõúÁÂÃÀÇÉÊÍÓÔÕÚ" },
-            { "Nordic", "åæøÅÆØðþÐÞ" },
-            { "Polish", "ąćęłńóśźżĄĆĘŁŃÓŚŹŻ" },
-            { "Turkish", "çğışöüÇĞİŞÖÜ" },
-            { "Czech/Slovak", "áčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ" },
-            { "Hungarian", "áéíóöőúüűÁÉÍÓÖŐÚÜŰ" },
-            { "Romanian", "ăâîşţĂÂÎŞŢ" }
-        };
-
-        public static readonly Dictionary<string, string> SymbolData = new Dictionary<string, string>
-        {
-            { "Mathematical", "¼½¾±≈≠≤≥∞∑∆∏π√∫‰ØΔμΣΩ" },
-            { "Business", "©®™£¥€¢¤§¶" },
-            { "Arrows & Process", "➔⇨⇒➔↔↕↖↗↘↙↺↻⟳➞➠" },
-            { "Status & Indicators", "⚠⚐🏁🎯🚀⌛⏳✅❌❓❗💡📌🔍🔗" },
-            { "Harvey Balls", "○◔◑◕●" },
-            { "Punctuation", "…—–•·«»“”" },
-            { "Miscellaneous", "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳✓✕✘⚡" }
-        };
 
         public SpecialCharactersWindow(PowerPointManager ppManager)
         {
@@ -51,15 +25,15 @@ namespace oPenEfficiency.UI
             CategoryList.Items.Clear();
 
             // Symbols first
-            foreach (var category in SymbolData)
+            foreach (var category in SpecialCharacterCatalog.Symbols)
             {
-                CategoryList.Items.Add(new CategoryItem { Header = category.Key, Characters = category.Value });
+                CategoryList.Items.Add(new CategoryItem { Header = category.Header, Characters = category.Characters });
             }
 
             // Languages
-            foreach (var lang in LanguageData)
+            foreach (var category in SpecialCharacterCatalog.Languages)
             {
-                CategoryList.Items.Add(new CategoryItem { Header = lang.Key, Characters = lang.Value });
+                CategoryList.Items.Add(new CategoryItem { Header = category.Header, Characters = category.Characters });
             }
 
             if (CategoryList.Items.Count > 0)
@@ -72,13 +46,13 @@ namespace oPenEfficiency.UI
             if (CategoryList.SelectedItem is CategoryItem item)
             {
                 CharactersPanel.Children.Clear();
-                foreach (char c in item.Characters)
+                foreach (string glyph in SpecialCharacterCatalog.EnumerateGlyphs(item.Characters))
                 {
                     var btn = new Button
                     {
-                        Content = c.ToString(),
+                        Content = glyph,
                         Style = (Style)FindResource("CharButtonStyle"),
-                        Tag = c.ToString()
+                        Tag = glyph
                     };
                     btn.Click += CharButton_Click;
                     CharactersPanel.Children.Add(btn);
@@ -99,7 +73,7 @@ namespace oPenEfficiency.UI
             if (CategoryList == null) return;
             foreach (var obj in CategoryList.Items)
             {
-                if (obj is CategoryItem item && item.Header.Equals(language, StringComparison.OrdinalIgnoreCase))
+                if (obj is CategoryItem item && SpecialCharacterCatalog.MatchesHeader(item.Header, language))
                 {
                     CategoryList.SelectedItem = item;
                     break;
@@ -114,7 +88,7 @@ namespace oPenEfficiency.UI
 
         private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            try { this.DragMove(); } catch { }
+            try { this.DragMove(); } catch { /* DragMove can be rejected when the mouse button is released mid-event. */ }
         }
 
         protected override void OnDeactivated(EventArgs e)

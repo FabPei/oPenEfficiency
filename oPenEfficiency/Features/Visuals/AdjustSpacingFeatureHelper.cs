@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Services;
 
 namespace oPenEfficiency.Features
 {
@@ -9,7 +11,11 @@ namespace oPenEfficiency.Features
     /// </summary>
     internal static class AdjustSpacingFeatureHelper
     {
-        public static bool Execute(PowerPointManager manager, float increment = 5f, bool horizontal = true)
+        public static bool Execute(
+            PowerPointManager manager,
+            float increment = 5f,
+            bool horizontal = true,
+            bool preserveCenter = false)
         {
             if (manager == null) return false;
             try
@@ -24,19 +30,24 @@ namespace oPenEfficiency.Features
                 var shapes = new List<Shape>();
                 for (int i = 1; i <= shapeRange.Count; i++) shapes.Add(shapeRange[i]);
 
-                // Sort spatially by the appropriate axis
-                shapes.Sort((a, b) =>
+                var geometry = shapes.Select(shape => new ShapeGeometry
                 {
-                    return horizontal ? a.Left.CompareTo(b.Left) : a.Top.CompareTo(b.Top);
-                });
+                    Id = shape.Id,
+                    Left = shape.Left,
+                    Top = shape.Top,
+                    Width = shape.Width,
+                    Height = shape.Height
+                }).ToList();
+                var plannedById = ShapeGeometryPlanner
+                    .AdjustSpacing(geometry, increment, horizontal, preserveCenter)
+                    .ToDictionary(item => item.Id);
 
-                // Apply cumulative offset
-                for (int i = 1; i < shapes.Count; i++)
+                foreach (var shape in shapes)
                 {
                     if (horizontal)
-                        shapes[i].Left += i * increment;
+                        shape.Left = plannedById[shape.Id].Left;
                     else
-                        shapes[i].Top += i * increment;
+                        shape.Top = plannedById[shape.Id].Top;
                 }
 
                 // Restore selection to keep shapes selected
@@ -50,7 +61,7 @@ namespace oPenEfficiency.Features
             }
             catch (Exception ex)
             {
-                Utils.ExceptionLogger.Log(ex, $"AdjustSpacingFeatureHelper.Execute({(horizontal ? "H" : "V")})");
+                Utils.ExceptionLogger.Log(ex, $"AdjustSpacingFeatureHelper.Execute({(horizontal ? "H" : "V")}, Center={preserveCenter})");
                 return false;
             }
         }

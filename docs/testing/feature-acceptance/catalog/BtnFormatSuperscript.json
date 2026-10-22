@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFormatSuperscript",
+  "title": "Superscript (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFormatSuperscript-001",
+      "title": "Superscript applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Superscript (BtnFormatSuperscript) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFormatSuperscript-002",
+      "title": "Superscript applies to selected text on the real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "Applying Superscript to the selected probe text sets the superscript attribute exactly (mutually exclusive with subscript), leaves the text and geometry unchanged and produces one PowerPoint Undo entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "format-superscript"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

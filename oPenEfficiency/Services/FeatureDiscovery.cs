@@ -48,15 +48,40 @@ namespace oPenEfficiency.Services
                 try
                 {
                     var assembly = Assembly.GetExecutingAssembly();
-                    var featureTypes = assembly.GetTypes()
+                    var featureTypes = GetLoadableTypes(assembly)
                         .Where(t => t.IsClass &&
                                     t.IsAbstract && // static classes are abstract in IL
                                     t.GetCustomAttribute<FeatureMetadataAttribute>() != null)
                         .OrderBy(t => t.Name)
                         .ToList();
 
+                    var duplicateIds = new HashSet<string>(
+                        featureTypes
+                            .GroupBy(
+                                type => type.GetCustomAttribute<FeatureMetadataAttribute>().Id,
+                                StringComparer.Ordinal)
+                            .Where(group => group.Count() > 1)
+                            .Select(group => group.Key),
+                        StringComparer.Ordinal);
+
+                    foreach (var duplicateId in duplicateIds)
+                    {
+                        string typeNames = string.Join(", ", featureTypes
+                            .Where(type => string.Equals(
+                                type.GetCustomAttribute<FeatureMetadataAttribute>().Id,
+                                duplicateId,
+                                StringComparison.Ordinal))
+                            .Select(type => type.FullName));
+                        ExceptionLogger.Log(
+                            new InvalidOperationException($"Duplicate feature ID '{duplicateId}': {typeNames}"),
+                            "FeatureDiscovery.Initialize.DuplicateId");
+                    }
+
                     foreach (var type in featureTypes)
                     {
+                        var metadata = type.GetCustomAttribute<FeatureMetadataAttribute>();
+                        if (duplicateIds.Contains(metadata.Id)) continue;
+
                         try
                         {
                             var wrapper = new FeatureWrapper(type);
@@ -118,6 +143,22 @@ namespace oPenEfficiency.Services
             {
                 _discoveredFeatures = null;
                 _initialized = false;
+            }
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                // Windows Runtime metadata can contain types that the legacy VSTO loader
+                // cannot materialize. Keep discovering the types that did load instead of
+                // disabling every feature in the sidebar.
+                ExceptionLogger.Log(ex, "FeatureDiscovery.GetLoadableTypes");
+                return ex.Types.Where(type => type != null);
             }
         }
     }

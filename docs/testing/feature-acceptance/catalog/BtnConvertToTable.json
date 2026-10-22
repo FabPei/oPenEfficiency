@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnConvertToTable",
+  "title": "Convert Shapes to Table (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/ConvertShapesToTableFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnConvertToTable-001",
+      "title": "Convert Shapes to Table applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/ConvertShapesToTableFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Convert Shapes to Table (BtnConvertToTable) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnConvertToTable-002",
+      "title": "BtnConvertToTable deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, with a fixture grid of nine 100x50 pt text rectangles (r1c1..r3c3) tiled at 40/40 with a total of 300x150 pt and selected as one shape range, the non-interactive conversion (ReplaceOriginals, no prompts) deletes the nine rectangles and produces exactly one 3x3 table carrying the fixture texts at 40/40 with 100 pt columns and 50 pt rows, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, with a fixture grid of nine 100x50 pt text rectangles (r1c1..r3c3) tiled at 40/40 with a total of 300x150 pt and selected as one shape range, the non-interactive conversion (ReplaceOriginals, no prompts) deletes the nine rectangles and produces exactly one 3x3 table carrying the fixture texts at 40/40 with 100 pt columns and 50 pt rows, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/ConvertShapesToTableFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "convert-to-table"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

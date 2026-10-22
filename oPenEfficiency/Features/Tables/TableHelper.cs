@@ -1,5 +1,6 @@
 using System;
-using System.Text;
+using System.Globalization;
+using System.Linq;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
@@ -52,35 +53,12 @@ namespace oPenEfficiency.Features
         /// </summary>
         public static double ParseDoubleFromCell(string text)
         {
-            if (string.IsNullOrWhiteSpace(text)) return 0;
+            return TryParseDoubleFromCell(text, out double result) ? result : 0;
+        }
 
-            // Extract only digits, minus sign, and one decimal separator
-            var sb = new StringBuilder(text.Length);
-            bool foundCommaOrDot = false;
-            foreach (char ch in text)
-            {
-                if (char.IsDigit(ch) || ch == '-')
-                {
-                    sb.Append(ch);
-                }
-                else if ((ch == '.' || ch == ',') && !foundCommaOrDot)
-                {
-                    sb.Append(ch);
-                    foundCommaOrDot = true;
-                }
-            }
-
-            string cleaned = sb.ToString();
-
-            // Try parsing with current culture
-            if (double.TryParse(cleaned, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.CurrentCulture, out double result))
-                return result;
-
-            // Try with invariant culture (dot as decimal separator)
-            if (double.TryParse(cleaned.Replace(",", "."), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out result))
-                return result;
-
-            return 0;
+        public static bool TryParseDoubleFromCell(string text, out double result)
+        {
+            return oPenEfficiency.Services.FlexibleNumberParser.TryParse(text, out result);
         }
 
         /// <summary>
@@ -116,6 +94,93 @@ namespace oPenEfficiency.Features
             }
 
             return anySelected;
+        }
+
+        /// <summary>
+        /// Resolves the cell that owns an active text cursor. PowerPoint commonly reports
+        /// no Cell.Selected flags while the user is editing text inside a table cell.
+        /// </summary>
+        public static bool TryGetActiveTextCell(PowerPointManager manager, Table table, out int row, out int column)
+        {
+            row = 0;
+            column = 0;
+            if (manager == null || table == null) return false;
+
+            try
+            {
+                var app = manager.GetApplication();
+                var selection = app?.ActiveWindow?.Selection;
+                if (selection == null || selection.Type != PpSelectionType.ppSelectionText)
+                    return false;
+
+                int activeShapeId = 0;
+                try
+                {
+                    dynamic textFrame = selection.TextRange.Parent;
+                    Shape cellShape = textFrame?.Parent as Shape;
+                    if (cellShape != null) activeShapeId = cellShape.Id;
+                }
+                catch
+                {
+                    // Some Office builds do not expose the TextRange parent chain.
+                    // The geometry fallback below covers those builds.
+                }
+
+                int rowCount = table.Rows.Count;
+                int columnCount = table.Columns.Count;
+                if (activeShapeId != 0)
+                {
+                    for (int r = 1; r <= rowCount; r++)
+                    {
+                        for (int c = 1; c <= columnCount; c++)
+                        {
+                            if (table.Cell(r, c).Shape.Id == activeShapeId)
+                            {
+                                row = r;
+                                column = c;
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                float x;
+                float y;
+                try
+                {
+                    var range = selection.TextRange;
+                    x = range.BoundLeft + (range.BoundWidth / 2f);
+                    y = range.BoundTop + (range.BoundHeight / 2f);
+                }
+                catch
+                {
+                    return false;
+                }
+
+                const float tolerance = 0.5f;
+                for (int r = 1; r <= rowCount; r++)
+                {
+                    for (int c = 1; c <= columnCount; c++)
+                    {
+                        var shape = table.Cell(r, c).Shape;
+                        if (x >= shape.Left - tolerance &&
+                            x <= shape.Left + shape.Width + tolerance &&
+                            y >= shape.Top - tolerance &&
+                            y <= shape.Top + shape.Height + tolerance)
+                        {
+                            row = r;
+                            column = c;
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TableHelper.TryGetActiveTextCell");
+            }
+
+            return false;
         }
     }
 }

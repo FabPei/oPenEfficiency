@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,6 +53,11 @@ namespace oPenEfficiency.Services
             return Path.Combine(_baseAssetsPath, typeFolder);
         }
 
+        public bool IsPathInAssetLibrary(string path)
+        {
+            return IsWithinAssetRoot(path);
+        }
+
         /// <summary>
         /// Gets all folders (including subfolders) for a specific asset type.
         /// </summary>
@@ -104,17 +109,7 @@ namespace oPenEfficiency.Services
         /// </summary>
         public string CreateFolder(AssetType assetType, string folderName)
         {
-            string basePath = GetAssetFolderPath(assetType);
-            string safeName = MakeValidFileName(folderName);
-            string newPath = Path.Combine(basePath, safeName);
-
-            if (Directory.Exists(newPath))
-            {
-                throw new IOException($"Folder '{folderName}' already exists.");
-            }
-
-            Directory.CreateDirectory(newPath);
-            return newPath;
+            return CreateSubFolder(GetAssetFolderPath(assetType), folderName);
         }
 
         /// <summary>
@@ -122,8 +117,7 @@ namespace oPenEfficiency.Services
         /// </summary>
         public string CreateSubFolder(string parentPath, string folderName)
         {
-            string safeName = MakeValidFileName(folderName);
-            string newPath = Path.Combine(parentPath, safeName);
+            string newPath = Core.Services.AssetLibraryPolicy.ResolveNewFolderPath(_baseAssetsPath, parentPath, folderName);
 
             if (Directory.Exists(newPath))
             {
@@ -139,10 +133,12 @@ namespace oPenEfficiency.Services
         /// </summary>
         public async Task<SaveResult> SaveSelectedSlides(string targetFolder, string fileName, string keywords = null, bool autoTag = false)
         {
-            return await Task.Run(() =>
+            return await RunOnCurrentThreadAsync(() =>
             {
                 try
                 {
+                    if (!IsWithinAssetRoot(targetFolder))
+                        return new SaveResult { Success = false, ErrorMessage = "The target folder is outside the Asset Library." };
                     var app = _ppManager.GetApplication();
                     if (app == null || app.ActivePresentation == null)
                         return new SaveResult { Success = false, ErrorMessage = "No active presentation found." };
@@ -221,7 +217,7 @@ namespace oPenEfficiency.Services
                                 Microsoft.Office.Core.DocumentProperties props = (Microsoft.Office.Core.DocumentProperties)newPres.BuiltInDocumentProperties;
                                 props["Keywords"].Value = finalKeywords;
                             }
-                            catch { }
+                            catch { /* Built-in document properties are optional for the saved slide asset. */ }
                         }
 
                         newPres.SaveAs(targetPath);
@@ -249,10 +245,12 @@ namespace oPenEfficiency.Services
         /// </summary>
         public async Task<SaveResult> SaveSelectedShapes(string targetFolder, string fileName, string keywords = null, bool autoTag = false)
         {
-            return await Task.Run(() =>
+            return await RunOnCurrentThreadAsync(() =>
             {
                 try
                 {
+                    if (!IsWithinAssetRoot(targetFolder))
+                        return new SaveResult { Success = false, ErrorMessage = "The target folder is outside the Asset Library." };
                     var app = _ppManager.GetApplication();
                     if (app == null || app.ActivePresentation == null)
                         return new SaveResult { Success = false, ErrorMessage = "No active presentation found." };
@@ -274,7 +272,7 @@ namespace oPenEfficiency.Services
                             var combined = existing.Concat(autoTags).Distinct();
                             finalKeywords = string.Join(", ", combined);
                         }
-                        catch { }
+                        catch { /* Auto-tagging is optional; retain the explicitly supplied keywords. */ }
                     }
 
                     EnsureDirectoryExists(targetFolder);
@@ -300,8 +298,7 @@ namespace oPenEfficiency.Services
                                 newPres.PageSetup.SlideWidth = app.ActivePresentation.PageSetup.SlideWidth;
                                 newPres.PageSetup.SlideHeight = app.ActivePresentation.PageSetup.SlideHeight;
 
-                                // Layout 7 is typically Blank
-                                Slide slide = newPres.Slides.AddSlide(1, newPres.SlideMaster.CustomLayouts[7]);
+                                Slide slide = newPres.Slides.Add(1, PpSlideLayout.ppLayoutBlank);
                                 
                                 var pastedRange = slide.Shapes.Paste();
                                 
@@ -365,6 +362,8 @@ namespace oPenEfficiency.Services
             {
                 try
                 {
+                    if (!IsWithinAssetRoot(targetFolder))
+                        return new SaveResult { Success = false, ErrorMessage = "The target folder is outside the Asset Library." };
                     if (sourceImagePaths == null || sourceImagePaths.Count == 0)
                         return new SaveResult { Success = false, ErrorMessage = "No images selected." };
 
@@ -461,10 +460,12 @@ namespace oPenEfficiency.Services
         /// </summary>
         public async Task<SaveResult> ExtractAndSaveSlide(string sourcePath, int slideIndex, string targetFolder, string fileName, string keywords = null)
         {
-            return await Task.Run(() =>
+            return await RunOnCurrentThreadAsync(() =>
             {
                 try
                 {
+                    if (!IsWithinAssetRoot(targetFolder))
+                        return new SaveResult { Success = false, ErrorMessage = "The target folder is outside the Asset Library." };
                     var app = _ppManager.GetApplication();
                     if (app == null) return new SaveResult { Success = false, ErrorMessage = "PowerPoint not available." };
 
@@ -496,7 +497,7 @@ namespace oPenEfficiency.Services
                                     Microsoft.Office.Core.DocumentProperties props = (Microsoft.Office.Core.DocumentProperties)newPres.BuiltInDocumentProperties;
                                     props["Keywords"].Value = keywords;
                                 }
-                                catch { }
+                                catch { /* Built-in document properties are optional for the saved asset. */ }
                             }
 
                             // Ensure target folder exists
@@ -536,6 +537,7 @@ namespace oPenEfficiency.Services
         {
             try
             {
+                if (!IsWithinAssetRoot(filePath)) return false;
                 string directory = Path.GetDirectoryName(filePath);
                 string extension = Path.GetExtension(filePath);
                 string newPath = Path.Combine(directory, MakeValidFileName(newName) + extension);
@@ -617,7 +619,7 @@ namespace oPenEfficiency.Services
         {
             try
             {
-                if (!path.StartsWith(_baseAssetsPath, StringComparison.OrdinalIgnoreCase))
+                if (!IsWithinAssetRoot(path))
                     return false; 
 
                 if (File.Exists(path))
@@ -654,7 +656,7 @@ namespace oPenEfficiency.Services
         {
             try
             {
-                if (!oldPath.StartsWith(_baseAssetsPath, StringComparison.OrdinalIgnoreCase))
+                if (!IsWithinAssetRoot(oldPath))
                     return false; // Security check
 
                 string safeName = MakeValidFileName(newName);
@@ -707,6 +709,14 @@ namespace oPenEfficiency.Services
         }
 
         #region Helpers
+
+        private static Task<T> RunOnCurrentThreadAsync<T>(Func<T> action)
+        {
+            return Task.FromResult(action());
+        }
+
+        private bool IsWithinAssetRoot(string path)
+            => Core.Services.AssetLibraryPolicy.IsWithinRoot(_baseAssetsPath, path);
 
         private List<AssetFile> GetAssetFilesInFolder(string folder, string[] extensions)
         {
@@ -776,19 +786,7 @@ namespace oPenEfficiency.Services
         }
 
         private static string MakeValidFileName(string fileName)
-        {
-            if (string.IsNullOrEmpty(fileName))
-                return "unnamed";
-
-            // Remove invalid characters
-            char[] invalidChars = Path.GetInvalidFileNameChars();
-            string validName = string.Concat(fileName.Split(invalidChars));
-
-            // Trim and replace spaces with underscores for cleaner filenames
-            validName = validName.Trim().Replace(" ", "_");
-
-            return validName.Length > 100 ? validName.Substring(0, 100) : validName;
-        }
+            => Core.Services.AssetLibraryPolicy.MakeValidFolderName(fileName);
 
         private string GetUniqueFilePath(string folder, string baseName, string extension)
         {

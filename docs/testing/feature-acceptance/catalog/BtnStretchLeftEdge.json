@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnStretchLeftEdge",
+  "title": "Stretch Left Edge (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/StretchToFirstLeftEdgeFeature.cs",
+    "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnStretchLeftEdge-001",
+      "title": "Stretch Left Edge applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/StretchToFirstLeftEdgeFeature.cs",
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Stretch Left Edge (BtnStretchLeftEdge) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnStretchLeftEdge-002",
+      "title": "BtnStretchLeftEdge deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed StretchLeftEdge stretches every selected shape from its own left edge to the documented reference edge; the feature reports execution, the unselected shapes are untouched, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "In an isolated real PowerPoint host, the deployed StretchLeftEdge stretches every selected shape from its own left edge to the documented reference edge; the feature reports execution, the unselected shapes are untouched, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/StretchToFirstLeftEdgeFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "stretch-left-edge"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "line": 1,
+              "item": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "type": "runner"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

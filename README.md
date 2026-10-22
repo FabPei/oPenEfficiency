@@ -34,6 +34,20 @@ This documentation update does not publish a new product version. Features descr
 
 See the [detailed feature reference](https://github.com/FabPei/oPenEfficiency/wiki/Features). Command availability, names and options depend on the installed version. This is a PowerPoint add-in; linking to Excel content does not mean a separate Excel add-in is included in these public downloads.
 
+## Current source workspace
+
+The source snapshot adds a PowerPoint **Home** tab launcher and a customizable sidebar as the primary PowerPoint command surface. PowerPoint intentionally uses the Home-tab Sidebar launcher. Choose **Consulting Standard**, **All Features**, **Minimal** or **Labs** in Settings. The source configuration ships with no default feature shortcuts; assign your own in Settings.
+
+The optional Excel companion uses a dedicated **openEfficiency** Excel ribbon tab. Its source is included here; this does not add an Excel add-in to the older June 2026 download.
+
+The complete [source feature reference](docs/Features.md) covers the current commands and widgets. Examples include **Insert Linked Text Label**, which connects a PowerPoint label to a supported source, and chart overlays for a selected native chart or one group containing exactly one native chart. Outputs use native PowerPoint shapes, tables and text where supported; color erasing deliberately replaces a shape with a raster image.
+
+**Preview:** Treat any feature marked Preview in an installed build as provisional. **Experimental:** Labs tools are experimental. Source documentation and automated checks do not establish Office, visual or release acceptance. OneNote host projects are excluded; existing shared compatibility code remains. Additional Gantt work remains deferred.
+
+### Build this source
+
+Use Windows, Visual Studio with Office/VSTO tools and the .NET Framework 4.8 SDK, a current .NET SDK and PowerShell 7 (`pwsh`). Run `pwsh -NoProfile -File ./eng/Build.ps1 -Configuration Release -Rebuild -Installer` for the source build, five test projects, available host-free acceptance checks and local x86/x64 installer generation. It suppresses live Office add-in registration, restores temporary VSTO development metadata after the build, and does not install MSIs or publish a release. Local VSTO manifest signing uses a temporary self-signed key; it is not a trusted publisher certificate. MSI packages remain unsigned. The maintainer's private release/host evidence is separate.
+
 ## Installation
 
 You need Windows desktop PowerPoint, .NET Framework 4.8 and the Microsoft VSTO runtime. PowerPoint 2016 and later is the project's compatibility target; this is not a claim that every Office/Windows combination has been verified. PowerPoint for the web and PowerPoint for macOS do not load Windows VSTO add-ins.

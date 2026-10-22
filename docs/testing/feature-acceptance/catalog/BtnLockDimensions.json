@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnLockDimensions",
+  "title": "Lock/Unlock Aspect Ratio (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/DimensionLockFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnLockDimensions-001",
+      "title": "Lock/Unlock Aspect Ratio applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/DimensionLockFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Lock/Unlock Aspect Ratio (BtnLockDimensions) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnLockDimensions-001",
+      "title": "Lock Dimensions selection scope matches its metadata contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/DimensionLockFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Lock Dimensions (BtnLockDimensions, MinSelection=1, RequiredType=Shapes) is at 1 selected shape(s) and above and refused below that, refused for an empty selection and for a slide selection. The scenario asserts that the feature's declared [FeatureMetadata] scope drives the production sidebar enablement decision consistently (metadata -> SidebarStateEvaluator, the declared minimum reachable as an enabled button). It does not execute or inspect the command's own selection guard: an enabled command can still refuse a selection, which is why the guard and the PowerPoint effect stay owned by the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1LockDimensionsSelectionScopeIsValid"
+      }
+    },
+    {
+      "id": "QA9-BtnLockDimensions-002",
+      "title": "Lock/Unlock Aspect Ratio flips and restores the real shape lock state in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Lock/Unlock Aspect Ratio on one selected rectangle flips the production read-back DimensionLockFeature.IsDimensionLocked from False to True, a forced restore call returns it to the original state, both calls return true, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "lock-dimensions"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

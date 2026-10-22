@@ -1,29 +1,25 @@
-﻿using System;
+using System;
+using System.Windows.Forms;
 using Microsoft.Office.Interop.PowerPoint;
+using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
 using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features
 {
-    /// <summary>
-    /// Feature: Split a table into two pieces based on the current selection.
-    /// </summary>
+    /// <summary>Splits a table into two pieces based on the selected cell.</summary>
     [FeatureMetadata(
         Id = "BtnTableSplit",
         Name = "Split Table",
-        Tooltip = "Split table",
+        Tooltip = "Split table at the selected cell",
         IconData = "M3,3H21V21H3V3M7,5V19H10V5H7M12,5V19H14V5H12M15,5V19H19V5H15Z",
         Color = "#F43F5E",
-        Description = "Splits the table into two separate tables at the selected row or column.",
-        DetailedHelpText = "### Split Table\nSplits the selected table into two separate tables at the currently selected row. Upper and lower halves are repositioned automatically.",
-        Keywords = "split, divide, separate, cut, break, table",
+        Description = "Splits a selected table before the active column, or before the active row from the context menu.",
+        DetailedHelpText = "### Split Table\n\nSelect a cell that should become the first cell of the second table. A normal click splits before that column; use **Split Table by Row** in the context menu to split before that row. The command builds both results before replacing the original, so an unsupported merged-cell boundary or another conversion error leaves the source table unchanged. The second table is placed 20 points to the right or below the first.",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableSplitFeature
     {
-        /// <summary>
-        /// Wrapper for auto-discovery - splits table by column.
-        /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
             return Execute(manager, byColumn: true);
@@ -39,51 +35,92 @@ namespace oPenEfficiency.Features
                 Table table;
                 if (!TableHelper.GetSelectedTable(manager, out tableShape, out table)) return false;
 
-                int splitIndex = -1;
-                for (int r = 1; r <= table.Rows.Count; r++)
+                int splitIndex = FindSplitIndex(table, byColumn);
+                if (splitIndex < 0)
                 {
-                    for (int c = 1; c <= table.Columns.Count; c++)
-                    {
-                        if (table.Cell(r, c).Selected)
-                        {
-                            splitIndex = byColumn ? c : r;
-                            break;
-                        }
-                    }
-                    if (splitIndex != -1) break;
-                }
-
-                if (splitIndex <= 1 || (byColumn && splitIndex > table.Columns.Count) || (!byColumn && splitIndex > table.Rows.Count))
+                    MessageBox.Show("Select a table cell at the split position first.", "Split Table", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
-
-                var dupRange = tableShape.Duplicate();
-                var table2Shape = dupRange[1];
-                var table2 = table2Shape.Table;
-
-                if (byColumn)
-                {
-                    for (int c = table.Columns.Count; c >= splitIndex; c--) table.Columns[c].Delete();
-                    for (int c = splitIndex - 1; c >= 1; c--) table2.Columns[c].Delete();
-
-                    table2Shape.Left = tableShape.Left + tableShape.Width + 20;
-                    table2Shape.Top = tableShape.Top;
-                }
-                else
-                {
-                    for (int r = table.Rows.Count; r >= splitIndex; r--) table.Rows[r].Delete();
-                    for (int r = splitIndex - 1; r >= 1; r--) table2.Rows[r].Delete();
-
-                    table2Shape.Left = tableShape.Left;
-                    table2Shape.Top = tableShape.Top + tableShape.Height + 20;
                 }
 
-                return true;
+                if (splitIndex <= 1)
+                {
+                    MessageBox.Show(byColumn
+                        ? "Select a cell in column 2 or later. The selected column becomes the first column of the second table."
+                        : "Select a cell in row 2 or later. The selected row becomes the first row of the second table.",
+                        "Split Table", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+
+                Shape firstShape = null;
+                Shape secondShape = null;
+                try
+                {
+                    try { manager.GetApplication().StartNewUndoEntry(); } catch { /* Splitting remains valid when undo grouping is unavailable. */ }
+                    firstShape = tableShape.Duplicate()[1];
+                    secondShape = tableShape.Duplicate()[1];
+                    var firstTable = firstShape.Table;
+                    var secondTable = secondShape.Table;
+
+                    if (byColumn)
+                    {
+                        for (int column = firstTable.Columns.Count; column >= splitIndex; column--) firstTable.Columns[column].Delete();
+                        for (int column = splitIndex - 1; column >= 1; column--) secondTable.Columns[column].Delete();
+                        firstShape.Left = tableShape.Left;
+                        firstShape.Top = tableShape.Top;
+                        secondShape.Left = firstShape.Left + firstShape.Width + 20;
+                        secondShape.Top = tableShape.Top;
+                    }
+                    else
+                    {
+                        for (int row = firstTable.Rows.Count; row >= splitIndex; row--) firstTable.Rows[row].Delete();
+                        for (int row = splitIndex - 1; row >= 1; row--) secondTable.Rows[row].Delete();
+                        firstShape.Left = tableShape.Left;
+                        firstShape.Top = tableShape.Top;
+                        secondShape.Left = tableShape.Left;
+                        secondShape.Top = firstShape.Top + firstShape.Height + 20;
+                    }
+
+                    tableShape.Delete();
+                    try
+                    {
+                        firstShape.Select();
+                        secondShape.Select(Office.MsoTriState.msoFalse);
+                    }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "TableSplitFeature.SelectResults"); }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    TryDelete(firstShape);
+                    TryDelete(secondShape);
+                    ExceptionLogger.Log(ex, "TableSplitFeature.CreateResults");
+                    MessageBox.Show("The table could not be split. The original table was left unchanged. Merged cells that cross the split boundary are not supported.", "Split Table", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableSplitFeature.Execute");
                 return false;
             }
+        }
+
+        private static int FindSplitIndex(Table table, bool byColumn)
+        {
+            for (int row = 1; row <= table.Rows.Count; row++)
+            {
+                for (int column = 1; column <= table.Columns.Count; column++)
+                {
+                    if (table.Cell(row, column).Selected) return byColumn ? column : row;
+                }
+            }
+            return -1;
+        }
+
+        private static void TryDelete(Shape shape)
+        {
+            if (shape == null) return;
+            try { shape.Delete(); } catch { /* Rollback shape may already have been removed by PowerPoint. */ }
         }
     }
 }

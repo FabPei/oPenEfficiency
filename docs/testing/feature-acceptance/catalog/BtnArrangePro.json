@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnArrangePro",
+  "title": "Arrange Shapes Geometrically (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/ArrangeProFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnArrangePro-001",
+      "title": "Arrange Shapes Geometrically applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeProFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Arrange Shapes Geometrically (BtnArrangePro) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnArrangePro-001",
+      "title": "Arrange Pro palette opens in real PowerPoint and reports its window state",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=arrange-pro|executed=True|opened=True|windowType=ArrangeProWindow|closed=True|closeBy=harness.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "arrange-pro"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignLeft",
+  "title": "Align Left (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/AlignToFirstLeftFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignLeft-001",
+      "title": "Align Left applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstLeftFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Align Left (BtnAlignLeft) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignLeft-001",
+      "title": "Align Left never moves a shape to the right",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstLeftFeature.cs",
+        "oPenEfficiency.Core/Services/DirectionalGuideSelector.cs",
+        "oPenEfficiency.Core.Tests/GuideSnapAcceptanceTests.cs"
+      ],
+      "expected": "On a 960x540 deck with vertical guides at 0 and 120 the left edge 305 snaps to 120 and never rightwards (a guide at 400 is ignored); without a qualifying guide the slide edge 0 is the fallback; a guide exactly on the edge keeps the shape in place and a repeated alignment moves nothing.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GuideSnapAcceptanceTests.AlignLeftSnapsToTheNearestVerticalGuideAtOrBeforeTheLeftEdge"
+      }
+    },
+    {
+      "id": "QA9-BtnAlignLeft-002",
+      "title": "Align Left aligns a real multi-selection to the reference shape left edge",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstLeftFeature.cs",
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointAlignFirst.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Left runs its primary multi-select route: three probe shapes created at distinct left edges (40/130/220 pt) are selected and aligned, every probe left edge equals the reference shape left edge afterwards, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointAlignFirst.ps1",
+        "arguments": [
+          "-Directions",
+          "left"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

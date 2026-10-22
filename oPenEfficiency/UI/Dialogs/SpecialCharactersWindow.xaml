@@ -3,22 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Special Characters" Height="400" Width="450"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="Manual">
+        Topmost="True" ShowInTaskbar="False" WindowStartupLocation="Manual"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
     
     <Window.Resources>
         <ResourceDictionary>
-            
-
-            
-
-            
-            
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
             <Style x:Key="CharButtonStyle" TargetType="Button">
                 <Setter Property="Width" Value="38"/>
                 <Setter Property="Height" Value="38"/>
                 <Setter Property="Margin" Value="2"/>
-                <Setter Property="Background" Value="#333333"/>
-                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                 <Setter Property="FontSize" Value="18"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="Cursor" Value="Hand"/>
@@ -33,11 +31,11 @@
                 </Setter>
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="#444444"/>
-                        <Setter Property="BorderBrush" Value="#666666"/>
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
                     </Trigger>
                     <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="Background" Value="#0078D4"/>
+                        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -54,7 +52,7 @@
                 <Setter Property="BorderThickness" Value="0"/>
                 <Style.Triggers>
                     <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="#333333"/>
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -73,7 +71,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Header -->
-            <Border Grid.Row="0" Grid.ColumnSpan="2" Padding="10,5" Background="#282828" CornerRadius="8,8,0,0">
+            <Border Grid.Row="0" Grid.ColumnSpan="2" Padding="10,5" Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="8,8,0,0">
                 <DockPanel LastChildFill="False">
                     <TextBlock Text="SPECIAL CHARACTERS &amp; SYMBOLS" Style="{StaticResource DialogTitleText}" IsHitTestVisible="False" VerticalAlignment="Center"/>
                     <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" DockPanel.Dock="Right" />
@@ -93,18 +91,18 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#353535"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="ItemBorder" Property="Background" Value="#404040"/>
-                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="#0078D4"/>
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                                <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
                                                 <Setter TargetName="ItemBorder" Property="BorderThickness" Value="2,0,0,0"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
-                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>

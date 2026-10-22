@@ -1,51 +1,39 @@
 <Window x:Class="oPenEfficiency.UI.AutomationWizardWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Automation Wizard" Width="500" Height="400"
+        Title="Build Presentation from Answers" Width="760" Height="680" MinWidth="620" MinHeight="520"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" WindowStartupLocation="CenterOwner"
-        MouseDown="Window_MouseDown">
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Controls.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
+        Topmost="False" WindowStartupLocation="CenterOwner">
+    <Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="../Styles/Controls.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></Window.Resources>
     <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
-        </Border.Effect>
+        <Border.Effect><DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/></Border.Effect>
         <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Grid>
-                <StackPanel>
-                    <TextBlock Text="DOCUMENT AUTOMATION" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Fill in the details to generate the presentation." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                <StackPanel MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                    <TextBlock Text="BUILD PRESENTATION FROM ANSWERS" Style="{StaticResource DialogTitleText}"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
             </Grid>
-            <StackPanel Grid.Row="1" Margin="0,20">
-                <TextBlock Text="Client Name:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                <TextBox Style="{StaticResource StandardTextBox}" Margin="0,0,0,15" Text="Acme Corp"/>
-
-                <TextBlock Text="Project Scope:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
-                <ComboBox Margin="0,0,0,15">
-                    <ComboBoxItem Content="Phase 1 - Audit" IsSelected="True"/>
-                    <ComboBoxItem Content="Phase 2 - Implementation"/>
-                </ComboBox>
-
-                <CheckBox Content="Include Appendix Slides" Foreground="{DynamicResource TextPrimaryBrush}" IsChecked="True" Margin="0,0,0,15"/>
-                
-                <TextBlock Text="Note: This UI dynamically generates based on the Wizard Designer schema stored in the template." Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" FontStyle="Italic"/>
-            </StackPanel>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Generate Presentation" Click="Generate_Click" Style="{StaticResource PrimaryButton}"/>
-            </StackPanel>
+            <ScrollViewer Grid.Row="1" Margin="0,18,0,12" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Answers" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="15" Margin="0,0,0,10"/>
+                    <StackPanel x:Name="QuestionsPanel"/>
+                    <TextBlock Text="Execution preview" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="15" Margin="0,16,0,8"/>
+                    <TextBlock Text="Review the complete execution preview before creating a new presentation copy."
+                               Style="{StaticResource ContextMetaText}" Margin="0,0,0,8"/>
+                    <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                        <TextBlock x:Name="PreviewText" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+            <Grid Grid.Row="2">
+                <Button Content="Refresh Preview" Click="RefreshPreview_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Click="Close_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                    <Button x:Name="GenerateButton" Content="Create Presentation Copy…" Click="Generate_Click" Style="{StaticResource PrimaryButton}" IsEnabled="False"/>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Border>
 </Window>

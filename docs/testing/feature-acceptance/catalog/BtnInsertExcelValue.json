@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnInsertExcelValue",
+  "title": "Insert Excel Value (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ExcelValueFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnInsertExcelValue-001",
+      "title": "Insert Excel Value applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ExcelValueFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Insert Excel Value (BtnInsertExcelValue) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnInsertExcelValue-002",
+      "title": "Excel value link tag codec is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ExcelValueLinkStatePolicy.cs",
+        "oPenEfficiency/Features/Utilities/ExcelValueFeature.cs",
+        "oPenEfficiency.Core.Tests/ExcelValueLinkStatePolicyTests.cs"
+      ],
+      "expected": "The oPE_ExcelValue newline-delimited key=value AlternativeText codec round-trips all fields (path/sheet/cell/dec/thou/pct/raw/id/start/len/text) with invariant raw numbers (never a locale decimal comma), documented fallbacks for unparsable fields (decimals/start/length -1, raw null, booleans only on exact '1'), values keeping everything after the first '=', carriage-return tolerance, null reference fields for missing keys, and rejection of non-tag payloads.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ExcelValueLinkStatePolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

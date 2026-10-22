@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAgendaWizard",
+  "title": "Agenda Creator (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/AgendaWizardFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAgendaWizard-001",
+      "title": "Agenda Creator applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/AgendaWizardFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Agenda Creator (BtnAgendaWizard) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "LIM-AGENDA-PAGENUM-001-TREE",
+      "title": "Agenda page numbers are frozen at generation time",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/AgendaGenerationService.cs",
+        "oPenEfficiency.Command.Tests/AgendaLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: agenda page numbers are frozen at generation time - generation writes item.PageNumber from the divider slide's SlideIndex exactly once and no save or sync path recomputes it. Fix-forward target for AG-S1+: refresh page numbers on save. The host-free pin asserts the generation-time write, the single-write invariant and the absence of any page-number method.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~AgendaLimitationPinTests"
+      }
+    },
+    {
+      "id": "LIM-AGENDA-SINGLE-001-TREE",
+      "title": "A deck carries exactly one fixed-tag agenda definition",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Wizards/AgendaWizard.xaml.cs",
+        "oPenEfficiency.Command.Tests/AgendaLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: a deck carries exactly one agenda definition, held in the single fixed oPE_AgendaMain tag with the constant value \"True\" - there is no per-agenda name or identity slot. Fix-forward target for AG-S1+: multiple named agendas with an explicit active one.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~AgendaLimitationPinTests"
+      }
+    },
+    {
+      "id": "LIM-AGENDA-SYNC-001-TREE",
+      "title": "Agenda sync is capture-clear-regenerate-restore without a diff review",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/AgendaGenerationService.cs",
+        "oPenEfficiency.Command.Tests/AgendaLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: agenda synchronization runs capture-clear-regenerate-restore (GetContentSlideMap, ClearExistingAgendaSections, ClearExistingDividerSlides, regenerate, RestoreContentSlidePositions) with no diff-first review stage before manual edits are overwritten. Fix-forward target for AG-S1+: present the pending changes as a reviewable diff before applying them.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~AgendaLimitationPinTests"
+      }
+    },
+    {
+      "id": "QA9-BtnAgendaWizard-001",
+      "title": "Agenda Wizard window opens in real PowerPoint and reports its window state",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=agenda-wizard|executed=True|opened=True|windowType=AgendaWizard|closed=True|closeBy=harness.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "agenda-wizard"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

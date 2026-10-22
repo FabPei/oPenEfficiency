@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableColumnWidth",
+  "title": "Copy Column Widths (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableColumnWidthFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableColumnWidth-001",
+      "title": "Copy Column Widths applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnWidthFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+      ],
+      "expected": "Copy Column Widths (BtnTableColumnWidth) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableColumnWidth-001",
+      "title": "Copy Column Widths keeps the proportions of the copied widths and lands on the target total exactly",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnWidthFeature.cs",
+        "oPenEfficiency.Core/Services/TableDimensionScaler.cs",
+        "oPenEfficiency.Core.Tests/TableDimensionAcceptanceTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives the host-neutral production code of Copy Column Widths (Tables): TableDimensionScaler.ScaleToTotal is asserted against the real scaling contract - copy Column Widths keeps the proportions of the copied widths and lands on the target total exactly.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableDimensionAcceptanceTests.ScaleToTotalKeepsTheProportionsAndHitsTheTargetExactly"
+      }
+    },
+    {
+      "id": "QA9-BtnTableColumnWidth-002",
+      "title": "BtnTableColumnWidth copy/paste deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the Copy Column Widths command captures the fixture 3x3 table's 100/100/100 pt widths, the seam then mutates them to 60/120/120 pt, and the paste restores all three columns to 100 pt with the 300 pt total width, all texts and row heights untouched, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the Copy Column Widths command captures the fixture 3x3 table's 100/100/100 pt widths, the seam then mutates them to 60/120/120 pt, and the paste restores all three columns to 100 pt with the 300 pt total width, all texts and row heights untouched, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnWidthFeature.cs",
+        "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "paste-column-widths"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

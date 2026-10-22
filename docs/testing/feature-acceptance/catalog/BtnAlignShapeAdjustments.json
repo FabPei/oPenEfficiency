@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignShapeAdjustments",
+  "title": "Copy Shape Adjustments (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/AlignShapeAdjustmentsFeature.cs",
+    "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignShapeAdjustments-001",
+      "title": "Copy Shape Adjustments applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/AlignShapeAdjustmentsFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Copy Shape Adjustments (BtnAlignShapeAdjustments) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignShapeAdjustments-002",
+      "title": "Shape-adjustment transfer compatibility is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ShapeAdjustmentTransferPolicy.cs",
+        "oPenEfficiency/Features/Shapes/AlignShapeAdjustmentsFeature.cs",
+        "oPenEfficiency.Core.Tests/ShapeAdjustmentTransferPolicyTests.cs"
+      ],
+      "expected": "Copy Shape Adjustments decides host-free which shapes receive the anchor's adjustment values: the explicit first/last-selected choice resolves to the first or last index of the selection while an unset choice falls back to the anchor shape configured in Settings, and a selected shape is compatible only when it has the same PowerPoint shape type, the same AutoShapeType and exactly the same number of adjustments - every other shape is skipped untouched.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ShapeAdjustmentTransferPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnAlignShapeAdjustments-003",
+      "title": "Copy Shape Adjustments transfers the first selected shape's adjustments in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Shapes/AlignShapeAdjustmentsFeature.cs",
+        "eng/Smoke-PowerPointShapeAdjustments.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Copy Shape Adjustments with the first-selected anchor runs its primary route: three rounded-rectangle probes with adjustments 0.05/0.25/0.4 plus a diamond without adjustments in the middle of the selection are selected, afterwards both non-anchor probes carry the first probe's value (0.05), the anchor keeps its own value, the diamond gains no adjustments, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointShapeAdjustments.ps1",
+        "arguments": [
+          "-Mode",
+          "first"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnAlignShapeAdjustments-004",
+      "title": "Copy Shape Adjustments transfers the last selected shape's adjustments in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Shapes/AlignShapeAdjustmentsFeature.cs",
+        "eng/Smoke-PowerPointShapeAdjustments.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Copy Shape Adjustments with the last-selected anchor runs its right-click route: the same probe fixture is selected, afterwards both non-anchor probes carry the last probe's value (0.4), the anchor keeps its own value, the diamond gains no adjustments, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointShapeAdjustments.ps1",
+        "arguments": [
+          "-Mode",
+          "last"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

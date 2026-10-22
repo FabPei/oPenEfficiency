@@ -10,66 +10,85 @@ namespace oPenEfficiency.Features.Text
 {
     [FeatureMetadata(
         Id = "BtnFitFormToText",
-        Name = "Fit Form to Text",
-        Tooltip = "Fit Form to Text",
+        Name = "Fit Shape to Text",
+        Tooltip = "Fit shape tightly to its text",
         IconData = "M3,17H21V19H3V17 M3,5H21V7H3V5 M13,9V15H11V9H13 M15,9V11H17V9H15 M15,13V15H17V13H15 M7,9V11H9V9H7 M7,13V15H9V13H7", // A custom representation
         Color = "#FDE047",
         MinSelection = 1,
-        RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
-        Description = "Adjusts the bounding box of the selected shapes to exactly fit the text string within, removing asymmetrical margins and empty whitespace.",
-        DetailedHelpText = "### Fit Form to Text\n\nSnaps the bounding box of the selected shape exactly to the dimensions of the contained text. Eliminates unwanted whitespace padding and ensures the shape tightly wraps its content.",
-        Keywords = "auto size, shrink to fit, adjust bounding box, remove padding, zero margins, tight fit"
+        RequiredType = OfficeSelectionType.Shapes,
+        Description = "Fits selected text-bearing shapes tightly around their text, including supported shapes inside groups.",
+        DetailedHelpText = "### Fit Shape to Text\n\nFor each selected text-bearing shape, including supported children of selected groups, disables word wrapping and lets PowerPoint resize the shape to fit its text. The primary action also removes all four text margins. Right-click to choose fitting with zero margins or while preserving the existing margins. Shapes without text are skipped and the complete action creates one PowerPoint Undo entry."
     )]
     public static class FitFormToTextFeature
     {
         public static bool Execute(PowerPointManager manager)
         {
+            return Execute(manager, clearMargins: true);
+        }
+
+        public static bool Execute(PowerPointManager manager, bool clearMargins)
+        {
+            if (manager == null) return false;
             try
             {
-                var selection = manager.GetApplication().ActiveWindow.Selection;
+                var app = manager.GetApplication();
+                if (app == null || app.ActiveWindow == null) return false;
+                var selection = app.ActiveWindow.Selection;
                 if (selection.Type != PowerPoint.PpSelectionType.ppSelectionShapes) return false;
 
-                bool modified = false;
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "FitFormToTextFeature.StartNewUndoEntry"); }
 
-                foreach (PowerPoint.Shape shape in selection.ShapeRange)
+                bool modified = false;
+                bool failed = false;
+
+                for (int i = 1; i <= selection.ShapeRange.Count; i++)
                 {
-                    modified |= ProcessShape(shape);
+                    modified |= ProcessShape(selection.ShapeRange[i], clearMargins, ref failed);
                 }
 
-                return modified;
+                return modified && !failed;
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex.Message, "FitFormToTextFeature");
+                ExceptionLogger.Log(ex, "FitFormToTextFeature.Execute");
                 return false;
             }
         }
 
-        private static bool ProcessShape(PowerPoint.Shape shape)
+        private static bool ProcessShape(PowerPoint.Shape shape, bool clearMargins, ref bool failed)
         {
             bool modified = false;
 
             if (shape.Type == MsoShapeType.msoGroup)
             {
-                foreach (PowerPoint.Shape child in shape.GroupItems)
+                for (int i = 1; i <= shape.GroupItems.Count; i++)
                 {
-                    modified |= ProcessShape(child);
+                    modified |= ProcessShape(shape.GroupItems[i], clearMargins, ref failed);
                 }
                 return modified;
             }
 
             if (shape.HasTextFrame == MsoTriState.msoTrue && shape.TextFrame.HasText == MsoTriState.msoTrue)
             {
-                shape.TextFrame.MarginLeft = 0;
-                shape.TextFrame.MarginRight = 0;
-                shape.TextFrame.MarginTop = 0;
-                shape.TextFrame.MarginBottom = 0;
-                
-                // Disable WordWrap temporarily so the shape shrinks to exactly the line width
-                shape.TextFrame.WordWrap = MsoTriState.msoFalse;
-                shape.TextFrame.AutoSize = PowerPoint.PpAutoSize.ppAutoSizeShapeToFitText;
-                
-                modified = true;
+                try
+                {
+                    if (clearMargins)
+                    {
+                        shape.TextFrame.MarginLeft = 0;
+                        shape.TextFrame.MarginRight = 0;
+                        shape.TextFrame.MarginTop = 0;
+                        shape.TextFrame.MarginBottom = 0;
+                    }
+                    shape.TextFrame.WordWrap = MsoTriState.msoFalse;
+                    shape.TextFrame.AutoSize = PowerPoint.PpAutoSize.ppAutoSizeShapeToFitText;
+                    modified = true;
+                }
+                catch (Exception ex)
+                {
+                    failed = true;
+                    ExceptionLogger.Log(ex, "FitFormToTextFeature.ProcessShape");
+                }
             }
 
             return modified;

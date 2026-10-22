@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnDockTop",
+  "title": "Stack Above (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/DockToFirstTopFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnDockTop-001",
+      "title": "Stack Above applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/DockToFirstTopFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Stack Above (BtnDockTop) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnDockTop-002",
+      "title": "Dock stacking cursor is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/DockStackPolicy.cs",
+        "oPenEfficiency/Features/Alignment/DockToFirstTopFeature.cs",
+        "oPenEfficiency.Core.Tests/DockStackPolicyTests.cs"
+      ],
+      "expected": "Stack Above places every non-anchor shape directly above the reference shape in selection order with zero gap: the first shape's top sits at (reference top - its height) and the cursor follows each placed edge upward; the other coordinate, size and formatting are untouched.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~DockStackPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

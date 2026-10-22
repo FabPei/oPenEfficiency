@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -12,6 +13,7 @@ namespace oPenEfficiency.UI
         private const double PointsPerCm = 28.346;
         private bool _isUpdatingFromCode;
         private PowerPointManager _manager;
+        private PowerPoint.Application _application;
 
         public SizeAdjustControl()
         {
@@ -26,22 +28,32 @@ namespace oPenEfficiency.UI
 
         private void SizeAdjustControl_Loaded(object sender, RoutedEventArgs e)
         {
-            _manager = new PowerPointManager(Globals.ThisAddIn.Application);
+            _application = Globals.ThisAddIn?.Application;
+            if (_application == null) return;
+
+            _manager = new PowerPointManager(_application);
             try
             {
-                Globals.ThisAddIn.Application.WindowSelectionChange += Application_WindowSelectionChange;
+                _application.WindowSelectionChange += Application_WindowSelectionChange;
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.Loaded.SubscribeSelectionChange"); }
             RefreshFromSelection();
         }
 
         private void SizeAdjustControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (_application == null) return;
+
             try
             {
-                Globals.ThisAddIn.Application.WindowSelectionChange -= Application_WindowSelectionChange;
+                _application.WindowSelectionChange -= Application_WindowSelectionChange;
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.Unloaded.UnsubscribeSelectionChange"); }
+            finally
+            {
+                _application = null;
+                _manager = null;
+            }
         }
 
         private void Application_WindowSelectionChange(PowerPoint.Selection Sel)
@@ -69,7 +81,7 @@ namespace oPenEfficiency.UI
                     TxtHeight.Text = "";
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.RefreshFromSelection"); }
             finally
             {
                 _isUpdatingFromCode = false;
@@ -106,7 +118,7 @@ namespace oPenEfficiency.UI
                     s.Width = newPoints;
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.WidthChanged"); }
             finally
             {
                 if (!immediate) RefreshFromSelection();
@@ -128,7 +140,7 @@ namespace oPenEfficiency.UI
                     s.Height = newPoints;
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.HeightChanged"); }
             finally
             {
                 if (!immediate) RefreshFromSelection();
@@ -144,7 +156,7 @@ namespace oPenEfficiency.UI
                 var s = shapes[1];
                 s.Width = (float)(s.Width + deltaCm * PointsPerCm);
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.AdjustWidth"); }
             finally
             {
                 RefreshFromSelection();
@@ -160,11 +172,18 @@ namespace oPenEfficiency.UI
                 var s = shapes[1];
                 s.Height = (float)(s.Height + deltaCm * PointsPerCm);
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSizeFailure(ex, "SizeAdjustControl.AdjustHeight"); }
             finally
             {
                 RefreshFromSelection();
             }
+        }
+
+        private static void ReportOptionalSizeFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // A stale selection leaves the control unchanged and available for the next selection event.
         }
 
         private void BtnWidthUp_Click(object sender, RoutedEventArgs e) => NudgeWidth(+0.1);

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "featureId": "FEAT-006",
+  "title": "Advanced Charting",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Charts/*",
+    "oPenEfficiency/UI/Dialogs/ChartOverlayDialog*",
+    "oPenEfficiency/Services/SelectionUpdateCoordinator.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs",
+    "oPenEfficiency/ThisAddIn.cs",
+    "oPenEfficiency/ThisAddIn.Automation.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CH-NATIVE-001",
+      "title": "Native PowerPoint chart insertion canary",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Charts/*",
+        "*ThisAddIn*",
+        "oPenEfficiency/Services/SelectionUpdateCoordinator.cs",
+        "oPenEfficiency/UI/*"
+      ],
+      "expected": "Repeated Insert Chart -> clustered column -> select -> delete -> Undo -> save/reopen remains stable with openEfficiency loaded and produces no new error-log entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointNativeChart.ps1",
+        "arguments": []
+      }
+    },
+    {
+      "id": "CH-OVERLAY-001",
+      "title": "Chart overlay smoke after native canary",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Charts/*",
+        "*ChartOverlayDialog*"
+      ],
+      "expected": "After native chart insertion is stable, Delta/CAGR overlay opens and applies to exactly the selected native chart.",
+      "ownerSteps": [
+        "Insert a native clustered-column chart.",
+        "Select exactly that chart.",
+        "Invoke Add Analytical Chart Overlays.",
+        "Apply Delta or CAGR and verify PowerPoint stays stable."
+      ],
+      "technicalReason": "The Chart Overlay contract is an interactive WPF dialog flow whose outcome - the Delta/CAGR overlay rendered onto a live native chart - must be judged visually by the owner; there is no deterministic host-free oracle for the rendered overlay quality, and the dialog's selection-bound behavior has no automation seam. Structural automation of the overlay math stays possible later via the charting planners (CH-S0 freeze); until then this stays an explicit owner-manual check."
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnRotateShape",
+  "title": "Rotate Shapes (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnRotateShape-001",
+      "title": "Rotate Shapes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Rotate Shapes (BtnRotateShape) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnRotateShape-001",
+      "title": "Rotate Shape selection scope matches its metadata contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Rotate Shape (BtnRotateShape, MinSelection=1, RequiredType=Shapes) is at 1 selected shape(s) and above and refused below that, refused for an empty selection and for a slide selection. The scenario asserts that the feature's declared [FeatureMetadata] scope drives the production sidebar enablement decision consistently (metadata -> SidebarStateEvaluator, the declared minimum reachable as an enabled button). It does not execute or inspect the command's own selection guard: an enabled command can still refuse a selection, which is why the guard and the PowerPoint effect stay owned by the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1RotateShapeSelectionScopeIsValid"
+      }
+    },
+    {
+      "id": "QA9-BtnRotateShape-002",
+      "title": "BtnRotateShape deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed Rotate Shape rotates every selected shape by the documented step in place (bounding box center preserved), reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "In an isolated real PowerPoint host, the deployed Rotate Shape rotates every selected shape by the documented step in place (bounding box center preserved), reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "rotate"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "line": 1,
+              "item": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "type": "runner"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnRotateShape-003",
+      "title": "Rotate Shapes 90 left context-menu step deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed Rotate Shape 90-left context-menu step rotates every selected shape by -90 degrees around each shape's own center (a 0-degree fixture reports 270 normalized), reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Rotate Shape 90-left context-menu step rotates every selected shape by -90 degrees around each shape's own center (a 0-degree fixture reports 270 normalized), reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "rotate-90-left"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md"
+    },
+    {
+      "id": "QA9-BtnRotateShape-004",
+      "title": "Rotate Shapes 45 right context-menu step deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed Rotate Shape 45-right context-menu step rotates every selected shape by +45 degrees around each shape's own center, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Rotate Shape 45-right context-menu step rotates every selected shape by +45 degrees around each shape's own center, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "rotate-45-right"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md"
+    },
+    {
+      "id": "QA9-BtnRotateShape-005",
+      "title": "Rotate Shapes 45 left context-menu step deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed Rotate Shape 45-left context-menu step rotates every selected shape by -45 degrees around each shape's own center (a 0-degree fixture reports 315 normalized), reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Rotate Shape 45-left context-menu step rotates every selected shape by -45 degrees around each shape's own center (a 0-degree fixture reports 315 normalized), reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectTransformFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "rotate-45-left"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md"
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

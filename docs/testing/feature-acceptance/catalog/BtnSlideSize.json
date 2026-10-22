@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSlideSize",
+  "title": "Analyze Slide Media Size (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/SlideSizeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSlideSize-001",
+      "title": "Analyze Slide Media Size applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SlideSizeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Analyze Slide Media Size (BtnSlideSize) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSlideSize-001",
+      "title": "Slide Size selection scope matches its metadata contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SlideSizeFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Slide Size (BtnSlideSize, MinSelection=0, RequiredType=None declared explicitly in SlideSizeFeature.cs - the catalog reader does not default it, so the shape-only branch of the contract does not apply to this feature) is enabled for an empty selection and for a single selected shape, because it declares no minimum. The scenario asserts that the feature's declared [FeatureMetadata] scope drives the production sidebar enablement decision consistently (metadata -> SidebarStateEvaluator, the declared minimum reachable as an enabled button). It does not execute or inspect the command's own selection guard: an enabled command can still refuse a selection, which is why the guard and the PowerPoint effect stay owned by the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1SlideSizeSelectionScopeIsValid"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

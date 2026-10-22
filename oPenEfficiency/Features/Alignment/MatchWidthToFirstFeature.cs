@@ -14,10 +14,9 @@ namespace oPenEfficiency.Features
         IconData = "M3,5H5V19H3V5M19,5H21V19H19V5M6,12H18M8,10L6,12L8,14M16,10L18,12L16,14",
         Color = "#10B981",
         Description = "Standardizes the width of all selected objects to match the anchor object.",
-        DetailedHelpText = "### Match Width\nResizes all selected shapes to match the exact pixel width of the first shape, preserving height and position.",
-        Keywords = "same width, copy width, match size horizontal",
+        DetailedHelpText = "### Match Width\n\nResizes every non-anchor shape to the exact width of the first or last selected anchor configured in Settings. Right-click any Match button to choose width, height, or both dimensions directly. Height, position, and existing aspect-ratio lock state are preserved.",
         MinSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class MatchWidthToFirstFeature
     {
         public static bool Execute(PowerPointManager manager)

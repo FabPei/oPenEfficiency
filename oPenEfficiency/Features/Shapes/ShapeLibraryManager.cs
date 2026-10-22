@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using Microsoft.Office.Core;
 using Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Services;
+using oPenEfficiency.Utils;
 using Shape = Microsoft.Office.Interop.PowerPoint.Shape;
 using Slide = Microsoft.Office.Interop.PowerPoint.Slide;
 
@@ -360,7 +361,9 @@ namespace oPenEfficiency.Features
                             {
                                 if (shape != null)
                                 {
-                                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(shape); } catch { }
+                                    ExceptionPolicy.RunBestEffortComCleanup(
+                                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(shape),
+                                        "ShapeLibraryManager.GenerateThumbnailCache.ReleaseShape");
                                 }
                             }
                         }
@@ -369,7 +372,9 @@ namespace oPenEfficiency.Features
                     {
                         if (slide != null)
                         {
-                            try { System.Runtime.InteropServices.Marshal.ReleaseComObject(slide); } catch { }
+                            ExceptionPolicy.RunBestEffortComCleanup(
+                                () => System.Runtime.InteropServices.Marshal.ReleaseComObject(slide),
+                                "ShapeLibraryManager.GenerateThumbnailCache.ReleaseSlide");
                         }
                     }
                 }
@@ -388,8 +393,12 @@ namespace oPenEfficiency.Features
             {
                 if (pres != null)
                 {
-                    try { pres.Close(); } catch { }
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(pres); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => pres.Close(),
+                        "ShapeLibraryManager.GenerateThumbnailCache.ClosePresentation");
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(pres),
+                        "ShapeLibraryManager.GenerateThumbnailCache.ReleasePresentation");
                 }
             }
         }
@@ -410,7 +419,7 @@ namespace oPenEfficiency.Features
                 var app = _manager.GetApplication();
                 if (app.ActivePresentation == null) return false;
 
-                try { app.StartNewUndoEntry(); } catch { }
+                RunOptionalShapeOperation(() => app.StartNewUndoEntry(), "ShapeLibraryManager.InsertShape.StartUndoEntry");
 
                 Slide activeSlide = null;
                 try
@@ -420,7 +429,7 @@ namespace oPenEfficiency.Features
                         activeSlide = (Slide)app.ActiveWindow.View.Slide;
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalShapeFailure(ex, "ShapeLibraryManager.InsertShape.ActiveSlide"); }
 
                 if (activeSlide == null) return false;
 
@@ -475,7 +484,7 @@ namespace oPenEfficiency.Features
                                         }
                                     }
                                 } 
-                                catch { }
+                                catch (Exception ex) { ReportOptionalShapeFailure(ex, "ShapeLibraryManager.InsertShape.RestoreRelativePosition"); }
                             }
                             return true;
                         }
@@ -485,14 +494,18 @@ namespace oPenEfficiency.Features
                     {
                         if (shapeToCopy != null)
                         {
-                            try { System.Runtime.InteropServices.Marshal.ReleaseComObject(shapeToCopy); } catch { }
+                            ExceptionPolicy.RunBestEffortComCleanup(
+                                () => System.Runtime.InteropServices.Marshal.ReleaseComObject(shapeToCopy),
+                                "ShapeLibraryManager.InsertShape.ReleaseSourceShape");
                         }
                     }
                 }
                 finally
                 {
                     sourcePres.Close();
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(sourcePres); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(sourcePres),
+                        "ShapeLibraryManager.InsertShape.ReleaseSourcePresentation");
                 }
             }
             catch (Exception ex)
@@ -500,6 +513,19 @@ namespace oPenEfficiency.Features
                 System.Diagnostics.Debug.WriteLine("Insert Shape Error: " + ex.Message);
                 return false;
             }
+        }
+
+        private static void RunOptionalShapeOperation(Action operation, string context)
+        {
+            try { operation(); }
+            catch (Exception ex) { ReportOptionalShapeFailure(ex, context); }
+        }
+
+        private static void ReportOptionalShapeFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // Optional metadata and view state must not prevent insertion of an otherwise valid shape.
         }
     }
 }

@@ -79,7 +79,25 @@ namespace oPenEfficiency.Services
 
     public class LLMTranslationService
     {
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
+        private readonly TimeSpan _requestTimeout;
+        private static readonly HttpClient SharedHttpClient = new HttpClient();
+
+        public LLMTranslationService()
+            : this(SharedHttpClient)
+        {
+        }
+
+        internal LLMTranslationService(HttpClient httpClient)
+            : this(httpClient, BoundedHttpResponseReader.DefaultTimeout)
+        {
+        }
+
+        internal LLMTranslationService(HttpClient httpClient, TimeSpan requestTimeout)
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _requestTimeout = requestTimeout;
+        }
 
         public async Task<string> TranslateWithOpenAIAsync(string text, string targetLanguage, string apiKey, string model)
         {
@@ -108,23 +126,23 @@ namespace oPenEfficiency.Services
                     request.Headers.Add("Authorization", $"Bearer {apiKey}");
                     request.Content = content;
                     
-                    var response = await _httpClient.SendAsync(request);
+                    var response = await BoundedHttpResponseReader.SendAsync(_httpClient, request, _requestTimeout);
                     if (!response.IsSuccessStatusCode)
                     {
-                        string error = await response.Content.ReadAsStringAsync();
-                        System.Diagnostics.Debug.WriteLine($"OpenAI API Error ({response.StatusCode}): {error}");
+                        oPenEfficiency.Utils.ExceptionLogger.Log(
+                            $"OpenAI returned HTTP {(int)response.StatusCode} ({response.StatusCode}). The response body was omitted because it may contain sensitive data.",
+                            "LLMTranslationService.TranslateWithOpenAIAsync");
                         return null;
                     }
 
-                    string jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonService.Deserialize<OpenAIResponse>(jsonResponse);
+                    var result = JsonService.Deserialize<OpenAIResponse>(response.Body);
 
-                    return result?.Choices?[0]?.Message?.Content?.Trim();
+                    return BoundedHttpResponseReader.ValidateTranslation(result?.Choices?[0]?.Message?.Content)?.Trim();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"OpenAI Translation Exception: {ex.Message}");
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "LLMTranslationService.TranslateWithOpenAIAsync");
                 return null;
             }
         }
@@ -156,23 +174,23 @@ namespace oPenEfficiency.Services
                     request.Headers.Add("anthropic-version", "2023-06-01");
                     request.Content = content;
                     
-                    var response = await _httpClient.SendAsync(request);
+                    var response = await BoundedHttpResponseReader.SendAsync(_httpClient, request, _requestTimeout);
                     if (!response.IsSuccessStatusCode)
                     {
-                        string error = await response.Content.ReadAsStringAsync();
-                        System.Diagnostics.Debug.WriteLine($"Claude API Error ({response.StatusCode}): {error}");
+                        oPenEfficiency.Utils.ExceptionLogger.Log(
+                            $"Claude returned HTTP {(int)response.StatusCode} ({response.StatusCode}). The response body was omitted because it may contain sensitive data.",
+                            "LLMTranslationService.TranslateWithClaudeAsync");
                         return null;
                     }
 
-                    string jsonResponse = await response.Content.ReadAsStringAsync();
-                    var result = JsonService.Deserialize<ClaudeResponse>(jsonResponse);
+                    var result = JsonService.Deserialize<ClaudeResponse>(response.Body);
 
-                    return result?.Content?[0]?.Text?.Trim();
+                    return BoundedHttpResponseReader.ValidateTranslation(result?.Content?[0]?.Text)?.Trim();
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Claude Translation Exception: {ex.Message}");
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "LLMTranslationService.TranslateWithClaudeAsync");
                 return null;
             }
         }

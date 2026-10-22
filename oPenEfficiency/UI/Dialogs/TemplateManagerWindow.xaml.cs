@@ -8,9 +8,19 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI.Dialogs
 {
+    public enum TemplateManagerStartAction
+    {
+        Templates,
+        Search,
+        AddTemplate,
+        WatchedFolders,
+        RestoreHidden
+    }
+
     public class TemplateViewModel : TemplateItem
     {
         public bool IsCustom { get; set; }
@@ -23,12 +33,36 @@ namespace oPenEfficiency.UI.Dialogs
         private ObservableCollection<TemplateViewModel> _allTemplates = new ObservableCollection<TemplateViewModel>();
         private ObservableCollection<string> _watchedDirectories = new ObservableCollection<string>();
 
-        public TemplateManagerWindow(PowerPointManager powerPointManager)
+        public TemplateManagerWindow(
+            PowerPointManager powerPointManager,
+            TemplateManagerStartAction startAction = TemplateManagerStartAction.Templates)
         {
             _powerPointManager = powerPointManager;
             _templateService = new TemplateService();
             InitializeComponent();
             LoadData();
+            Loaded += (sender, args) => ApplyStartAction(startAction);
+        }
+
+        private void ApplyStartAction(TemplateManagerStartAction action)
+        {
+            if (action == TemplateManagerStartAction.WatchedFolders || action == TemplateManagerStartAction.RestoreHidden)
+                MainTabs.SelectedIndex = 1;
+            else
+                MainTabs.SelectedIndex = 0;
+
+            if (action == TemplateManagerStartAction.Search)
+            {
+                SearchBox.Focus();
+            }
+            else if (action == TemplateManagerStartAction.AddTemplate)
+            {
+                AddTemplate_Click(this, new RoutedEventArgs());
+            }
+            else if (action == TemplateManagerStartAction.RestoreHidden)
+            {
+                RestoreHidden_Click(this, new RoutedEventArgs());
+            }
         }
 
         private void LoadData()
@@ -55,7 +89,8 @@ namespace oPenEfficiency.UI.Dialogs
             _allTemplates.Clear();
             foreach (var t in templates)
             {
-                bool isCustom = config.CustomTemplates != null && config.CustomTemplates.Any(ct => ct.Path.Equals(t.Path, StringComparison.OrdinalIgnoreCase));
+                bool isCustom = config.CustomTemplates != null && config.CustomTemplates.Any(ct =>
+                    ct != null && string.Equals(ct.Path, t.Path, StringComparison.OrdinalIgnoreCase));
                 _allTemplates.Add(new TemplateViewModel 
                 { 
                     Name = t.Name, 
@@ -71,14 +106,16 @@ namespace oPenEfficiency.UI.Dialogs
         {
             if (SearchBox == null) return;
 
-            string search = SearchBox.Text.ToLower();
+            string search = SearchBox.Text?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(search))
             {
                 TemplatesList.ItemsSource = _allTemplates;
             }
             else
             {
-                TemplatesList.ItemsSource = _allTemplates.Where(t => t.Name.ToLower().Contains(search) || t.Path.ToLower().Contains(search)).ToList();
+                TemplatesList.ItemsSource = _allTemplates.Where(t =>
+                    (t.Name ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (t.Path ?? string.Empty).IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
             }
         }
 
@@ -149,6 +186,16 @@ namespace oPenEfficiency.UI.Dialogs
         {
             if (sender is Button btn && btn.DataContext is TemplateViewModel template)
             {
+                if (!template.IsCustom)
+                {
+                    MessageBox.Show(
+                        "Only files explicitly added to the library can be permanently deleted here. Use Hide to remove discovered templates from the list without deleting them.",
+                        "Template Library",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
                 _templateService.AddToBlacklist(template.Path);
                 RefreshTemplateList();
             }
@@ -168,13 +215,13 @@ namespace oPenEfficiency.UI.Dialogs
                         if (File.Exists(template.Path))
                         {
                             File.Delete(template.Path);
-                            // Also remove from custom links if it was there
-                            _templateService.RemoveCustomTemplate(template.Path);
-                            RefreshTemplateList();
                         }
+                        _templateService.RemoveCustomTemplate(template.Path);
+                        RefreshTemplateList();
                     }
                     catch (Exception ex)
                     {
+                        ExceptionLogger.Log(ex, "TemplateManagerWindow.DeleteTemplate");
                         MessageBox.Show($"Failed to delete file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
@@ -222,7 +269,7 @@ namespace oPenEfficiency.UI.Dialogs
         {
             using (var dialog = new System.Windows.Forms.OpenFileDialog())
             {
-                dialog.Filter = "PowerPoint Templates (*.potx;*.pot)|*.potx;*.pot|PowerPoint Presentations (*.pptx;*.pptm)|*.pptx;*.pptm|All Files (*.*)|*.*";
+                dialog.Filter = "PowerPoint Templates and Presentations (*.potx;*.pot;*.pptx;*.pptm)|*.potx;*.pot;*.pptx;*.pptm";
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     _templateService.AddCustomTemplate(dialog.FileName);

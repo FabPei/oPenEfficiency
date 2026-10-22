@@ -9,7 +9,7 @@ namespace oPenEfficiency.Utils
         {
             var lab1 = RgbToLab(BgrToRgb(bgr1));
             var lab2 = RgbToLab(HexToRgb(hex2));
-            
+
             return Math.Sqrt(Math.Pow(lab2.L - lab1.L, 2) + Math.Pow(lab2.a - lab1.a, 2) + Math.Pow(lab2.b - lab1.b, 2));
         }
 
@@ -30,9 +30,15 @@ namespace oPenEfficiency.Utils
                         Convert.ToInt32(hex.Substring(2, 2), 16),
                         Convert.ToInt32(hex.Substring(4, 2), 16)
                     );
-                } catch { }
+                } catch { /* Invalid color text falls back to black for distance calculations. */ }
             }
             return (0, 0, 0);
+        }
+
+        public static int HexToBgr(string hex)
+        {
+            var rgb = HexToRgb(hex);
+            return (rgb.R) | (rgb.G << 8) | (rgb.B << 16);
         }
 
         public static (double L, double a, double b) RgbToLab((int R, int G, int B) rgb)

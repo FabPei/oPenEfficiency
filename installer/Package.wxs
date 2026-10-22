@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="openEfficiency"
+      Manufacturer="$(var.Manufacturer)"
+      Version="$(var.ProductVersion)"
+      UpgradeCode="4FF1029B-8EE7-4147-AA25-186EE25A4F9C"
+      Language="1033"
+      Scope="perMachine"
+      InstallerVersion="500"
+      Compressed="yes">
+
+    <SummaryInformation
+        Description="Managed installer for the openEfficiency PowerPoint and Excel VSTO add-ins"
+        Manufacturer="$(var.Manufacturer)" />
+
+    <MajorUpgrade
+        DowngradeErrorMessage="A newer version of openEfficiency is already installed."
+        Schedule="afterInstallInitialize" />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="oPenEfficiencyIcon" SourceFile="$(var.RepositoryRoot)\oPenEfficiency_black.ico" />
+    <Property Id="ARPPRODUCTICON" Value="oPenEfficiencyIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/FabPei/oPenEfficiency" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/FabPei/oPenEfficiency/issues" />
+
+    <Property Id="NETFRAMEWORK48">
+      <RegistrySearch
+          Id="NetFramework48Search"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
+          Name="Release"
+          Type="raw"
+          Bitness="$(var.RegistryBitness)" />
+    </Property>
+    <Property Id="VSTORUNTIMEREDIST">
+      <RegistrySearch
+          Id="VstoRuntimeRedistSearch"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4R"
+          Name="Version"
+          Type="raw" />
+    </Property>
+    <Property Id="OFFICEVSTORUNTIME">
+      <RegistrySearch
+          Id="OfficeVstoRuntimeSearch"
+          Root="HKLM"
+          Key="SOFTWARE\Microsoft\VSTO Runtime Setup\v4"
+          Name="Version"
+          Type="raw" />
+    </Property>
+
+    <Launch Condition="Installed OR NETFRAMEWORK48 &gt;= 528040"
+            Message="openEfficiency requires Microsoft .NET Framework 4.8 or later." />
+    <Launch Condition="Installed OR VSTORUNTIMEREDIST OR OFFICEVSTORUNTIME"
+            Message="openEfficiency requires the Microsoft Visual Studio 2010 Tools for Office Runtime." />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="oPenEfficiency">
+        <Directory Id="POWERPOINTFOLDER" Name="PowerPoint" />
+        <Directory Id="EXCELFOLDER" Name="Excel" />
+      </Directory>
+    </StandardDirectory>
+
+    <Feature
+        Id="PowerPointAddIn"
+        Title="openEfficiency for PowerPoint"
+        Description="PowerPoint productivity tools and sidebar"
+        Level="1"
+        AllowAbsent="no">
+      <ComponentGroupRef Id="PowerPointPayload" />
+      <ComponentRef Id="PowerPointRegistration" />
+    </Feature>
+
+    <Feature
+        Id="ExcelAddIn"
+        Title="openEfficiency for Excel"
+        Description="Excel companion tools and PowerPoint linking"
+        Level="1">
+      <ComponentGroupRef Id="ExcelPayload" />
+      <ComponentRef Id="ExcelRegistration" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="PowerPointPayload" Directory="POWERPOINTFOLDER">
+      <Files Include="$(var.PowerPointOutputDir)\**" />
+    </ComponentGroup>
+
+    <Component Id="PowerPointRegistration"
+               Directory="POWERPOINTFOLDER"
+               Guid="1A25981A-7CA0-4FE3-8AD4-1BC19BAB2D6A">
+      <RegistryKey Root="HKLM"
+                   Key="Software\Microsoft\Office\PowerPoint\Addins\oPenEfficiency">
+        <RegistryValue Name="Description"
+                       Type="string"
+                       Value="Consulting-focused productivity tools for Microsoft PowerPoint" />
+        <RegistryValue Name="FriendlyName"
+                       Type="string"
+                       Value="openEfficiency" />
+        <RegistryValue Name="LoadBehavior"
+                       Type="integer"
+                       Value="3" />
+        <RegistryValue Name="Manifest"
+                       Type="string"
+                       Value="file:///[POWERPOINTFOLDER]oPenEfficiency.vsto|vstolocal"
+                       KeyPath="yes" />
+      </RegistryKey>
+    </Component>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ExcelPayload" Directory="EXCELFOLDER">
+      <Files Include="$(var.ExcelOutputDir)\**" />
+    </ComponentGroup>
+
+    <Component Id="ExcelRegistration"
+               Directory="EXCELFOLDER"
+               Guid="89A4B8C6-214B-44FC-A8C8-299186AD69A8">
+      <RegistryKey Root="HKLM"
+                   Key="Software\Microsoft\Office\Excel\Addins\oPenEfficiency.Excel">
+        <RegistryValue Name="Description"
+                       Type="string"
+                       Value="Excel companion tools and PowerPoint linking for openEfficiency" />
+        <RegistryValue Name="FriendlyName"
+                       Type="string"
+                       Value="openEfficiency for Excel" />
+        <RegistryValue Name="LoadBehavior"
+                       Type="integer"
+                       Value="3" />
+        <RegistryValue Name="Manifest"
+                       Type="string"
+                       Value="file:///[EXCELFOLDER]oPenEfficiency.Excel.vsto|vstolocal"
+                       KeyPath="yes" />
+      </RegistryKey>
+    </Component>
+  </Fragment>
+</Wix>

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnShapeLock",
+  "title": "Lock/Unlock Shapes (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ShapeLockingFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnShapeLock-001",
+      "title": "Lock/Unlock Shapes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ShapeLockingFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Lock/Unlock Shapes (BtnShapeLock) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnShapeLock-002",
+      "title": "Shape Lock toggles and restores the real COM lock state in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointShapeLock.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Shape Lock on two unlocked rectangles locks exactly both of them (read back through the production IsShapeLocked over the real COM lock state), a second invocation restores both to unlocked, both invocations report execution, the geometry and shape count are untouched, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointShapeLock.ps1",
+        "arguments": [
+          "-Mode",
+          "toggle-lock"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

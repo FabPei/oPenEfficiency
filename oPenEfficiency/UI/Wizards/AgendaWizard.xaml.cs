@@ -13,6 +13,7 @@ using oPenEfficiency.Models;
 using oPenEfficiency.Services;
 using Microsoft.Office.Interop.PowerPoint;
 using Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency
 {
@@ -23,8 +24,10 @@ namespace oPenEfficiency
         public ObservableCollection<PreviewShape> PreviewShapes { get; set; } = new ObservableCollection<PreviewShape>();
         public ObservableCollection<PreviewShape> HighlightPreviewShapes { get; set; } = new ObservableCollection<PreviewShape>();
         private List<SavedAgenda> _savedAgendas = new List<SavedAgenda>();
+        private int? _existingMainAgendaSlideId;
+        private bool _isFittingDurations;
 
-        
+
         private void MovePhysicalSection(string topic, bool movingUp)
         {
             try
@@ -63,8 +66,10 @@ namespace oPenEfficiency
             Items = new ObservableCollection<AgendaItem>();
             Items.CollectionChanged += Items_CollectionChanged;
             InitializeComponent();
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
             this.DataContext = this;
             AgendaListView.ItemsSource = Items;
+            _existingMainAgendaSlideId = FindExistingMainAgendaSlideId();
 
             // Load saved agendas
             LoadSavedAgendas();
@@ -86,6 +91,30 @@ namespace oPenEfficiency
 
             // Detect and auto-select active layout
             DetectActiveLayout();
+            if (_existingMainAgendaSlideId.HasValue && BtnOk != null)
+                BtnOk.Content = "Update Agenda";
+        }
+
+        private int? FindExistingMainAgendaSlideId()
+        {
+            try
+            {
+                var presentation = _manager.GetApplication()?.ActivePresentation;
+                if (presentation == null) return null;
+
+                for (int i = 1; i <= presentation.Slides.Count; i++)
+                {
+                    var slide = presentation.Slides[i];
+                    if (string.Equals(slide.Tags["oPE_AgendaMain"], "True", StringComparison.OrdinalIgnoreCase))
+                        return slide.SlideID;
+                }
+            }
+            catch (Exception ex)
+            {
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.FindExistingMainAgendaSlideId");
+            }
+
+            return null;
         }
 
         private bool TryPreFillFromPresentation()
@@ -113,7 +142,7 @@ namespace oPenEfficiency
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.HasAgendaTag"); }
             return false;
         }
 
@@ -144,7 +173,7 @@ namespace oPenEfficiency
                             string topic = parts.Last().Trim();
                             // Remove leading numbers like "1. ", "1.1 "
                             topic = System.Text.RegularExpressions.Regex.Replace(topic, @"^[\d\.]+\s*", "");
-                            
+
                             // Level can be inferred from number of parts - 1
                             int level = Math.Max(0, parts.Length - 1);
                             eeItems.Add((level, topic, i));
@@ -182,8 +211,8 @@ namespace oPenEfficiency
             }
 
             // Group all agenda data by GUID first
-            var topicData = new Dictionary<string, (string Topic, string Resp, int Level, float Top, float Left)>();
-            
+            var topicData = new Dictionary<string, (string Id, string Topic, string Resp, int Level, float Top, float Left)>();
+
             foreach (Microsoft.Office.Interop.PowerPoint.Shape shape in slide.Shapes)
             {
                 try
@@ -193,14 +222,17 @@ namespace oPenEfficiency
 
                     if (!string.IsNullOrEmpty(role))
                     {
-                        string guid = "";
+                        string guid = shape.Tags["oPE_AgendaItemId"];
                         string[] parts = shape.Name.Split('_');
-                        if (parts.Length >= 3) guid = parts[2];
-                        else guid = "legacy_" + shape.Id;
+                        if (string.IsNullOrWhiteSpace(guid))
+                        {
+                            if (parts.Length >= 3) guid = parts[2];
+                            else guid = "legacy_" + shape.Id;
+                        }
 
                         if (!topicData.ContainsKey(guid))
                         {
-                            topicData[guid] = (null, "", 0, shape.Top, shape.Left);
+                            topicData[guid] = (guid, null, "", 0, shape.Top, shape.Left);
                         }
 
                         var current = topicData[guid];
@@ -217,11 +249,11 @@ namespace oPenEfficiency
                         {
                             current.Resp = shape.TextFrame.TextRange.Text;
                         }
-                        
+
                         topicData[guid] = current;
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.LoadLayouts.ReadLayout"); }
             }
 
             // Filter out entries that didn't have a Topic text and sort by Top position
@@ -241,10 +273,11 @@ namespace oPenEfficiency
                     if (!mainX.HasValue) mainX = data.Left;
                     else if (data.Left > mainX + 5) level = 1;
 
-                    Items.Add(new AgendaItem 
-                    { 
-                        Level = level, 
-                        Topic = data.Topic, 
+                    Items.Add(new AgendaItem
+                    {
+                        Id = data.Id,
+                        Level = level,
+                        Topic = data.Topic,
                         Responsible = data.Resp,
                         Duration = 15 // Default duration
                     });
@@ -264,12 +297,14 @@ namespace oPenEfficiency
 
                 // 1. Try to find the tag in the presentation or the active slide
                 string activeLayoutName = "";
-                try { activeLayoutName = pres.Tags["oPE_AgendaLayout"]; } catch { }
+                try { activeLayoutName = pres.Tags["oPE_AgendaLayout"]; }
+                catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.LoadActiveLayout.PresentationTag"); }
 
                 var activeSlide = app.ActiveWindow.View.Slide as Slide;
                 if (string.IsNullOrEmpty(activeLayoutName) && activeSlide != null)
                 {
-                    try { activeLayoutName = activeSlide.Tags["oPE_AgendaLayout"]; } catch { }
+                    try { activeLayoutName = activeSlide.Tags["oPE_AgendaLayout"]; }
+                    catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.LoadActiveLayout.SlideTag"); }
                 }
 
                 // 2. If no tag, try to find an existing agenda slide and see if we can match its style
@@ -299,7 +334,7 @@ namespace oPenEfficiency
                         if (item.Content.ToString() == activeLayoutName)
                         {
                             CboLayout.SelectedItem = item;
-                            
+
                             // If we found an active layout, it's highly likely we are updating
                             if (BtnOk != null) BtnOk.Content = "Update Agenda";
                             break;
@@ -332,7 +367,7 @@ namespace oPenEfficiency
                         break;
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.LoadAgendaItems.ReadSlide"); }
             }
 
             if (topicShape == null) return null;
@@ -381,7 +416,9 @@ namespace oPenEfficiency
         private void AgendaItem_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             // Recalculate time slots when Duration changes
-            if (e.PropertyName == nameof(AgendaItem.Duration))
+            if (e.PropertyName == nameof(AgendaItem.Duration) ||
+                e.PropertyName == nameof(AgendaItem.ShouldGenerate) ||
+                e.PropertyName == nameof(AgendaItem.IsBreak))
             {
                 RecalculateAll();
             }
@@ -394,7 +431,7 @@ namespace oPenEfficiency
                 CboLayout.Items.Clear();
                 CboLayout.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "-- Select Layout --" });
 
-                var layouts = JsonService.Load<List<AgendaLayoutConfig>>(@"AgendaLayouts\agenda_layouts.json");
+                var layouts = new JsonAgendaLayoutStore().Load();
                 if (layouts != null)
                 {
                     foreach (var layout in layouts)
@@ -402,8 +439,13 @@ namespace oPenEfficiency
                         CboLayout.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = layout.LayoutName, Tag = layout });
                     }
                 }
+
+                // Index 0 is the "-- Select Layout --" placeholder. The built-in sample
+                // stays selectable for a clean profile, so it is preselected.
+                int defaultLayoutIndex = AgendaLayoutCatalog.GetDefaultSelectionIndex(layouts);
+                CboLayout.SelectedIndex = defaultLayoutIndex >= 0 ? defaultLayoutIndex + 1 : 0;
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.RefreshPreview"); }
         }
 
         private void LoadSavedAgendas()
@@ -411,21 +453,21 @@ namespace oPenEfficiency
             try
             {
                 string fileName = "saved_agendas.json";
-                
+
                 _savedAgendas = JsonService.Load<List<SavedAgenda>>(fileName) ?? new List<SavedAgenda>();
-                
+
                 CboSavedAgendas.Items.Clear();
                 CboSavedAgendas.Items.Add(new System.Windows.Controls.ComboBoxItem { Content = "New Agenda", Tag = null });
-                
+
                 foreach (var agenda in _savedAgendas.OrderByDescending(a => a.CreatedDate))
                 {
-                    CboSavedAgendas.Items.Add(new System.Windows.Controls.ComboBoxItem 
-                    { 
-                        Content = $"{agenda.Name} ({agenda.CreatedDate:yyyy-MM-dd})", 
-                        Tag = agenda 
+                    CboSavedAgendas.Items.Add(new System.Windows.Controls.ComboBoxItem
+                    {
+                        Content = $"{agenda.Name} ({agenda.CreatedDate:yyyy-MM-dd})",
+                        Tag = agenda
                     });
                 }
-                
+
                 CboSavedAgendas.SelectedIndex = 0;
             }
             catch (Exception ex)
@@ -441,18 +483,26 @@ namespace oPenEfficiency
                 // Load saved agenda
                 TxtTitle.Text = agenda.Title;
                 TxtSubtitle.Text = agenda.Subtitle;
+                TxtStartTime.Text = string.IsNullOrWhiteSpace(agenda.StartTime) ? "09:00" : agenda.StartTime;
+                TxtTargetEndTime.Text = string.IsNullOrWhiteSpace(agenda.TargetEndTime) ? "10:30" : agenda.TargetEndTime;
+                TxtStartNumber.Text = Math.Max(1, agenda.StartNumber).ToString();
+                SelectTimeFormat(agenda.TimeFormat);
                 Items.Clear();
 
                 foreach (var item in agenda.Items)
                 {
                     Items.Add(new AgendaItem
                     {
+                        Id = string.IsNullOrWhiteSpace(item.Id) ? Guid.NewGuid().ToString("D") : item.Id,
                         Level = item.Level,
                         Topic = item.Topic,
+                        Responsible = item.Responsible,
                         Duration = item.Duration,
                         Format = item.Format,
                         ShouldGenerate = item.ShouldGenerate,
-                        ShowMinutes = item.ShowMinutes
+                        ShowMinutes = item.ShowMinutes,
+                        ShowResponsible = item.ShowResponsible,
+                        IsBreak = item.IsBreak
                     });
                 }
 
@@ -478,17 +528,19 @@ namespace oPenEfficiency
                         _savedAgendas.RemoveAll(a => a.Name == agendaToDelete.Name);
 
                         // Save updated list
-                        string appDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "oPenEfficiency", "SavedAgendas");
                         string fileName = "saved_agendas.json";
 
                         if (_savedAgendas.Count > 0)
                         {
-                            JsonService.Save(_savedAgendas, fileName);
+                            if (!JsonService.TrySave(_savedAgendas, fileName))
+                                throw new System.IO.IOException("The saved agenda file could not be updated.");
                         }
                         else
                         {
-                            // Delete file if no agendas left
-                            string filePath = System.IO.Path.Combine(appDataPath, fileName);
+                            string filePath = System.IO.Path.Combine(
+                                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                                "oPenEfficiency",
+                                fileName);
                             if (System.IO.File.Exists(filePath))
                             {
                                 System.IO.File.Delete(filePath);
@@ -520,54 +572,83 @@ namespace oPenEfficiency
             }
         }
 
-        private void SaveCurrentAgenda()
+        private bool SaveCurrentAgenda()
         {
             try
             {
+                string agendaName = (TxtTitle.Text ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(agendaName))
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "Enter an agenda name before saving.",
+                        "Save Agenda",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    return false;
+                }
+
                 var savedAgenda = new SavedAgenda
                 {
-                    Name = TxtTitle.Text ?? "Untitled Agenda",
-                    Title = TxtTitle.Text ?? "Agenda",
+                    Name = agendaName,
+                    Title = agendaName,
                     Subtitle = TxtSubtitle.Text ?? "",
                     CreatedDate = DateTime.Now,
+                    StartTime = TxtStartTime.Text ?? "09:00",
+                    TargetEndTime = TxtTargetEndTime.Text ?? "10:30",
+                    StartNumber = int.TryParse(TxtStartNumber.Text, out var startNumber) ? startNumber : 1,
+                    TimeFormat = GetSelectedTimeFormat(),
                     Items = Items.Select(item => new SavedAgendaItem
                     {
+                        Id = item.Id,
                         Level = item.Level,
                         Topic = item.Topic,
+                        Responsible = item.Responsible,
                         Duration = item.Duration,
                         Format = item.Format,
                         ShouldGenerate = item.ShouldGenerate,
-                        ShowMinutes = item.ShowMinutes
+                        ShowMinutes = item.ShowMinutes,
+                        ShowResponsible = item.ShowResponsible,
+                        IsBreak = item.IsBreak
                     }).ToList()
                 };
 
-                // Add to saved agendas list
+                int existingIndex = _savedAgendas.FindIndex(a => string.Equals(a.Name, agendaName, StringComparison.OrdinalIgnoreCase));
+                if (existingIndex >= 0)
+                {
+                    var overwrite = System.Windows.Forms.MessageBox.Show(
+                        $"A saved agenda named '{agendaName}' already exists. Replace it?",
+                        "Replace Saved Agenda",
+                        System.Windows.Forms.MessageBoxButtons.YesNo,
+                        System.Windows.Forms.MessageBoxIcon.Question);
+                    if (overwrite != System.Windows.Forms.DialogResult.Yes) return false;
+                    _savedAgendas.RemoveAll(a => string.Equals(a.Name, agendaName, StringComparison.OrdinalIgnoreCase));
+                }
+
                 _savedAgendas.Add(savedAgenda);
-                
+
                 // Keep only last 20 saved agendas
                 if (_savedAgendas.Count > 20)
                 {
                     _savedAgendas = _savedAgendas.OrderByDescending(a => a.CreatedDate).Take(20).ToList();
                 }
 
-                // Save to file
-                string appDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "oPenEfficiency", "SavedAgendas");
                 string fileName = "saved_agendas.json";
-                
-                // Ensure directory exists
-                if (!System.IO.Directory.Exists(appDataPath))
-                {
-                    System.IO.Directory.CreateDirectory(appDataPath);
-                }
+                if (!JsonService.TrySave(_savedAgendas, fileName))
+                    throw new System.IO.IOException("The agenda definition could not be written to disk.");
 
-                JsonService.Save(_savedAgendas, fileName);
-                
-                // Refresh the dropdown
                 LoadSavedAgendas();
+                return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving agenda: {ex.Message}");
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.SaveCurrentAgenda");
+                System.Windows.Forms.MessageBox.Show(
+                    $"The agenda could not be saved.\n\n{ex.Message}",
+                    "Save Agenda",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Error);
+                LoadSavedAgendas();
+                return false;
             }
         }
 
@@ -623,9 +704,33 @@ namespace oPenEfficiency
             }
         }
 
+        private void FitToOwnerWorkArea()
+        {
+            var owner = new System.Windows.Interop.WindowInteropHelper(this).Owner;
+            var screen = System.Windows.Forms.Screen.FromHandle(owner);
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+            double availableWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            double availableHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            MinWidth = Math.Min(MinWidth, availableWidth);
+            MinHeight = Math.Min(MinHeight, availableHeight);
+            MaxWidth = availableWidth;
+            MaxHeight = availableHeight;
+            Width = Math.Min(Width, availableWidth);
+            Height = Math.Min(Height, availableHeight);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                BtnCancel_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
                 this.DragMove();
         }
 
@@ -716,7 +821,7 @@ namespace oPenEfficiency
             }
         }
 
-        
+
         private void CboLayout_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateLivePreview();
@@ -727,7 +832,7 @@ namespace oPenEfficiency
             if (PreviewShapes == null || HighlightPreviewShapes == null) return;
             PreviewShapes.Clear();
             HighlightPreviewShapes.Clear();
-            
+
             AgendaLayoutConfig layout = null;
             if (CboLayout != null && CboLayout.SelectedItem is ComboBoxItem selectedLayoutItem && selectedLayoutItem.Tag is AgendaLayoutConfig config)
             {
@@ -757,9 +862,9 @@ namespace oPenEfficiency
             // 1. Full Preview - Title
             Brush titleColor = layout.HeadlineShape != null ? GetBrush(layout.HeadlineShape.FontColorRgb, true) : Brushes.Black;
             PreviewShapes.Add(new PreviewShape {
-                X = layout.HeadlineShape?.Left ?? 50, 
-                Y = layout.HeadlineShape?.Top ?? 30, 
-                W = layout.HeadlineShape?.Width ?? 800, 
+                X = layout.HeadlineShape?.Left ?? 50,
+                Y = layout.HeadlineShape?.Top ?? 30,
+                W = layout.HeadlineShape?.Width ?? 800,
                 H = layout.HeadlineShape?.Height ?? 50,
                 Text = TxtTitle?.Text ?? "Agenda",
                 BgColor = layout.HeadlineShape != null ? GetBrush(layout.HeadlineShape.FillColorRgb, layout.HeadlineShape.HasFill) : Brushes.Transparent,
@@ -773,9 +878,9 @@ namespace oPenEfficiency
             {
                 Brush subColor = layout.SubHeadlineShape != null ? GetBrush(layout.SubHeadlineShape.FontColorRgb, true) : Brushes.Gray;
                 PreviewShapes.Add(new PreviewShape {
-                    X = layout.SubHeadlineShape?.Left ?? 50, 
-                    Y = layout.SubHeadlineShape?.Top ?? 85, 
-                    W = layout.SubHeadlineShape?.Width ?? 800, 
+                    X = layout.SubHeadlineShape?.Left ?? 50,
+                    Y = layout.SubHeadlineShape?.Top ?? 85,
+                    W = layout.SubHeadlineShape?.Width ?? 800,
                     H = layout.SubHeadlineShape?.Height ?? 30,
                     Text = TxtSubtitle.Text,
                     BgColor = layout.SubHeadlineShape != null ? GetBrush(layout.SubHeadlineShape.FillColorRgb, layout.SubHeadlineShape.HasFill) : Brushes.Transparent,
@@ -792,12 +897,12 @@ namespace oPenEfficiency
             foreach (var item in Items)
             {
                 if (!item.ShouldGenerate) continue;
-                
+
                 bool isMain = item.Level == 0;
                 if (isMain) level0Index++;
 
                 // NO highlight in full preview as requested
-                bool isActiveInFull = false; 
+                bool isActiveInFull = false;
 
                 // Add to Full Preview
                 float rowHeight = AddItemToPreview(PreviewShapes, item, layout, currentY, isActiveInFull);
@@ -828,7 +933,7 @@ namespace oPenEfficiency
 
             // Determine preview text color
             Brush textColor = GetBrush(textConfig.FontColorRgb, true);
-            
+
             // Determine preview highlight fill color
             Brush highlightFillBrush = null;
             if (isActive && layout.HighlightFillColor)
@@ -858,7 +963,7 @@ namespace oPenEfficiency
                 float left = 50; // Standard slide margin
                 if (numConfig != null) left = Math.Min(left, numConfig.Left - 5);
                 if (timeConfig != null) left = Math.Min(left, timeConfig.Left - 5);
-                
+
                 float right = 910; // Standard right edge
                 if (durConfig != null) right = Math.Max(right, durConfig.Left + durConfig.Width + 5);
                 if (respConfig != null) right = Math.Max(right, respConfig.Left + respConfig.Width + 5);
@@ -946,11 +1051,10 @@ namespace oPenEfficiency
 
         private void RecalculateAll()
         {
-            // Parse start time
             TimeSpan currentTime;
             if (!TimeSpan.TryParse(TxtStartTime?.Text, out currentTime))
             {
-                currentTime = TimeSpan.FromHours(9); // Default to 09:00
+                currentTime = TimeSpan.FromHours(9);
             }
 
             int startNumber = 1;
@@ -970,62 +1074,210 @@ namespace oPenEfficiency
                 else if (timeFormat == "h:mm tt") timeFormat = "h:mm tt";
             }
 
-            // Track parent numbers at each level for hierarchical numbering
-            int[] levelCounters = new int[20];
-            levelCounters[0] = startNumber - 1;
-
-            int flatIndex = 1;
-            foreach (var item in Items)
+            var planItems = Items.Select(item => new AgendaPlanItem
             {
-                if (!item.IsBreak)
-                {
-                    // Update level counters
-                    levelCounters[item.Level]++;
-
-                    // Reset counters for all deeper levels when we go up a level
-                    for (int i = item.Level + 1; i < levelCounters.Length; i++)
-                    {
-                        levelCounters[i] = 0;
-                    }
-
-                    // Build hierarchical number
-                    if (item.Level == 0)
-                    {
-                        item.DisplayIndex = levelCounters[0].ToString();
-                    }
-                    else
-                    {
-                        var numberParts = new System.Collections.Generic.List<string>();
-                        for (int i = 0; i <= item.Level; i++)
-                        {
-                            if (levelCounters[i] > 0)
-                            {
-                                numberParts.Add(levelCounters[i].ToString());
-                            }
-                        }
-                        item.DisplayIndex = string.Join(".", numberParts);
-                    }
-                }
-                else
-                {
-                    item.DisplayIndex = "";
-                }
-
-                // Calculate time slot
-                TimeSpan startTime = currentTime;
-                TimeSpan endTime = currentTime + TimeSpan.FromMinutes(item.Duration);
-
-                item.TimeSlot = $"{DateTime.Today.Add(startTime).ToString(timeFormat)} - {DateTime.Today.Add(endTime).ToString(timeFormat)}";
-
-                // Move time forward for next item
-                currentTime = endTime;
-
-                flatIndex++;
+                Topic = item.Topic, Level = item.Level, Duration = item.Duration,
+                IsBreak = item.IsBreak, ShouldGenerate = item.ShouldGenerate
+            }).ToList();
+            var plan = new AgendaPlanningService().Build(planItems, currentTime, startNumber, timeFormat, null);
+            for (int index = 0; index < Items.Count; index++)
+            {
+                Items[index].DisplayIndex = planItems[index].DisplayIndex;
+                Items[index].TimeSlot = planItems[index].TimeSlot;
             }
+            UpdateBudgetStatus();
             UpdateLivePreview();
         }
 
-        
+        private string GetSelectedTimeFormat()
+        {
+            return (CboTimeFormat?.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "HH:mm";
+        }
+
+        private void SelectTimeFormat(string format)
+        {
+            if (CboTimeFormat == null) return;
+            foreach (ComboBoxItem item in CboTimeFormat.Items)
+            {
+                if (string.Equals(item.Content?.ToString(), format, StringComparison.OrdinalIgnoreCase))
+                {
+                    CboTimeFormat.SelectedItem = item;
+                    return;
+                }
+            }
+            CboTimeFormat.SelectedIndex = 0;
+        }
+
+        private void UpdateBudgetStatus()
+        {
+            if (TxtBudgetStatus == null) return;
+
+            int totalMinutes = Items?
+                .Where(item => item.ShouldGenerate)
+                .Sum(item => Math.Max(0, item.Duration)) ?? 0;
+
+            if (!TimeSpan.TryParse(TxtStartTime?.Text, out var start) ||
+                !TimeSpan.TryParse(TxtTargetEndTime?.Text, out var target))
+            {
+                TxtBudgetStatus.Text = $"Total: {totalMinutes} min · enter valid start and target times";
+                return;
+            }
+
+            if (target <= start) target = target.Add(TimeSpan.FromDays(1));
+            int budgetMinutes = (int)Math.Round((target - start).TotalMinutes);
+            int difference = budgetMinutes - totalMinutes;
+
+            if (difference == 0)
+                TxtBudgetStatus.Text = $"Total: {totalMinutes} min · on target";
+            else if (difference > 0)
+                TxtBudgetStatus.Text = $"Total: {totalMinutes} min · {difference} min buffer";
+            else
+                TxtBudgetStatus.Text = $"Total: {totalMinutes} min · {-difference} min over target";
+        }
+
+        private void BtnFitDurations_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isFittingDurations) return;
+            if (!TimeSpan.TryParse(TxtStartTime?.Text, out var start) ||
+                !TimeSpan.TryParse(TxtTargetEndTime?.Text, out var target))
+            {
+                System.Windows.Forms.MessageBox.Show(
+                    "Enter valid start and target end times first.",
+                    "Invalid Time Budget",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Warning);
+                return;
+            }
+
+            var planItems = Items.Select(item => new AgendaPlanItem
+            {
+                Topic = item.Topic,
+                Level = item.Level,
+                Duration = item.Duration,
+                IsBreak = item.IsBreak,
+                ShouldGenerate = item.ShouldGenerate
+            }).ToList();
+            if (!new AgendaPlanningService().TryFitDurations(planItems, start, target))
+            {
+                System.Windows.Forms.MessageBox.Show(
+                    "The target window is too short for the visible agenda items and fixed breaks.",
+                    "Time Budget Too Short",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Warning);
+                return;
+            }
+
+            _isFittingDurations = true;
+            try
+            {
+                for (int itemIndex = 0; itemIndex < Items.Count; itemIndex++)
+                    Items[itemIndex].Duration = planItems[itemIndex].Duration;
+            }
+            finally
+            {
+                _isFittingDurations = false;
+            }
+
+            RecalculateAll();
+        }
+
+        private void BtnValidate_Click(object sender, RoutedEventArgs e)
+        {
+            ShowValidationReport();
+        }
+
+        public bool ShowValidationReport()
+        {
+            var issues = ValidateAgendaAndDeck();
+            string message = issues.Count == 0
+                ? "No agenda or deck-structure issues were found."
+                : string.Join(Environment.NewLine, issues.Select((issue, index) => $"{index + 1}. {issue}"));
+            System.Windows.Forms.MessageBox.Show(
+                message,
+                issues.Count == 0 ? "Agenda Validation Passed" : $"Agenda Validation ({issues.Count} Issues)",
+                System.Windows.Forms.MessageBoxButtons.OK,
+                issues.Count == 0
+                    ? System.Windows.Forms.MessageBoxIcon.Information
+                    : System.Windows.Forms.MessageBoxIcon.Warning);
+            return issues.Count == 0;
+        }
+
+        private List<string> ValidateAgendaAndDeck()
+        {
+            if (Items == null || Items.Count == 0)
+            {
+                return new List<string> { "The agenda has no topics." };
+            }
+            TimeSpan start = TimeSpan.Zero;
+            TimeSpan target = TimeSpan.Zero;
+            bool validTimes = TimeSpan.TryParse(TxtStartTime?.Text, out start) && TimeSpan.TryParse(TxtTargetEndTime?.Text, out target);
+            var planItems = Items.Select(item => new AgendaPlanItem { Topic=item.Topic, Level=item.Level, Duration=item.Duration, IsBreak=item.IsBreak, ShouldGenerate=item.ShouldGenerate }).ToList();
+            var issues = new AgendaPlanningService().Build(planItems, validTimes ? start : TimeSpan.Zero, 1, GetSelectedTimeFormat(), validTimes ? (TimeSpan?)target : null).Issues;
+            if (!validTimes) issues.Add("Start time or target end time is invalid.");
+
+            if (!(CboLayout?.SelectedItem is ComboBoxItem selectedLayout) ||
+                !(selectedLayout.Tag is AgendaLayoutConfig))
+                issues.Add("No valid agenda layout is selected.");
+
+            try
+            {
+                var presentation = _manager.GetApplication()?.ActivePresentation;
+                if (presentation != null && _existingMainAgendaSlideId.HasValue)
+                {
+                    var visibleTopics = new HashSet<string>(
+                        Items.Where(item => item.ShouldGenerate && !item.IsBreak)
+                            .Select(item => item.Topic?.Trim())
+                            .Where(topic => !string.IsNullOrWhiteSpace(topic)),
+                        StringComparer.OrdinalIgnoreCase);
+                    var dividerTopics = new List<string>();
+
+                    for (int i = 1; i <= presentation.Slides.Count; i++)
+                    {
+                        string deckTopic = presentation.Slides[i].Tags["oPE_AgendaTopic"];
+                        if (!string.IsNullOrWhiteSpace(deckTopic))
+                            dividerTopics.Add(deckTopic.Trim());
+                    }
+
+                    var sectionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    for (int sectionIndex = 1; sectionIndex <= presentation.SectionProperties.Count; sectionIndex++)
+                    {
+                        string sectionName = presentation.SectionProperties.Name(sectionIndex);
+                        if (!string.IsNullOrWhiteSpace(sectionName))
+                            sectionNames.Add(sectionName.Trim());
+                    }
+
+                    foreach (string topic in visibleTopics)
+                    {
+                        if (!dividerTopics.Contains(topic, StringComparer.OrdinalIgnoreCase))
+                            issues.Add($"Chapter '{topic}' has no tagged divider slide.");
+                        if (ChkSections.IsChecked == true && !sectionNames.Contains(topic))
+                            issues.Add($"Chapter '{topic}' has no matching PowerPoint section.");
+                    }
+
+                    foreach (var duplicateDivider in dividerTopics
+                        .GroupBy(topic => topic, StringComparer.OrdinalIgnoreCase)
+                        .Where(group => group.Count() > 1))
+                    {
+                        issues.Add($"Chapter '{duplicateDivider.Key}' has multiple divider slides.");
+                    }
+
+                    foreach (string deckTopic in dividerTopics)
+                    {
+                        if (!visibleTopics.Contains(deckTopic))
+                            issues.Add($"Deck chapter '{deckTopic}' is no longer present in the agenda.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.ValidateDeckStructure");
+                issues.Add("The existing PowerPoint section structure could not be fully inspected.");
+            }
+
+            return issues.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+
         private void BtnDeleteInline_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is AgendaItem item)
@@ -1157,6 +1409,7 @@ namespace oPenEfficiency
 
         private void BtnOk_Click(object sender, RoutedEventArgs e)
         {
+            AgendaMutationTransaction mutationTransaction = null;
             try
             {
                 // Validate agenda items
@@ -1182,7 +1435,8 @@ namespace oPenEfficiency
                 {
                     System.Windows.Forms.MessageBox.Show(
                         "Please select a valid Agenda Layout from the dropdown menu before creating the agenda.\n\n" +
-                        "If you haven't created a layout yet, use the 'Agenda Layout Creator' first.",
+                        "The built-in '" + AgendaLayoutCatalog.StandardAgendaName + "' layout is always available; " +
+                        "use the 'Agenda Layout Designer' only if you want a custom layout.",
                         "Layout Required",
                         System.Windows.Forms.MessageBoxButtons.OK,
                         System.Windows.Forms.MessageBoxIcon.Warning);
@@ -1210,6 +1464,7 @@ namespace oPenEfficiency
                     {
                         agendaItems.Add(new AgendaItemData
                         {
+                            Id = item.Id,
                             Level = item.Level,
                             Topic = item.Topic,
                             Duration = item.Duration,
@@ -1259,29 +1514,84 @@ namespace oPenEfficiency
                     return;
                 }
 
-                var activeSlide = _manager.GetCurrentSlide();
-                int insertIndex = (activeSlide != null) ? activeSlide.SlideIndex + 1 : presentation.Slides.Count + 1;
-                
-                var currentSlide = presentation.Slides.Add(insertIndex, PpSlideLayout.ppLayoutTitle);
-                currentSlide.Tags.Add("oPE_AgendaSlide", "True");
-                currentSlide.Tags.Add("oPE_AgendaMain", "True"); // Identify as main agenda slide
-                currentSlide.Tags.Add("EE4P_AGENDAWIZARD_MAIN", "True"); // Compatibility tag
-
-                // Generate agenda items on the new slide
-                var generationService = new AgendaGenerationService(_manager, currentSlide, layout);
                 bool createSections = ChkSections.IsChecked ?? false;
                 bool createDividerSlides = ChkSeparatingSlides.IsChecked ?? false;
                 bool highlightCurrent = ChkHighlightCurrent.IsChecked ?? false;
-                generationService.GenerateFullAgenda(agendaItems, createSections, createDividerSlides, highlightCurrent);
-                
+                if (createSections && !createDividerSlides)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "PowerPoint sections require divider slides so each section has a stable boundary. Enable Separating Slides or turn off Sections.",
+                        "Divider Slides Required",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    return;
+                }
+
+                bool synchronizeExisting = _existingMainAgendaSlideId.HasValue;
+                Slide currentSlide = null;
+                if (synchronizeExisting)
+                {
+                    try { currentSlide = presentation.Slides.FindBySlideID(_existingMainAgendaSlideId.Value); }
+                    catch { synchronizeExisting = false; }
+                }
+
+                AgendaGenerationService.EnsureMutationAllowed(
+                    presentation,
+                    synchronizeExisting,
+                    createSections);
+
+                mutationTransaction = new AgendaMutationTransaction(
+                    new PowerPointAgendaMutationHost(presentation));
+                mutationTransaction.Begin(synchronizeExisting);
+
+                if (currentSlide == null)
+                {
+                    mutationTransaction.MarkMutationAttempted();
+                    var activeSlide = _manager.GetCurrentSlide();
+                    int insertIndex = (activeSlide != null) ? activeSlide.SlideIndex + 1 : presentation.Slides.Count + 1;
+                    currentSlide = presentation.Slides.Add(insertIndex, PpSlideLayout.ppLayoutTitle);
+                    currentSlide.Tags.Add("oPE_AgendaSlide", "True");
+                    currentSlide.Tags.Add("oPE_AgendaMain", "True");
+                    currentSlide.Tags.Add("EE4P_AGENDAWIZARD_MAIN", "True");
+                }
+
+                // Generate agenda items on the new slide
+                mutationTransaction.MarkMutationAttempted();
+                var generationService = new AgendaGenerationService(_manager, currentSlide, layout);
+                generationService.GenerateFullAgenda(
+                    agendaItems,
+                    createSections,
+                    createDividerSlides,
+                    highlightCurrent,
+                    synchronizeExisting,
+                    ChkStarterSlides.IsChecked == true,
+                    TxtTitle.Text,
+                    TxtSubtitle.Text);
+
                 if (ChkBackupSlide.IsChecked == true)
                 {
                     try {
                         var pres = _manager.GetApplication().ActivePresentation;
-                        var backupSlide = pres.Slides.Add(pres.Slides.Count + 1, PpSlideLayout.ppLayoutTitle);
-                        backupSlide.Tags.Add("EE4P_BACKUP_SLIDE", "True");
-                        if (backupSlide.Shapes.HasTitle == Microsoft.Office.Core.MsoTriState.msoTrue) {
-                            backupSlide.Shapes.Title.TextFrame.TextRange.Text = "Backup";
+                        Slide backupSlide = null;
+                        for (int slideIndex = 1; slideIndex <= pres.Slides.Count; slideIndex++)
+                        {
+                            var candidate = pres.Slides[slideIndex];
+                            if (!string.IsNullOrEmpty(candidate.Tags["oPE_BackupSlide"]) ||
+                                !string.IsNullOrEmpty(candidate.Tags["EE4P_BACKUP_SLIDE"]))
+                            {
+                                backupSlide = candidate;
+                                break;
+                            }
+                        }
+
+                        if (backupSlide == null)
+                        {
+                            backupSlide = pres.Slides.Add(pres.Slides.Count + 1, PpSlideLayout.ppLayoutTitle);
+                            backupSlide.Tags.Add("oPE_BackupSlide", "True");
+                            backupSlide.Tags.Add("EE4P_BACKUP_SLIDE", "True");
+                            if (backupSlide.Shapes.HasTitle == Microsoft.Office.Core.MsoTriState.msoTrue) {
+                                backupSlide.Shapes.Title.TextFrame.TextRange.Text = "Backup";
+                            }
                         }
 
                         // Also create a section for the backup slide if sections are enabled
@@ -1302,13 +1612,20 @@ namespace oPenEfficiency
                                 pres.SectionProperties.AddBeforeSlide(backupSlide.SlideIndex, "Backup");
                             }
                         }
-                    } catch { }
+                    }
+                    catch (Exception ex)
+                    {
+                        oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.CreateBackupSlide");
+                        throw new InvalidOperationException("The Backup slide could not be created.", ex);
+                    }
                 }
 
                 this.Close();
             }
             catch (System.Runtime.InteropServices.COMException comEx)
             {
+                mutationTransaction?.RollBack();
+                oPenEfficiency.Utils.ExceptionLogger.Log(comEx, "AgendaWizard.BtnOk.PowerPoint");
                 // PowerPoint-specific error handling
                 string errorMessage = comEx.Message;
                 string errorTitle = "PowerPoint Error";
@@ -1320,7 +1637,7 @@ namespace oPenEfficiency
                                    "• The layout configuration has invalid position/size values (e.g., negative or too large)\n" +
                                    "• The slide is full and cannot accommodate more shapes (maximum ~100 shapes per slide)\n" +
                                    "• The shape positioning exceeds PowerPoint's slide boundaries (typically 720x540 points for 4:3)\n\n" +
-                                   "Solution: Check your layout configuration in the Agenda Layout Creator or try creating the agenda on a new, empty slide.";
+                                   "Solution: Check your layout configuration in the Agenda Layout Designer or try creating the agenda on a new, empty slide.";
                     errorTitle = "Shape Position Out of Range";
                 }
                 else if (errorMessage.Contains("Shape doesn't exist") || errorMessage.Contains("Shape not found"))
@@ -1329,7 +1646,7 @@ namespace oPenEfficiency
                                    "This may happen if:\n\n" +
                                    "• The layout references a shape that was deleted from PowerPoint\n" +
                                    "• The shape ID stored in the layout is no longer valid\n\n" +
-                                   "Solution: Re-create the layout by re-assigning all shapes in the Agenda Layout Creator.";
+                                   "Solution: Re-create the layout by re-assigning all shapes in the Agenda Layout Designer.";
                     errorTitle = "Shape Not Found";
                 }
                 else if (errorMessage.Contains("Cannot insert") || errorMessage.Contains("Cannot add"))
@@ -1343,7 +1660,7 @@ namespace oPenEfficiency
                 }
                 else if (errorMessage.Contains("Object does not exist") || errorMessage.Contains("unknown member"))
                 {
-                    errorMessage = "The Agenda Wizard lost track of a PowerPoint object (Slide or Section).\n\n" +
+                    errorMessage = "Agenda Creator lost track of a PowerPoint object (slide or section).\n\n" +
                                    "This typically happens when:\n\n" +
                                    "• Existing agenda slides were deleted manually while the wizard was open\n" +
                                    "• PowerPoint's internal selection state is out of sync\n" +
@@ -1353,7 +1670,7 @@ namespace oPenEfficiency
                 }
                 else
                 {
-                    errorMessage = $"The Agenda Wizard encountered a PowerPoint error:\n\n{errorMessage}\n\n" +
+                    errorMessage = $"Agenda Creator encountered a PowerPoint error:\n\n{errorMessage}\n\n" +
                                    "Possible causes:\n" +
                                    "• PowerPoint is busy or not responding\n" +
                                    "• The presentation is in a protected or restricted state\n" +
@@ -1364,6 +1681,8 @@ namespace oPenEfficiency
             }
             catch (InvalidOperationException invalidOpEx)
             {
+                mutationTransaction?.RollBack();
+                oPenEfficiency.Utils.ExceptionLogger.Log(invalidOpEx, "AgendaWizard.BtnOk.Configuration");
                 string errorMessage = invalidOpEx.Message;
                 string errorTitle = "Configuration Error";
 
@@ -1376,6 +1695,8 @@ namespace oPenEfficiency
             }
             catch (Exception ex)
             {
+                mutationTransaction?.RollBack();
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.BtnOk");
                 string detailedMessage = $"Error creating agenda: {ex.Message}\n\n" +
                                          $"Error Type: {ex.GetType().Name}\n\n" +
                                          "Common causes:\n" +
@@ -1391,44 +1712,166 @@ namespace oPenEfficiency
 
         private void BtnSaveAgenda_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                SaveCurrentAgenda();
+            if (SaveCurrentAgenda())
                 System.Windows.Forms.MessageBox.Show("Agenda saved successfully!", "Success", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show($"Error saving agenda: {ex.Message}", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
-            }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e) => this.Close();
 
-        
+
         private void BtnReadFromPres_Click(object sender, RoutedEventArgs e)
+        {
+            ExtractFromDeckCommand();
+        }
+
+        public bool ExtractFromDeckCommand()
         {
             try
             {
-                var app = _manager.GetApplication();
-                var slide = app.ActiveWindow.View.Slide as Slide;
-                
-                if (slide != null)
+                if (ExtractItemsFromDeck())
                 {
-                    if (ExtractItemsFromSlide(slide))
+                    RecalculateAll();
+                    System.Windows.Forms.MessageBox.Show(
+                        "The agenda was derived from tagged agenda slides, PowerPoint sections, or slide titles.",
+                        "Deck Structure Imported",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Information);
+                    return true;
+                }
+
+                System.Windows.Forms.MessageBox.Show(
+                    "No tagged agenda, PowerPoint sections, or usable slide titles were found.",
+                    "No Deck Structure Found",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Warning);
+            }
+            catch (Exception ex)
+            {
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.ExtractItemsFromDeck");
+                System.Windows.Forms.MessageBox.Show("Error reading presentation: " + ex.Message);
+            }
+            return false;
+        }
+
+        public void PrepareDeckStructure()
+        {
+            ChkSeparatingSlides.IsChecked = true;
+            ChkSections.IsChecked = true;
+            ChkStarterSlides.IsChecked = true;
+            ChkHighlightCurrent.IsChecked = true;
+        }
+
+        private bool ExtractItemsFromDeck()
+        {
+            var app = _manager.GetApplication();
+            var presentation = app?.ActivePresentation;
+            if (presentation == null) return false;
+
+            if (TryPreFillFromPresentation()) return Items.Count > 0;
+
+            var extracted = new List<AgendaItem>();
+            try
+            {
+                dynamic sections = presentation.SectionProperties;
+                for (int sectionIndex = 1; sectionIndex <= presentation.SectionProperties.Count; sectionIndex++)
+                {
+                    string sectionName = presentation.SectionProperties.Name(sectionIndex)?.Trim();
+                    if (string.IsNullOrWhiteSpace(sectionName) ||
+                        string.Equals(sectionName, "Default Section", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(sectionName, "Backup", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    extracted.Add(new AgendaItem
                     {
-                        RecalculateAll();
-                        System.Windows.Forms.MessageBox.Show($"Successfully read agenda items from the current slide.", "Import Successful", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
-                    }
-                    else
+                        Topic = sectionName,
+                        Level = 0,
+                        Duration = 15
+                    });
+
+                    int firstSlideIndex = sections.FirstSlideIndex(sectionIndex);
+                    int slideCount = sections.SlidesCount(sectionIndex);
+                    for (int offset = 0; offset < slideCount; offset++)
                     {
-                        System.Windows.Forms.MessageBox.Show("No compatible agenda shapes found on the current slide.", "Import Failed", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
+                        var slide = presentation.Slides[firstSlideIndex + offset];
+                        if (IsAgendaInfrastructureSlide(slide)) continue;
+
+                        string title = GetSlideTitle(slide);
+                        if (!string.IsNullOrWhiteSpace(title) &&
+                            !string.Equals(title, sectionName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            extracted.Add(new AgendaItem
+                            {
+                                Topic = title,
+                                Level = 1,
+                                Duration = 5
+                            });
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show("Error reading presentation: " + ex.Message);
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "AgendaWizard.ExtractSections");
             }
+
+            if (extracted.Count == 0)
+            {
+                for (int i = 1; i <= presentation.Slides.Count; i++)
+                {
+                    var slide = presentation.Slides[i];
+                    if (IsAgendaInfrastructureSlide(slide)) continue;
+
+                    string title = GetSlideTitle(slide);
+                    if (string.IsNullOrWhiteSpace(title)) continue;
+                    if (extracted.Any(item => string.Equals(item.Topic, title, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+
+                    extracted.Add(new AgendaItem
+                    {
+                        Topic = title,
+                        Level = 0,
+                        Duration = 10
+                    });
+                }
+            }
+
+            if (extracted.Count == 0) return false;
+            Items.Clear();
+            foreach (var item in extracted) Items.Add(item);
+            return true;
+        }
+
+        private static bool IsAgendaInfrastructureSlide(Slide slide)
+        {
+            if (slide == null) return true;
+            try
+            {
+                return !string.IsNullOrEmpty(slide.Tags["oPE_AgendaSlide"]) ||
+                       !string.IsNullOrEmpty(slide.Tags["EE4P_AGENDA_DIVIDER"]) ||
+                       !string.IsNullOrEmpty(slide.Tags["oPE_BackupSlide"]);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string GetSlideTitle(Slide slide)
+        {
+            try
+            {
+                if (slide?.Shapes.HasTitle == Microsoft.Office.Core.MsoTriState.msoTrue)
+                    return slide.Shapes.Title.TextFrame.TextRange.Text?.Trim();
+            }
+            catch (Exception ex) { ReportOptionalAgendaWizardFailure(ex, "AgendaWizard.GetSlideTitle"); }
+            return null;
+        }
+
+        private static void ReportOptionalAgendaWizardFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // Missing tags, titles, or stale slides fall back to the wizard's existing defaults.
         }
 
 
@@ -1459,6 +1902,11 @@ namespace oPenEfficiency
             RecalculateAll();
         }
 
+        private void TxtTargetEndTime_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            UpdateBudgetStatus();
+        }
+
         private void CboTimeFormat_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             RecalculateAll();
@@ -1487,22 +1935,30 @@ namespace oPenEfficiency
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public string StartTime { get; set; } = "09:00";
+        public string TargetEndTime { get; set; } = "10:30";
+        public int StartNumber { get; set; } = 1;
+        public string TimeFormat { get; set; } = "HH:mm";
         public List<SavedAgendaItem> Items { get; set; } = new List<SavedAgendaItem>();
     }
 
     public class SavedAgendaItem
     {
+        public string Id { get; set; } = Guid.NewGuid().ToString("D");
         public int Level { get; set; }
         public string Topic { get; set; }
+        public string Responsible { get; set; }
         public int Duration { get; set; }
         public ShapeFormatConfig Format { get; set; }
         public bool ShouldGenerate { get; set; } = true;
         public bool ShowMinutes { get; set; } = true;
         public bool ShowResponsible { get; set; } = true;
+        public bool IsBreak { get; set; }
     }
 
     public class AgendaItem : INotifyPropertyChanged
     {
+        private string _id = Guid.NewGuid().ToString("D");
         private string _displayIndex;
         private string _topic;
         private string _responsible;
@@ -1514,6 +1970,7 @@ namespace oPenEfficiency
         private bool _showMinutes = true;
         private bool _showResponsible = true;
 
+        public string Id { get => _id; set { _id = string.IsNullOrWhiteSpace(value) ? Guid.NewGuid().ToString("D") : value; OnPropertyChanged(); } }
         public string DisplayIndex { get => _displayIndex; set { _displayIndex = value; OnPropertyChanged(); } }
         public string Topic { get => _topic; set { _topic = value; OnPropertyChanged(); } }
         public string Responsible { get => _responsible; set { _responsible = value; OnPropertyChanged(); } }
@@ -1543,7 +2000,7 @@ namespace oPenEfficiency
             }
             return FontWeights.Normal;
         }
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => throw new NotImplementedException();
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => System.Windows.Data.Binding.DoNothing;
     }
 
     public class PreviewShape

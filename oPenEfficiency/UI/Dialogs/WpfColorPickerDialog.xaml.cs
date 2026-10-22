@@ -82,7 +82,7 @@ namespace oPenEfficiency.UI
                     _isUpdating = false;
                 }
             }
-            catch { }
+            catch { /* Invalid color input retains the dialog's last valid color. */ }
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

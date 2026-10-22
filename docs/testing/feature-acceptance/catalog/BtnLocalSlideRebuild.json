@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnLocalSlideRebuild",
+  "title": "Rebuild Slide from PDF/Image (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/LocalSlideRebuildFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnLocalSlideRebuild-001",
+      "title": "Rebuild Slide from PDF/Image applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/LocalSlideRebuildFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Rebuild Slide from PDF/Image (BtnLocalSlideRebuild) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnLocalSlideRebuild-002",
+      "title": "Rebuild page-range selection grammar is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/SlideRebuildPageRangePolicy.cs",
+        "oPenEfficiency/Features/Utilities/LocalSlideRebuildFeature.cs",
+        "oPenEfficiency.Core.Tests/SlideRebuildPageRangePolicyTests.cs"
+      ],
+      "expected": "The page selection accepts comma-separated single pages and inclusive ranges ('1, 3, 6-8'); pages are 1-based and capped at 10000, a range may span at most 1000 pages (end - start <= 999), duplicates collapse into the result set, and any malformed token (empty token, triple bounds, non-numeric, zero page, inverted range) rejects the whole input.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SlideRebuildPageRangePolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

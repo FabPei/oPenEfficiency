@@ -1,170 +1,225 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using oPenEfficiency.Services.Shortcuts;
 
 namespace oPenEfficiency
 {
     public partial class ShortcutConfigWindow : Window
     {
-        private string _featureId;
-        private string _configPath;
+        private readonly string _featureId;
+        private readonly string _featureName;
+        private readonly List<string> _capturedKeys = new List<string>();
+        private readonly HashSet<Key> _heldKeys = new HashSet<Key>();
+        private readonly IDisposable _modalCaptureScope;
+        private bool _capturing;
+        private ShortcutValidationResult _validation;
 
         public ShortcutConfigWindow(string featureId = null)
         {
             InitializeComponent();
             _featureId = featureId;
-            // Store config in AppData
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var folder = System.IO.Path.Combine(appData, "oPenEfficiency");
-            if (!System.IO.Directory.Exists(folder)) System.IO.Directory.CreateDirectory(folder);
-            _configPath = System.IO.Path.Combine(folder, "shortcuts.cfg");
+            _featureName = UI.FeatureLibrary.AllFeatures
+                .FirstOrDefault(feature => feature.Id == featureId)?.Name ??
+                featureId ??
+                "Command";
 
-            LoadKeys();
-            
-            if (!string.IsNullOrEmpty(_featureId))
-            {
-                this.Title = $"Configure Shortcuts for {_featureId}";
-                LoadSavedShortcut();
-            }
+            Title = "Configure Shortcut for " + _featureName;
+            FeatureNameText.Text = _featureName;
+            _modalCaptureScope = ShortcutManager.SuspendActivationForModalCapture();
+            Closed += (sender, args) => _modalCaptureScope.Dispose();
+            PreviewKeyDown += Window_PreviewKeyDown;
+            PreviewKeyUp += Window_PreviewKeyUp;
 
-            this.PreviewKeyDown += Window_PreviewKeyDown;
-        }
-
-        private void LoadKeys()
-        {
-            var keys = Enum.GetValues(typeof(Key))
-                .Cast<Key>()
-                .Distinct()
-                .OrderBy(k => 
-                {
-                    if (k == Key.None) return 0;
-                    if (k == Key.LeftCtrl || k == Key.RightCtrl) return 1;
-                    if (k == Key.LeftAlt || k == Key.RightAlt) return 2;
-                    if (k == Key.LeftShift || k == Key.RightShift) return 3;
-                    if (k == Key.System) return 4;
-                    if (k >= Key.A && k <= Key.Z) return 5;
-                    if (k >= Key.D0 && k <= Key.D9) return 6;
-                    return 7;
-                })
-                .ThenBy(k => k.ToString())
-                .ToList();
-                
-            ComboKey1.ItemsSource = keys;
-            ComboKey2.ItemsSource = keys;
-            ComboKey3.ItemsSource = keys;
-            ComboKey4.ItemsSource = keys;
-            
-            ComboKey1.SelectedItem = Key.None;
-            ComboKey2.SelectedItem = Key.None;
-            ComboKey3.SelectedItem = Key.None;
-            ComboKey4.SelectedItem = Key.None;
+            LoadSavedShortcut();
         }
 
         private void LoadSavedShortcut()
         {
-            if (!System.IO.File.Exists(_configPath)) return;
-            
-            var lines = System.IO.File.ReadAllLines(_configPath);
-            foreach (var line in lines)
+            var assignment = ShortcutManager.GetAssignment(_featureId);
+            if (assignment != null)
             {
-                var parts = line.Split('=');
-                if (parts.Length == 2 && parts[0] == _featureId)
+                _capturedKeys.AddRange(
+                    ShortcutPolicy.SplitStorageValue(assignment.RawValue)
+                        .Where(key => !string.IsNullOrWhiteSpace(key) &&
+                                      !string.Equals(
+                                          key.Trim(),
+                                          "None",
+                                          StringComparison.OrdinalIgnoreCase)));
+                if (assignment.NeedsAttention)
                 {
-                    var keys = parts[1].Split(',');
-                    if (keys.Length >= 1) ComboKey1.SelectedItem = (Key)Enum.Parse(typeof(Key), keys[0]);
-                    if (keys.Length >= 2) ComboKey2.SelectedItem = (Key)Enum.Parse(typeof(Key), keys[1]);
-                    if (keys.Length >= 3) ComboKey3.SelectedItem = (Key)Enum.Parse(typeof(Key), keys[2]);
-                    if (keys.Length >= 4) ComboKey4.SelectedItem = (Key)Enum.Parse(typeof(Key), keys[3]);
-                    break;
+                    AttentionText.Text =
+                        "Requires attention: " + ResolveFeatureNames(assignment.AttentionReason);
+                    AttentionText.Visibility = Visibility.Visible;
                 }
             }
+
+            UpdateValidation();
         }
 
-        private int _listeningCombo = 0;
-
-        private void ResetButtons()
+        private void BtnCapture_Click(object sender, RoutedEventArgs e)
         {
-            BtnAssign1.Content = "Assign";
-            BtnAssign2.Content = "Assign";
-            BtnAssign3.Content = "Assign";
-            BtnAssign4.Content = "Assign";
+            _capturedKeys.Clear();
+            _heldKeys.Clear();
+            _capturing = true;
+            AttentionText.Visibility = Visibility.Collapsed;
+            BtnCapture.Content = "Hold the complete chord, then release";
+            BtnSave.IsEnabled = false;
+            ChordText.Text = "Listening…";
+            BtnCapture.Focus();
         }
-
-        private void BtnAssign1_Click(object sender, RoutedEventArgs e) { ResetButtons(); _listeningCombo = 1; BtnAssign1.Content = "Press..."; }
-        private void BtnAssign2_Click(object sender, RoutedEventArgs e) { ResetButtons(); _listeningCombo = 2; BtnAssign2.Content = "Press..."; }
-        private void BtnAssign3_Click(object sender, RoutedEventArgs e) { ResetButtons(); _listeningCombo = 3; BtnAssign3.Content = "Press..."; }
-        private void BtnAssign4_Click(object sender, RoutedEventArgs e) { ResetButtons(); _listeningCombo = 4; BtnAssign4.Content = "Press..."; }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (_listeningCombo > 0)
+            if (!_capturing) return;
+
+            Key key = ResolveKey(e);
+            if (key != Key.None && _heldKeys.Add(key))
+                _capturedKeys.Add(key.ToString());
+
+            UpdateValidation();
+            e.Handled = true;
+        }
+
+        private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            if (!_capturing) return;
+
+            Key key = ResolveKey(e);
+            if (key != Key.None)
+                _heldKeys.Remove(key);
+            e.Handled = true;
+
+            Dispatcher.BeginInvoke(new Action(() =>
             {
-                Key key = e.Key;
-                if (key == Key.System) key = e.SystemKey; 
-                
-                switch (_listeningCombo)
+                if (_heldKeys.Count == 0 && Keyboard.Modifiers == ModifierKeys.None)
                 {
-                    case 1: ComboKey1.SelectedItem = key; break;
-                    case 2: ComboKey2.SelectedItem = key; break;
-                    case 3: ComboKey3.SelectedItem = key; break;
-                    case 4: ComboKey4.SelectedItem = key; break;
+                    _capturing = false;
+                    BtnCapture.Content = "Capture again";
+                    UpdateValidation();
                 }
-                
-                ResetButtons();
-                _listeningCombo = 0;
-                e.Handled = true;
+            }));
+        }
+
+        private void UpdateValidation()
+        {
+            _validation = ShortcutManager.ValidateShortcut(
+                _featureId,
+                _capturedKeys,
+                riskConfirmed: false);
+
+            ChordText.Text = _validation.Chord?.DisplayText ??
+                (_capturedKeys.Count > 0
+                    ? ShortcutPolicy.FormatLegacyValue(string.Join(",", _capturedKeys))
+                    : "No chord captured");
+
+            if (_validation.RequiresRiskConfirmation)
+            {
+                ValidationText.Text = _validation.Warning +
+                    " Saving requires an explicit confirmation.";
+                ValidationText.Foreground =
+                    (Brush)FindResource("WarningBrush");
+                BtnSave.IsEnabled = !_capturing;
+            }
+            else if (!_validation.IsValid)
+            {
+                string validationError = _validation.Error;
+                if (!string.IsNullOrWhiteSpace(_validation.ConflictingFeatureId))
+                {
+                    validationError += " Conflicts with " +
+                        GetFeatureName(_validation.ConflictingFeatureId) + ".";
+                }
+                ValidationText.Text = ResolveFeatureNames(validationError);
+                ValidationText.Foreground =
+                    (Brush)FindResource("ErrorBrush");
+                BtnSave.IsEnabled = false;
+            }
+            else
+            {
+                ValidationText.Text =
+                    "Chord is valid and available for this command.";
+                ValidationText.Foreground =
+                    (Brush)FindResource("TextSecondaryBrush");
+                BtnSave.IsEnabled = !_capturing;
             }
         }
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_featureId)) return;
+            if (string.IsNullOrWhiteSpace(_featureId) || _capturing) return;
 
-            var k1 = ComboKey1.SelectedItem?.ToString() ?? "None";
-            var k2 = ComboKey2.SelectedItem?.ToString() ?? "None";
-            var k3 = ComboKey3.SelectedItem?.ToString() ?? "None";
-            var k4 = ComboKey4.SelectedItem?.ToString() ?? "None";
-            var value = $"{k1},{k2},{k3},{k4}";
-
-            var lines = System.IO.File.Exists(_configPath) ? System.IO.File.ReadAllLines(_configPath).ToList() : new System.Collections.Generic.List<string>();
-            var updated = false;
-
-            for (int i = 0; i < lines.Count; i++)
+            bool riskConfirmed = false;
+            if (_validation != null && _validation.RequiresRiskConfirmation)
             {
-                if (lines[i].StartsWith(_featureId + "="))
-                {
-                    lines[i] = $"{_featureId}={value}";
-                    updated = true;
-                    break;
-                }
+                var answer = MessageBox.Show(
+                    _validation.Warning +
+                    "\n\nThis can run a command while you are typing or navigating in PowerPoint. Save it anyway?",
+                    "Confirm Shortcut Activation Risk",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (answer != MessageBoxResult.Yes) return;
+                riskConfirmed = true;
             }
 
-            if (!updated)
+            if (!ShortcutManager.TryReplaceShortcut(
+                _featureId,
+                _capturedKeys,
+                riskConfirmed,
+                out var validation,
+                out string error))
             {
-                lines.Add($"{_featureId}={value}");
+                _validation = validation;
+                MessageBox.Show(
+                    ResolveFeatureNames(error ?? "The shortcut could not be saved."),
+                    "Shortcut Not Saved",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                UpdateValidation();
+                return;
             }
 
-            System.IO.File.WriteAllLines(_configPath, lines);
-            
-            ShortcutManager.Reload();
-            MessageBox.Show($"Shortcut saved for {_featureId}: {k1} + {k2} + {k3} + {k4}");
-            this.Close();
+            DialogResult = true;
+            Close();
         }
 
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
-            ResetButtons();
-            _listeningCombo = 0;
-            ComboKey1.SelectedItem = Key.None;
-            ComboKey2.SelectedItem = Key.None;
-            ComboKey3.SelectedItem = Key.None;
-            ComboKey4.SelectedItem = Key.None;
+            if (string.IsNullOrWhiteSpace(_featureId)) return;
+            if (!ShortcutManager.ClearShortcut(_featureId))
+            {
+                MessageBox.Show(
+                    "The assignment could not be cleared. The previous assignment remains unchanged.",
+                    "Shortcut Not Cleared",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return;
+            }
+
+            DialogResult = true;
+            Close();
         }
 
-        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        private void BtnCancel_Click(object sender, RoutedEventArgs e) => Close();
+
+        private string ResolveFeatureNames(string text)
         {
-            this.Close();
+            if (string.IsNullOrWhiteSpace(text)) return text;
+            foreach (var feature in UI.FeatureLibrary.AllFeatures)
+            {
+                text = text.Replace(feature.Id, feature.Name);
+            }
+            return text;
         }
+
+        private static string GetFeatureName(string featureId) =>
+            UI.FeatureLibrary.AllFeatures
+                .FirstOrDefault(feature => feature.Id == featureId)?.Name ??
+            featureId;
+
+        private static Key ResolveKey(KeyEventArgs e) =>
+            e.Key == Key.System ? e.SystemKey : e.Key;
     }
 }

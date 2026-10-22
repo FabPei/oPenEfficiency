@@ -8,27 +8,27 @@ namespace oPenEfficiency.Features
 {
     /// <summary>
     /// Feature: Set or toggle the locking state of shapes.
-    /// Handles native PowerPoint locking (Office 365/2021+) and fallback metadata-based locking.
+    /// Uses native PowerPoint shape locking when it is available.
     /// </summary>
     [FeatureMetadata(
         Id = "BtnShapeLock",
-        Name = "Shape Locking",
-        Tooltip = "Shape locking",
+        Name = "Lock/Unlock Shapes",
+        SearchAliases = new[] { "Shape Locking" },
+        Tooltip = "Lock or unlock the selected shapes",
         IconData = "M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M12,7H14V12H12V7M12,14H14V17H12V14Z",
         Color = "#6B7280",
-        Description = "Locks or unlocks all shapes in the presentation to prevent accidental edits.",
-        DetailedHelpText = "### Shape Locking\nLocks the position and size of the selected shapes to prevent accidental edits.\n**Right-Click Options:**\n* **Global Lock**: Lock all shapes on every slide in the presentation.\n* **Global Unlock**: Unlock everything in the presentation instantly for mass editing.",
-        Keywords = "lock, unlock, freeze, protect, edit prevention",
+        Description = "Locks or unlocks the selected shapes to prevent accidental edits.",
+        DetailedHelpText = "### Lock/Unlock Shapes\nLocks or unlocks the selected shapes using PowerPoint's native shape lock. If the selection contains both states, left-click locks every selected shape; left-click again unlocks them.\n\n**Right-click options:**\n* **Toggle Lock All Shapes**: Lock all shapes when any shape is unlocked; unlock all when every shape is locked.\n* **Lock All Shapes**: Lock all shapes on every slide in the presentation.\n* **Unlock All Shapes**: Unlock all shapes on every slide in the presentation.\n\nNative shape locking requires a PowerPoint version that supports it.",
         MinSelection = 0,
         IsToggle = true)]
     public static class ShapeLockingFeature
     {
         /// <summary>
-        /// Wrapper for auto-discovery - toggles shape lock state for all shapes.
+        /// Wrapper for auto-discovery - toggles shape lock state for the selection.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return SetGlobalShapeLock(manager, forceState: null);
+            return SetSelectionShapeLock(manager, forceState: null);
         }
 
         public static bool SetGlobalShapeLock(PowerPointManager manager, bool? forceState = null)
@@ -39,28 +39,29 @@ namespace oPenEfficiency.Features
                 var app = manager.GetApplication();
                 if (app.ActivePresentation == null) return false;
 
-                bool targetState = true;
-                if (forceState == null)
+                bool found = false;
+                bool allLocked = true;
+                foreach (Slide slide in app.ActivePresentation.Slides)
                 {
-                    bool found = false;
-                    foreach (Slide slide in app.ActivePresentation.Slides)
+                    foreach (Shape shape in slide.Shapes)
                     {
-                        if (slide.Shapes.Count > 0)
-                        {
-                            targetState = !IsShapeLocked(slide.Shapes[1]);
-                            found = true;
-                            break;
-                        }
+                        found = true;
+                        if (!IsShapeLocked(shape)) allLocked = false;
                     }
-                    if (!found) return false;
                 }
-                else targetState = forceState.Value;
+                if (!found) return false;
+
+                bool targetState = forceState ?? !allLocked;
+                bool allSucceeded = true;
 
                 foreach (Slide slide in app.ActivePresentation.Slides)
                 {
-                    foreach (Shape shape in slide.Shapes) SetShapeLock(shape, targetState);
+                    foreach (Shape shape in slide.Shapes)
+                    {
+                        if (!SetShapeLock(shape, targetState)) allSucceeded = false;
+                    }
                 }
-                return true;
+                return allSucceeded;
             }
             catch (Exception ex)
             {
@@ -77,18 +78,19 @@ namespace oPenEfficiency.Features
                 var selection = manager.GetSelectedShapes();
                 if (selection == null || selection.Count == 0) return false;
 
-                bool targetState = true;
-                if (forceState == null)
+                bool allLocked = true;
+                for (int i = 1; i <= selection.Count; i++)
                 {
-                    targetState = !IsShapeLocked(selection[1]);
+                    if (!IsShapeLocked(selection[i])) allLocked = false;
                 }
-                else targetState = forceState.Value;
+                bool targetState = forceState ?? !allLocked;
+                bool allSucceeded = true;
 
                 for (int i = 1; i <= selection.Count; i++)
                 {
-                    SetShapeLock(selection[i], targetState);
+                    if (!SetShapeLock(selection[i], targetState)) allSucceeded = false;
                 }
-                return true;
+                return allSucceeded;
             }
             catch (Exception ex)
             {
@@ -99,29 +101,47 @@ namespace oPenEfficiency.Features
 
         public static bool IsShapeLocked(Shape shape)
         {
-            try { return ((dynamic)shape).Locked; }
+            return TryGetNativeLockState(shape, out bool locked) && locked;
+        }
+
+        private static bool SetShapeLock(Shape shape, bool lockState)
+        {
+            if (shape == null) return false;
+            try
+            {
+                ((dynamic)shape).Locked = lockState
+                    ? Office.MsoTriState.msoTrue
+                    : Office.MsoTriState.msoFalse;
+                bool succeeded = TryGetNativeLockState(shape, out bool currentState) && currentState == lockState;
+                if (succeeded)
+                {
+                    try { shape.Tags.Add("oPE_Locked", lockState ? "true" : "false"); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeLockingFeature.SetShapeLock.Tag"); }
+                }
+                return succeeded;
+            }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "ShapeLockingFeature.IsShapeLocked.Dynamic");
-                try { return shape.Tags["oPE_Locked"] == "true"; }
-                catch (Exception ex2)
-                {
-                    ExceptionLogger.Log(ex2, "ShapeLockingFeature.IsShapeLocked.Fallback");
-                    return false;
-                }
+                ExceptionLogger.Log(ex, "ShapeLockingFeature.SetShapeLock");
+                return false;
             }
         }
 
-        private static void SetShapeLock(Shape shape, bool lockState)
+        private static bool TryGetNativeLockState(Shape shape, out bool locked)
         {
-            try { ((dynamic)shape).Locked = lockState; }
-            catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeLockingFeature.SetShapeLock.Locked"); }
-
-            try { shape.LockAspectRatio = lockState ? Office.MsoTriState.msoTrue : Office.MsoTriState.msoFalse; }
-            catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeLockingFeature.SetShapeLock.LockAspectRatio"); }
-
-            try { shape.Tags.Add("oPE_Locked", lockState.ToString().ToLower()); }
-            catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeLockingFeature.SetShapeLock.Tag"); }
+            locked = false;
+            if (shape == null) return false;
+            try
+            {
+                locked = (int)((dynamic)shape).Locked != 0;
+                return true;
+            }
+            catch
+            {
+                // Unsupported PowerPoint versions are an expected compatibility case. The
+                // mutating path logs failures, while this frequently-polled query stays quiet.
+                return false;
+            }
         }
     }
 }

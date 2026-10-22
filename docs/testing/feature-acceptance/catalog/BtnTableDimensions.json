@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableDimensions",
+  "title": "Copy/Paste Table Dimensions (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableDimensions-001",
+      "title": "Copy/Paste Table Dimensions applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Copy/Paste Table Dimensions (BtnTableDimensions) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableDimensions-001",
+      "title": "Copy/paste table dimensions refuses degenerate input (empty, zero or negative target, non-positive dimension) with the documented exception types",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+        "oPenEfficiency.Core/Services/TableDimensionScaler.cs",
+        "oPenEfficiency.Core.Tests/TableDimensionAcceptanceTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives the host-neutral production code of Copy/Paste Table Dimensions (Tables): TableDimensionScaler.ScaleToTotal is asserted against the real scaling contract - copy/paste table dimensions refuses degenerate input (empty, zero or negative target, non-positive dimension) with the documented exception types.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableDimensionAcceptanceTests.ScaleToTotalRefusesDegenerateInput"
+      }
+    },
+    {
+      "id": "QA9-BtnTableDimensions-002",
+      "title": "Copy/paste table dimensions applies the target total to a single dimension",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+        "oPenEfficiency.Core/Services/TableDimensionScaler.cs",
+        "oPenEfficiency.Core.Tests/TableDimensionAcceptanceTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives the host-neutral production code of Copy/Paste Table Dimensions (Tables): TableDimensionScaler.ScaleToTotal is asserted against the real scaling contract - a single dimension stays a single dimension and takes the target total exactly.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableDimensionAcceptanceTests.ScaleToTotalAppliesTheTargetToASingleDimension"
+      }
+    },
+    {
+      "id": "QA9-BtnTableDimensions-003",
+      "title": "Copy/Paste Table Dimensions transfers exact widths and heights between real tables",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableDimBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Copy/Paste Table Dimensions copies a 2x2 source table staged at column widths 80/70 and row heights 40/30 and pastes them onto a differently sized 2x2 target table (120/90 and 55/45 before), leaving the target at exactly widths 80/70 and heights 40/30 (measured targetW=80,70 targetH=40,30 with actuallyChanged=True), both dispatches return true, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableDimBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "table-dimensions"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

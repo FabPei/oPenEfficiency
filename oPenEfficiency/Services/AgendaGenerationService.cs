@@ -4,7 +4,9 @@ using Microsoft.Office.Interop.PowerPoint;
 using Shape = Microsoft.Office.Interop.PowerPoint.Shape;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Models;
+using oPenEfficiency.Utils;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace oPenEfficiency.Services
 {
@@ -13,6 +15,8 @@ namespace oPenEfficiency.Services
     /// </summary>
     public class AgendaGenerationService
     {
+        private const string ThinkCellPresentationProtectionTag = "THINKCELLPRESENTATIONDONOTDELETE";
+        private const string ThinkCellShapeProtectionTag = "THINKCELLSHAPEDONOTDELETE";
         private readonly PowerPointManager _manager;
         private readonly AgendaLayoutConfig _layout;
         private readonly int _targetSlideId; // Store ID for stability
@@ -24,7 +28,85 @@ namespace oPenEfficiency.Services
             _targetSlideId = targetSlide.SlideID;
         }
 
-        public void GenerateFullAgenda(List<AgendaItemData> items, bool createSections, bool createDividerSlides, bool highlightCurrent = false)
+        public static void EnsureMutationAllowed(
+            Presentation presentation,
+            bool synchronizeExisting,
+            bool createSections)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+
+            try
+            {
+                bool presentationProtected =
+                    !string.IsNullOrEmpty(presentation.Tags[ThinkCellPresentationProtectionTag]);
+                string protectionError = AgendaWorkflowPolicy.GetMutationProtectionError(
+                    presentationProtected,
+                    false,
+                    synchronizeExisting,
+                    createSections);
+                if (protectionError != null) throw new InvalidOperationException(protectionError);
+
+                if (!synchronizeExisting && !createSections) return;
+
+                bool protectedSlideContentFound = false;
+                for (int slideIndex = 1; slideIndex <= presentation.Slides.Count; slideIndex++)
+                {
+                    Slide slide = presentation.Slides[slideIndex];
+                    if (IsThinkCellProtected(slide))
+                    {
+                        protectedSlideContentFound = true;
+                        break;
+                    }
+                }
+
+                protectionError = AgendaWorkflowPolicy.GetMutationProtectionError(
+                    false,
+                    protectedSlideContentFound,
+                    synchronizeExisting,
+                    createSections);
+                if (protectionError != null) throw new InvalidOperationException(protectionError);
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
+            }
+            catch (COMException ex)
+            {
+                throw new InvalidOperationException(
+                    "Agenda Creator could not verify think-cell protection before changing the presentation.",
+                    ex);
+            }
+            catch (InvalidComObjectException ex)
+            {
+                throw new InvalidOperationException(
+                    "Agenda Creator could not verify think-cell protection because a PowerPoint object is no longer available.",
+                    ex);
+            }
+        }
+
+        private static bool IsThinkCellProtected(Slide slide)
+        {
+            if (slide == null) return false;
+            if (!string.IsNullOrEmpty(slide.Tags[ThinkCellShapeProtectionTag])) return true;
+
+            for (int shapeIndex = 1; shapeIndex <= slide.Shapes.Count; shapeIndex++)
+            {
+                if (!string.IsNullOrEmpty(slide.Shapes[shapeIndex].Tags[ThinkCellShapeProtectionTag]))
+                    return true;
+            }
+
+            return false;
+        }
+
+        public void GenerateFullAgenda(
+            List<AgendaItemData> items,
+            bool createSections,
+            bool createDividerSlides,
+            bool highlightCurrent = false,
+            bool synchronizeExisting = false,
+            bool createStarterSlides = false,
+            string agendaTitle = null,
+            string agendaSubtitle = null)
         {
             if (items == null || items.Count == 0) return;
 
@@ -33,9 +115,14 @@ namespace oPenEfficiency.Services
             Slide targetSlide = GetSafeSlide(pres, _targetSlideId);
             if (targetSlide == null) return;
 
-            // --- NEIGHBORHOOD LOGIC: Capture current content slide mapping ---
-            var contentMap = GetContentSlideMap(pres);
-            var oldTopics = contentMap.Keys.ToList();
+            Dictionary<string, List<int>> existingContent = null;
+            if (synchronizeExisting)
+            {
+                existingContent = GetContentSlideMap(pres);
+                var oldTopics = GetExistingAgendaTopics(pres);
+                ClearExistingAgendaSections(pres, oldTopics);
+                ClearExistingDividerSlides(pres, _targetSlideId);
+            }
 
             // Store active layout info
             try
@@ -44,23 +131,15 @@ namespace oPenEfficiency.Services
                 targetSlide.Tags.Add("oPE_AgendaLayout", _layout.LayoutName);
                 targetSlide.Tags.Add("oPE_AgendaActive", "True");
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                throw new System.InvalidOperationException("Agenda metadata could not be stored.", ex);
+            }
 
             // 0. Cleanup
             ClearExistingAgendaShapes(targetSlide);
+            ApplySlideFrame(targetSlide, agendaTitle, agendaSubtitle);
             
-            // CRITICAL: Clear sections BEFORE deleting the divider slides, 
-            // so we can still identify sections via slide tags.
-            if (createSections)
-            {
-                ClearExistingAgendaSections(pres, oldTopics);
-            }
-
-            if (createDividerSlides)
-            {
-                ClearExistingDividerSlides(pres, _targetSlideId);
-            }
-
             // Start inserting after the target slide
             int currentTargetIndex = GetSafeSlideIndex(targetSlide);
             int insertSlideIndex = currentTargetIndex + 1;
@@ -72,7 +151,10 @@ namespace oPenEfficiency.Services
             for (int i = 0; i < items.Count; i++)
             {
                 var item = items[i];
-                if (item.ShouldGenerate)
+                if (AgendaWorkflowPolicy.ShouldCreateChapterInfrastructure(
+                    item.Level,
+                    item.IsBreak,
+                    item.ShouldGenerate))
                 {
                     Slide dividerSlide = null;
                     if (createDividerSlides)
@@ -83,7 +165,8 @@ namespace oPenEfficiency.Services
                             dividerSlide.Tags.Add("EE4P_AGENDA_DIVIDER", "True");
                             dividerSlide.Tags.Add("oPE_AgendaSlide", "True");
                             dividerSlide.Tags.Add("oPE_AgendaLayout", _layout.LayoutName);
-                            dividerSlide.Tags.Add("oPE_AgendaTopic", item.Topic); // CRITICAL: Store topic name in tag
+                            dividerSlide.Tags.Add("oPE_AgendaTopic", item.Topic);
+                            dividerSlide.Tags.Add("oPE_AgendaItemId", item.Id);
                             
                             // Setup title: Always "Agenda"
                             SetupSlideTitle(dividerSlide, "Agenda");
@@ -93,7 +176,11 @@ namespace oPenEfficiency.Services
 
                             dividerSlideIds[i] = dividerSlide.SlideID;
                             item.PageNumber = dividerSlide.SlideIndex.ToString();
-                        } catch { }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            throw new System.InvalidOperationException($"Divider slide {i + 1} could not be created.", ex);
+                        }
                     }
                     
                     if (createSections)
@@ -102,23 +189,33 @@ namespace oPenEfficiency.Services
                             // Since we cleared sections above, we just create them fresh at the right position.
                             int targetIndexForSection = dividerSlide != null ? GetSafeSlideIndex(dividerSlide) : insertSlideIndex;
                             pres.SectionProperties.AddBeforeSlide(Math.Min(targetIndexForSection, pres.Slides.Count + 1), item.Topic);
-                        } catch { }
+                        }
+                        catch (System.Exception ex)
+                        {
+                            throw new System.InvalidOperationException($"Section '{item.Topic}' could not be created.", ex);
+                        }
                     }
                     
                     if (createDividerSlides) insertSlideIndex++;
                 }
             }
 
-            // --- NEIGHBORHOOD LOGIC: Restore content slide positions ---
-            if (createDividerSlides)
-            {
-                RestoreContentSlidePositions(pres, dividerSlideIds.Values.ToList(), contentMap, items);
-            }
+            var newDividerIds = dividerSlideIds
+                .OrderBy(pair => pair.Key)
+                .Select(pair => pair.Value)
+                .ToList();
+
+            if (synchronizeExisting && existingContent != null)
+                RestoreContentSlidePositions(pres, newDividerIds, existingContent, items);
+
+            if (createStarterSlides && createDividerSlides)
+                CreateMissingStarterSlides(pres, dividerSlideIds, existingContent, items);
 
             // 2. Generate on main target slide
             var dividerSlides = new Dictionary<int, Slide>();
             foreach(var kvp in dividerSlideIds) {
-                try { dividerSlides[kvp.Key] = pres.Slides.FindBySlideID(kvp.Value); } catch {}
+                try { dividerSlides[kvp.Key] = pres.Slides.FindBySlideID(kvp.Value); }
+                catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.Generate.DividerLookup"); }
             }
             GenerateAgendaItems(items, -1, dividerSlides, highlightCurrent);
 
@@ -138,6 +235,25 @@ namespace oPenEfficiency.Services
         }
 
         #region Neighborhood Logic
+
+        private List<string> GetExistingAgendaTopics(Presentation pres)
+        {
+            var topics = new List<string>();
+            if (pres == null) return topics;
+
+            for (int i = 1; i <= pres.Slides.Count; i++)
+            {
+                try
+                {
+                    string topic = pres.Slides[i].Tags["oPE_AgendaTopic"];
+                    if (!string.IsNullOrWhiteSpace(topic))
+                        topics.Add(topic);
+                }
+                catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.GetExistingTopics.ReadTag"); }
+            }
+
+            return topics;
+        }
 
         /// <summary>
         /// Deletes all PowerPoint sections that contain at least one oPE agenda slide,
@@ -174,7 +290,8 @@ namespace oPenEfficiency.Services
                                     isAgendaSection = true;
                                     break;
                                 }
-                            } catch { }
+                            }
+                            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.RemoveAgendaSections.ReadSlideTag"); }
                         }
                     }
 
@@ -185,7 +302,7 @@ namespace oPenEfficiency.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.RemoveAgendaSections"); }
         }
 
         /// <summary>
@@ -193,24 +310,29 @@ namespace oPenEfficiency.Services
         /// </summary>
         private Dictionary<string, List<int>> GetContentSlideMap(Presentation pres)
         {
-            var map = new Dictionary<string, List<int>>();
-            string currentTopic = null;
+            var map = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+            string currentAgendaKey = null;
 
             for (int i = 1; i <= pres.Slides.Count; i++)
             {
                 var slide = pres.Slides[i];
                 string topicTag = slide.Tags["oPE_AgendaTopic"];
+                string itemIdTag = slide.Tags["oPE_AgendaItemId"];
                 bool isDivider = !string.IsNullOrEmpty(slide.Tags["EE4P_AGENDA_DIVIDER"]) || !string.IsNullOrEmpty(slide.Tags["oPE_AgendaSlide"]);
 
                 if (isDivider && !string.IsNullOrEmpty(topicTag))
                 {
-                    currentTopic = topicTag;
-                    if (!map.ContainsKey(currentTopic)) map[currentTopic] = new List<int>();
+                    currentAgendaKey = GetAgendaKey(itemIdTag, topicTag);
+                    if (!map.ContainsKey(currentAgendaKey)) map[currentAgendaKey] = new List<int>();
                 }
-                else if (currentTopic != null && !isDivider)
+                else if (!string.IsNullOrEmpty(slide.Tags["oPE_BackupSlide"]) ||
+                         !string.IsNullOrEmpty(slide.Tags["EE4P_BACKUP_SLIDE"]))
                 {
-                    // This is a content slide belonging to currentTopic
-                    map[currentTopic].Add(slide.SlideID);
+                    currentAgendaKey = null;
+                }
+                else if (currentAgendaKey != null && !isDivider)
+                {
+                    map[currentAgendaKey].Add(slide.SlideID);
                 }
             }
             return map;
@@ -221,25 +343,34 @@ namespace oPenEfficiency.Services
         /// </summary>
         private void RestoreContentSlidePositions(Presentation pres, List<int> newDividerIds, Dictionary<string, List<int>> contentMap, List<AgendaItemData> items)
         {
-            foreach (var topic in contentMap.Keys)
+            foreach (var agendaKey in contentMap.Keys)
             {
-                // Find the new divider for this topic
                 Slide newDivider = null;
                 foreach (int id in newDividerIds)
                 {
                     try {
                         var s = pres.Slides.FindBySlideID(id);
-                        if (s.Tags["oPE_AgendaTopic"] == topic)
+                        string dividerKey = GetAgendaKey(
+                            s.Tags["oPE_AgendaItemId"],
+                            s.Tags["oPE_AgendaTopic"]);
+                        bool legacyTopicMatch = agendaKey.StartsWith("topic:", StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(
+                                "topic:" + (s.Tags["oPE_AgendaTopic"] ?? string.Empty).Trim(),
+                                agendaKey,
+                                StringComparison.OrdinalIgnoreCase);
+                        if (string.Equals(dividerKey, agendaKey, StringComparison.OrdinalIgnoreCase) ||
+                            legacyTopicMatch)
                         {
                             newDivider = s;
                             break;
                         }
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ReorderContent.FindDivider"); }
                 }
 
                 if (newDivider != null)
                 {
-                    var slideIdsToMove = contentMap[topic];
+                    var slideIdsToMove = contentMap[agendaKey];
                     int targetPos = newDivider.SlideIndex;
 
                     foreach (int slideId in slideIdsToMove)
@@ -251,8 +382,55 @@ namespace oPenEfficiency.Services
                                 targetPos++;
                                 slideToMove.MoveTo(targetPos);
                             }
-                        } catch { }
+                        }
+                        catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ReorderContent.MoveSlide"); }
                     }
+                }
+            }
+        }
+
+        private static string GetAgendaKey(string itemId, string topic)
+        {
+            return !string.IsNullOrWhiteSpace(itemId)
+                ? "id:" + itemId.Trim()
+                : "topic:" + (topic ?? string.Empty).Trim();
+        }
+
+        private void CreateMissingStarterSlides(
+            Presentation pres,
+            Dictionary<int, int> dividerSlideIds,
+            Dictionary<string, List<int>> existingContent,
+            List<AgendaItemData> items)
+        {
+            foreach (var pair in dividerSlideIds.OrderByDescending(entry => entry.Key))
+            {
+                var item = items[pair.Key];
+                if (item.Level != 0 || item.IsBreak) continue;
+
+                bool hasExistingContent = existingContent != null &&
+                    ((existingContent.TryGetValue(GetAgendaKey(item.Id, item.Topic), out var slideIds) &&
+                      slideIds.Count > 0) ||
+                     (existingContent.TryGetValue(GetAgendaKey(null, item.Topic), out slideIds) &&
+                      slideIds.Count > 0));
+                if (hasExistingContent) continue;
+
+                try
+                {
+                    var divider = pres.Slides.FindBySlideID(pair.Value);
+                    var starter = pres.Slides.Add(
+                        Math.Min(divider.SlideIndex + 1, pres.Slides.Count + 1),
+                        PpSlideLayout.ppLayoutText);
+                    starter.Tags.Add("oPE_AgendaStarterSlide", "True");
+                    starter.Tags.Add("oPE_AgendaItemId", item.Id);
+                    starter.Tags.Add("oPE_AgendaTopic", item.Topic);
+                    if (starter.Shapes.HasTitle == Office.MsoTriState.msoTrue)
+                        starter.Shapes.Title.TextFrame.TextRange.Text = item.Topic;
+                }
+                catch (System.Exception ex)
+                {
+                    throw new System.InvalidOperationException(
+                        $"A starter slide for '{item.Topic}' could not be created.",
+                        ex);
                 }
             }
         }
@@ -292,13 +470,39 @@ namespace oPenEfficiency.Services
                     }
 
                     titleShape.TextFrame.TextRange.Text = title;
+                    titleShape.Left = _layout.HeadlineShape.Left;
+                    titleShape.Top = _layout.HeadlineShape.Top;
+                    titleShape.Width = _layout.HeadlineShape.Width;
+                    titleShape.Height = _layout.HeadlineShape.Height;
                     ApplyShapeFormat(titleShape, _layout.HeadlineShape);
                     titleShape.Tags.Add("oPE_AgendaRole", "Headline");
                 }
                 else if (slide.Shapes.HasTitle == Office.MsoTriState.msoTrue) {
                     slide.Shapes.Title.TextFrame.TextRange.Text = title;
                 }
-            } catch { }
+            }
+            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.SetSlideTitle"); }
+        }
+
+        private void ApplySlideFrame(Slide slide, string title, string subtitle)
+        {
+            if (_layout.SlideShape != null)
+            {
+                if (_layout.SlideShape.HasFill)
+                {
+                    slide.FollowMasterBackground = Office.MsoTriState.msoFalse;
+                    slide.Background.Fill.Solid();
+                    slide.Background.Fill.ForeColor.RGB = _layout.SlideShape.FillColorRgb;
+                }
+                else
+                {
+                    slide.FollowMasterBackground = Office.MsoTriState.msoTrue;
+                }
+            }
+
+            SetupSlideTitle(slide, string.IsNullOrWhiteSpace(title) ? "Agenda" : title.Trim());
+            if (_layout.SubHeadlineShape != null && !string.IsNullOrWhiteSpace(subtitle))
+                CreateShape(_layout.SubHeadlineShape, subtitle.Trim(), "SubHeadline");
         }
 
         private void SafeCleanPlaceholders(Slide slide)
@@ -316,9 +520,11 @@ namespace oPenEfficiency.Services
                         }
                         if (s.Tags["oPE_AgendaRole"] == "Headline") continue;
                         s.Delete(); 
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.SafeCleanPlaceholders.DeleteShape"); }
                 }
-            } catch {}
+            }
+            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.SafeCleanPlaceholders"); }
         }
 
         private void ClearExistingAgendaShapes(Slide slide)
@@ -331,9 +537,11 @@ namespace oPenEfficiency.Services
                         var shape = slide.Shapes[i];
                         if (!string.IsNullOrEmpty(shape.Tags["EE4P_AGENDAWIZARD"]) || !string.IsNullOrEmpty(shape.Tags["oPE_AgendaRole"]))
                             shape.Delete();
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ClearExistingAgendaShapes.DeleteShape"); }
                 }
-            } catch {}
+            }
+            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ClearExistingAgendaShapes"); }
         }
 
         private void ClearExistingDividerSlides(Presentation pres, int protectId)
@@ -347,9 +555,11 @@ namespace oPenEfficiency.Services
                         if (slide.SlideID == protectId) continue;
                         if (!string.IsNullOrEmpty(slide.Tags["EE4P_AGENDA_DIVIDER"]))
                             slide.Delete();
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ClearExistingDividerSlides.DeleteSlide"); }
                 }
-            } catch {}
+            }
+            catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.ClearExistingDividerSlides"); }
         }
 
         public void GenerateAgendaItems(List<AgendaItemData> items, int activeItemIndex = -1, Dictionary<int, Slide> dividerSlides = null, bool highlightCurrent = false)
@@ -445,7 +655,7 @@ namespace oPenEfficiency.Services
 
             if (_layout.ItemTextShape != null)
             {
-                textShape = CreateShape(_layout.ItemTextShape, topicText, "Topic", isActive, linkTarget);
+                textShape = CreateShape(_layout.ItemTextShape, topicText, "Topic", isActive, linkTarget, item.Id);
                 textShape.Top = startY;
                 if (itemX.HasValue) textShape.Left = itemX.Value;
                 bottomY = Math.Max(bottomY, textShape.Top + textShape.Height);
@@ -453,7 +663,7 @@ namespace oPenEfficiency.Services
 
             if (_layout.ItemNumberingShape != null)
             {
-                var numShape = CreateShape(_layout.ItemNumberingShape, displayNumber, "ItemNo", isActive, linkTarget);
+                var numShape = CreateShape(_layout.ItemNumberingShape, displayNumber, "ItemNo", isActive, linkTarget, item.Id);
                 numShape.Top = startY + (_layout.AlignInfoShapesWithItem ? 0 : (_layout.ItemNumberingShape.Top - _layout.ItemTextShape.Top));
                 if (textShape != null) numShape.Left = textShape.Left + (_layout.ItemNumberingShape.Left - _layout.ItemTextShape.Left);
                 bottomY = Math.Max(bottomY, numShape.Top + numShape.Height);
@@ -461,21 +671,49 @@ namespace oPenEfficiency.Services
 
             if (_layout.ItemTimeShape != null && !string.IsNullOrEmpty(item.TimeSlot))
             {
-                var timeShape = CreateShape(_layout.ItemTimeShape, item.TimeSlot, "TimeSlot", isActive);
+                var timeShape = CreateShape(_layout.ItemTimeShape, item.TimeSlot, "TimeSlot", isActive, null, item.Id);
                 PositionInfoShape(timeShape, textShape, "Time");
                 bottomY = Math.Max(bottomY, timeShape.Top + timeShape.Height);
             }
 
             if (_layout.ItemPageNumberShape != null && !string.IsNullOrEmpty(item.PageNumber))
             {
-                var pageShape = CreateShape(_layout.ItemPageNumberShape, item.PageNumber, "PageNumber", isActive, linkTarget);
+                var pageShape = CreateShape(_layout.ItemPageNumberShape, item.PageNumber, "PageNumber", isActive, linkTarget, item.Id);
                 PositionInfoShape(pageShape, textShape, "PageNumber");
                 bottomY = Math.Max(bottomY, pageShape.Top + pageShape.Height);
             }
 
+            if (_layout.ItemDurationShape != null && item.ShowMinutes)
+            {
+                var durationShape = CreateShape(
+                    _layout.ItemDurationShape,
+                    $"{item.Duration} min",
+                    "Duration",
+                    isActive,
+                    null,
+                    item.Id);
+                PositionInfoShape(durationShape, textShape, "Duration");
+                bottomY = Math.Max(bottomY, durationShape.Top + durationShape.Height);
+            }
+
+            if (_layout.ItemResponsibleShape != null &&
+                item.ShowResponsible &&
+                !string.IsNullOrWhiteSpace(item.Responsible))
+            {
+                var responsibleShape = CreateShape(
+                    _layout.ItemResponsibleShape,
+                    item.Responsible,
+                    "Responsible",
+                    isActive,
+                    null,
+                    item.Id);
+                PositionInfoShape(responsibleShape, textShape, "Responsible");
+                bottomY = Math.Max(bottomY, responsibleShape.Top + responsibleShape.Height);
+            }
+
             if (_layout.ItemBackgroundShape != null)
             {
-                 var bgShape = CreateShape(_layout.ItemBackgroundShape, "", "Background", isActive);
+                 var bgShape = CreateShape(_layout.ItemBackgroundShape, "", "Background", isActive, null, item.Id);
                  bgShape.Top = startY;
                  if (itemX.HasValue) bgShape.Left = itemX.Value + (_layout.ItemBackgroundShape.Left - _layout.ItemTextShape.Left);
                  else bgShape.Left = textShape != null ? textShape.Left + (_layout.ItemBackgroundShape.Left - _layout.ItemTextShape.Left) : _layout.ItemBackgroundShape.Left;
@@ -496,7 +734,7 @@ namespace oPenEfficiency.Services
 
             if (textConfig != null)
             {
-                textShape = CreateShape(textConfig, topicText, "Topic", isActive);
+                textShape = CreateShape(textConfig, topicText, "Topic", isActive, null, item.Id);
                 textShape.Top = startY;
                 if (itemX.HasValue) textShape.Left = itemX.Value;
                 else textShape.Left = textConfig.Left;
@@ -508,7 +746,7 @@ namespace oPenEfficiency.Services
                 ShapeFormatConfig numConfig = _layout.SubItemNumberingShape ?? _layout.ItemNumberingShape;
                 if (numConfig != null)
                 {
-                    var numShape = CreateShape(numConfig, displayNumber, "ItemNo", isActive);
+                    var numShape = CreateShape(numConfig, displayNumber, "ItemNo", isActive, null, item.Id);
                     numShape.Top = startY + (_layout.AlignInfoShapesWithItem ? 0 : (numConfig.Top - textConfig.Top));
                     if (textShape != null) numShape.Left = textShape.Left + (numConfig.Left - textConfig.Left);
                     bottomY = Math.Max(bottomY, numShape.Top + numShape.Height);
@@ -518,9 +756,39 @@ namespace oPenEfficiency.Services
             if (_layout.SubItemBackgroundShape != null || _layout.ItemBackgroundShape != null)
             {
                  var bgConfig = _layout.SubItemBackgroundShape ?? _layout.ItemBackgroundShape;
-                 var bgShape = CreateShape(bgConfig, "", "Background", isActive);
+                 var bgShape = CreateShape(bgConfig, "", "Background", isActive, null, item.Id);
                  bgShape.Top = startY;
                  bgShape.ZOrder(Office.MsoZOrderCmd.msoSendToBack);
+            }
+
+            ShapeFormatConfig durationConfig = _layout.SubItemDurationShape ?? _layout.ItemDurationShape;
+            if (durationConfig != null && item.ShowMinutes)
+            {
+                var durationShape = CreateShape(
+                    durationConfig,
+                    $"{item.Duration} min",
+                    "Duration",
+                    isActive,
+                    null,
+                    item.Id);
+                PositionInfoShape(durationShape, textShape, "Duration", true);
+                bottomY = Math.Max(bottomY, durationShape.Top + durationShape.Height);
+            }
+
+            ShapeFormatConfig responsibleConfig = _layout.SubItemResponsibleShape ?? _layout.ItemResponsibleShape;
+            if (responsibleConfig != null &&
+                item.ShowResponsible &&
+                !string.IsNullOrWhiteSpace(item.Responsible))
+            {
+                var responsibleShape = CreateShape(
+                    responsibleConfig,
+                    item.Responsible,
+                    "Responsible",
+                    isActive,
+                    null,
+                    item.Id);
+                PositionInfoShape(responsibleShape, textShape, "Responsible", true);
+                bottomY = Math.Max(bottomY, responsibleShape.Top + responsibleShape.Height);
             }
 
             return bottomY;
@@ -585,10 +853,23 @@ namespace oPenEfficiency.Services
                 tr.Font.Color.RGB = config.FontColorRgb;
                 if (config.FontBold) tr.Font.Bold = Office.MsoTriState.msoTrue;
                 if (config.FontItalic) tr.Font.Italic = Office.MsoTriState.msoTrue;
+                int alignment = config.TextAlignment;
+                if (alignment < 1 || alignment > 4) alignment = 1;
+                tr.ParagraphFormat.Alignment = (PpParagraphAlignment)alignment;
+                shape.TextFrame.MarginLeft = config.MarginLeft;
+                shape.TextFrame.MarginRight = config.MarginRight;
+                shape.TextFrame.MarginTop = config.MarginTop;
+                shape.TextFrame.MarginBottom = config.MarginBottom;
             }
         }
 
-        private Shape CreateShape(ShapeFormatConfig config, string text, string role = null, bool isActive = false, Slide linkToSlide = null)
+        private Shape CreateShape(
+            ShapeFormatConfig config,
+            string text,
+            string role = null,
+            bool isActive = false,
+            Slide linkToSlide = null,
+            string agendaItemId = null)
         {
             var app = _manager.GetApplication();
             var pres = app.ActivePresentation;
@@ -624,7 +905,8 @@ namespace oPenEfficiency.Services
                     try {
                         shape.ActionSettings[PpMouseActivation.ppMouseClick].Action = PpActionType.ppActionHyperlink;
                         shape.ActionSettings[PpMouseActivation.ppMouseClick].Hyperlink.SubAddress = linkToSlide.SlideID + "," + linkToSlide.SlideIndex + ",";
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalAgendaFailure(ex, "AgendaGenerationService.AddTextShape.Hyperlink"); }
                 }
                 int align = config.TextAlignment; if (align < 1 || align > 4) align = 1;
                 tr.ParagraphFormat.Alignment = (PpParagraphAlignment)align;
@@ -638,17 +920,30 @@ namespace oPenEfficiency.Services
             shape.TextFrame.Orientation = (Office.MsoTextOrientation)orient;
 
             if (!string.IsNullOrEmpty(role)) {
-                string guid = Guid.NewGuid().ToString("D");
+                string guid = string.IsNullOrWhiteSpace(agendaItemId)
+                    ? Guid.NewGuid().ToString("D")
+                    : agendaItemId;
                 shape.Name = $"ee4p_item_{guid}_shape";
                 shape.Tags.Add("oPE_AgendaRole", role);
                 shape.Tags.Add("EE4P_AGENDAWIZARD", role);
+                shape.Tags.Add("oPE_AgendaItemId", guid);
             }
             return shape;
+        }
+
+        private static void ReportOptionalAgendaFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+            {
+                ExceptionLogger.Log(exception, context);
+            }
+            // Missing or stale slide/shape COM state must not abort generation of other agenda items.
         }
     }
 
     public class AgendaItemData
     {
+        public string Id { get; set; } = Guid.NewGuid().ToString("D");
         public int Level { get; set; }
         public string Topic { get; set; }
         public int Duration { get; set; }

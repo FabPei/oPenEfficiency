@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnIllustrationLibrary",
+  "title": "Illustration Library (Libraries)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/IllustrationLibraryFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnIllustrationLibrary-001",
+      "title": "Illustration Library applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/IllustrationLibraryFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Illustration Library (BtnIllustrationLibrary) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-001",
+      "title": "An insertion withholds the placeholder variants and the parts the user switched off, and the source file stays untouched",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/IllustrationInsertionPlanner.cs",
+        "oPenEfficiency.Core.Tests/IllustrationInsertionPlannerTests.cs",
+        "oPenEfficiency/Services/IllustrationInsertionService.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives IllustrationInsertionPlanner for Illustration Library: the prepared insertion copy drops the placeholder groups of the *-None variants and every part the user switched off while the remaining parts stay in the copy, and the artwork text the caller passed in keeps all of its groups.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationInsertionPlannerTests.TheInsertedCopyWithholdsPlaceholdersAndHiddenPartsAndLeavesTheSourceUntouched"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-002",
+      "title": "Palette replacements reach the prepared copy and leave the other colours of the artwork alone",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/IllustrationInsertionPlanner.cs",
+        "oPenEfficiency.Core.Tests/IllustrationInsertionPlannerTests.cs",
+        "oPenEfficiency/Services/IllustrationInsertionService.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives IllustrationInsertionPlanner for Illustration Library: a replacement map turns the requested colour of the prepared copy into its replacement (here #263238 into #BA68C8) while a colour that was not requested keeps its value, and the replacement is applied after the parts were removed.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationInsertionPlannerTests.ColorMapIsAppliedAfterThePartsAreRemoved"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-003",
+      "title": "An insertion that changes nothing inserts the original file instead of writing a copy",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/IllustrationInsertionPlanner.cs",
+        "oPenEfficiency.Core.Tests/IllustrationInsertionPlannerTests.cs",
+        "oPenEfficiency/Services/IllustrationInsertionService.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives IllustrationInsertionPlanner for Illustration Library: IsNoOp reports exactly the option sets that ask for no change (placeholder retention without hidden parts and without replacements, and the null options), ChangesNothing reports a prepared copy that came out identical to the source and refuses empty input, and IllustrationInsertionService.Insert uses these two decisions to insert the original file instead of a temp copy.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationInsertionPlannerTests.NoOpRoutesAreReportedExactly"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-004",
+      "title": "Only the named parts that carry artwork are offered for switching off",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/IllustrationInsertionPlanner.cs",
+        "oPenEfficiency.Core.Tests/IllustrationInsertionPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/IllustrationLibraryWindow.xaml.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives IllustrationInsertionPlanner for Illustration Library: the selectable parts of an artwork are its named parts in source order and never the placeholder variants, which is the list the figure panel of the window renders as switches.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationInsertionPlannerTests.SelectablePartsSkipPlaceholders"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-005",
+      "title": "The placement height follows the artwork viewBox, and artwork without a viewBox is reported instead of guessed",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/IllustrationInsertionPlanner.cs",
+        "oPenEfficiency.Core.Tests/IllustrationInsertionPlannerTests.cs",
+        "oPenEfficiency/Services/IllustrationInsertionService.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives IllustrationInsertionPlanner for Illustration Library: the viewBox of the artwork is read as its width and height (here 240 and 360) and a file without a usable viewBox is reported as unreadable, which is the aspect source IllustrationInsertionService uses for the slide placement.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationInsertionPlannerTests.ViewBoxDrivesTheAspectRatio"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-006",
+      "title": "PowerPoint inserts the illustration as a vector picture and one Undo removes it",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/IllustrationInsertionService.cs",
+        "oPenEfficiency/UI/Dialogs/IllustrationLibraryWindow.xaml",
+        "oPenEfficiency/UI/Dialogs/IllustrationLibraryWindow.xaml.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIllustrationLibrary.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Illustration Library inserts one bundled figure as a scalable SVG picture after applying a palette replacement. The result keeps the native viewBox aspect ratio and the oPE_Illustration tag and remains one selected slide object. One Undo removes the picture insertion. The run never touches an existing Office session.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIllustrationLibrary.ps1",
+        "arguments": [
+          "-Routes",
+          "picture"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-007",
+      "title": "Interactive editable-shapes insertion converts through PowerPoint's SVG Edit command",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/IllustrationInsertionService.cs",
+        "oPenEfficiency/UI/Dialogs/IllustrationLibraryWindow.xaml.cs"
+      ],
+      "ownerSteps": [
+        "Open PowerPoint with the deployed add-in and open the Illustration Library (Figures view).",
+        "Pick a bundled figure, replace its palette colour, choose the editable-shapes insert mode and insert.",
+        "Confirm the slide shows editable shapes (not a picture), fitting the footprint the preview picture showed.",
+        "Press Ctrl+Z up to three times: the chain (cosmetics re-fit, Convert-to-Shapes, insertion) clears the slide with the tagged picture as the last single-shape intermediate.",
+        "Re-insert and confirm the Selection Pane shows the illustration source name (Illustration <name>) on the inserted result; the oPE_Illustration metadata is a shape tag and never a Selection Pane name."
+      ],
+      "expected": "In interactive use, the editable-shapes insertion converts the inserted SVG picture through PowerPoint's own SVG Edit command into editable shapes, re-fits them into the picture's original footprint, re-tags them, re-names the converted result with the illustration source name, and keeps the bounded undo chain (at most three steps: cosmetics, conversion, insertion).",
+      "technicalReason": "Deterministic automation is not feasible for the conversion step: CommandBars.ExecuteMso(\"SVGEdit\") issued inside an external automation call silently does nothing (no effect, no error), while the same command converts correctly when issued interactively with an activated window. Evidence: TestResults/feat-011-illustration-library.json and docs/product/feat-011-illustration-library-todo.md (wave 6h decision). The production service fails closed in the automation context with an explicit 'converting to editable shapes is not available' message, which the automated picture leg QA9-BtnIllustrationLibrary-006 exercises around."
+    },
+    {
+      "id": "QA9-BtnIllustrationLibrary-008",
+      "title": "The editable-shapes route keeps the illustration source name after the SVG conversion",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/IllustrationInsertionService.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Both insertion routes share one source-name builder (Illustration <name>, item-id fallback) and the editable-shapes route re-names the converted result with it after re-fitting and re-tagging, so the Selection Pane keeps the illustration provenance after SVGEdit replaces the picture; the oPE_Illustration provenance stays a shape tag holding the item id. The host-free pin IllustrationEditableInsertionKeepsTheSourceName reddens without the re-name.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~IllustrationEditableInsertionKeepsTheSourceName"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

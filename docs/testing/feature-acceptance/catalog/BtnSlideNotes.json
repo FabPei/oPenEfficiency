@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSlideNotes",
+  "title": "Private Review Notes (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/SlideNotesFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSlideNotes-001",
+      "title": "Private Review Notes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SlideNotesFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Private Review Notes (BtnSlideNotes) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSlideNotes-001",
+      "title": "Slide Notes window opens and toggles closed in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=slide-notes|executed=True|opened=True|windowType=SlideNotesWindow|closed=True|closeBy=dispatch.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "slide-notes"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnSlideNotes-002",
+      "title": "Private comment overlay opens and toggles closed in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=slide-notes-overlay|executed=True|opened=True|windowType=PrivateCommentOverlayWindow|closed=True|closeBy=dispatch.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "slide-notes-overlay"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnSlideNotes-003",
+      "title": "Private comments overview window opens and reports its window state",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=slide-notes-overview|executed=True|opened=True|windowType=PrivateCommentsOverviewWindow|closed=True|closeBy=harness.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "slide-notes-overview"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

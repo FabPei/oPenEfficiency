@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableHeatmap",
+  "title": "Apply Table Heatmap (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableHeatmapFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableHeatmap-001",
+      "title": "Apply Table Heatmap applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableHeatmapFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Apply Table Heatmap (BtnTableHeatmap) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableHeatmap-002",
+      "title": "BtnTableHeatmap deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the fixture 3x3 table\\u0027s cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in fill mode paints the minimum cell (1,1) the exact low red, the exact-midpoint cell (1,2) the exact midpoint yellow and the maximum cell (1,3) the exact high green, leaves the non-numeric pre-filled label cell (2,3) blue, keeps all texts and the table geometry, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the fixture 3x3 table's cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in fill mode paints the minimum cell (1,1) the exact low red, the exact-midpoint cell (1,2) the exact midpoint yellow and the maximum cell (1,3) the exact high green, leaves the non-numeric pre-filled label cell (2,3) blue, keeps all texts and the table geometry, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableHeatmapApplier.cs",
+        "oPenEfficiency/Features/Tables/TableHeatmapFeature.cs",
+        "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "heatmap-fill"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnTableHeatmap-003",
+      "title": "BtnTableHeatmap font-color mode deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the fixture 3x3 table's cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in font-color mode paints the minimum cell (1,1) font red, the exact-midpoint cell (1,2) font yellow and the maximum cell (1,3) font green, never touches any fill (the pre-filled label cell (2,3) stays blue), keeps all texts and the table geometry, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the fixture 3x3 table's cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in font-color mode paints the minimum cell (1,1) font red, the exact-midpoint cell (1,2) font yellow and the maximum cell (1,3) font green, never touches any fill (the pre-filled label cell (2,3) stays blue), keeps all texts and the table geometry, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableHeatmapApplier.cs",
+        "oPenEfficiency/Features/Tables/TableHeatmapFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "heatmap-font"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnTableHeatmap-004",
+      "title": "BtnTableHeatmap icon mode deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the fixture 3x3 table\\u0027s cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in icon mode prefixes every numeric cell with its normalized preset-0 arrow (down below 0.33, right from 0.33, up from 0.66) with the matching red/yellow/green icon color, leaves the non-numeric label cell exactly as it was, keeps the table geometry, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the fixture 3x3 table's cells hold 10/30/50/20/40/Label/15/35/45; the entire-table heatmap run with color preset 0 (Red to Yellow to Green) in icon mode prefixes every numeric cell with its normalized preset-0 arrow (down below 0.33, right from 0.33, up from 0.66) with the matching red/yellow/green icon color, leaves the non-numeric label cell exactly as it was, keeps the table geometry, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableHeatmapApplier.cs",
+        "oPenEfficiency/Features/Tables/TableHeatmapFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "heatmap-icon"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

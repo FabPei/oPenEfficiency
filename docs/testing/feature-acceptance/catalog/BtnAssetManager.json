@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAssetManager",
+  "title": "Asset Library (Libraries)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAssetManager-001",
+      "title": "Asset Library applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Asset Library (BtnAssetManager) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAssetManager-002",
+      "title": "Asset library containment guard and folder-name sanitization pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/AssetLibraryPolicy.cs",
+        "oPenEfficiency/Services/LocalAssetService.cs"
+      ],
+      "expected": "The production guards pin: the containment rule that gates every write/delete accepts the asset root itself and its children (trailing separators irrelevant, case-insensitive) but rejects siblings that merely share the root prefix (C:\\Root2 vs C:\\Root), their children, unrelated ancestors, and blank/null input; the folder-name sanitization removes invalid filename characters, trims and underscores spaces, falls back to 'unnamed' for empty or blank results and caps names at 100 characters. LocalAssetService delegates both guards (CreateFolder/CreateSubFolder/DeleteAsset are gated by the containment rule).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~AssetLibraryPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

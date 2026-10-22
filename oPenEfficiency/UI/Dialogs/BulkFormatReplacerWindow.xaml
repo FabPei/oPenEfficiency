@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:oPenEfficiency.UI"
         xmlns:controls="clr-namespace:oPenEfficiency.UI.Controls"
-        Title="Bulk Format Replacer" Height="650" Width="550"
+        Title="Replace Formatting" Height="650" Width="550"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" Topmost="True" ShowInTaskbar="False">
     
@@ -54,7 +54,7 @@
             <Grid Grid.Row="0" Margin="0,0,0,25">
                 <StackPanel Orientation="Horizontal">
                     <controls:FeatureIcon Width="20" Height="20" Margin="0,0,12,0" FeatureId="BtnReplaceFont" IconColor="{StaticResource AccentBrush}"/>
-                    <TextBlock Text="Bulk Format Replacer" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="Replace Formatting" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="18" FontWeight="SemiBold"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click"/>
             </Grid>

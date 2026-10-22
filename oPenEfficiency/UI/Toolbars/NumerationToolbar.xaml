@@ -1,7 +1,7 @@
 <Window x:Class="oPenEfficiency.UI.NumerationToolbar"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Numeration" Height="50" Width="420"
+        Title="Numbered Marker" Height="50" Width="420"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False"
         MouseDown="Window_MouseDown"

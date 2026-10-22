@@ -88,7 +88,7 @@ namespace oPenEfficiency.Services
                         if (Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase))
                             return true;
                     }
-                    catch { }
+                    catch { /* Shapes with inaccessible text or metadata contribute no automatic tags. */ }
                 }
             }
 
@@ -156,7 +156,7 @@ namespace oPenEfficiency.Services
                     }
                 }
             }
-            catch { }
+            catch { /* Optional slide metadata contributes no tags when its COM proxy is stale. */ }
         }
 
         private static int CountWords(string text)

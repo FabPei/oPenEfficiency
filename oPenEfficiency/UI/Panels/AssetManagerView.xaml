@@ -10,7 +10,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Themes/Dark.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <Style x:Key="TabItemStyle" TargetType="ListBoxItem">
@@ -44,17 +44,39 @@
 
     <Grid Background="{DynamicResource WindowBackgroundBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- Row 0: Logo & Settings -->
-            <RowDefinition Height="Auto"/> <!-- Row 1: Tabs & Search -->
-            <RowDefinition Height="*"/>    <!-- Row 2: Content -->
+            <RowDefinition Height="Auto"/> <!-- Row 0: Tabs, actions & search -->
+            <RowDefinition Height="*"/>    <!-- Row 1: Content -->
         </Grid.RowDefinitions>
 
-        <!-- Logo & Settings Bar -->
-        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" Padding="12,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+        <!-- Navigation Row (tabs, actions, search) — brand bar removed per ui-space-audit AM-P-06 -->
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,4">
             <Grid>
-                <TextBlock Text="oPenEfficiency" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
-                
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Tabs (scrollable so narrow panes clip nothing) -->
+                <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False" Background="Transparent">
+                    <ListBox x:Name="SidebarMenu" Background="Transparent" BorderThickness="0"
+                             ItemContainerStyle="{StaticResource TabItemStyle}"
+                             SelectionChanged="SidebarMenu_SelectionChanged"
+                             VerticalAlignment="Bottom">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBoxItem Tag="MyAssets"><TextBlock Text="Favorites" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
+                        <ListBoxItem Tag="Slides"><TextBlock Text="Slides" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
+                        <ListBoxItem Tag="Shapes"><TextBlock Text="Objects" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
+                        <ListBoxItem Tag="Images"><TextBlock Text="Pictures" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
+                    </ListBox>
+                </ScrollViewer>
+
+                <!-- Actions (formerly the brand/logo bar) -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
                     <!-- Save Selection Button -->
                     <Button x:Name="BtnSaveSelection" Width="110" Height="28" Background="{DynamicResource AccentBrush}" BorderThickness="0" Cursor="Hand" Click="BtnSaveSelection_Click" Margin="0,0,10,0">
                         <Button.Template>
@@ -81,7 +103,7 @@
                     </Button>
 
                     <!-- Refresh Button -->
-                    <Button Width="28" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnRefresh_Click" ToolTip="Refresh Library" Margin="0,0,5,0">
+                    <Button x:Name="BtnRefresh" Width="28" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnRefresh_Click" ToolTip="Refresh Library" Margin="0,0,5,0">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}">
@@ -98,7 +120,7 @@
                     </Button>
 
                     <!-- Settings Button (Fixed Vector Icon) -->
-                    <Button Width="28" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnOpenSettings_Click" ToolTip="Settings">
+                    <Button x:Name="BtnOpenSettings" Width="28" Height="28" Background="Transparent" BorderThickness="0" Cursor="Hand" Click="BtnOpenSettings_Click" ToolTip="Settings">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}">
@@ -114,35 +136,9 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
-            </Grid>
-        </Border>
 
-        <!-- Navigation Row (Tabs & Search Aligned) -->
-        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="12,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Tabs -->
-                <ListBox x:Name="SidebarMenu" Grid.Column="0" Background="Transparent" BorderThickness="0" 
-                         ItemContainerStyle="{StaticResource TabItemStyle}" 
-                         SelectionChanged="SidebarMenu_SelectionChanged"
-                         VerticalAlignment="Bottom">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal"/>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBoxItem Tag="MyAssets"><TextBlock Text="Favorites" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
-                    <ListBoxItem Tag="Slides"><TextBlock Text="Slides" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
-                    <ListBoxItem Tag="Shapes"><TextBlock Text="Objects" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
-                    <ListBoxItem Tag="Images"><TextBlock Text="Pictures" FontSize="11" FontWeight="SemiBold"/></ListBoxItem>
-                </ListBox>
-
-                <!-- Search Bar (In same row as tabs) -->
-                <Border Grid.Column="1" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Width="250" Height="24" VerticalAlignment="Center" Margin="10,4,0,4">
+                <!-- Search (responsive: shrinks with the pane instead of a fixed 250 DIP) -->
+                <Border Grid.Column="2" Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" MinWidth="110" VerticalAlignment="Center" Margin="10,0,0,0">
                     <Grid>
                         <TextBox x:Name="SearchBox" Margin="5,0,0,0" Background="Transparent" Foreground="{DynamicResource TextPrimaryBrush}" BorderThickness="0" VerticalContentAlignment="Center" FontSize="10" TextChanged="SearchBox_TextChanged"/>
                         <TextBlock IsHitTestVisible="False" Text="Search..." VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{DynamicResource TextMutedBrush}" FontSize="10">
@@ -163,6 +159,6 @@
         </Border>
 
         <!-- Content Area -->
-        <ContentControl x:Name="MainContent" Grid.Row="2" Margin="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+        <ContentControl x:Name="MainContent" Grid.Row="1" Margin="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
     </Grid>
 </UserControl>

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSyncObjects",
+  "title": "Sync Shapes Across Slides (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/SyncObjectsFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSyncObjects-001",
+      "title": "Sync Shapes Across Slides applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/SyncObjectsFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Sync Shapes Across Slides (BtnSyncObjects) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSyncObjects-001",
+      "title": "Sync Objects window opens in real PowerPoint and reports its window state",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=sync-objects|executed=True|opened=True|windowType=SyncObjectsWindow|closed=True|closeBy=harness.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "sync-objects"
+        ]
+      }
+    },
+    {
+      "id": "REG-SYNC-WINDOW-DRAG-001",
+      "title": "Owner retake of Sync Shapes Across Slides header movement after the caption fix",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+        "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml.cs",
+        "eng/Smoke-SyncObjectsWindow.ps1"
+      ],
+      "expected": "In real PowerPoint, dragging the upper Sync Shapes Across Slides title region changes the window position; exactly one resize grip shows in the bottom-right corner, and Close/Cancel work normally.",
+      "ownerSteps": [
+        "Open Sync Shapes Across Slides in PowerPoint and drag its upper title region; confirm that the window position changes.",
+        "Confirm only one resize triangle shows in the bottom-right corner and that resizing still works.",
+        "Check the Close button and reopen the workspace."
+      ],
+      "technicalReason": "Deterministic automation verifies the native non-client routing only (WM_NCHITTEST: Title/TopPadding return HTCAPTION, Close/Body return HTCLIENT) plus the single-grip visual tree count in eng/Smoke-SyncObjectsWindow.ps1. Physical movement under a real pointer gesture follows the Map Builder precedent (REG-MAP-BUILDER-DRAG-001): one synthetic fixture gesture produced zero movement and a further attempt refused input because the fixture shell was not opaque, so no synthetic pointer input is injected and movement must be observed interactively by the owner."
+    },
+    {
+      "id": "REG-SYNC-WINDOW-UI-001",
+      "title": "Sync Shapes Across Slides keeps one resize grip and routes its header to native dragging",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+        "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml.cs",
+        "eng/Smoke-SyncObjectsWindow.ps1"
+      ],
+      "expected": "The actual compiled Sync Shapes Across Slides window contains exactly one resize grip (the workspace corner grip; the former footer grip that produced the duplicated triangle is gone) and routes its full measured header region to native HTCAPTION while Close and the body stay HTCLIENT.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-SyncObjectsWindow.ps1",
+        "arguments": []
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

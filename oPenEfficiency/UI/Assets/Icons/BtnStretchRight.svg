@@ -10,7 +10,7 @@
    <path id="svg_15" stroke=" rgba(0, 0, 0, 0.9)" d="m17.1705,3.16136l1,0"/>
    <g id="svg_17">
     <rect transform="matrix(0, -1, 1, 0, -11, 0)" id="svg_8" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" rx="1" y="13.97875" x="-10.10053" height="7" width="7"/>
-    <g id="svg_13">
+    <g id="svg_13" data-oe-role="accent" data-oe-accent-role="ActionBlue">
      <path id="svg_9" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 1.166px" d="m12.91721,6.60053l3.498,0"/>
      <path id="svg_10" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 1.166px" d="m15.75611,8.35003l1.75,-1.75l-1.75,-1.749"/>
     </g>

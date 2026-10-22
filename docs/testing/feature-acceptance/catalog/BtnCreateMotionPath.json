@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnCreateMotionPath",
+  "title": "Create Motion Path (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnCreateMotionPath-001",
+      "title": "Create Motion Path applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Create Motion Path (BtnCreateMotionPath) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnCreateMotionPath-002",
+      "title": "Motion-path delta and mode expansion are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/MotionPathPolicy.cs",
+        "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+        "oPenEfficiency.Core.Tests/MotionPathPolicyTests.cs"
+      ],
+      "expected": "Create Motion Path expands its mode host-free (FirstToSecond animates only forward, SecondToFirst only backward, BothDirections both), measures the center-to-center delta of the two shapes as a fraction of the slide size, and builds the motion path string with invariant-culture coordinates regardless of the user's locale.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~MotionPathPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnCreateMotionPath-003",
+      "title": "Create Motion Path writes the forward slide-relative motion path in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+        "eng/Smoke-PowerPointMotionPath.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Create Motion Path (first shape to second shape) adds exactly one timeline effect whose motion path carries the center-to-center delta of the two probes as a fraction of the slide size (measured fixture: 0.3333;0.4074), the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointMotionPath.ps1",
+        "arguments": [
+          "-Mode",
+          "first-to-second"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnCreateMotionPath-004",
+      "title": "Create Motion Path writes the backward slide-relative motion path in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+        "eng/Smoke-PowerPointMotionPath.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Create Motion Path (second shape to first shape, the right-click reverse route) adds exactly one timeline effect whose motion path carries the negated center-to-center delta (measured fixture: -0.3333;-0.4074), the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointMotionPath.ps1",
+        "arguments": [
+          "-Mode",
+          "second-to-first"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnCreateMotionPath-005",
+      "title": "Create Motion Path writes both directions in one undo entry in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Shapes/CreateMotionPathFeature.cs",
+        "eng/Smoke-PowerPointMotionPath.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Create Motion Path (both directions) adds exactly two timeline effects, one carrying the forward delta (0.3333;0.4074) and one the negated delta (-0.3333;-0.4074), the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointMotionPath.ps1",
+        "arguments": [
+          "-Mode",
+          "both"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

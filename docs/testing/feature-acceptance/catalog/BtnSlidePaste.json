@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSlidePaste",
+  "title": "Insert Slide Snapshots (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/SlidePasteFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSlidePaste-001",
+      "title": "Insert Slide Snapshots applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SlidePasteFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Insert Slide Snapshots (BtnSlidePaste) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSlidePaste-002",
+      "title": "Snapshot grid layout is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/SnapshotGridLayoutPolicy.cs",
+        "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml.cs",
+        "oPenEfficiency.Core.Tests/SnapshotGridLayoutPolicyTests.cs"
+      ],
+      "expected": "The grid starts from the default snapshot size and shrinks the height by 5% per iteration (preserving the width/height ratio) until the rows fit the available area, bounded by 200 iterations and the ~0.5cm safety minimum (the historical loop stops after the shrink that crosses the floor, so the final height sits just below it); the column count is recomputed from the final size with a floor of one column.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SnapshotGridLayoutPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

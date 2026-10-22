@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnIllustrativeSticker",
+  "title": "Status Sticker (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/IllustrativeStickerFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnIllustrativeSticker-001",
+      "title": "Status Sticker applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/IllustrativeStickerFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Status Sticker (BtnIllustrativeSticker) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnIllustrativeSticker-001",
+      "title": "The status sticker preview composes its text and metadata from the configuration",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Visuals/IllustrativeStickerFeature.cs"
+      ],
+      "expected": "CreateStatusSticker uses the first configured status label, appends the date and author in the documented ' · ' order when enabled, resolves the configured font, maps the bold and italic flags and humanizes the stored position ('BottomLeft' becomes 'Bottom left').",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.StatusPreviewUsesFirstLabelAndConfiguredMetadata"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrativeSticker-002",
+      "title": "Empty or invalid sticker settings still produce safe representative previews",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Visuals/IllustrativeStickerFeature.cs"
+      ],
+      "expected": "With blank text, an invalid colour and missing values, the sticky preview falls back to 'Sticky note' with the theme palette and the resolved theme font, and the status preview falls back to 'Work in progress' with its documented red.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.EmptySettingsProduceSafeRepresentativePreviews"
+      }
+    },
+    {
+      "id": "QA9-BtnIllustrativeSticker-003",
+      "title": "Illustrative Sticker creates exactly one shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointUtilities.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Illustrative Sticker with the bounded text overload on an empty slide adds exactly one shape (measured shapeCountDelta=1), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointUtilities.ps1",
+        "arguments": [
+          "-Mode",
+          "illustrative-sticker"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -56,7 +56,7 @@ namespace oPenEfficiency.UI
             if (selection != null && selection.Count == 1)
             {
                 var selected = selection[1];
-                if (selected.AlternativeText != null && selected.AlternativeText.StartsWith("oPE_Checkbox"))
+                if (oPenEfficiency.Core.Services.CheckboxStatePolicy.IsCheckboxTag(selected.AlternativeText))
                 {
                     _targetShape = selected;
                     ParseTag(selected.AlternativeText);
@@ -77,7 +77,7 @@ namespace oPenEfficiency.UI
             if (selection != null && selection.Count == 1)
             {
                 var selected = selection[1];
-                if (selected.AlternativeText != null && selected.AlternativeText.StartsWith("oPE_Checkbox"))
+                if (oPenEfficiency.Core.Services.CheckboxStatePolicy.IsCheckboxTag(selected.AlternativeText))
                 {
                     _targetShape = selected;
                 }
@@ -122,20 +122,19 @@ namespace oPenEfficiency.UI
                 if (this.Top < 0) this.Top = 10;
                 if (this.Left < 0) this.Left = 10;
             }
-            catch { }
+            catch { /* Toolbar positioning falls back to its existing screen location. */ }
         }
 
         private void ParseTag(string altText)
         {
-            // Format: oPE_Checkbox|state|hasFrame|fontSize|colorRgb
-            var parts = altText.Split('|');
-            if (parts.Length >= 5)
-            {
-                Enum.TryParse(parts[1], out _currentState);
-                bool.TryParse(parts[2], out _hasFrame);
-                float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _fontSize);
-                int.TryParse(parts[4], out _fillColorRgb);
-            }
+            oPenEfficiency.Core.Services.CheckboxStatePolicy.ParseTagFields(
+                altText, out string stateText, out bool hasFrame, out float fontSize, out int fillColorRgb);
+            if (stateText == null) return;
+
+            Enum.TryParse(stateText, out _currentState);
+            _hasFrame = hasFrame;
+            _fontSize = fontSize;
+            _fillColorRgb = fillColorRgb;
         }
 
         private void SyncUIFromState()
@@ -214,7 +213,7 @@ namespace oPenEfficiency.UI
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            try { DragMove(); } catch { }
+            try { DragMove(); } catch { /* DragMove can be rejected when the mouse button is released mid-event. */ }
         }
 
         private void Window_Deactivated(object sender, EventArgs e)
@@ -299,14 +298,14 @@ namespace oPenEfficiency.UI
                     if (selection != null && selection.Count == 1)
                     {
                         var selected = selection[1];
-                        if (selected.AlternativeText != null && selected.AlternativeText.StartsWith("oPE_Checkbox"))
+                        if (oPenEfficiency.Core.Services.CheckboxStatePolicy.IsCheckboxTag(selected.AlternativeText))
                         {
                             _targetShape = selected;
                         }
                     }
                 }
             }
-            catch { }
+            catch { /* A stale selection is ignored until the next PowerPoint selection event. */ }
         }
     }
 }

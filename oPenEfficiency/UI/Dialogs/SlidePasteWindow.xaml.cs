@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,7 +17,7 @@ namespace oPenEfficiency.UI
     public partial class SlidePasteWindow : Window
     {
         // ─── Constants ────────────────────────────────────────────────────────
-        private const float CmToPt = 28.3465f;
+        private const float CmToPt = oPenEfficiency.Core.Services.SnapshotGridLayoutPolicy.CmToPt;
         private const float MarginCm = 1.5f;
         private const float GapCm = 0.3f;
         private const float DefaultWidthCm = 7.11f;
@@ -25,26 +27,31 @@ namespace oPenEfficiency.UI
         private const double ThumbW = 112.0;
         private const double ThumbH = 63.0;
 
-        // Maximum iterations when shrinking image size to fit; 200 is sufficient because
-        // each step reduces H by 5%, so after 200 steps H ≈ H0 * 0.95^200 ≈ 0 (well past minimum).
-        private const int MaxLayoutIterations = 200;
-
         // ─── Fields ────────────────────────────────────────────────────────────
         private readonly PowerPointManager _manager;
-        private readonly HashSet<int> _selectedIndices = new HashSet<int>();   // 1-based slide indices
+        private readonly HashSet<int> _selectedSlideIds = new HashSet<int>();
         private readonly string _tempDir;
+        private Presentation _sourcePresentation;
 
         // ─── Construction ─────────────────────────────────────────────────────
-        public SlidePasteWindow(PowerPointManager manager)
+        public SlidePasteWindow(PowerPointManager manager, bool addLinks = false, bool addShadows = false)
         {
             InitializeComponent();
             _manager = manager;
+            ChkAddLink.IsChecked = addLinks;
+            ChkAddShadow.IsChecked = addShadows;
 
             _tempDir = Path.Combine(Path.GetTempPath(), "oPenEfficiency_SlidePaste_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
 
             Loaded += OnLoaded;
             Closed += OnClosed;
+        }
+
+        public void SetOptions(bool addLinks, bool addShadows)
+        {
+            ChkAddLink.IsChecked = addLinks;
+            ChkAddShadow.IsChecked = addShadows;
         }
 
         // ─── Window events ────────────────────────────────────────────────────
@@ -77,6 +84,7 @@ namespace oPenEfficiency.UI
                 var app = _manager.GetApplication();
                 var pres = app.ActivePresentation;
                 if (pres == null) return;
+                _sourcePresentation = pres;
 
                 int count = pres.Slides.Count;
                 if (count == 0) return;
@@ -119,7 +127,8 @@ namespace oPenEfficiency.UI
                     var capturedBmp = bmp;
                     int capturedIndex = slideIndex;
 
-                    Dispatcher.Invoke(() => AddSlideItem(capturedIndex, capturedBmp));
+                    int slideId = pres.Slides[i].SlideID;
+                    Dispatcher.Invoke(() => AddSlideItem(capturedIndex, slideId, capturedBmp));
                 }
 
                 Dispatcher.Invoke(() =>
@@ -134,7 +143,7 @@ namespace oPenEfficiency.UI
             }
         }
 
-        private void AddSlideItem(int slideIndex, BitmapImage thumbnail)
+        private void AddSlideItem(int slideIndex, int slideId, BitmapImage thumbnail)
         {
             // Outer container
             var itemBorder = new Border
@@ -147,7 +156,7 @@ namespace oPenEfficiency.UI
                 BorderBrush = Brushes.Transparent,
                 CornerRadius = new CornerRadius(4),
                 Cursor = Cursors.Hand,
-                Tag = slideIndex
+                Tag = slideId
             };
 
             var stack = new StackPanel { Orientation = Orientation.Vertical };
@@ -208,17 +217,17 @@ namespace oPenEfficiency.UI
             // Click handler
             itemBorder.MouseLeftButtonDown += (s, e) =>
             {
-                int idx = (int)itemBorder.Tag;
-                if (_selectedIndices.Contains(idx))
+                int id = (int)itemBorder.Tag;
+                if (_selectedSlideIds.Contains(id))
                 {
-                    _selectedIndices.Remove(idx);
+                    _selectedSlideIds.Remove(id);
                     itemBorder.BorderBrush = Brushes.Transparent;
                     selectionOverlay.Visibility = Visibility.Collapsed;
                     checkmark.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    _selectedIndices.Add(idx);
+                    _selectedSlideIds.Add(id);
                     itemBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
                     selectionOverlay.Visibility = Visibility.Visible;
                     checkmark.Visibility = Visibility.Visible;
@@ -229,12 +238,12 @@ namespace oPenEfficiency.UI
             // Hover effect
             itemBorder.MouseEnter += (s, e) =>
             {
-                if (!_selectedIndices.Contains((int)itemBorder.Tag))
+                if (!_selectedSlideIds.Contains((int)itemBorder.Tag))
                     itemBorder.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3F, 0x3F, 0x4A));
             };
             itemBorder.MouseLeave += (s, e) =>
             {
-                if (!_selectedIndices.Contains((int)itemBorder.Tag))
+                if (!_selectedSlideIds.Contains((int)itemBorder.Tag))
                     itemBorder.BorderBrush = Brushes.Transparent;
             };
 
@@ -243,7 +252,7 @@ namespace oPenEfficiency.UI
 
         private void UpdateStatus()
         {
-            int n = _selectedIndices.Count;
+            int n = _selectedSlideIds.Count;
             if (n == 0)
             {
                 TxtStatus.Text = "No slides selected";
@@ -261,26 +270,51 @@ namespace oPenEfficiency.UI
         // ─── Insert ───────────────────────────────────────────────────────────
         private void BtnInsert_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedIndices.Count == 0) return;
+            if (_selectedSlideIds.Count == 0) return;
+
+            var createdShapes = new List<Shape>();
 
             try
             {
                 var app = _manager.GetApplication();
                 var pres = app.ActivePresentation;
+                if (pres == null || _sourcePresentation == null || !IsSameComObject(pres, _sourcePresentation))
+                {
+                    MessageBox.Show(
+                        "The active presentation changed while Insert Slide Snapshots was open. Return to the original presentation or reopen Insert Slide Snapshots.",
+                        "Insert Slide Snapshots",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
                 var targetSlide = _manager.GetCurrentSlide();
                 if (targetSlide == null)
                 {
                     MessageBox.Show("No active slide found. Please navigate to a slide first.",
-                        "Slide Paste", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "Insert Slide Snapshots", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
                 bool addLink = ChkAddLink.IsChecked == true;
                 bool addShadow = ChkAddShadow.IsChecked == true;
 
-                // Sort selected indices
-                var sortedIndices = new List<int>(_selectedIndices);
-                sortedIndices.Sort();
+                var sourceSlides = new List<Slide>();
+                foreach (int slideId in _selectedSlideIds)
+                {
+                    try
+                    {
+                        var sourceSlide = pres.Slides.FindBySlideID(slideId);
+                        if (sourceSlide != null) sourceSlides.Add(sourceSlide);
+                    }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "SlidePasteWindow.ResolveSourceSlide"); }
+                }
+                sourceSlides = sourceSlides.OrderBy(slide => slide.SlideIndex).ToList();
+                if (sourceSlides.Count == 0)
+                {
+                    MessageBox.Show("The selected source slides no longer exist.", "Insert Slide Snapshots", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 // Layout calculation
                 float margin = MarginCm * CmToPt;
@@ -294,45 +328,43 @@ namespace oPenEfficiency.UI
                 float availW = slideWidth - 2 * margin;
                 float availH = slideHeight - 2 * margin;
 
-                int n = sortedIndices.Count;
-                float W = defaultW;
-                float H = defaultH;
-
+                int n = sourceSlides.Count;
                 // Reduce image size until all images fit within the available slide area
-                float minH = 0.5f * CmToPt; // safety minimum ~0.5cm
-                for (int attempt = 0; attempt < MaxLayoutIterations; attempt++)
-                {
-                    int cols = Math.Max(1, (int)Math.Floor((availW + gap) / (W + gap)));
-                    int rows = (int)Math.Ceiling((double)n / cols);
-                    float totalH = rows * H + (rows - 1) * gap;
-                    if (totalH <= availH) break;
-                    H *= 0.95f;
-                    W = H * ratio;
-                    if (H < minH) break;
-                }
+                oPenEfficiency.Core.Services.SnapshotGridLayoutPolicy.FitGrid(
+                    n, availW, availH, gap, defaultW, defaultH, ratio,
+                    out float W, out float H, out int finalCols);
 
-                int finalCols = Math.Max(1, (int)Math.Floor((availW + gap) / (W + gap)));
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "SlidePasteWindow.StartNewUndoEntry"); }
 
-                // Export each selected slide at higher resolution and insert
-                for (int i = 0; i < sortedIndices.Count; i++)
+                int skippedCount = 0;
+                for (int i = 0; i < sourceSlides.Count; i++)
                 {
-                    int slideIdx = sortedIndices[i];
-                    string exportPath = Path.Combine(_tempDir, $"export_{slideIdx}.png");
+                    Slide sourceSlide = sourceSlides[i];
+                    int slideIndex = sourceSlide.SlideIndex;
+                    int slideId = sourceSlide.SlideID;
+                    string exportPath = Path.Combine(_tempDir, $"export_{slideId}.png");
 
                     try
                     {
-                        pres.Slides[slideIdx].Export(exportPath, "PNG", 960, 540);
+                        sourceSlide.Export(exportPath, "PNG", 960, 540);
                     }
                     catch (Exception ex)
                     {
-                        ExceptionLogger.Log(ex, $"SlidePasteWindow.BtnInsert_Click.Export slide {slideIdx}");
+                        ExceptionLogger.Log(ex, $"SlidePasteWindow.BtnInsert_Click.Export slide {slideIndex}");
+                        skippedCount++;
                         continue;
                     }
 
-                    if (!File.Exists(exportPath)) continue;
+                    if (!File.Exists(exportPath))
+                    {
+                        skippedCount++;
+                        continue;
+                    }
 
-                    int col = i % finalCols;
-                    int row = i / finalCols;
+                    int layoutIndex = createdShapes.Count;
+                    int col = layoutIndex % finalCols;
+                    int row = layoutIndex / finalCols;
                     float left = margin + col * (W + gap);
                     float top = margin + row * (H + gap);
 
@@ -341,6 +373,9 @@ namespace oPenEfficiency.UI
                         Office.MsoTriState.msoFalse,  // LinkToFile = false
                         Office.MsoTriState.msoTrue,   // SaveWithDocument = true
                         left, top, W, H);
+                    pic.Name = $"oPE_SlidePaste_{slideId}";
+                    pic.Tags.Add("oPE_SlidePasteSourceSlideId", slideId.ToString());
+                    createdShapes.Add(pic);
 
                     if (addShadow)
                     {
@@ -364,22 +399,58 @@ namespace oPenEfficiency.UI
                         {
                             var actionSetting = pic.ActionSettings[PpMouseActivation.ppMouseClick];
                             actionSetting.Action = PpActionType.ppActionHyperlink;
-                            actionSetting.Hyperlink.SubAddress = slideIdx.ToString();
+                            actionSetting.Hyperlink.SubAddress = $"{slideId},{slideIndex},";
                         }
                         catch (Exception ex)
                         {
-                            ExceptionLogger.Log(ex, $"SlidePasteWindow.Link slide {slideIdx}");
+                            ExceptionLogger.Log(ex, $"SlidePasteWindow.Link slide {slideIndex}");
                         }
                     }
                 }
 
+                if (createdShapes.Count == 0)
+                {
+                    MessageBox.Show("No slide images could be inserted. Review the error log for export details.", "Insert Slide Snapshots", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (skippedCount > 0)
+                {
+                    MessageBox.Show(
+                        $"Inserted {createdShapes.Count} slide image(s); {skippedCount} source slide(s) were skipped because export failed.",
+                        "Insert Slide Snapshots — Incomplete",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                }
                 Close();
             }
             catch (Exception ex)
             {
+                for (int i = createdShapes.Count - 1; i >= 0; i--)
+                {
+                    try { createdShapes[i].Delete(); }
+                    catch (Exception rollbackEx) { ExceptionLogger.Log(rollbackEx, "SlidePasteWindow.BtnInsert_Click.Rollback"); }
+                }
                 ExceptionLogger.Log(ex, "SlidePasteWindow.BtnInsert_Click");
                 MessageBox.Show($"An error occurred while inserting slides:\n{ex.Message}",
-                    "Slide Paste", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Insert Slide Snapshots", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private static bool IsSameComObject(object first, object second)
+        {
+            IntPtr firstPointer = IntPtr.Zero;
+            IntPtr secondPointer = IntPtr.Zero;
+            try
+            {
+                firstPointer = Marshal.GetIUnknownForObject(first);
+                secondPointer = Marshal.GetIUnknownForObject(second);
+                return firstPointer == secondPointer;
+            }
+            finally
+            {
+                if (firstPointer != IntPtr.Zero) Marshal.Release(firstPointer);
+                if (secondPointer != IntPtr.Zero) Marshal.Release(secondPointer);
             }
         }
     }

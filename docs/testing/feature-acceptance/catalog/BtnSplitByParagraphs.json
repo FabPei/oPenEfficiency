@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSplitByParagraphs",
+  "title": "Split Text Box by Paragraphs (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/SplitByParagraphsFeature.cs",
+    "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSplitByParagraphs-001",
+      "title": "Split Text Box by Paragraphs applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SplitByParagraphsFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Split Text Box by Paragraphs (BtnSplitByParagraphs) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSplitByParagraphs-001",
+      "title": "Merging text boxes follows top-to-bottom, left-to-right reading order with the documented 5 pt row tolerance",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SplitByParagraphsFeature.cs",
+        "oPenEfficiency.Core/Services/ParagraphFlowPlanner.cs",
+        "oPenEfficiency.Core.Tests/ParagraphFlowPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives ParagraphFlowPlanner for Split Text Box by Paragraphs (Merge Selected Text Boxes): shapes whose top edges differ by at most 5 pt count as one row and order left to right, beyond that tolerance the top edge decides, a later row sorts after an earlier one regardless of the left edge, and identical positions compare equal.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ParagraphFlowPlannerTests.ReadingOrderUsesTheDocumentedRowTolerance"
+      }
+    },
+    {
+      "id": "QA9-BtnSplitByParagraphs-002",
+      "title": "Splitting drops empty paragraphs by default, keeps them on request, and merges with one paragraph mark per paragraph",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SplitByParagraphsFeature.cs",
+        "oPenEfficiency.Core/Services/ParagraphFlowPlanner.cs",
+        "oPenEfficiency.Core.Tests/ParagraphFlowPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives ParagraphFlowPlanner for Split Text Box by Paragraphs: a paragraph's trailing paragraph marks are stripped for the new text box, an empty paragraph is dropped by default and retained on the keep-empty route, and merging joins the collected texts with exactly one paragraph mark per paragraph.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ParagraphFlowPlannerTests.ParagraphCollectionKeepsOrDropsEmptyParagraphsAndStripsEndings"
+      }
+    },
+    {
+      "id": "QA9-BtnSplitByParagraphs-003",
+      "title": "Split by Paragraphs splits a two-paragraph text box in real PowerPoint via the dialog driver",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Split by Paragraphs on one text box holding two non-empty paragraphs shows its confirmation dialog (the driver measures dialogSeen=True), the driver dismisses it with a synthetic key press (dialogClosed=True), the feature splits the box into exactly two text boxes carrying first paragraph and second paragraph (measured countBefore=1 countAfter=2 hasFirst=True hasSecond=True), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "split-by-paragraphs"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

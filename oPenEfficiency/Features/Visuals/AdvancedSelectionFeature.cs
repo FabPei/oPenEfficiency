@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features
 {
     /// <summary>
-    /// Selection engine used by SelectSameTypeFeature. Not registered as a sidebar button directly.
+    /// Feature: Select multiple shapes on a slide based on criteria matching a reference shape.
     /// </summary>
     public static class AdvancedSelectionFeature
     {
@@ -139,7 +140,7 @@ namespace oPenEfficiency.Features
         }
 
         /// <summary>
-        /// Wrapper for auto-discovery - selects shapes of the same type as the first selected shape.
+        /// Selects shapes of the same type as the first selected shape.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
@@ -160,7 +161,7 @@ namespace oPenEfficiency.Features
                 var slide = app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
-                var refShape = manager.GetReferenceShape();
+                var refShape = shapeRange[1];
                 
                 // Reference values
                 var refType = refShape.Type;
@@ -551,7 +552,7 @@ namespace oPenEfficiency.Features
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"AdvancedSelection Error: {ex}");
+                ExceptionLogger.Log(ex, "AdvancedSelectionFeature.Execute");
                 return false;
             }
         }

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnNumeration",
+  "title": "Numbered Marker (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/NumerationFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnNumeration-001",
+      "title": "Numbered Marker applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/NumerationFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Numbered Marker (BtnNumeration) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnNumeration-002",
+      "title": "Numbered Marker state codec and replacement placement are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/NumerationStatePolicy.cs",
+        "oPenEfficiency/Features/Utilities/NumerationFeature.cs"
+      ],
+      "expected": "The persistent AlternativeText codec writes the documented defaults invariant (number 1, Circle, 22.68 points, #005C94, opaque) and the lenient read requires the oPE_Numeration prefix, applies only present fields, keeps the defaults for sizes outside the 5..200 point window and for unparsable or empty colors, and clamps a parsed alpha into 0..255; a replacement marker is centered on the predecessor shape's center.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~NumerationStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnNumeration-003",
+      "title": "Numeration stamps the selected shape with a two-shape numbered marker in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointUtilities.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Numeration on one selected rectangle adds exactly two shapes (measured shapeCountDelta=2: the seam fixture rectangle plus the single badge shape the feature creates, whose TextFrame holds the digit), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointUtilities.ps1",
+        "arguments": [
+          "-Mode",
+          "numeration"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

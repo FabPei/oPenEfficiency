@@ -1,0 +1,364 @@
+{
+  "notice": "Frozen source contract; not execution evidence.",
+  "defaultSections": [
+    {
+      "name": "COMMAND SEARCH",
+      "features": [
+        {
+          "id": "BtnSearchBar"
+        }
+      ]
+    },
+    {
+      "name": "AlignAndSize",
+      "features": [
+        {
+          "id": "BtnSizePanel"
+        },
+        {
+          "id": "BtnMagicResizer"
+        },
+        {
+          "id": "BtnMatchSize"
+        },
+        {
+          "id": "BtnMatchWidth"
+        },
+        {
+          "id": "BtnMatchHeight"
+        },
+        {
+          "id": "BtnSlideSize"
+        },
+        {
+          "id": "BtnAlignLeft"
+        },
+        {
+          "id": "BtnAlignCenter"
+        },
+        {
+          "id": "BtnAlignRight"
+        },
+        {
+          "id": "BtnAlignTop"
+        },
+        {
+          "id": "BtnAlignCenterVertical"
+        },
+        {
+          "id": "BtnAlignBottom"
+        },
+        {
+          "id": "BtnDistributeHorizontal"
+        },
+        {
+          "id": "BtnDistributeVertical"
+        },
+        {
+          "id": "BtnRemoveHorizontalGaps"
+        },
+        {
+          "id": "BtnRemoveVerticalGaps"
+        },
+        {
+          "id": "BtnAdjustSpacing"
+        },
+        {
+          "id": "BtnStretchLeft"
+        },
+        {
+          "id": "BtnStretchRight"
+        },
+        {
+          "id": "BtnStretchTop"
+        },
+        {
+          "id": "BtnStretchBottom"
+        },
+        {
+          "id": "BtnStretchLeftEdge"
+        },
+        {
+          "id": "BtnStretchRightEdge"
+        },
+        {
+          "id": "BtnStretchTopEdge"
+        },
+        {
+          "id": "BtnStretchBottomEdge"
+        },
+        {
+          "id": "BtnDockLeft"
+        },
+        {
+          "id": "BtnDockRight"
+        },
+        {
+          "id": "BtnDockTop"
+        },
+        {
+          "id": "BtnDockBottom"
+        },
+        {
+          "id": "BtnAlignShapeAdjustments"
+        }
+      ]
+    },
+    {
+      "name": "ArrangeAndOrganize",
+      "features": [
+        {
+          "id": "BtnCopyXY"
+        },
+        {
+          "id": "BtnPasteXY"
+        },
+        {
+          "id": "BtnPositionPainter"
+        },
+        {
+          "id": "BtnSwapPositions"
+        },
+        {
+          "id": "BtnBringToFront"
+        },
+        {
+          "id": "BtnSendToBack"
+        },
+        {
+          "id": "BtnSelectSameType"
+        },
+        {
+          "id": "BtnHideSelected"
+        },
+        {
+          "id": "BtnShowHidden"
+        },
+        {
+          "id": "BtnHideMasterObjects"
+        },
+        {
+          "id": "BtnCreateMotionPath"
+        },
+        {
+          "id": "BtnOptimizeFreeForm"
+        },
+        {
+          "id": "BtnArrangeGrid"
+        },
+        {
+          "id": "BtnSmartCorners"
+        }
+      ]
+    },
+    {
+      "name": "TextAndFormat",
+      "features": [
+        {
+          "id": "BtnFontPanel"
+        },
+        {
+          "id": "BtnApplyTextTool"
+        },
+        {
+          "id": "BtnFitFormToText"
+        },
+        {
+          "id": "BtnReplaceFont"
+        },
+        {
+          "id": "BtnParagraphDialog"
+        },
+        {
+          "id": "BtnSpecialChars"
+        },
+        {
+          "id": "BtnFormatNumbers"
+        },
+        {
+          "id": "BtnSpellCheck"
+        },
+        {
+          "id": "BtnDeleteText"
+        },
+        {
+          "id": "BtnTextFormatPainter"
+        },
+        {
+          "id": "BtnPickColor"
+        },
+        {
+          "id": "BtnPickFillColor"
+        },
+        {
+          "id": "BtnPickLineColor"
+        },
+        {
+          "id": "BtnPickTextColor"
+        },
+        {
+          "id": "BtnThemeColor"
+        },
+        {
+          "id": "BtnSplitByParagraphs"
+        },
+        {
+          "id": "BtnInsertText"
+        },
+        {
+          "id": "BtnShapeFill"
+        }
+      ]
+    },
+    {
+      "name": "Tables",
+      "features": [
+        {
+          "id": "BtnConvertTableToShapes"
+        },
+        {
+          "id": "BtnTableDimensions"
+        },
+        {
+          "id": "BtnTableFormatPainter"
+        },
+        {
+          "id": "BtnTableSort"
+        },
+        {
+          "id": "BtnTableSum"
+        },
+        {
+          "id": "BtnAlignToTableCell"
+        }
+      ]
+    },
+    {
+      "name": "VisualElements",
+      "features": [
+        {
+          "id": "BtnIllustrativeSticker"
+        },
+        {
+          "id": "BtnHarveyBall"
+        },
+        {
+          "id": "BtnTrafficLight"
+        },
+        {
+          "id": "BtnThermometer"
+        },
+        {
+          "id": "BtnStarRating"
+        },
+        {
+          "id": "BtnCheckbox"
+        },
+        {
+          "id": "BtnNumeration"
+        },
+        {
+          "id": "BtnProgressSeries"
+        },
+        {
+          "id": "BtnRepeatShape"
+        },
+        {
+          "id": "BtnSplitShape"
+        },
+        {
+          "id": "BtnSetMargin"
+        },
+        {
+          "id": "BtnLearnMargin"
+        },
+        {
+          "id": "BtnMapWizard"
+        }
+      ]
+    },
+    {
+      "name": "StorylineAndReview",
+      "features": [
+        {
+          "id": "BtnStyleCheck"
+        },
+        {
+          "id": "BtnCleaner"
+        },
+        {
+          "id": "BtnAgendaWizard"
+        },
+        {
+          "id": "BtnStoryline"
+        },
+        {
+          "id": "BtnSlideGuidelines"
+        },
+        {
+          "id": "BtnConsolidateMasters"
+        },
+        {
+          "id": "BtnExportWizard"
+        },
+        {
+          "id": "BtnSlideNotes"
+        },
+        {
+          "id": "BtnFlightMode"
+        }
+      ]
+    },
+    {
+      "name": "DataAndAutomation",
+      "features": [
+        {
+          "id": "BtnUpdateExcelCharts"
+        },
+        {
+          "id": "BtnGanttChart"
+        },
+        {
+          "id": "BtnSlidePaste"
+        },
+        {
+          "id": "BtnDocumentAutomation"
+        },
+        {
+          "id": "BtnTagInspector"
+        }
+      ]
+    },
+    {
+      "name": "Libraries",
+      "features": [
+        {
+          "id": "BtnIconBrowser"
+        },
+        {
+          "id": "BtnIllustrationLibrary"
+        },
+        {
+          "id": "BtnAssetManager"
+        },
+        {
+          "id": "BtnTemplateManager"
+        },
+        {
+          "id": "BtnCountryFlags"
+        }
+      ]
+    },
+    {
+      "name": "SETTINGS & HELP",
+      "features": [
+        {
+          "id": "BtnSettings"
+        },
+        {
+          "id": "BtnExploreFeatures"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableColumnInsertion",
+  "title": "Insert Table Column (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableColumnInsertionFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableColumnInsertion-001",
+      "title": "Insert Table Column applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnInsertionFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Insert Table Column (BtnTableColumnInsertion) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableColumnInsertion-002",
+      "title": "BtnTableColumnInsertion deterministic Office leg (insert right, preserve width)",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the layout context-menu entry 'insert right, preserve width' on the fixture 3x3 table (interior cell selected) inserts one empty column at index 3 and scales all four columns so the total width stays the 300 pt original (75 pt per column), keeps the 150 pt height, the 40/40 position, the three 50 pt rows and the original texts shifted right of the new empty column, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the layout context-menu entry 'insert right, preserve width' on the fixture 3x3 table (interior cell selected) inserts one empty column at index 3 and scales all four columns so the total width stays the 300 pt original (75 pt per column), keeps the 150 pt height, the 40/40 position, the three 50 pt rows and the original texts shifted right of the new empty column, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnInsertionFeature.cs",
+        "oPenEfficiency.Core/Services/TableDimensionScaler.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "insert-columns-preserve"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnTableColumnInsertion-003",
+      "title": "BtnTableColumnInsertion deterministic Office leg (duplicate column format)",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the layout context-menu entry 'duplicate format left' on the fixture 3x3 table (interior cell selected, source column 2 pre-formatted blue with 15 pt font) inserts an empty column at index 3 carrying the source column's 100 pt width and a full copy of its blue fill and 15 pt font (the explicit fill and font copy in CopyCellFormat), leaves the original formatted column at index 2 with its format intact, keeps the 50 pt rows and the 40/40 position, redistributes the original columns to 75 pt while the new column takes the source column's 100 pt (table 325x150, the real-host measured PowerPoint behavior), reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the layout context-menu entry 'duplicate format left' on the fixture 3x3 table (interior cell selected, source column 2 pre-formatted blue with 15 pt font) inserts an empty column at index 3 carrying the source column's 100 pt width and a full copy of its blue fill and 15 pt font (PickUp/Apply plus the explicit font copy), leaves the original formatted column at index 2 with its format intact, keeps the 50 pt rows and the 40/40 position, redistributes the original columns to 75 pt while the new column takes the source column's 100 pt (table 325x150, the real-host measured PowerPoint behavior), reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableColumnInsertionFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "duplicate-column-format"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnMagicResizer",
+  "title": "Scale Selected Shapes (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnMagicResizer-001",
+      "title": "Scale Selected Shapes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Scale Selected Shapes (BtnMagicResizer) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnMagicResizer-002",
+      "title": "Scale-factor derivation and anchor-preserving bounds are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/MagicResizerScalingPolicy.cs",
+        "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml.cs",
+        "oPenEfficiency.Core.Tests/MagicResizerScalingPolicyTests.cs"
+      ],
+      "expected": "Scale Selected Shapes derives its scale factors host-free (percentage mode scales both axes by the percentage/100 and rejects non-positive input; absolute mode converts the centimetre targets to points and divides by the reference shape's own dimensions, rejecting non-positive targets or reference sizes), maps every one of the nine anchor buttons to its anchor fractions, and resizes each shape so its anchor point stays exactly where it was while the other coordinate follows the scaled bounds; the font-size floor of 1 pt and the average scalar factor for line weight, bullet size and margins are pinned.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~MagicResizerScalingPolicyTests"
+      }
+    },
+    {
+      "id": "REG-MAGICRESIZER-GROUP-001",
+      "title": "Scale Selected Shapes stays clickable for a single group selection",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml.cs",
+        "oPenEfficiency.Command.Tests/MagicResizerSelectionRuleTests.cs"
+      ],
+      "expected": "The BtnMagicResizer enablement rule accepts exactly one selected shape target (a single group scales as one unit), keeps multi-shape selections enabled and leaves the empty shape selection disabled; the scale action no longer rejects a selection of one group with the old two-shape warning.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~MagicResizerSelectionRuleTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

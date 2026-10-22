@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableSort",
+  "title": "Sort Table Cells (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableSort-001",
+      "title": "Sort Table Cells applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Sort Table Cells (BtnTableSort) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableSort-001",
+      "title": "Sort Table Cells orders by the flexible number parser and moves whole rows, numeric values by value and text by text",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives TableTextPlanner.SortRows for Sort Table Cells: rows are ordered by the production comparator (numbers through FlexibleNumberParser, so 9 sorts before 10), a sort moves the whole row, and an out-of-range sort column is refused.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.SortRowsUsesNumericOrderAndMovesWholeRows"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSort-002",
+      "title": "The table planner refuses ragged rows and an out-of-range sort column",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives the input guards of TableTextPlanner for Sort Table Cells: rows that do not share one positive column count are refused with ArgumentException, an out-of-range sort column with ArgumentOutOfRangeException, and a table without interior cells yields no totals instead of a fabricated total.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.TablePlannerRejectsInvalidShapesAndSortColumns"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSort-003",
+      "title": "Sort Table Cells interactive multi-cell selection (context-menu variants)",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs"
+      ],
+      "expected": "The interactive multi-cell selection path of the feature behaves as documented on a real PowerPoint host: the selected cell range is processed, one Undo restores the previous state, and refusals report without corrupting the table.",
+      "ownerSteps": [
+        "Open a table, select at least two vertical cells in the sort column.",
+        "Use the Sort Table Cells context menu: A-Z and Z-A on the selection, then a whole-row variant.",
+        "Verify the row texts reorder by the key column, destination formatting stays in its row, and one PowerPoint Undo restores the previous texts."
+      ],
+      "technicalReason": "Deterministic automation is not feasible for this interactive selection leg: the PowerPoint object model has no multi-cell range selection (Microsoft.Office.Interop.PowerPoint.Cell.Selected is read-only, PIA-verified CanWrite=False; Cell.Select() selects a single cell) while the feature requires a vertical/rectangular multi-cell selection, and its refusal paths run through modal MessageBoxes that block a headless host. The deterministic sorting/totals behavior is covered by the TableTextPlanner core runners; this leg stays a human check until a reviewed seam technique exists."
+    },
+    {
+      "id": "QA9-BtnTableSort-004",
+      "title": "Sort Z-A whole-row overload reorders rows descending and keeps payloads attached in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSortBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Sort Z-A whole-row overload (SortType.ZA_WholeRow) on a 3x2 fixture table whose first column reads delta/alpha/charlie reorders the rows to delta,charlie,alpha and keeps each payload cell travelling with its key (d2,c2,a2), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSortBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "table-sort-za"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

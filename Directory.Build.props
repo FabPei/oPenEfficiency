@@ -1,0 +1,80 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'oPenEfficiency.Core' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.Core.Tests' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.Catalog.Tests' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.Command.Tests' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.Gantt.Tests' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.OneNote' Or
+                            '$(MSBuildProjectName)' == 'oPenEfficiency.OneNote.Tests'">
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-minimum</AnalysisLevel>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'oPenEfficiency.Core' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.Core.Tests' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.Catalog.Tests' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.Command.Tests' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.Gantt.Tests' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.OneNote' Or
+                        '$(MSBuildProjectName)' == 'oPenEfficiency.OneNote.Tests'">
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers"
+                      Version="9.0.0"
+                      PrivateAssets="all" />
+  </ItemGroup>
+  <!-- Build identity stamp (dev loop): every build gets a new assembly identity, so Office's
+       VSTO shadow copy (%LOCALAPPDATA%\assembly\dl3) cannot keep serving a stale DLL after a
+       rebuild, and "which build is loaded" is answerable from the binary itself.
+       BuildStamp is defined unconditionally (and again with a fallback in the target below),
+       because this file is imported before the project body, so a condition on a project
+       property would not be visible here, and because a missing stamp must never silently
+       produce an empty version (CS7034).
+       OPENEFFICIENCY_BUILD_STAMP lets a canonical build (eng/Build.ps1) hand its stamp to the
+       nested builds it starts (feature-acceptance runner projects, changed-file validation).
+       Those nested builds rebuild the VSTO projects; with their own timestamp they would produce a
+       second, unvalidated identity after the deployment-identity gate has already run. -->
+  <PropertyGroup>
+    <BuildStamp Condition="'$(BuildStamp)' == '' and '$(OPENEFFICIENCY_BUILD_STAMP)' != ''">$(OPENEFFICIENCY_BUILD_STAMP)</BuildStamp>
+    <BuildStamp Condition="'$(BuildStamp)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d.HHmm'))</BuildStamp>
+  </PropertyGroup>
+  <!-- OPENEFFICIENCY_USE_COMMITTED_VSTO_APPLICATION_VERSION hands the installer build's identity
+       mode to those nested builds as well: without it a nested build re-stamps the deployment
+       manifests with the per-build stamp and the deployment-identity gate (which validates the
+       committed release CalVer in installer mode) measures a superseded identity. An explicit
+       /p:UseCommittedVstoApplicationVersion always wins; the env hand-off only fills the gap. -->
+  <PropertyGroup>
+    <UseCommittedVstoApplicationVersion Condition="'$(UseCommittedVstoApplicationVersion)' == '' and '$(OPENEFFICIENCY_USE_COMMITTED_VSTO_APPLICATION_VERSION)' != ''">$(OPENEFFICIENCY_USE_COMMITTED_VSTO_APPLICATION_VERSION)</UseCommittedVstoApplicationVersion>
+  </PropertyGroup>
+  <!-- SDK-style project that generates its own assembly info: stamping works through properties. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'oPenEfficiency.Core'">
+    <Version>$(BuildStamp)</Version>
+    <AssemblyVersion>$(BuildStamp)</AssemblyVersion>
+    <FileVersion>$(BuildStamp)</FileVersion>
+    <InformationalVersion>$(BuildStamp)</InformationalVersion>
+  </PropertyGroup>
+
+  <!-- Legacy VSTO projects ignore the Version properties, so generate the two attributes as a
+       source fragment instead (their AssemblyInfo.cs no longer sets them itself). -->
+  <Target Name="StampBuildIdentity" BeforeTargets="CoreCompile"
+          Condition="'$(MSBuildProjectName)' == 'oPenEfficiency' Or '$(MSBuildProjectName)' == 'oPenEfficiency.Excel'">
+    <PropertyGroup>
+      <_BuildStampInfoFile>$(IntermediateOutputPath)BuildStampInfo.cs</_BuildStampInfoFile>
+      <_BuildStampValue Condition="'$(BuildStamp)' != ''">$(BuildStamp)</_BuildStampValue>
+      <_BuildStampValue Condition="'$(BuildStamp)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d.HHmm'))</_BuildStampValue>
+    </PropertyGroup>
+    <Error Condition="'$(_BuildStampValue)' == ''"
+           Text="Build stamp could not be computed; AssemblyVersion would be empty (CS7034)." />
+    <ItemGroup>
+      <_BuildStampLine Include="// Generated per build by Directory.Build.props (StampBuildIdentity) - do not edit." />
+      <_BuildStampLine Include="[assembly: System.Reflection.AssemblyVersion(&quot;$(_BuildStampValue)&quot;)]" />
+      <_BuildStampLine Include="[assembly: System.Reflection.AssemblyFileVersion(&quot;$(_BuildStampValue)&quot;)]" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(_BuildStampInfoFile)" Lines="@(_BuildStampLine)" Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(_BuildStampInfoFile)" />
+      <FileWrites Include="$(_BuildStampInfoFile)" />
+    </ItemGroup>
+  </Target>
+  <PropertyGroup>
+    <OpenEfficiencySkipOfficeRegistration Condition="'$(OpenEfficiencySkipOfficeRegistration)' == '' and '$(OPENEFFICIENCY_SKIP_OFFICE_REGISTRATION)' != ''">$(OPENEFFICIENCY_SKIP_OFFICE_REGISTRATION)</OpenEfficiencySkipOfficeRegistration>
+  </PropertyGroup>
+</Project>

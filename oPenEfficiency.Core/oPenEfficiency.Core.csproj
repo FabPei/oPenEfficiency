@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    oPenEfficiency.Core
+    Host-neutral shared library used by every Office host add-in
+    (PowerPoint today; Excel, Word, OneNote later).
+    Contains NO Office-host interop. Keep it that way.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>oPenEfficiency</RootNamespace>
+    <AssemblyName>oPenEfficiency.Core</AssemblyName>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Nullable>disable</Nullable>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+</Project>

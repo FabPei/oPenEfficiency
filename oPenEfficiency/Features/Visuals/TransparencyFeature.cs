@@ -8,13 +8,15 @@ namespace oPenEfficiency.Features.Visuals
 {
     [FeatureMetadata(
         Id = "BtnTransparency", 
-        Name = "Transparency", 
+        Name = "Adjust Transparency",
+        SearchAliases = new[] { "Transparency" },
         Tooltip = "Adjust Transparency", 
         IconData = "M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 0 1 20 12A8 8 0 0 1 12 20V4Z", 
         Color = "#06B6D4", 
-        Keywords = "transparency, opacity, alpha, clear, invisible",
+        Description = "Open a floating toolbar to adjust the transparency of selected shapes.",
+        DetailedHelpText = "### Adjust Transparency\nOpens a floating toolbar for changing the transparency of the selected shapes. Use it to make fills, lines, or entire objects more subtle while keeping the underlying layout intact. Select one or more shapes first, then choose the desired transparency in the toolbar.",
         MinSelection = 1, 
-        RequiredType = PpSelectionType.ppSelectionShapes,
+        RequiredType = OfficeSelectionType.Shapes,
         IsToggle = true)]
     public static class TransparencyFeature
     {

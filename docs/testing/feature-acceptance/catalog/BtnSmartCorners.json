@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSmartCorners",
+  "title": "Toggle Rounded Corners (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/SmartCornersFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSmartCorners-001",
+      "title": "Toggle Rounded Corners applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/SmartCornersFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Toggle Rounded Corners (BtnSmartCorners) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSmartCorners-002",
+      "title": "Toggle Rounded Corners flips the real AutoShapeType back and forth in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointVisualBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Toggle Rounded Corners on one selected native rectangle flips its AutoShapeType to msoShapeRoundedRectangle (measured roundedBefore=False roundedAfterFirst=True), a second invocation flips it back (roundedAfterSecond=False), both invocations return true, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointVisualBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "smart-corners"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnMatchSize",
+  "title": "Match Size (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/MatchSizeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnMatchSize-001",
+      "title": "Match Size applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/MatchSizeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Match Size (BtnMatchSize) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnMatchSize-001",
+      "title": "Match Size selection scope matches its metadata contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/MatchSizeFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Match Size (BtnMatchSize, MinSelection=2, RequiredType=Shapes) is at 2 selected shape(s) and above and refused below that, refused for an empty selection and for a slide selection. The scenario asserts that the feature's declared [FeatureMetadata] scope drives the production sidebar enablement decision consistently (metadata -> SidebarStateEvaluator, the declared minimum reachable as an enabled button). It does not execute or inspect the command's own selection guard: an enabled command can still refuse a selection, which is why the guard and the PowerPoint effect stay owned by the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1MatchSizeSelectionScopeIsValid"
+      }
+    },
+    {
+      "id": "QA9-BtnMatchSize-002",
+      "title": "Match Size makes every selected shape share one original anchor size in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingDistribute.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Match Size on three differently sized shapes makes all three end with identical width and height (within 0.5 pt) equal to one of the three original per-shape sizes (the anchor keeps its own size), reports execution, keeps the shape count unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSpacingDistribute.ps1",
+        "arguments": [
+          "-Mode",
+          "match-size"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

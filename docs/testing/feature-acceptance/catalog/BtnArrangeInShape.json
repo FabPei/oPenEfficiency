@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnArrangeInShape",
+  "title": "Arrange Shapes in Pattern (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnArrangeInShape-001",
+      "title": "Arrange Shapes in Pattern applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Arrange Shapes in Pattern (BtnArrangeInShape) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnArrangeInShape-001",
+      "title": "BtnArrangeInShape places the selection on the documented pattern outline",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "BtnArrangeInShape arranges selected shapes on the chosen geometric pattern outline; the pattern math is deterministic and host-free-testable."
+        }
+      ],
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented pattern placement",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic host-free scenario places the probe centers on the documented triangle outline and passes; bind-office-evidence-and-reviews (office-only gate) remains until QA9-BtnArrangeInShape-002 has real-host evidence and review.",
+          "status": "open",
+          "type": "acceptance",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Core.Tests/PatternPlacementPlannerTests.cs",
+              "line": 47,
+              "item": "PatternPlacementPlannerTests.TriangleOutlinePlacesItemsOnTheTrianglePerimeter",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "acceptance",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "QA9-BtnArrangeInShape-002",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "expected": "On the same fixed four-shape fixture, the triangle outline pattern places the shape centers at (200,-12.5), (303.92,167.5), (200,227.5), (96.08,167.5) - the documented perimeter walk - and the other pattern families (circle, square grid, filled triangle, star inner-vertex radius, reserved center) follow their documented formulas.",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/PatternPlacementPlanner.cs",
+        "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+        "oPenEfficiency.Core.Tests/PatternPlacementPlannerTests.cs"
+      ],
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~PatternPlacementPlannerTests.TriangleOutlinePlacesItemsOnTheTrianglePerimeter"
+      }
+    },
+    {
+      "id": "QA9-BtnArrangeInShape-002",
+      "title": "BtnArrangeInShape deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Real-host acceptance for the pattern-outline placement of selected shapes."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented pattern placement",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "eng/Smoke-PowerPointArrangePattern.ps1",
+              "line": 1,
+              "item": "eng/Smoke-PowerPointArrangePattern.ps1",
+              "type": "runner"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host arrange-pattern run for triangle",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed BtnArrangeInShape arranges four fixed probes on the triangle outline so that every probe shape center matches the hard-coded documented perimeter positions within 1 pt, the feature reports execution, all probes remain, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+        "oPenEfficiency.Core/Services/PatternPlacementPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointArrangePattern.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointArrangePattern.ps1",
+        "arguments": [
+          "-Patterns",
+          "triangle"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

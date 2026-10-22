@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnHarveyBall",
+  "title": "Harvey Ball (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Charts/HarveyBallFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnHarveyBall-001",
+      "title": "Harvey Ball applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Charts/HarveyBallFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Harvey Ball (BtnHarveyBall) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnHarveyBall-002",
+      "title": "Harvey Ball state cycle and persistence codec are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/HarveyBallStatePolicy.cs",
+        "oPenEfficiency/Features/Charts/HarveyBallFeature.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.cs"
+      ],
+      "expected": "The 0 -> 0.25 -> 0.5 -> 0.75 -> 1.0 -> 0 click cycle snaps off-ladder values onto the ladder, and the AlternativeText state codec round-trips every ladder value culture-independently while still reading legacy culture-formatted states (e.g. de-DE 'oPE_HarveyBall|0,25'); malformed or foreign states are rejected.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~HarveyBallStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnHarveyBall-003",
+      "title": "Harvey Ball creates exactly one shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Harvey Ball at 50 percent on an empty slide adds exactly one shape (measured shapeCountDelta=1), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "harvey-ball"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

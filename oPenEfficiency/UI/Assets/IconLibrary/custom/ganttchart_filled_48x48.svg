@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Außenrahmen -->
+  <path fill="#000000" fill-rule="evenodd" d="
+    M8 6H40C41.7 6 43 7.3 43 9V39C43 40.7 41.7 42 40 42H8C6.3 42 5 40.7 5 39V9C5 7.3 6.3 6 8 6ZM8 9V39H40V9H8Z"/>
+
+  <!-- Kopfzeile und Raster -->
+  <rect x="6" y="13" width="36" height="3" fill="#000000"/>
+  <rect x="16" y="14" width="3" height="27" fill="#000000"/>
+  <rect x="6" y="22" width="36" height="2.5" fill="#000000"/>
+  <rect x="6" y="31" width="36" height="2.5" fill="#000000"/>
+
+  <!-- Task-Markierungen links -->
+  <rect x="9.5" y="18" width="4" height="2.5" rx="1.25" fill="#000000"/>
+  <rect x="9.5" y="27" width="4" height="2.5" rx="1.25" fill="#000000"/>
+  <rect x="9.5" y="36" width="4" height="2.5" rx="1.25" fill="#000000"/>
+
+  <!-- Gantt-Balken -->
+  <rect x="21" y="17.5" width="10" height="4" rx="1.2" fill="#000000"/>
+  <rect x="26" y="26.5" width="11" height="4" rx="1.2" fill="#000000"/>
+  <rect x="20" y="35.5" width="15" height="4" rx="1.2" fill="#000000"/>
+</svg>

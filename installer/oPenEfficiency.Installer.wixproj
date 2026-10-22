@@ -1,0 +1,23 @@
+<Project Sdk="WixToolset.Sdk/6.0.2">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <RegistryBitness Condition="'$(InstallerPlatform)' == 'x86'">always32</RegistryBitness>
+    <RegistryBitness Condition="'$(InstallerPlatform)' != 'x86'">always64</RegistryBitness>
+    <Platform>$(InstallerPlatform)</Platform>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <Manufacturer Condition="'$(Manufacturer)' == ''">FabPei</Manufacturer>
+    <PowerPointOutputDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\oPenEfficiency\bin\$(Configuration)'))</PowerPointOutputDir>
+    <ExcelOutputDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\oPenEfficiency.Excel\bin\$(Configuration)'))</ExcelOutputDir>
+    <RepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..'))</RepositoryRoot>
+    <OutputName>oPenEfficiency-$(InstallerPlatform)-$(ProductVersion)</OutputName>
+    <DefineConstants>
+      ProductVersion=$(ProductVersion);
+      Manufacturer=$(Manufacturer);
+      PowerPointOutputDir=$(PowerPointOutputDir);
+      ExcelOutputDir=$(ExcelOutputDir);
+      RepositoryRoot=$(RepositoryRoot);
+      RegistryBitness=$(RegistryBitness)
+    </DefineConstants>
+  </PropertyGroup>
+</Project>

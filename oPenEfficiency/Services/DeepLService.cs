@@ -25,11 +25,25 @@ namespace oPenEfficiency.Services
     public class DeepLService
     {
         private readonly string _apiKey;
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
+        private readonly TimeSpan _requestTimeout;
+        private static readonly HttpClient SharedHttpClient = new HttpClient();
 
         public DeepLService(string apiKey)
+            : this(apiKey, SharedHttpClient)
+        {
+        }
+
+        internal DeepLService(string apiKey, HttpClient httpClient)
+            : this(apiKey, httpClient, BoundedHttpResponseReader.DefaultTimeout)
+        {
+        }
+
+        internal DeepLService(string apiKey, HttpClient httpClient, TimeSpan requestTimeout)
         {
             _apiKey = apiKey;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _requestTimeout = requestTimeout;
         }
 
         public async Task<string> TranslateAsync(string text, string targetLanguage)
@@ -55,25 +69,29 @@ namespace oPenEfficiency.Services
                     new KeyValuePair<string, string>("target_lang", targetLanguage)
                 });
 
-                var response = await _httpClient.PostAsync(endpoint, content);
-                if (!response.IsSuccessStatusCode)
+                using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
                 {
-                    string error = await response.Content.ReadAsStringAsync();
-                    System.Diagnostics.Debug.WriteLine($"DeepL API Error ({response.StatusCode}): {error}");
-                    return null;
-                }
+                    request.Content = content;
+                    var response = await BoundedHttpResponseReader.SendAsync(_httpClient, request, _requestTimeout);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        oPenEfficiency.Utils.ExceptionLogger.Log(
+                            $"DeepL returned HTTP {(int)response.StatusCode} ({response.StatusCode}). The response body was omitted because it may contain sensitive data.",
+                            "DeepLService.TranslateAsync");
+                        return null;
+                    }
 
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-                var result = JsonService.Deserialize<DeepLResponse>(jsonResponse);
+                    var result = JsonService.Deserialize<DeepLResponse>(response.Body);
 
-                if (result?.Translations != null && result.Translations.Count > 0)
-                {
-                    return result.Translations[0].Text;
+                    if (result?.Translations != null && result.Translations.Count > 0)
+                    {
+                        return BoundedHttpResponseReader.ValidateTranslation(result.Translations[0].Text);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DeepL Translation Exception: {ex.Message}");
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "DeepLService.TranslateAsync");
             }
 
             return null;

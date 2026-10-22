@@ -34,10 +34,18 @@ namespace oPenEfficiency.UI.Dialogs
         private List<KeyValuePair<string, MsoLanguageID>> _allLanguages;
         private MsoLanguageID? _initialLanguage;
         
-        public SpellCheckLanguageWindow(MsoLanguageID? initialLanguage = null)
+        public SpellCheckLanguageWindow(
+            MsoLanguageID? initialLanguage = null,
+            SpellCheckScope? initialScope = null)
         {
             _initialLanguage = initialLanguage;
             InitializeComponent();
+            if (initialScope.HasValue)
+            {
+                RadioWholePres.IsChecked = initialScope.Value == SpellCheckScope.Presentation;
+                RadioSelectedSlides.IsChecked = initialScope.Value == SpellCheckScope.SelectedSlides;
+                RadioSelectedShapes.IsChecked = initialScope.Value == SpellCheckScope.SelectedShapes;
+            }
             PopulateLanguages();
         }
 

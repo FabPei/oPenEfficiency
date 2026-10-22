@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnDistributeVertical",
+  "title": "Distribute Vertically (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/DistributeFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnDistributeVertical-001",
+      "title": "Distribute Vertically applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/DistributeFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Distribute Vertically (BtnDistributeVertical) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnDistributeVertical-001",
+      "title": "Distribute Vertical selection scope matches its metadata contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/DistributeFeatures.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Distribute Vertical (BtnDistributeVertical, MinSelection=2, RequiredType=Shapes) is enabled at 2 selected shape(s) and above and refused below that, refused for an empty selection and for a slide selection. Measured in the command's own code: the primary route (the sidebar button, relativeToSlide=false) resolves to the across-slide route at exactly two selected shapes by owner decision a1 (REG-DISTRIBUTE-SCOPE-001), so the button performs a distribution at the minimum it advertises; from three shapes it distributes the interior gaps. The per-feature metadata cannot express a per-variant minimum - the route decision inside the production rule does. The scenario asserts that the feature's declared [FeatureMetadata] scope drives the production sidebar enablement decision consistently (metadata -> SidebarStateEvaluator, the declared minimum reachable as an enabled button); its own help text documents '2 or more shapes' as the most permissive route, which is what the metadata minimum encodes. Whether the command's own guard agrees is asserted separately: the Catalog guard test binds both Execute methods to the production DistributeSelectionRule and the rule's contract is executed by the -002 scenario. The PowerPoint effect of the command stays the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1DistributeVerticalSelectionScopeIsValid"
+      }
+    },
+    {
+      "id": "QA9-BtnDistributeVertical-002",
+      "title": "Distribute Vertical selection guard is the production rule",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/DistributeSelectionRule.cs",
+        "oPenEfficiency.Core.Tests/DistributeSelectionGuardTests.cs",
+        "oPenEfficiency/Features/Alignment/DistributeFeatures.cs"
+      ],
+      "expected": "Distribute Vertical (BtnDistributeVertical, MinSelection=2) selection guard: the production rule DistributeSelectionRule decides both questions the command asks before it touches the ShapeRange - UsesAcrossSlideRoute(count, relativeToSlide) resolves the route and MeetsMinimum(count, route) accepts or refuses it. Owner decision a1 for REG-DISTRIBUTE-SCOPE-001: the primary click (relativeToSlide=false) spreads exactly two selected shapes across the slide, because there is no interior gap to distribute, and distributes the interior gaps from three shapes on; the two context-menu \"Across Slide\" variants keep their explicit route at two or more shapes; a single selected shape stays refused on every route. This scenario's runner executes both rules for every count from 0 to 6 in oPenEfficiency.Core.Tests/DistributeSelectionGuardTests.cs, so a mutated threshold, a special case in the rule body or a flipped route resolution is red; the binding of the two Execute methods to the rule - no count comparison anywhere in the participating files, the route resolved exactly once per method - is asserted structurally by the catalog guard test Wave1DistributeVerticalSelectionGuardIsTheProductionRule, which the canonical build runs. The COM effect (ShapeRange.Distribute and the Undo entry) stays the office-automated leg.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~DistributeSelectionGuardTests"
+      }
+    },
+    {
+      "id": "QA9-BtnDistributeVertical-003",
+      "title": "Distribute Vertically centers the middle shape between the outer shapes in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingDistribute.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Distribute Vertically on three equal-height shapes with uneven gaps leaves both outer shapes at their original top position (within 0.5 pt), moves the middle shape so its center is exactly the midpoint of the outer centers (within 0.5 pt), reports execution, keeps the shape count unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSpacingDistribute.ps1",
+        "arguments": [
+          "-Mode",
+          "distribute-v"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

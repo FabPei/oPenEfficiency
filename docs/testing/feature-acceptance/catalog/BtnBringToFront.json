@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnBringToFront",
+  "title": "Bring to Front (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnBringToFront-001",
+      "title": "Bring to Front applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Bring to Front (BtnBringToFront) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnBringToFront-001",
+      "title": "Bring to Front decides its target stacking order in the host-neutral plan",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/Services/ZOrderRankPlanner.cs",
+        "oPenEfficiency.Core.Tests/ZOrderRankPlannerTests.cs"
+      ],
+      "expected": "The bring-to-front plan appends the ranked selection after the unselected shapes: on the working order 1,11,2,12 with selection order 12,11 and first-selected-on-top the plan is 1,2,11,12 - the first selected shape (12) ends topmost and the unselected shapes keep their relative order. The COM move itself is the office-automated leg (QA9-BtnBringToFront-002).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ZOrderRankPlannerTests.RankedPlanBringsTheSelectionToFrontWithTheFirstSelectedOnTop"
+      }
+    },
+    {
+      "id": "QA9-BtnBringToFront-002",
+      "title": "Bring to Front applies its planned stacking change in a real PowerPoint host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointZOrder.ps1"
+      ],
+      "expected": "On the isolated Office host, three probe shapes are created with distinct stacking positions (bottom-to-top in creation order) and the bottommost probe is selected alone. Bring to Front is invoked through the same production entry point the visible command uses. The selected probe must become the topmost shape (slot 1 of 3 -> slot 3), the two unselected probes must keep their relative order, all three probes must still exist afterwards, and no new entry may appear in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointZOrder.ps1",
+        "arguments": [
+          "-Commands",
+          "bring-to-front"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

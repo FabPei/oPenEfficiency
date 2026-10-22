@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnLearnMargin",
+  "title": "Copy Text Margins (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/LearnMarginFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnLearnMargin-001",
+      "title": "Copy Text Margins applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/LearnMarginFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Copy Text Margins (BtnLearnMargin) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnLearnMargin-002",
+      "title": "Copy Text Margins stages the real TextFrame margins in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Copy Text Margins on one selected text box staged at Left=17 Right=19 Top=21 Bottom=23 shows its success info box (the driver measures dialogSeen=True and dismisses with a synthetic key press) and populates the production MarginState with exactly those values (measured stateMatch=True learnedLeft=17), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "learn-margin"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

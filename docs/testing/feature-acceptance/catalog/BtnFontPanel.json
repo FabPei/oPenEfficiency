@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFontPanel",
+  "title": "Font Panel (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFontPanel-001",
+      "title": "Font Panel applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+      ],
+      "expected": "Font Panel (BtnFontPanel) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFontPanel-001",
+      "title": "Font Panel apply decisions (size bounds, change detection, culture parsing) pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/FontEditPolicy.cs",
+        "oPenEfficiency/UI/Panels/FontPanel.xaml.cs"
+      ],
+      "expected": "The production decision rules pin: font sizes are exclusive-bounded (0 and 4000+ rejected, 0.01 and 3999.99 accepted); the size-change detection uses an inclusive no-change boundary at exactly the 0.01 epsilon while float reality makes 12 -> 12.01 a change; the name comparison is case-insensitive and treats a missing name as a change; typed size text parses in the user's culture (de-DE '12,5' and en-US '12.5' both work, non-numeric input is rejected). FontPanel delegates all three rules instead of inlining them (both call sites included).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FontEditPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

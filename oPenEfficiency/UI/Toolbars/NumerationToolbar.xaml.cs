@@ -130,7 +130,7 @@ namespace oPenEfficiency.UI
         {
             if (!_isDialogOpened)
             {
-                try { this.Close(); } catch { }
+                try { this.Close(); } catch { /* Closing an already-closed toolbar is idempotent. */ }
             }
         }
     }

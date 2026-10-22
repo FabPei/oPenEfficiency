@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFormatStrikethrough",
+  "title": "Strikethrough (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFormatStrikethrough-001",
+      "title": "Strikethrough applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Strikethrough (BtnFormatStrikethrough) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFormatStrikethrough-001",
+      "title": "Strikethrough toggles on and off over selected text in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextFormat.ps1"
+      ],
+      "expected": "the bound driver ends green with newErrorLogEntries=0; seam verdict PASS|strikethrough|executed=True|strikeBefore=False|strikeAfterFirst=True|strikeAfterSecond=False|textUnchanged=True.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextFormat.ps1",
+        "arguments": [
+          "-Mode",
+          "strikethrough"
+        ]
+      }
+    },
+    {
+      "id": "REG-TEXTFONTPROPS-001-TREE",
+      "title": "The explicit strikethrough/spacing font paths are pinned as dead object-model paths",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Command.Tests/TextFontObjectModelLimitationTests.cs"
+      ],
+      "expected": "Pinned current behavior: the PowerPoint Font dispatch exposes no StrikeThrough/Spacing member, so the explicit Apply/Remove paths of Strikethrough and the Character-Spacing presets are dead code (only the native toggle/gallery commands work). Fix-forward (native-toggle readback or an RTF-level redesign, owner decision) must update the regression-ledger entry REG-TEXTFONTPROPS-001 and this pin together.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~TextFontObjectModelLimitationTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

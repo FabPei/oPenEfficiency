@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Browser -->
+  <rect x="5" y="6" width="38" height="30" rx="3" fill="#000000"/>
+  <rect x="8" y="15" width="32" height="18" rx="1" fill="#FFFFFF"/>
+
+  <!-- Browserpunkte -->
+  <circle cx="10" cy="10.5" r="1" fill="#FFFFFF"/>
+  <circle cx="14" cy="10.5" r="1" fill="#FFFFFF"/>
+  <circle cx="18" cy="10.5" r="1" fill="#FFFFFF"/>
+
+  <!-- UI Elemente -->
+  <rect x="10" y="18" width="10" height="5" rx="1" fill="#000000"/>
+  <rect x="24" y="18.5" width="12" height="2.2" rx="1.1" fill="#000000"/>
+  <rect x="24" y="22.5" width="9" height="2.2" rx="1.1" fill="#000000"/>
+  <rect x="10" y="27" width="8" height="4" rx="1" fill="#000000"/>
+  <rect x="21" y="27" width="8" height="4" rx="1" fill="#000000"/>
+
+  <!-- Cursor -->
+  <path d="M29 23L40 34L35 35.3L38.2 41.3L34.8 43L31.7 37L28 40.7L29 23Z" fill="#000000"/>
+</svg>

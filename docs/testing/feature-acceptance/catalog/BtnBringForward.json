@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnBringForward",
+  "title": "Bring Forward (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnBringForward-001",
+      "title": "Bring Forward applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Bring Forward (BtnBringForward) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnBringForward-001",
+      "title": "Bring Forward decides its target stacking order in the host-neutral plan",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/Services/ZOrderRankPlanner.cs",
+        "oPenEfficiency.Core.Tests/ZOrderRankPlannerTests.cs"
+      ],
+      "expected": "The one-step forward plan fills the selection's recaptured bottom-to-top slots in rank order: on the working order 11,1,12,2 with selection order 12,11 the first-selected-on-top ranking yields 11,1,12,2 (12 stacked above 11) and the opposite ranking yields 12,1,11,2; unselected shapes keep their slots. The one-layer move itself is the office-automated leg (QA9-BtnBringForward-002).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ZOrderRankPlannerTests.StepPlanPutsTheFirstSelectedShapeOnTopOfTheSelection"
+      }
+    },
+    {
+      "id": "QA9-BtnBringForward-002",
+      "title": "Bring Forward applies its planned stacking change in a real PowerPoint host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointZOrder.ps1"
+      ],
+      "expected": "On the isolated Office host, three probe shapes are created with distinct stacking positions (bottom-to-top in creation order) and the second-topmost probe is selected alone. Bring Forward is invoked through the same production entry point the visible command uses. The selected probe must move exactly one layer forward (slot 2 of 3 -> slot 3), the two unselected probes must keep their relative order, all three probes must still exist afterwards, and no new entry may appear in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointZOrder.ps1",
+        "arguments": [
+          "-Commands",
+          "bring-forward"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

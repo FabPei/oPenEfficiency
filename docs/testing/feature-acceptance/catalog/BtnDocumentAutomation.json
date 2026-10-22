@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnDocumentAutomation",
+  "title": "Build Presentation from Answers (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/DocumentAutomationFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnDocumentAutomation-001",
+      "title": "Build Presentation from Answers applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/DocumentAutomationFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Build Presentation from Answers (BtnDocumentAutomation) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnDocumentAutomation-002",
+      "title": "Schema recovery and output transaction hardening are pinned by the production Core tests",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/DocumentAutomation/DocumentAutomationModels.cs",
+        "oPenEfficiency.Core/DocumentAutomation/DocumentAutomationOutputTransaction.cs",
+        "oPenEfficiency.Core/DocumentAutomation/OneBasedCollectionTraversal.cs",
+        "oPenEfficiency/Services/DocumentAutomationPowerPointService.cs"
+      ],
+      "expected": "Corrupt stored schema parts fall back to the newest valid version while unsupported newer schema versions are rejected instead of silently downgrading; output writes run through a transaction that keeps the template unchanged on failure; one-based PowerPoint collection traversal treats the COM collections as 1-indexed. These behaviors are already driven by the production tests (33 tests: DocumentAutomationHardeningTests, DocumentAutomationOutputTransactionTests and the DocumentAutomation tests in the catalog test program) used by DocumentAutomationPowerPointService, so this scenario binds the existing runner instead of duplicating it.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~DocumentAutomation"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

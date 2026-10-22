@@ -16,12 +16,13 @@ namespace oPenEfficiency.UI
         private FavoritesTab _favoritesTab;
         private UserControl _activeTab;
         private LocalAssetService _assetService;
+        private readonly Microsoft.Office.Interop.PowerPoint.Application _application;
 
-        public AssetManagerView()
+        public AssetManagerView(PowerPointManager ppManager)
         {
+            if (ppManager == null) throw new ArgumentNullException(nameof(ppManager));
             InitializeComponent();
-            
-            var ppManager = new PowerPointManager(Globals.ThisAddIn.Application);
+            _application = ppManager.GetApplication();
             _assetService = new LocalAssetService(ppManager);
 
             // Proactively initialize tabs
@@ -50,12 +51,12 @@ namespace oPenEfficiency.UI
             // Initial selection check
             try
             {
-                if (Globals.ThisAddIn.Application?.ActiveWindow != null)
+                if (_application?.ActiveWindow != null)
                 {
-                    OnSelectionChange(Globals.ThisAddIn.Application.ActiveWindow.Selection);
+                    OnSelectionChange(_application.ActiveWindow.Selection);
                 }
             }
-            catch { }
+            catch { /* Asset loading failure leaves the panel empty and available for retry. */ }
         }
 
         public void OnSelectionChange(Microsoft.Office.Interop.PowerPoint.Selection selection)
@@ -72,10 +73,29 @@ namespace oPenEfficiency.UI
                     canSave = true;
                 }
             }
-            catch { }
+            catch { /* Folder refresh failure retains the last successfully loaded asset list. */ }
 
             BtnSaveSelection.IsEnabled = canSave;
             BtnSaveSelection.ToolTip = canSave ? "Save current selection to Favorites" : "Select something in PowerPoint to save";
+        }
+
+        public void SelectSection(string section)
+        {
+            if (SidebarMenu == null) return;
+            foreach (var itemValue in SidebarMenu.Items)
+            {
+                var item = itemValue as ListBoxItem;
+                if (item != null && string.Equals(item.Tag?.ToString(), section, StringComparison.OrdinalIgnoreCase))
+                {
+                    SidebarMenu.SelectedItem = item;
+                    return;
+                }
+            }
+        }
+
+        public void SaveCurrentSelection()
+        {
+            BtnSaveSelection_Click(this, new RoutedEventArgs());
         }
 
         private void HideLegacyChrome(UserControl tab)
@@ -86,7 +106,7 @@ namespace oPenEfficiency.UI
                 
                 if (tab.FindName("TxtStatus") is FrameworkElement status)
                     status.Visibility = Visibility.Collapsed;
-            } catch { }
+            } catch { /* Status animation cleanup is cosmetic and may race with panel disposal. */ }
         }
 
         private void SidebarMenu_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -121,6 +141,15 @@ namespace oPenEfficiency.UI
                 {
                     MainContent.Content = _activeTab;
                     SearchBox.Text = "";
+
+                    // The Favorites tab has no per-library sources to configure, so keep the
+                    // Settings affordance visibly disabled there instead of ignoring clicks.
+                    if (BtnOpenSettings != null)
+                    {
+                        bool isFavorites = _activeTab is FavoritesTab;
+                        BtnOpenSettings.IsEnabled = !isFavorites;
+                        BtnOpenSettings.ToolTip = isFavorites ? "No library settings for Favorites" : "Settings";
+                    }
                 }
             }
         }
@@ -160,7 +189,7 @@ namespace oPenEfficiency.UI
         {
             try
             {
-                var app = Globals.ThisAddIn.Application;
+                var app = _application;
                 if (app == null || app.ActivePresentation == null) return;
 
                 var selection = app.ActiveWindow.Selection;
@@ -192,6 +221,7 @@ namespace oPenEfficiency.UI
                 }
 
                 var dialog = new SaveToMyAssetsDialog(_assetService, type, defaultName);
+                new System.Windows.Interop.WindowInteropHelper(dialog).Owner = (IntPtr)app.HWND;
                 if (dialog.ShowDialog() == true)
                 {
                     SaveResult result;

@@ -1,7 +1,10 @@
-using Microsoft.Office.Interop.PowerPoint;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Xml;
+using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Services
 {
@@ -11,105 +14,67 @@ namespace oPenEfficiency.Services
 
         public static void SaveData(Presentation presentation, string jsonId, string jsonContent)
         {
-            if (string.IsNullOrEmpty(jsonId))
-                throw new ArgumentException("jsonId cannot be null or empty", nameof(jsonId));
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (string.IsNullOrEmpty(jsonId)) throw new ArgumentException("jsonId cannot be null or empty", nameof(jsonId));
 
-            // Escape jsonId for safe use in XPath and XML
-            string safeJsonId = EscapeForXmlAttribute(jsonId);
+            var oldParts = new List<Microsoft.Office.Core.CustomXMLPart>();
+            foreach (Microsoft.Office.Core.CustomXMLPart part in presentation.CustomXMLParts.SelectByNamespace(XML_NAMESPACE))
+                if (PartMatchesId(part, jsonId)) oldParts.Add(part);
 
-            var parts = presentation.CustomXMLParts.SelectByNamespace(XML_NAMESPACE);
-            foreach (Microsoft.Office.Core.CustomXMLPart part in parts)
-            {
-                // Use safer check that doesn't rely on string interpolation
-                if (part.XML.Contains("id=\"" + safeJsonId + "\"") ||
-                    part.XML.Contains("id='" + safeJsonId + "'"))
-                {
-                    part.Delete();
-                }
-            }
-
-            // Build XML safely using XmlWriter to prevent injection
-            string xmlString = BuildSafeXml(safeJsonId, jsonContent);
-            presentation.CustomXMLParts.Add(xmlString);
+            AtomicStoreTransaction.AddBeforeDelete(
+                () => presentation.CustomXMLParts.Add(BuildSafeXml(jsonId, jsonContent)),
+                oldParts.ConvertAll(part => (Action)(() => part.Delete())));
         }
 
         public static string LoadData(Presentation presentation, string jsonId)
         {
-            if (string.IsNullOrEmpty(jsonId))
-                return null;
+            return LoadDataCandidates(presentation, jsonId).FirstOrDefault();
+        }
 
-            // Escape jsonId for safe comparison
-            string safeJsonId = EscapeForXmlAttribute(jsonId);
-
-            var parts = presentation.CustomXMLParts.SelectByNamespace(XML_NAMESPACE);
-            foreach (Microsoft.Office.Core.CustomXMLPart part in parts)
+        public static IList<string> LoadDataCandidates(Presentation presentation, string jsonId)
+        {
+            var candidates = new List<string>();
+            if (presentation == null || string.IsNullOrEmpty(jsonId)) return candidates;
+            foreach (Microsoft.Office.Core.CustomXMLPart part in presentation.CustomXMLParts.SelectByNamespace(XML_NAMESPACE))
             {
-                // Use safer check that doesn't rely on string interpolation
-                if (part.XML.Contains("id=\"" + safeJsonId + "\"") ||
-                    part.XML.Contains("id='" + safeJsonId + "'"))
-                {
-                    var node = part.SelectSingleNode("//*[local-name()='JsonData']");
-                    if (node != null)
-                    {
-                        return node.Text;
-                    }
-                }
+                if (!PartMatchesId(part, jsonId)) continue;
+                if (!ExceptionPolicy.TryComProbe(() => part.SelectSingleNode("//*[local-name()='JsonData']"), out Microsoft.Office.Core.CustomXMLNode node) || node == null) continue;
+                if (ExceptionPolicy.TryComProbe(() => node.Text, out string text)) candidates.Add(text);
             }
-            return null;
+            candidates.Reverse();
+            return candidates;
         }
 
-        private static string EscapeForXmlAttribute(string value)
+        public static void DeleteData(Presentation presentation, string jsonId)
         {
-            if (string.IsNullOrEmpty(value))
-                return value;
-
-            // Replace XML special characters in attribute values
-            return value
-                .Replace("&", "&amp;")
-                .Replace("<", "&lt;")
-                .Replace(">", "&gt;")
-                .Replace("\"", "&quot;")
-                .Replace("'", "&apos;");
+            if (presentation == null || string.IsNullOrEmpty(jsonId)) return;
+            var matches = new List<Microsoft.Office.Core.CustomXMLPart>();
+            foreach (Microsoft.Office.Core.CustomXMLPart part in presentation.CustomXMLParts.SelectByNamespace(XML_NAMESPACE))
+                if (PartMatchesId(part, jsonId)) matches.Add(part);
+            foreach (var part in matches) part.Delete();
         }
 
-        private static string BuildSafeXml(string escapedJsonId, string jsonContent)
+        private static bool PartMatchesId(Microsoft.Office.Core.CustomXMLPart part, string jsonId)
         {
-            // Handle CDATA: if content contains ]]>, we need to split it
-            // CDATA sections cannot contain the sequence ]]>
-            string safeContent = jsonContent ?? string.Empty;
+            if (part == null) return false;
+            string escapedId = SecurityElement.Escape(jsonId);
+            return ExceptionPolicy.TryComProbe(() => part.XML, out string xml) &&
+                (xml.Contains("id=\"" + escapedId + "\"") || xml.Contains("id='" + escapedId + "'"));
+        }
 
-            using (var stringWriter = new System.IO.StringWriter())
-            using (var xmlWriter = XmlWriter.Create(stringWriter, new XmlWriterSettings { OmitXmlDeclaration = true }))
+        private static string BuildSafeXml(string jsonId, string jsonContent)
+        {
+            using (var writerBuffer = new System.IO.StringWriter())
+            using (var writer = XmlWriter.Create(writerBuffer, new XmlWriterSettings { OmitXmlDeclaration = true }))
             {
-                xmlWriter.WriteStartElement("ChartData", XML_NAMESPACE);
-                xmlWriter.WriteAttributeString("id", escapedJsonId);
-                xmlWriter.WriteStartElement("JsonData");
-
-                // Write content as CDATA, handling the ]]> edge case
-                if (safeContent.Contains("]]>"))
-                {
-                    // Split content around ]]> and write as separate CDATA sections
-                    var parts = safeContent.Split(new[] { "]]" }, StringSplitOptions.None);
-                    for (int i = 0; i < parts.Length; i++)
-                    {
-                        if (i > 0)
-                            xmlWriter.WriteRaw("]]");
-                        if (i < parts.Length - 1 || safeContent.EndsWith("]]"))
-                            xmlWriter.WriteRaw(parts[i] + ">");
-                        else
-                            xmlWriter.WriteRaw(parts[i]);
-                    }
-                }
-                else
-                {
-                    xmlWriter.WriteCData(safeContent);
-                }
-
-                xmlWriter.WriteEndElement(); // JsonData
-                xmlWriter.WriteEndElement(); // ChartData
-                xmlWriter.Flush();
-
-                return stringWriter.ToString();
+                writer.WriteStartElement("ChartData", XML_NAMESPACE);
+                writer.WriteAttributeString("id", jsonId);
+                writer.WriteStartElement("JsonData");
+                writer.WriteString(jsonContent ?? string.Empty);
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+                writer.Flush();
+                return writerBuffer.ToString();
             }
         }
     }

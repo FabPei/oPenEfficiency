@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,6 +8,7 @@ using System.Windows.Media;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -33,12 +35,18 @@ namespace oPenEfficiency.UI
         public SettingsWindow(PowerPointManager ppManager)
         {
             InitializeComponent();
+
+            // Naming the loaded build here makes a stale DLL visible in the UI (see StartupBuildLog).
+            AboutBuildText.Text = StartupBuildLog.FormatAboutLine(typeof(oPenEfficiency.ThisAddIn).Assembly);
             _ppManager = ppManager;
             _viewModel = new SettingsViewModel();
             DataContext = _viewModel;
 
             _viewModel.CloseAction   = () => this.Close();
             _viewModel.RebuildAction = () => SettingsApplied?.Invoke(this, EventArgs.Empty);
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
+            Closed += SettingsWindow_Closed;
 
             Loaded += (_, __) =>
             {
@@ -57,6 +65,35 @@ namespace oPenEfficiency.UI
                     }
                 }
             };
+        }
+
+        private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.PropertyName) ||
+                e.PropertyName == nameof(SettingsViewModel.BackgroundColor) ||
+                e.PropertyName == nameof(SettingsViewModel.UseThemeBackground) ||
+                e.PropertyName == nameof(SettingsViewModel.SectionFontColor) ||
+                e.PropertyName == nameof(SettingsViewModel.UseThemeSectionFontColor))
+            {
+                UpdateContrastWarning();
+            }
+        }
+
+        private void ThemeManager_ThemeChanged(object sender, string themeName)
+        {
+            UpdateContrastWarning();
+        }
+
+        private void SettingsWindow_Closed(object sender, EventArgs e)
+        {
+            ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+            if (_viewModel != null) _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+        }
+
+        public void SelectSection(int index)
+        {
+            if (NavListBox != null) NavListBox.SelectedIndex = index;
+            if (SettingsTabs != null) SettingsTabs.SelectedIndex = index;
         }
 
         private void StickyStyle_Checked(object sender, RoutedEventArgs e)
@@ -186,7 +223,15 @@ namespace oPenEfficiency.UI
         {
             if (ContrastWarningBanner == null) return;
 
-            double ratio = GetContrastRatio(_viewModel.BackgroundColor, _viewModel.SectionFontColor);
+            string backgroundColor = ResolveContrastColor(
+                _viewModel.UseThemeBackground,
+                "SidebarBackgroundBrush",
+                _viewModel.BackgroundColor);
+            string sectionFontColor = ResolveContrastColor(
+                _viewModel.UseThemeSectionFontColor,
+                "SidebarSectionHeaderBrush",
+                _viewModel.SectionFontColor);
+            double ratio = GetContrastRatio(backgroundColor, sectionFontColor);
             if (ratio < 0) { ContrastWarningBanner.Visibility = Visibility.Collapsed; return; }
 
             string ratioText = ratio.ToString("F2") + ":1";
@@ -221,6 +266,13 @@ namespace oPenEfficiency.UI
                                   "against this background. Please choose colours that differ more."
                 );
             }
+        }
+
+        private string ResolveContrastColor(bool useTheme, string resourceKey, string customColor)
+        {
+            if (!useTheme) return customColor;
+            var brush = TryFindResource(resourceKey) as SolidColorBrush;
+            return brush?.Color.ToString() ?? customColor;
         }
 
         private void ShowWarning(Color background, Color border, Color titleColor, Color detailColor,
@@ -325,7 +377,7 @@ namespace oPenEfficiency.UI
                         int b = (rgb >> 16) & 0xFF;
                         result.Add((label, $"#{r:X2}{g:X2}{b:X2}"));
                     }
-                    catch { }
+                    catch { /* Invalid optional color settings retain the current preview value. */ }
                 }
                 return result;
             }
@@ -380,7 +432,7 @@ namespace oPenEfficiency.UI
                             try {
                                 var wpfc = (Color)ColorConverter.ConvertFromString(section.Color);
                                 cd.Color = System.Drawing.Color.FromArgb(wpfc.A, wpfc.R, wpfc.G, wpfc.B);
-                            } catch { }
+                            } catch { /* Invalid color text keeps the previous native color-dialog value. */ }
                         }
 
                         if (cd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -477,7 +529,7 @@ namespace oPenEfficiency.UI
             finally
             {
                 CleanupCacheBtn.IsEnabled = true;
-                CleanupCacheBtn.Content = "Cache bereinigen";
+                CleanupCacheBtn.Content = "Clean Cache";
             }
         }
 
@@ -492,6 +544,60 @@ namespace oPenEfficiency.UI
             catch (Exception ex)
             {
                 CacheSizeText.Text = $"Cache size: Error - {ex.Message}";
+            }
+        }
+
+        private void CreateDiagnosticBundleBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "ZIP archives (*.zip)|*.zip",
+                Title = "Create Diagnostic Bundle",
+                FileName = $"openEfficiency-diagnostics-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+                AddExtension = true,
+                DefaultExt = ".zip",
+                OverwritePrompt = true
+            };
+
+            if (dialog.ShowDialog(this) != true) return;
+
+            try
+            {
+                CreateDiagnosticBundleBtn.IsEnabled = false;
+                CreateDiagnosticBundleBtn.Content = "Creating...";
+
+                string officeVersion = null;
+                try
+                {
+                    officeVersion = _ppManager?.GetApplication()?.Version;
+                }
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "Settings.CreateDiagnosticBundle.OfficeVersion");
+                }
+
+                var service = new DiagnosticBundleService();
+                service.Create(
+                    dialog.FileName,
+                    _viewModel?.Config,
+                    DiagnosticBundleService.CaptureRuntime(officeVersion, addInLoaded: true),
+                    ExceptionLogger.GetLogFilePath());
+
+                DiagnosticBundleResult.SetResourceReference(TextBlock.ForegroundProperty, "SuccessBrush");
+                DiagnosticBundleResult.Text = "Diagnostic bundle created. Review the ZIP before sharing it.";
+                DiagnosticBundleResult.Visibility = Visibility.Visible;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "Settings.CreateDiagnosticBundle");
+                DiagnosticBundleResult.SetResourceReference(TextBlock.ForegroundProperty, "ErrorBrush");
+                DiagnosticBundleResult.Text = "Could not create the diagnostic bundle. See the local error log for details.";
+                DiagnosticBundleResult.Visibility = Visibility.Visible;
+            }
+            finally
+            {
+                CreateDiagnosticBundleBtn.IsEnabled = true;
+                CreateDiagnosticBundleBtn.Content = "Create Diagnostic Bundle";
             }
         }
 

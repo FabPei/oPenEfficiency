@@ -8,15 +8,15 @@ namespace oPenEfficiency.UI
         private ElementHost _elementHost;
         private AssetManagerView _wpfView;
 
-        public AssetManagerHost()
+        public AssetManagerHost(PowerPointManager manager)
         {
-            InitializeComponent();
+            InitializeComponent(manager ?? throw new System.ArgumentNullException(nameof(manager)));
         }
 
-        private void InitializeComponent()
+        private void InitializeComponent(PowerPointManager manager)
         {
             this._elementHost = new ElementHost();
-            this._wpfView = new AssetManagerView();
+            this._wpfView = new AssetManagerView(manager);
             
             this.SuspendLayout();
             
@@ -35,6 +35,16 @@ namespace oPenEfficiency.UI
             {
                 _wpfView.OnSelectionChange(selection);
             }
+        }
+
+        public void SelectSection(string section)
+        {
+            _wpfView?.SelectSection(section);
+        }
+
+        public void SaveCurrentSelection()
+        {
+            _wpfView?.SaveCurrentSelection();
         }
     }
 }

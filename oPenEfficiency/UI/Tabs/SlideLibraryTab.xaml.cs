@@ -341,7 +341,7 @@ namespace oPenEfficiency.UI.Tabs
                         }
                     }
                 }
-            } catch { }
+            } catch { /* Invalid persisted folder entries are excluded from the slide library. */ }
             return paths.Where(p => !string.IsNullOrEmpty(p) && System.IO.Directory.Exists(p)).Distinct().ToList();
         }
 

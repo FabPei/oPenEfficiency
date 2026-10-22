@@ -1,0 +1,125 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.HtmlSlideImportOptionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Import HTML Slides"
+        Width="620"
+        Height="620"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                <StackPanel MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                    <TextBlock Text="Import HTML Slides" FontSize="22" FontWeight="SemiBold"/>
+                    <TextBlock Text="Choose which slides to import and which parts of the HTML appearance should be preserved."
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="0,6,0,0"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button x:Name="BtnClose" Style="{StaticResource WindowCloseButton}" Click="Close_Click" DockPanel.Dock="Right"/>
+            </DockPanel>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Content="Select All" Width="110" Height="34" Click="SelectAll_Click" Style="{StaticResource SecondaryButton}"/>
+                <Button Content="Clear" Width="90" Height="34" Margin="10,0,0,0" Click="Clear_Click" Style="{StaticResource SecondaryButton}"/>
+            </StackPanel>
+
+            <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="8">
+                <ListBox x:Name="SlidesList"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ItemsSource="{Binding Slides}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource BorderLightBrush}" BorderThickness="0,0,0,1" Padding="6,8">
+                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding DisplayText}"
+                                               FontSize="15"
+                                               TextWrapping="Wrap"/>
+                                </CheckBox>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <Border Grid.Row="3" Margin="0,14,0,0" Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <TextBlock Text="Import Style" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Text="Control whether the imported slides keep the HTML look or adapt to PowerPoint defaults."
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="0,6,0,12"
+                               TextWrapping="Wrap"/>
+                    <CheckBox x:Name="ChkPreserveStyling"
+                              Content="Preserve HTML styling and colors"
+                              IsChecked="True"
+                              Margin="0,0,0,10"/>
+                    <CheckBox x:Name="ChkPreserveBackground"
+                              Content="Preserve HTML background"
+                              IsChecked="True"
+                              Margin="0,0,0,10"/>
+                    <CheckBox x:Name="ChkPreserveFonts"
+                              Content="Preserve HTML fonts"
+                              IsChecked="True"/>
+                    <CheckBox x:Name="ChkUsePresentationTheme"
+                              Content="Apply current presentation theme (colors and fonts)"
+                              Margin="0,10,0,0"
+                              ToolTip="Maps imported HTML text and shape colors to the active PowerPoint theme. Images keep their original colors."/>
+                </StackPanel>
+            </Border>
+
+            <Grid Grid.Row="4" Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           Text="Only checked slides will be imported."/>
+
+                <Button Grid.Column="1"
+                        Content="Cancel"
+                        Width="100"
+                        Height="36"
+                        Margin="0,0,10,0"
+                        Click="Cancel_Click"
+                        Style="{StaticResource SecondaryButton}"/>
+
+                <Button Grid.Column="2"
+                        Content="Import"
+                        Width="110"
+                        Height="36"
+                        Click="Import_Click"
+                        Style="{StaticResource AccentButton}"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnMapWizard",
+  "title": "Map Builder (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/MapWizardFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnMapWizard-001",
+      "title": "Map Builder applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/MapWizardFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Map Builder (BtnMapWizard) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnMapWizard-002",
+      "title": "Germany federal-states map inserts with the full metadata contract",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/MapAssetService.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs"
+      ],
+      "expected": "The seam drives the production MapAssetService.InsertGermanyFederalStates on its own presentation and pins the metadata contract: the result is a group tagged COUNTRY-DEU-ADM1 with detail level ADM1, scope Country, country id DEU and projection Mercator on the map group; every region root carries a non-empty region id tag; and the DISTINCT region ids equal the bundled administrative-region catalog count for DEU (host-measured: 38 roots because multi-part states render several roots sharing one region id, 16 distinct states) with zero new error-log entries.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "map-insert-germany"
+        ]
+      }
+    },
+    {
+      "id": "REG-MAP-BUILDER-DRAG-001",
+      "title": "Owner retake of Map Builder header movement after the responsiveness fix",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+        "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml.cs",
+        "oPenEfficiency/Services/MapAssetService.cs",
+        "oPenEfficiency/Resources/Maps/administrative_region_metadata.json",
+        "eng/Generate-MapAdministrativeCatalog.py",
+        "eng/Smoke-MapBuilderWindow.ps1",
+        "oPenEfficiency.Command.Tests/MapAdministrativeCatalogTests.cs"
+      ],
+      "expected": "In real PowerPoint, dragging the upper Map Builder title region changes the window position before and after the first country selection; controls remain responsive and Close/Cancel work normally.",
+      "ownerSteps": [
+        "Open Map Builder in PowerPoint and drag its upper title region; confirm that the window position changes.",
+        "Choose Country or territory for the first time, then drag the title region again; confirm responsive movement and no clipped controls.",
+        "Check the Close and Cancel buttons and reopen the workspace."
+      ],
+      "technicalReason": "Deterministic automation verifies the native non-client routing only (WM_NCHITTEST: Title/TopPadding return HTCAPTION, Close/Body return HTCLIENT in eng/Smoke-MapBuilderWindow.ps1). Actual window movement under a real pointer gesture cannot be proven in the headless WPF fixture: one synthetic drag gesture produced zero movement and a second attempt refused to send input because the fixture shell was not opaque, so no further synthetic input is injected. Physical movement must be observed interactively by the owner in real PowerPoint."
+    },
+    {
+      "id": "REG-MAP-BUILDER-UI-001-TREE",
+      "title": "Map Builder remains bounded and responsive during first country selection",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+        "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml.cs",
+        "oPenEfficiency/Services/MapAssetService.cs",
+        "oPenEfficiency/Resources/Maps/administrative_region_metadata.json",
+        "eng/Generate-MapAdministrativeCatalog.py",
+        "eng/Smoke-MapBuilderWindow.ps1",
+        "oPenEfficiency.Command.Tests/MapAdministrativeCatalogTests.cs"
+      ],
+      "expected": "The actual compiled WPF window fits its controls into 640, 760 and 960 DIP widths without outer horizontal scrolling; first country selection completes below two seconds and all administrative availability/parent queries leave polygon geometry unloaded.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-MapBuilderWindow.ps1",
+        "arguments": []
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

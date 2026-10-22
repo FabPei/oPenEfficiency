@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFormatNumbers",
+  "title": "Format Numbers (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/FormatNumbersFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFormatNumbers-001",
+      "title": "Format Numbers applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/FormatNumbersFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Format Numbers (BtnFormatNumbers) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFormatNumbers-001",
+      "title": "Format Numbers normalizes detected numbers for the configured separators, grouping and currency placement",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/FormatNumbersFeature.cs",
+        "oPenEfficiency.Core/Services/NumberTextFormatter.cs",
+        "oPenEfficiency.Core.Tests/NumberTextFormatterTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives NumberTextFormatter.TryFormatToken for Format Numbers: detected numbers are re-formatted for the configured thousand and decimal separators (including a space thousand separator), Indian grouping is rendered for large values, and a detected currency is removed, prefixed or suffixed with the documented separator and spacing rules, across the parameter matrix of the production test.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~NumberTextFormatterTests.NumberTokensAreNormalizedAndFormatted"
+      }
+    },
+    {
+      "id": "QA9-BtnFormatNumbers-002",
+      "title": "Format Numbers keeps the in-place currency contract and leaves invalid tokens untouched",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/FormatNumbersFeature.cs",
+        "oPenEfficiency.Core/Services/NumberTextFormatter.cs",
+        "oPenEfficiency.Core.Tests/NumberTextFormatterTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives NumberTextFormatter.TryFormatToken for Format Numbers: with in-place currency placement the decimal separator is replaced by the currency symbol in the formatted number, while a token that is not a number makes the formatter report failure and return that token unchanged.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~NumberTextFormatterTests.InPlaceCurrencyAndInvalidTokensFollowExistingContract"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

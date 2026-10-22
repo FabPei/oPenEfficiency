@@ -1,33 +1,20 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
-using Office = Microsoft.Office.Core;
+using oPenEfficiency.Services;
 using oPenEfficiency.Utils;
 using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features
 {
-    /// <summary>
-    /// Helper class for table row data during sorting.
-    /// </summary>
-    public class TableRowData
-    {
-        public string[] Cells { get; set; }
-        public string SortValue { get; set; }
-    }
-
-    /// <summary>
-    /// Feature: Sort table cells or whole rows based on selection.
-    /// </summary>
     [FeatureMetadata(
         Id = "BtnTableSortAZ",
         Name = "Sort A-Z",
-        Tooltip = "Sort A-Z",
-        IconData = "M3,3H21V21H3V3M7,5V19L11,15H8V13H13V16L17,12V5H7M15,7H17V11H19V7H21V5H15V7Z",
+        Tooltip = "Sort selected table values A-Z",
+        IconData = "M2,11L5.5,2H7.5L11,11H8.8L8,9H5L4.2,11Z M5.8,7H7.2L6.5,5.2Z M3,13H11V15L6,20H11V22H3V20L8,15H3Z M16,2H18V18.6L20.3,16.3L21.7,17.7L17,22.4L12.3,17.7L13.7,16.3L16,18.6Z",
         Color = "#F43F5E",
-        Description = "Sorts table rows in ascending order (A-Z) based on selected cell column.",
-        DetailedHelpText = "### Sort A-Z\nSorts the rows of the selected table alphabetically or numerically based on a chosen column, with ascending and descending support.",
-        Keywords = "sort, order, alphabet, arrange, list, organize",
+        Description = "Sorts the selected cells ascending with culture-aware numeric ordering when every compared value is numeric.",
+        DetailedHelpText = "### Sort A-Z\n\nSelect at least two cells vertically in the sort column. The primary command sorts only those selected cell texts and keeps destination formatting in place. The **Sort Table Cells** context menu also provides descending and whole-row-text variants. Numeric values use culture-aware numeric order, text uses culture-aware case-insensitive order, and equal values remain stable. Read or write errors trigger rollback of the affected texts and successful sorts create a PowerPoint Undo entry.",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableSortFeature
@@ -40,23 +27,13 @@ namespace oPenEfficiency.Features
             ZA_WholeRow
         }
 
-        /// <summary>
-        /// Wrapper for auto-discovery - sorts table A-Z based on selection.
-        /// </summary>
-        public static bool Execute(PowerPointManager manager)
-        {
-            return Execute(manager, SortType.AZ_Selection);
-        }
+        public static bool Execute(PowerPointManager manager) => Execute(manager, SortType.AZ_Selection);
 
-        /// <summary>
-        /// Executes table sorting based on the specified sort type.
-        /// </summary>
         public static bool Execute(PowerPointManager manager, SortType type)
         {
             if (manager == null) return false;
-
-            bool ascending = (type == SortType.AZ_Selection || type == SortType.AZ_WholeRow);
-            bool wholeRow = (type == SortType.AZ_WholeRow || type == SortType.ZA_WholeRow);
+            bool ascending = type == SortType.AZ_Selection || type == SortType.AZ_WholeRow;
+            bool wholeRow = type == SortType.AZ_WholeRow || type == SortType.ZA_WholeRow;
 
             try
             {
@@ -65,82 +42,87 @@ namespace oPenEfficiency.Features
                 if (!TableHelper.GetSelectedTable(manager, out tableShape, out table)) return false;
 
                 int minRow, maxRow, minCol, maxCol;
-                if (!TableHelper.GetSelectedCellBounds(table, out minRow, out maxRow, out minCol, out maxCol)) return false;
+                if (!TableHelper.GetSelectedCellBounds(table, out minRow, out maxRow, out minCol, out maxCol))
+                {
+                    ShowInfo("Select at least two cells vertically in the column to sort.");
+                    return false;
+                }
+                if (minRow >= maxRow)
+                {
+                    ShowInfo("Select at least two rows to sort.");
+                    return false;
+                }
+                if (!wholeRow && minCol != maxCol)
+                {
+                    ShowInfo("Selected-cell sorting requires one vertical column. Use a whole-row option to move complete row texts.");
+                    return false;
+                }
 
-                int startRow = minRow;
-                int endRow = maxRow;
                 int sortColumn = minCol;
+                int firstColumn = wholeRow ? 1 : sortColumn;
+                int lastColumn = wholeRow ? table.Columns.Count : sortColumn;
+                var original = new Dictionary<string, string>();
+                var rows = new List<string[]>();
 
-                if (startRow >= endRow) return true;
-
-                int colCount = table.Columns.Count;
-                var rowDataList = new List<TableRowData>();
-
-                for (int r = startRow; r <= endRow; r++)
+                for (int row = minRow; row <= maxRow; row++)
                 {
-                    var data = new string[colCount];
-                    if (wholeRow)
+                    var cells = new string[lastColumn - firstColumn + 1];
+                    for (int column = firstColumn; column <= lastColumn; column++)
                     {
-                        for (int c = 1; c <= colCount; c++)
-                        {
-                            try { data[c - 1] = table.Cell(r, c).Shape.TextFrame.TextRange.Text; }
-                            catch (Exception ex)
-                            {
-                                ExceptionLogger.Log(ex, $"TableSort: Error reading cell [{r},{c}]");
-                                data[c - 1] = "";
-                            }
-                        }
+                        string value = table.Cell(row, column).Shape.TextFrame.TextRange.Text;
+                        cells[column - firstColumn] = value;
+                        original[Key(row, column)] = value;
                     }
-                    else
-                    {
-                        try { data[sortColumn - 1] = table.Cell(r, sortColumn).Shape.TextFrame.TextRange.Text; }
-                        catch (Exception ex)
-                        {
-                            ExceptionLogger.Log(ex, $"TableSort: Error reading sort cell [{r},{sortColumn}]");
-                            data[sortColumn - 1] = "";
-                        }
-                    }
-
-                    rowDataList.Add(new TableRowData { Cells = data, SortValue = data[sortColumn - 1] });
+                    rows.Add(cells);
                 }
 
-                rowDataList.Sort((a, b) =>
-                {
-                    int res = string.Compare(a.SortValue, b.SortValue, StringComparison.CurrentCultureIgnoreCase);
-                    return ascending ? res : -res;
-                });
+                var plannedRows = TableTextPlanner.SortRows(
+                    rows,
+                    sortColumn - firstColumn,
+                    ascending);
+                try { manager.GetApplication().StartNewUndoEntry(); } catch { /* Sorting remains valid when undo grouping is unavailable. */ }
 
-                for (int i = 0; i < rowDataList.Count; i++)
+                try
                 {
-                    int r = startRow + i;
-                    if (wholeRow)
+                    for (int offset = 0; offset < plannedRows.Count; offset++)
                     {
-                        for (int c = 1; c <= colCount; c++)
-                        {
-                            try { table.Cell(r, c).Shape.TextFrame.TextRange.Text = rowDataList[i].Cells[c - 1]; }
-                            catch (Exception ex)
-                            {
-                                ExceptionLogger.Log(ex, $"TableSort: Error writing cell [{r},{c}]");
-                            }
-                        }
+                        int row = minRow + offset;
+                        for (int column = firstColumn; column <= lastColumn; column++)
+                            table.Cell(row, column).Shape.TextFrame.TextRange.Text = plannedRows[offset][column - firstColumn];
                     }
-                    else
-                    {
-                        try { table.Cell(r, sortColumn).Shape.TextFrame.TextRange.Text = rowDataList[i].Cells[sortColumn - 1]; }
-                        catch (Exception ex)
-                        {
-                            ExceptionLogger.Log(ex, $"TableSort: Error writing cell [{r},{sortColumn}]");
-                        }
-                    }
+                    return true;
                 }
-
-                return true;
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "TableSortFeature.Write");
+                    Restore(table, original);
+                    System.Windows.Forms.MessageBox.Show("The sort could not be completed. The affected cell texts were restored where PowerPoint allowed it.", "Sort Table Cells", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                    return false;
+                }
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableSortFeature.Execute");
+                System.Windows.Forms.MessageBox.Show("The selected table values could not be read, so nothing was sorted.", "Sort Table Cells", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 return false;
             }
+        }
+
+        private static void Restore(Table table, Dictionary<string, string> original)
+        {
+            foreach (var item in original)
+            {
+                var parts = item.Key.Split(':');
+                try { table.Cell(int.Parse(parts[0]), int.Parse(parts[1])).Shape.TextFrame.TextRange.Text = item.Value; }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "TableSortFeature.Rollback"); }
+            }
+        }
+
+        private static string Key(int row, int column) => row + ":" + column;
+
+        private static void ShowInfo(string message)
+        {
+            System.Windows.Forms.MessageBox.Show(message, "Sort Table Cells", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
         }
     }
 }

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnMoveToBackup",
+  "title": "Move Slides to Backup (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/MoveToBackupFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnMoveToBackup-001",
+      "title": "Move Slides to Backup applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/MoveToBackupFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Move Slides to Backup (BtnMoveToBackup) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnMoveToBackup-002",
+      "title": "Designated Backup slide recognition and confirmation wording are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/BackupSlidePolicy.cs",
+        "oPenEfficiency/Features/Utilities/MoveToBackupFeature.cs",
+        "oPenEfficiency.Core.Tests/BackupSlidePolicyTests.cs"
+      ],
+      "expected": "A slide is the designated Backup slide when either the oPE_BackupSlide or the EE4P_BACKUP_SLIDE tag carries 'True' (case-insensitive; missing, empty or other values do not qualify), and the move/copy confirmation reads '{Move|Copy} {count} selected slide(s) to the end, behind Backup slide {index}?'",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~BackupSlidePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnMoveToBackup-003",
+      "title": "Move Slides to Backup Locate action navigates to the tagged backup slide in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Move Slides to Backup Locate action on a two-slide fixture whose second slide carries the oPE_BackupSlide tag navigates the real view to the backup slide (measured navigatedTo=2 expectedIndex=2), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "locate-backup"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

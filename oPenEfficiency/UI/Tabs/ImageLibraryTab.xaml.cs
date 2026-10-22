@@ -190,7 +190,7 @@ namespace oPenEfficiency.UI.Tabs
                                 long size = new FileInfo(file.FilePath).Length;
                                 if (size < thresholdBytes) continue;
                             }
-                            catch { }
+                            catch { /* An unreadable image asset is skipped while loading the remaining library. */ }
                         }
                     }
 
@@ -831,7 +831,7 @@ namespace oPenEfficiency.UI.Tabs
                         }
                     }
                 }
-            } catch { }
+            } catch { /* Invalid persisted folder entries are excluded from the image library. */ }
             return paths.Where(p => !string.IsNullOrEmpty(p) && System.IO.Directory.Exists(p)).Distinct().ToList();
         }
 }

@@ -1,0 +1,75 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.FeatureAcceptanceWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="openEfficiency - Feature Acceptance Status"
+        Width="980" Height="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackgroundBrush}">
+    <!-- ArchetypeException: dev/QA status window with a resizable results grid and a command
+         toolbar; the canonical overlay archetypes (borderless palette/popup) do not fit it.
+         The window is dev-only (UserVisible=false plus repository checkout required). -->
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <DockPanel Margin="8">
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock x:Name="RepositoryLabel"
+                       Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,0,0,6"
+                       Text="repository: (not found)" />
+            <WrapPanel Margin="0,0,0,6">
+                <Button Content="Run gate command" Margin="0,0,6,4" Padding="8,3" Click="OnRunGate" />
+                <Button Content="Rerun feature" Margin="0,0,6,4" Padding="8,3" Click="OnRerunFeature" />
+                <Button Content="Rebind evidence" Margin="0,0,6,4" Padding="8,3" Click="OnRebindEvidence" />
+                <Button Content="Open evidence folder" Margin="0,0,6,4" Padding="8,3" Click="OnOpenEvidenceFolder" />
+                <Button Content="Open checklist" Margin="0,0,6,4" Padding="8,3" Click="OnOpenChecklist" />
+                <Button Content="Copy summary" Margin="0,0,6,4" Padding="8,3" Click="OnCopySummary" />
+                <Button Content="Refresh" Margin="0,0,6,4" Padding="8,3" Click="OnRefresh" />
+            </WrapPanel>
+            <WrapPanel Margin="0,0,0,6">
+                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Text="Severity: " />
+                <ComboBox x:Name="SeverityFilter" Width="150" SelectedIndex="0" SelectionChanged="OnFilterChanged">
+                    <ComboBoxItem Content="All" />
+                    <ComboBoxItem Content="Issues only" />
+                    <ComboBoxItem Content="failed" />
+                    <ComboBoxItem Content="missing-evidence" />
+                    <ComboBoxItem Content="stale" />
+                </ComboBox>
+                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="14,0,0,0" Text="Sort by: " />
+                <ComboBox x:Name="SortSelector" Width="130" SelectedIndex="0" SelectionChanged="OnFilterChanged">
+                    <ComboBoxItem Content="Severity" />
+                    <ComboBoxItem Content="Age (newest first)" />
+                    <ComboBoxItem Content="Scenario" />
+                </ComboBox>
+                <TextBlock x:Name="IssueCountLabel" Foreground="{DynamicResource TextSecondaryBrush}" Margin="14,0,0,0" VerticalAlignment="Center" Text="" />
+            </WrapPanel>
+        </StackPanel>
+
+        <DataGrid x:Name="RowsGrid"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  SelectionMode="Single"
+                  Background="{DynamicResource SurfaceBrush}"
+                  RowBackground="{DynamicResource SurfaceBrush}"
+                  AlternatingRowBackground="{DynamicResource SurfaceHoverBrush}"
+                  Foreground="{DynamicResource TextPrimaryBrush}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource BorderBrush}"
+                  MouseDoubleClick="OnRowDoubleClick">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="120" />
+                <DataGridTextColumn Header="Scenario" Binding="{Binding ScenarioId}" Width="220" />
+                <DataGridTextColumn Header="Feature" Binding="{Binding FeatureId}" Width="170" />
+                <DataGridTextColumn Header="Tier" Binding="{Binding Tier}" Width="110" />
+                <DataGridTextColumn Header="Status" Binding="{Binding AutomationStatus}" Width="90" />
+                <DataGridTextColumn Header="Evidence" Binding="{Binding EvidenceState}" Width="90" />
+                <DataGridTextColumn Header="Age (h)" Binding="{Binding EvidenceAgeHours}" Width="70" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

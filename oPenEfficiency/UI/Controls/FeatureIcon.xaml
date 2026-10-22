@@ -7,9 +7,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="24" d:DesignWidth="24">
     <Viewbox x:Name="IconViewbox" Stretch="Uniform">
-        <Path x:Name="IconPath" 
-              HorizontalAlignment="Center" 
-              VerticalAlignment="Center"
-              Stretch="Uniform"/>
+        <!-- IsHitTestVisible=False keeps the glyph purely decorative as defense in depth: only a
+             FeatureId change rebuilds these children (PQ-016), but input must always hit the
+             stable button template, never transient icon visuals. -->
+        <Grid x:Name="IconLayerHost" Width="24" Height="24" IsHitTestVisible="False"/>
     </Viewbox>
 </UserControl>

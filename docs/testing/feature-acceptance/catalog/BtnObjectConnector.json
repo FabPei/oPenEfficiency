@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnObjectConnector",
+  "title": "Connect Shapes (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/ObjectConnectorFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnObjectConnector-001",
+      "title": "Connect Shapes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ObjectConnectorFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Connect Shapes (BtnObjectConnector) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnObjectConnector-002",
+      "title": "Connector side selection and quad winding are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ConnectorGeometryPolicy.cs",
+        "oPenEfficiency/Features/Visuals/ObjectConnectorFeature.cs",
+        "oPenEfficiency.Core.Tests/ConnectorGeometryPolicyTests.cs"
+      ],
+      "expected": "Object Connector picks the side pair host-free: the dominant axis of the center-to-center delta chooses horizontal (Right/Left, signed) or vertical (Bottom/Top, signed) with an exact tie going to the vertical pair, every bounding-box side yields exactly its two corner points, the connector quad winds clockwise (first side top/bottom, then second side bottom/top) and is empty when either side carries fewer than two points, and the analytically known regular polygons (pentagon, hexagon, octagon) are generated with their historical start angles.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ConnectorGeometryPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnObjectConnector-003",
+      "title": "Object Connector draws the explicit Right-to-Left quad in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Visuals/ObjectConnectorFeature.cs",
+        "eng/Smoke-PowerPointObjectConnector.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Connect Shapes with the explicit Right/Left sides appends exactly one freeform shape whose five nodes are the harness-computed quad (first shape right-side corners top/bottom, second shape left-side corners bottom/top, closing node back to the first point) within 0.5 pt, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointObjectConnector.ps1",
+        "arguments": [
+          "-Mode",
+          "explicit"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnObjectConnector-004",
+      "title": "Object Connector auto-detects the closest sides in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Visuals/ObjectConnectorFeature.cs",
+        "eng/Smoke-PowerPointObjectConnector.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Connect Shapes with auto-detect on the same fixture (center delta horizontally dominant) appends exactly one freeform shape with the same Right-to-Left quad within 0.5 pt, proving the side decision on the real host, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointObjectConnector.ps1",
+        "arguments": [
+          "-Mode",
+          "auto"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

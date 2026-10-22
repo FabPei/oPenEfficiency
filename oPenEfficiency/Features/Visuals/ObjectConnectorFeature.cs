@@ -7,15 +7,15 @@ namespace oPenEfficiency.Features
 {
     [FeatureMetadata(
         Id = "BtnObjectConnector",
-        Name = "Object Connector",
-        Tooltip = "Object connector",
-        IconData = "M4,2H6V4H4V6H2V4H4V2M6,10V12H4V14H6V16H4V20H6V18H8V20H10V18H12V20H14V16H16V14H14V12H16V10H14V8H16V4H14V6H12V8H10V6H8V8H6V10M20,2H18V4H20V6H22V4H20V2M18,10V12H20V14H18V16H20V20H18V18H16V20H14V18H12V20H10V16H8V14H10V12H8V10H10V8H8V4H10V6H12V4H14V8H16V6H18V8H20V10H18Z",
+        Name = "Connect Shapes",
+        SearchAliases = new[] { "Object Connector" },
+        Tooltip = "Create a filled connector between two selected shapes",
+        IconData = "M1,6H9V18H1Z M3,8V16H7V8Z M15,6H23V18H15Z M17,8V16H21V8Z M9,9H15V11H9Z M9,13H15V15H9Z",
         Color = "#06B6D4",
         Description = "Creates a filled connector shape between two selected objects. Auto-detects closest sides.",
-        DetailedHelpText = "### Object Connector\nDraws a smart connector line between two selected shapes. The connector automatically routes around other shapes and updates when the connected shapes are moved.",
-        Keywords = "connector, line, link, route, join",
+        DetailedHelpText = "### Connect Shapes\nCreates a filled connector polygon between the first two selected shapes. The primary action detects the nearest sides and follows supported shape silhouettes. Right-click to use automatic smart routing or force right-to-left, left-to-right, bottom-to-top, or top-to-bottom attachment sides.",
         MinSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class ObjectConnectorFeature
     {
         /// <summary>
@@ -77,17 +77,9 @@ namespace oPenEfficiency.Features
 
         private static (string, string) DetectClosestSides(Shape s1, Shape s2)
         {
-            float dx = (s2.Left + s2.Width / 2) - (s1.Left + s1.Width / 2);
-            float dy = (s2.Top + s2.Height / 2) - (s1.Top + s1.Height / 2);
-
-            if (System.Math.Abs(dx) > System.Math.Abs(dy))
-            {
-                return dx > 0 ? ("Right", "Left") : ("Left", "Right");
-            }
-            else
-            {
-                return dy > 0 ? ("Bottom", "Top") : ("Top", "Bottom");
-            }
+            return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.DetectClosestSides(
+                s1.Left + s1.Width / 2, s1.Top + s1.Height / 2,
+                s2.Left + s2.Width / 2, s2.Top + s2.Height / 2);
         }
 
         private static List<(float x, float y)> CalculatePoints(Shape s1, string side1, Shape s2, string side2, bool smart)
@@ -97,36 +89,15 @@ namespace oPenEfficiency.Features
             List<(float x, float y)> p1 = smart ? GetSilhouettePoints(s1, side1) : GetBoundingBoxPoints(s1, side1);
             List<(float x, float y)> p2 = smart ? GetSilhouettePoints(s2, side2) : GetBoundingBoxPoints(s2, side2);
 
-            if (p1.Count < 2 || p2.Count < 2) return new List<(float x, float y)>();
-
             // Polygon winds clockwise: p1-top → p1-bottom → p2-bottom → p2-top
             // This ensures a proper closed quad without crossed edges.
-            return new List<(float x, float y)>
-            {
-                p1[0],              // top of s1 side
-                p1[p1.Count - 1],   // bottom of s1 side
-                p2[p2.Count - 1],   // bottom of s2 side
-                p2[0],              // top of s2 side
-            };
+            return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.BuildConnectorQuad(p1, p2);
         }
 
         private static List<(float x, float y)> GetBoundingBoxPoints(Shape s, string side)
         {
-            var pts = new List<(float x, float y)>();
-            if (side == "Right") {
-                pts.Add((s.Left + s.Width, s.Top));
-                pts.Add((s.Left + s.Width, s.Top + s.Height));
-            } else if (side == "Left") {
-                pts.Add((s.Left, s.Top));
-                pts.Add((s.Left, s.Top + s.Height));
-            } else if (side == "Top") {
-                pts.Add((s.Left, s.Top));
-                pts.Add((s.Left + s.Width, s.Top));
-            } else if (side == "Bottom") {
-                pts.Add((s.Left, s.Top + s.Height));
-                pts.Add((s.Left + s.Width, s.Top + s.Height));
-            }
-            return pts;
+            return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.GetBoundingBoxPoints(
+                s.Left, s.Top, s.Width, s.Height, side);
         }
 
         private static List<(float x, float y)> GetSilhouettePoints(Shape s, string side)
@@ -208,13 +179,13 @@ namespace oPenEfficiency.Features
 
                     case Office.MsoAutoShapeType.msoShapeRegularPentagon:
                         // Approximate: use 5 equally spaced points on an ellipse
-                        return ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 5, -System.Math.PI / 2);
+                        return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 5, -System.Math.PI / 2);
 
                     case Office.MsoAutoShapeType.msoShapeHexagon:
-                        return ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 6, 0);
+                        return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 6, 0);
 
                     case Office.MsoAutoShapeType.msoShapeOctagon:
-                        return ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 8, System.Math.PI / 8);
+                        return oPenEfficiency.Core.Services.ConnectorGeometryPolicy.ComputeRegularPolygonVertices(cx, cy, s.Width / 2f, s.Height / 2f, 8, System.Math.PI / 8);
                 }
             }
             catch (System.Exception ex)
@@ -246,19 +217,6 @@ namespace oPenEfficiency.Features
             }
 
             return null; // triggers bounding-box fallback
-        }
-
-        private static List<(float x, float y)> ComputeRegularPolygonVertices(
-            float cx, float cy, float rx, float ry, int sides, double startAngle)
-        {
-            var pts = new List<(float, float)>();
-            for (int i = 0; i < sides; i++)
-            {
-                double angle = startAngle + 2 * System.Math.PI * i / sides;
-                pts.Add((cx + (float)(rx * System.Math.Cos(angle)),
-                         cy + (float)(ry * System.Math.Sin(angle))));
-            }
-            return pts;
         }
     }
 }

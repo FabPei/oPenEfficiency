@@ -50,7 +50,7 @@ namespace oPenEfficiency.UI.Dialogs
                 ApplyButton.IsEnabled = true;
                 DeleteButton.IsEnabled = true;
 
-                foreach (var style in AvailableStyles.OrderBy(s => s.Name))
+                foreach (var style in AvailableStyles.Where(s => s != null).OrderBy(s => s.Name ?? string.Empty))
                 {
                     var item = new ListBoxItem
                     {
@@ -67,11 +67,7 @@ namespace oPenEfficiency.UI.Dialogs
                         {
                             Width = 16,
                             Height = 16,
-                            Background = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(
-                                    (byte)(style.HeaderFillColor.Value >> 16),
-                                    (byte)(style.HeaderFillColor.Value >> 8),
-                                    (byte)style.HeaderFillColor.Value)),
+                            Background = ToBrush(style.HeaderFillColor.Value),
                             BorderBrush = System.Windows.Media.Brushes.Gray,
                             BorderThickness = new Thickness(1),
                             ToolTip = "Header Color"
@@ -86,11 +82,7 @@ namespace oPenEfficiency.UI.Dialogs
                             Width = 16,
                             Height = 16,
                             Margin = new Thickness(4, 0, 0, 0),
-                            Background = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(
-                                    (byte)(style.BodyFillColor.Value >> 16),
-                                    (byte)(style.BodyFillColor.Value >> 8),
-                                    (byte)style.BodyFillColor.Value)),
+                            Background = ToBrush(style.BodyFillColor.Value),
                             BorderBrush = System.Windows.Media.Brushes.Gray,
                             BorderThickness = new Thickness(1),
                             ToolTip = "Body Color"
@@ -105,11 +97,7 @@ namespace oPenEfficiency.UI.Dialogs
                             Width = 16,
                             Height = 16,
                             Margin = new Thickness(4, 0, 0, 0),
-                            Background = new System.Windows.Media.SolidColorBrush(
-                                System.Windows.Media.Color.FromRgb(
-                                    (byte)(style.AltRowFillColor.Value >> 16),
-                                    (byte)(style.AltRowFillColor.Value >> 8),
-                                    (byte)style.AltRowFillColor.Value)),
+                            Background = ToBrush(style.AltRowFillColor.Value),
                             BorderBrush = System.Windows.Media.Brushes.Gray,
                             BorderThickness = new Thickness(1),
                             ToolTip = "Alt Row Color"
@@ -181,8 +169,14 @@ namespace oPenEfficiency.UI.Dialogs
 
                 if (result == MessageBoxResult.Yes)
                 {
+                    var previous = new List<TableBrandingFeature.TableStyle>(AvailableStyles);
                     AvailableStyles.RemoveAll(s => s.Name == SelectedStyle.Name);
-                    TableBrandingFeature.SaveStyles(AvailableStyles);
+                    if (!TableBrandingFeature.SaveStyles(AvailableStyles))
+                    {
+                        AvailableStyles = previous;
+                        MessageBox.Show(this, "The style could not be deleted. The existing style file was left unchanged.", "Table Style Library", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
                     LoadStylesList();
                     SelectedStyle = null;
                 }
@@ -202,6 +196,12 @@ namespace oPenEfficiency.UI.Dialogs
             {
                 ApplyButton_Click(sender, e);
             }
+        }
+
+        private static System.Windows.Media.Brush ToBrush(uint officeRgb)
+        {
+            var color = System.Drawing.ColorTranslator.FromOle(unchecked((int)officeRgb));
+            return new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(color.R, color.G, color.B));
         }
     }
 }

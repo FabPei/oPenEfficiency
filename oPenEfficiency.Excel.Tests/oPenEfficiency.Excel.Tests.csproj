@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>oPenEfficiency.Excel.Tests</RootNamespace>
+    <AssemblyName>oPenEfficiency.Excel.Tests</AssemblyName>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\oPenEfficiency.Excel\oPenEfficiency.Excel.csproj">
+      <AdditionalProperties>Platform=AnyCPU</AdditionalProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\oPenEfficiency\oPenEfficiency.csproj">
+      <AdditionalProperties>Platform=AnyCPU</AdditionalProperties>
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
+    </ProjectReference>
+    <Reference Include="System.Drawing" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.4" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.4" />
+  </ItemGroup>
+</Project>

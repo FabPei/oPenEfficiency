@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSwapPositions",
+  "title": "Swap Positions (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/SwapPositionsFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSwapPositions-001",
+      "title": "Swap Positions applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/SwapPositionsFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Swap Positions (BtnSwapPositions) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSwapPositions-002",
+      "title": "Anchor swap placement is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/AnchorSwapPlacementPolicy.cs",
+        "oPenEfficiency/Features/Alignment/SwapPositionsFeature.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs",
+        "oPenEfficiency.Core.Tests/AnchorSwapPlacementPolicyTests.cs"
+      ],
+      "expected": "Each of the nine anchors (center, corners, edge midpoints) sits on its rectangle; the exchange moves each shape so its anchor lands where the other shape's anchor was while the shape keeps its anchor-to-top-left offset — equal sizes swapping on center exchange their exact top-left positions, and the TopLeft anchor aligns the top-left corners across different sizes.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~AnchorSwapPlacementPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnSwapPositions-003",
+      "title": "Swap Positions exchanges the two shapes centers in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Swap Positions on two rectangles at known centers exchanges them exactly (each shape ends at the other original center within 0.5 pt), reports execution, keeps the shape count unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "swap-positions"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

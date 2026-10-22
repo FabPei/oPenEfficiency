@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnShapeFill",
+  "title": "Shape Fill (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/ShapeFillFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnShapeFill-001",
+      "title": "Shape Fill applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/ShapeFillFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Shape Fill (BtnShapeFill) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnShapeFill-001",
+      "title": "Shape Fill palette opens and closes on its documented toggle in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointWindowBatch.ps1"
+      ],
+      "expected": "WINDOW_BATCH_PASS with newErrorLogEntries=0; seam verdict PASS|mode=shape-fill|executed=True|opened=True|windowType=ShapeFillWindow|closed=True.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointWindowBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "shape-fill"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

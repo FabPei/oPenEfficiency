@@ -110,7 +110,7 @@
                 <TextBox x:Name="TxtWidth"
                          Grid.Column="1"
                          Style="{StaticResource CmInput}"
-                         ToolTip="Width (cm) — press Enter to apply"
+                         ToolTip="Width (cm or pt) — press Enter to apply"
                          KeyDown="TxtWidth_KeyDown"
                          LostFocus="TxtWidth_LostFocus"/>
 
@@ -146,7 +146,7 @@
                 <TextBox x:Name="TxtHeight"
                          Grid.Column="1"
                          Style="{StaticResource CmInput}"
-                         ToolTip="Height (cm) — press Enter to apply"
+                         ToolTip="Height (cm or pt) — press Enter to apply"
                          KeyDown="TxtHeight_KeyDown"
                          LostFocus="TxtHeight_LostFocus"/>
 

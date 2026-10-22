@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnGanttChart",
+  "title": "Gantt & Timeline Editor (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnGanttChart-001",
+      "title": "Gantt & Timeline Editor applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Gantt & Timeline Editor (BtnGanttChart) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "LIM-GANTT-EXCEL-SYNC-001-TREE",
+      "title": "Gantt Excel synchronization is import-based replace without source lineage",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/GanttExcelManager.cs",
+        "oPenEfficiency/UI/Panels/GanttPanelViewModel.cs",
+        "oPenEfficiency.Core/Models/GanttModels.cs",
+        "oPenEfficiency.Gantt.Tests/GanttLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: the Excel side is import-based - the Excel capability is template/export/import only and sync re-imports the whole task list from the remembered file path with clear-and-replace semantics; tasks carry no per-item source lineage and there is no merge/diff or granular relink. Fix-forward target: FEAT-005 based refresh/relink semantics (TL-S7).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj",
+        "filter": "FullyQualifiedName~GanttLimitationPinTests"
+      }
+    },
+    {
+      "id": "LIM-GANTT-FULL-REDRAW-001-TREE",
+      "title": "Gantt rendering is a full redraw",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/GanttRenderer.cs",
+        "oPenEfficiency.Gantt.Tests/GanttLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: every render is a full redraw - Render clears all chart shapes before the first draw call and rebuilds the complete chart, and no incremental update path exists. Fix-forward target: incremental updates that keep identity and selection stable (TL-S3).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj",
+        "filter": "FullyQualifiedName~GanttLimitationPinTests"
+      }
+    },
+    {
+      "id": "LIM-GANTT-UNDO-001-TREE",
+      "title": "Gantt undo is model-state snapshot based",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/GanttUndoRedoManager.cs",
+        "oPenEfficiency.Gantt.Tests/GanttLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: Gantt undo is model-state snapshot based - each transaction records one whole-project snapshot that Undo restores by deserialization, with no operation-level inverse commands. The host-level PowerPoint undo granularity of a full re-render stays an owner real-host question. Fix-forward target: recorded, asserted undo granularity per operation.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj",
+        "filter": "FullyQualifiedName~GanttLimitationPinTests"
+      }
+    },
+    {
+      "id": "LIM-GANTT-WEEKEND-001-TREE",
+      "title": "The Gantt weekend definition is fixed to Monday-Friday",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Utils/GanttMathEngine.cs",
+        "oPenEfficiency.Gantt.Tests/GanttLimitationPinTests.cs"
+      ],
+      "expected": "Pinned current behavior: the weekend definition is fixed to Monday-Friday - working-day math treats exactly Saturday and Sunday as non-working and the calendar policy is not configurable. Fix-forward target: weekend chooser, holiday calendar, fiscal calendar and LTR/RTL support as a FEAT-010 gap.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj",
+        "filter": "FullyQualifiedName~GanttLimitationPinTests"
+      }
+    },
+    {
+      "id": "REG-GANTT-RESIZE-ADOPT-001-HOST",
+      "title": "Real-host bar-resize adoption through the gantt-interaction office leg",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Panels/GanttPanelViewModel.cs",
+        "oPenEfficiency/Services/GanttRenderer.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "The gantt-interaction office leg runs on a real PowerPoint host: widening a task bar by 50 percent and running SyncFromSlide adopts the new end date, so the former 'resize did not sync task duration' note no longer appears and the leg reports its proved scope (arrows + drag/sync + resize) with failures=0.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-interaction"
+        ]
+      }
+    },
+    {
+      "id": "REG-GANTT-RESIZE-ADOPT-001-TREE",
+      "title": "A widened Gantt task bar adopts its new end date in the chart's own scale",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/GanttSyncAdoptionPolicy.cs",
+        "oPenEfficiency/Services/GanttRenderer.cs",
+        "oPenEfficiency/UI/Panels/GanttPanelViewModel.cs",
+        "oPenEfficiency.Gantt.Tests/GanttSyncAdoptionTests.cs"
+      ],
+      "expected": "After growing a task bar's width by 50 percent, slide synchronization derives task.end from the right edge in the scale the chart was actually rendered with (duration grows from 1 to 2 days), mirroring how it adopts task.start from the left edge. The deterministic regression pin uses the measured 2026-09-30 geometry: 40.9->61.4pt at the recorded 450/11 pt-per-day render scale yields end 2026-01-09, while the old recomputed 610/11 scale keeps the one-day duration.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj",
+        "filter": "FullyQualifiedName~GanttSyncAdoptionTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

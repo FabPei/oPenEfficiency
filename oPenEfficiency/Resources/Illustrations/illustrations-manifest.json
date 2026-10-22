@@ -1,0 +1,75 @@
+{
+  "Version": "1.0",
+  "Collections": [
+    {
+      "Id": "open-peeps",
+      "Name": "Open Peeps",
+      "Description": "Hand-drawn mix-and-match people. Every figure carries named parts (head, hairstyle, face, facial hair, accessories, pose), so it can be recoloured and split into its individual pieces.",
+      "License": "CC0 1.0 Universal",
+      "LicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "SourceUrl": "https://www.openpeeps.com/",
+      "SourceRevision": "openpeeps.com bundle, downloaded 2026-09-25 (93 figures)",
+      "AttributionRequired": false,
+      "AttributionText": "",
+      "AllowsBundling": true,
+      "RelativeFolder": "Peeps/open-peeps",
+      "SupportsPartDecomposition": true
+    },
+    {
+      "Id": "open-doodles",
+      "Name": "Open Doodles",
+      "Description": "Hand-drawn doodle scenes with a dark ink stroke and one accent colour. Recolourable through the palette, but the artwork is not split into named parts.",
+      "License": "CC0 1.0 Universal",
+      "LicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "SourceUrl": "https://www.opendoodles.com/",
+      "SourceRevision": "opendoodles.com bundle, downloaded 2026-09-25 (3 figures)",
+      "AttributionRequired": false,
+      "AttributionText": "",
+      "AllowsBundling": true,
+      "RelativeFolder": "Doodles/opendoodles",
+      "SupportsPartDecomposition": false
+    },
+    {
+      "Id": "kitbitz-space",
+      "Name": "Kitbitz Space",
+      "Description": "Hand-drawn space-scene props (ships, planets, craters, bases) from the Kitbitz asset library. Individual pieces with inline hex colours; recolour-only, no named part groups.",
+      "License": "CC0 1.0 Universal",
+      "LicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "SourceUrl": "https://github.com/CaptExcellent/kits-library-assets",
+      "SourceRevision": "kitbitz kit assets, downloaded 2026-09-25 (139 of 170 SVGs; 31 Figma exports with embedded raster or foreignObject excluded)",
+      "AttributionRequired": false,
+      "AttributionText": "",
+      "AllowsBundling": true,
+      "RelativeFolder": "Kits/space-kit",
+      "SupportsPartDecomposition": false
+    },
+    {
+      "Id": "kitbitz-food",
+      "Name": "Kitbitz Food",
+      "Description": "Hand-drawn food and drink props (fruit, bread, coffee, packaging) from the Kitbitz asset library. Individual pieces with inline hex colours; recolour-only, no named part groups.",
+      "License": "CC0 1.0 Universal",
+      "LicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "SourceUrl": "https://github.com/CaptExcellent/kits-library-assets",
+      "SourceRevision": "kitbitz kit assets, downloaded 2026-09-25 (98 SVGs)",
+      "AttributionRequired": false,
+      "AttributionText": "",
+      "AllowsBundling": true,
+      "RelativeFolder": "Kits/food-kit",
+      "SupportsPartDecomposition": false
+    },
+    {
+      "Id": "kitbitz-winter",
+      "Name": "Kitbitz Winter",
+      "Description": "Hand-drawn winter props (snow, trees, cabins, seasonal objects) from the Kitbitz asset library. Individual pieces with inline hex colours; recolour-only, no named part groups.",
+      "License": "CC0 1.0 Universal",
+      "LicenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "SourceUrl": "https://github.com/CaptExcellent/kits-library-assets",
+      "SourceRevision": "kitbitz kit assets, downloaded 2026-09-25 (88 SVGs)",
+      "AttributionRequired": false,
+      "AttributionText": "",
+      "AllowsBundling": true,
+      "RelativeFolder": "Kits/winter-kit",
+      "SupportsPartDecomposition": false
+    }
+  ]
+}

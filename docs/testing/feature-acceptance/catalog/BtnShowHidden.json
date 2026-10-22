@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnShowHidden",
+  "title": "Show Hidden (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ShowHiddenFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnShowHidden-001",
+      "title": "Show Hidden applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ShowHiddenFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Show Hidden (BtnShowHidden) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnShowHidden-001",
+      "title": "BtnShowHidden documented selection scope",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Show Hidden is enabled at its documented selection scope (hidden shapes on the slide) and refused otherwise; the deterministic host-free scenario pins that scope contract."
+        }
+      ],
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Show Hidden is enabled at its documented selection scope (hidden shapes on the slide) and refused otherwise; the deterministic host-free scenario pins that scope contract.",
+      "changedPathPatterns": [
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1ShowHiddenSelectionScopeIsValid"
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic host-free scenario passes; bind-office-evidence-and-reviews (office-only gate) remains until the office leg has real-host evidence and review.",
+          "status": "open",
+          "type": "acceptance",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Catalog.Tests/Program.cs",
+              "line": 1,
+              "item": "Catalog.Tests.Wave1ShowHiddenSelectionScopeIsValid",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "acceptance",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "QA9-BtnShowHidden-002",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnShowHidden-002",
+      "title": "BtnShowHidden deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed Show Hidden restores the shapes hidden through Hide Selected (feature-tagged) on the slide, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "In an isolated real PowerPoint host, the deployed Show Hidden restores the shapes hidden through Hide Selected (feature-tagged) on the slide, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointFlipRotateStretch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "show-hidden"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "line": 1,
+              "item": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+              "type": "runner"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

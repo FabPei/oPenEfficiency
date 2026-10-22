@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using oPenEfficiency.Utils;
 using oPenEfficiency.Features;
 
@@ -16,9 +17,21 @@ namespace oPenEfficiency.UI
             InitializeComponent();
             _powerPointManager = powerPointManager;
 
-            // Center on screen and ensure window appears in front of PowerPoint
-            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            this.Topmost = true;
+            // The feature assigns PowerPoint as owner before Show(). Keep the form
+            // modeless so users can change the selection between formatting actions.
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
+        }
+
+        private void FitToOwnerWorkArea()
+        {
+            var helper = new System.Windows.Interop.WindowInteropHelper(this);
+            var screen = System.Windows.Forms.Screen.FromHandle(helper.Owner);
+            var dpi = VisualTreeHelper.GetDpi(this);
+            double availableWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            double availableHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            MaxWidth = availableWidth;
+            MaxHeight = availableHeight;
+            Width = Math.Min(Width, availableWidth);
         }
 
         private void Format_Click(object sender, RoutedEventArgs e)
@@ -108,9 +121,18 @@ namespace oPenEfficiency.UI
             this.Close();
         }
 
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+                e.Handled = true;
+            }
+        }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
                 this.DragMove();
         }
     }

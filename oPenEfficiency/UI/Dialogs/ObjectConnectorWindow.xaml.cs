@@ -22,7 +22,7 @@ namespace oPenEfficiency.UI
 
         private void Window_Deactivated(object sender, EventArgs e)
         {
-            try { this.Close(); } catch { }
+            try { this.Close(); } catch { /* Closing an already-closed modeless window is idempotent. */ }
         }
 
         private void BtnCancel_Click(object sender, RoutedEventArgs e)

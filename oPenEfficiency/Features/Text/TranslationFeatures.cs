@@ -6,23 +6,14 @@ using System.Threading.Tasks;
 using Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
-using oPenEfficiency.Services.Attributes;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features.Text
 {
-    [FeatureMetadata(
-        Id = "BtnTranslate",
-        Name = "Translate",
-        Tooltip = "Translate text in selected shapes",
-        IconData = "M5 8l6 6 M4 14h7 M2 5h12 M7 2l3 3-3 3 M22 22l-5-10-5 10 M14 18h6",
-        Color = "#EAB308",
-        Description = "Opens PowerPoint's built-in Translator pane to translate text in selected shapes.",
-        DetailedHelpText = "### Translate\nOpens the Microsoft Translator pane integrated in PowerPoint. Select shapes or text and use this feature to translate content into any supported language.\n\nFor AI-powered translation (DeepL, OpenAI, Claude, LibreTranslate), configure the translation provider in Settings.",
-        Keywords = "translator, translation, deepL, ai translate, convert language",
-        MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
     public static class TranslationFeatures
     {
+        private static bool _translationInProgress;
+
         private class TextTranslationRequest
         {
             public TextRange Range { get; set; }
@@ -33,18 +24,22 @@ namespace oPenEfficiency.Features.Text
             public float FontSize { get; set; }
             public string FontName { get; set; }
             public int FontColor { get; set; }
+            public bool HasFontColor { get; set; }
             public Microsoft.Office.Core.MsoTriState FontBold { get; set; }
             public Microsoft.Office.Core.MsoTriState FontItalic { get; set; }
         }
 
         public static bool Execute(PowerPointManager manager)
         {
+            if (manager == null) return false;
             try
             {
                 var app = manager.GetApplication();
+                if (app?.CommandBars == null) return false;
                 
                 // Ensure the window is focused
-                try { if (app.ActiveWindow != null) app.ActiveWindow.Activate(); } catch { }
+                try { if (app.ActiveWindow != null) app.ActiveWindow.Activate(); }
+                catch (Exception optionalEx) { ExceptionPolicy.ReportOptionalComFailure(optionalEx, "TranslationFeatures.TranslateSelection.ActivateWindow"); }
 
                 // Pass 1: Try modern ExecuteMso
                 string[] msoIds = { "Translator", "Translate", "MicrosoftTranslator", "ReviewTranslate", "ReviewSelectionTranslate" };
@@ -58,7 +53,7 @@ namespace oPenEfficiency.Features.Text
                             return true; 
                         } 
                     } 
-                    catch { }
+                    catch (Exception optionalEx) { ExceptionPolicy.ReportOptionalComFailure(optionalEx, "TranslationFeatures.TranslateSelection.StartUndoEntry"); }
                 }
 
                 // Pass 2: Legacy CommandBars approach (showing the Research pane)
@@ -71,29 +66,40 @@ namespace oPenEfficiency.Features.Text
                         return true;
                     }
                 }
-                catch { }
+                catch (Exception optionalEx) { ExceptionPolicy.ReportOptionalComFailure(optionalEx, "TranslationFeatures.TranslateSelection.RestoreSelection"); }
 
-                return true;
+                System.Windows.MessageBox.Show(
+                    "PowerPoint's translation interface is not available in the current context.",
+                    "Translate Text",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Information);
+                return false;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Translation trigger failed: {ex.Message}");
+                ExceptionLogger.Log(ex, "TranslationFeatures.Execute");
                 return false;
             }
         }
 
         public static async void TranslateSelectionSafe(PowerPointManager manager, SidebarConfig config)
         {
+            if (manager == null || config == null) return;
             var app = manager.GetApplication();
             if (app == null || app.ActiveWindow == null) return;
-            
             var selection = app.ActiveWindow.Selection;
             if (selection == null) return;
-
+            if (_translationInProgress)
+            {
+                System.Windows.MessageBox.Show("A translation is already in progress.", "Translation");
+                return;
+            }
+            _translationInProgress = true;
             var textsToTranslate = new List<TextTranslationRequest>();
             
             try
             {
+                var sourcePresentation = app.ActivePresentation;
                 // UI Visual feedback
                 System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
                 
@@ -123,30 +129,59 @@ namespace oPenEfficiency.Features.Text
                 }
 
                 // Await returns us to main thread. Resume synchronously applying results.
-                ApplyTranslatedText(textsToTranslate);
+                if (app.ActivePresentation != sourcePresentation)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Translation was canceled because the active presentation changed.",
+                        "Translation",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                    return;
+                }
+
+                if (!textsToTranslate.Exists(request => !string.IsNullOrWhiteSpace(request.TranslatedText)))
+                {
+                    System.Windows.MessageBox.Show(
+                        "The configured provider returned no translation. The presentation was not changed.",
+                        "Translation",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                ApplyTranslatedText(app, textsToTranslate);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Translation Error: {ex.Message}", "oPenEfficiency", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                ExceptionLogger.Log(ex, "TranslationFeatures.TranslateSelectionSafe");
+                System.Windows.MessageBox.Show($"Translation Error: {ex.Message}", "openEfficiency", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
-                try { System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default; } catch { }
+                _translationInProgress = false;
+                try { System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default; }
+                catch (Exception cleanupEx) { ExceptionPolicy.ReportOptionalComFailure(cleanupEx, "TranslationFeatures.TranslateSelection.RestoreCursor"); }
             }
         }
 
         public static async void TranslateWithFreeApiSafe(PowerPointManager manager, string targetLang)
         {
+            if (manager == null || string.IsNullOrWhiteSpace(targetLang)) return;
             var app = manager.GetApplication();
             if (app == null || app.ActiveWindow == null) return;
-            
             var selection = app.ActiveWindow.Selection;
             if (selection == null) return;
-
+            if (_translationInProgress)
+            {
+                System.Windows.MessageBox.Show("A translation is already in progress.", "Translation");
+                return;
+            }
+            _translationInProgress = true;
             var textsToTranslate = new List<TextTranslationRequest>();
             
             try
             {
+                var sourcePresentation = app.ActivePresentation;
                 System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
                 
                 if (selection.Type == PpSelectionType.ppSelectionText)
@@ -172,15 +207,38 @@ namespace oPenEfficiency.Features.Text
                     req.TranslatedText = await Task.Run(() => GetMyMemoryTranslationAsync(req.OriginalText, targetLang));
                 }
 
-                ApplyTranslatedText(textsToTranslate);
+                if (app.ActivePresentation != sourcePresentation)
+                {
+                    System.Windows.MessageBox.Show(
+                        "Translation was canceled because the active presentation changed.",
+                        "Translation",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information);
+                    return;
+                }
+
+                if (!textsToTranslate.Exists(request => !string.IsNullOrWhiteSpace(request.TranslatedText)))
+                {
+                    System.Windows.MessageBox.Show(
+                        "The free translation service returned no translation. The presentation was not changed.",
+                        "Translation",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Warning);
+                    return;
+                }
+
+                ApplyTranslatedText(app, textsToTranslate);
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Free API Translation Error:\n{ex.Message}", "oPenEfficiency", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                ExceptionLogger.Log(ex, "TranslationFeatures.TranslateWithFreeApiSafe");
+                System.Windows.MessageBox.Show($"Free API Translation Error:\n{ex.Message}", "openEfficiency", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
             finally
             {
-                try { System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default; } catch { }
+                _translationInProgress = false;
+                try { System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Default; }
+                catch (Exception cleanupEx) { ExceptionPolicy.ReportOptionalComFailure(cleanupEx, "TranslationFeatures.TranslateText.RestoreCursor"); }
             }
         }
 
@@ -203,35 +261,66 @@ namespace oPenEfficiency.Features.Text
                 req.FontItalic = textRange.Font.Italic;
                 
                 // Avoid crashing on color extraction if varied
-                try { req.FontColor = textRange.Font.Color.RGB; } catch { req.FontColor = 0; }
+                try
+                {
+                    req.FontColor = textRange.Font.Color.RGB;
+                    req.HasFontColor = true;
+                }
+                catch { req.HasFontColor = false; }
             }
             catch { /* Ignore formatting extraction errors */ }
 
             list.Add(req);
         }
 
-        private static void ApplyTranslatedText(List<TextTranslationRequest> requests)
+        private static void ApplyTranslatedText(Application app, List<TextTranslationRequest> requests)
         {
-            foreach (var req in requests)
+            var changedRequests = new List<TextTranslationRequest>();
+            try
             {
-                if (!string.IsNullOrEmpty(req.TranslatedText) && req.Range != null)
+                try { app?.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "TranslationFeatures.StartNewUndoEntry"); }
+
+                foreach (var req in requests)
                 {
-                    req.Range.Text = req.TranslatedText;
-                    
-                    try
+                    if (!string.IsNullOrEmpty(req.TranslatedText) && req.Range != null)
                     {
-                        req.Range.Font.Size = req.FontSize;
-                        req.Range.Font.Name = req.FontName;
-                        req.Range.Font.Bold = req.FontBold;
-                        req.Range.Font.Italic = req.FontItalic;
-                        if (req.FontColor != 0) 
-                        {
-                            req.Range.Font.Color.RGB = req.FontColor;
-                        }
+                        req.Range.Text = req.TranslatedText;
+                        changedRequests.Add(req);
+                        RestoreBaseFormatting(req);
                     }
-                    catch { /* Ignore format restore failures */ }
                 }
             }
+            catch (Exception ex)
+            {
+                for (int i = changedRequests.Count - 1; i >= 0; i--)
+                {
+                    try
+                    {
+                        var req = changedRequests[i];
+                        req.Range.Text = req.OriginalText;
+                        RestoreBaseFormatting(req);
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        ExceptionLogger.Log(rollbackEx, "TranslationFeatures.ApplyTranslatedText.Rollback");
+                    }
+                }
+                ExceptionLogger.Log(ex, "TranslationFeatures.ApplyTranslatedText");
+                throw;
+            }
+        }
+
+        private static void RestoreBaseFormatting(TextTranslationRequest request)
+        {
+            if (request == null || request.Range == null) return;
+            if (request.FontSize > 0) request.Range.Font.Size = request.FontSize;
+            if (!string.IsNullOrWhiteSpace(request.FontName)) request.Range.Font.Name = request.FontName;
+            if (request.FontBold != Microsoft.Office.Core.MsoTriState.msoTriStateMixed)
+                request.Range.Font.Bold = request.FontBold;
+            if (request.FontItalic != Microsoft.Office.Core.MsoTriState.msoTriStateMixed)
+                request.Range.Font.Italic = request.FontItalic;
+            if (request.HasFontColor) request.Range.Font.Color.RGB = request.FontColor;
         }
 
         private static async Task<string> GetTranslatedTextAsync(string text, SidebarConfig config)
@@ -281,7 +370,10 @@ namespace oPenEfficiency.Features.Text
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TranslationFeatures.GetMyMemoryTranslationAsync");
+            }
             return null;
         }
     }

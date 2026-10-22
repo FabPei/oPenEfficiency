@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnArrangeGrid",
+  "title": "Arrange Grid (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/ArrangeGridFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnArrangeGrid-001",
+      "title": "Arrange Grid applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeGridFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Arrange Grid (BtnArrangeGrid) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnArrangeGrid-001",
+      "title": "Arrange Grid plan is deterministic, grid-aligned and idempotent",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeGridFeature.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency.Core.Tests/GridArrangeAcceptanceTests.cs"
+      ],
+      "expected": "On a mixed 3-shape fixture (2 rows x 2 columns, spacing 4) the plan puts the shapes at 20/30 10x5, 44/30 30x15 and 20/49 20x25: the selection's bounding-box corner stays fixed, cells are sized by the widest shape of their column and the tallest of their row, the requested spacing is exact, planning does not mutate its input, re-planning changes nothing and a grid too small for the selection is refused.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GridArrangeAcceptanceTests.ArrangeGridPlanIsIdempotentAndAnchoredAtTheSelectionBoundingBox"
+      }
+    },
+    {
+      "id": "QA9-BtnArrangeGrid-002",
+      "title": "Arrange Grid places the selection into a uniform grid in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGridSnap.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Arrange Grid (2 rows, 2 columns, 10 pt spacing) on four scattered equal-sized rectangles leaves exactly two column lefts and two row tops (clustered within 0.5 pt), the column gap equals width+spacing and the row gap equals height+spacing (within 0.5 pt), every grid cell holds exactly one shape, the shape count is unchanged, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGridSnap.ps1",
+        "arguments": [
+          "-Mode",
+          "arrange-grid"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

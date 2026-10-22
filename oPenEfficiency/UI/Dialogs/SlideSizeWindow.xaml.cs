@@ -3,6 +3,8 @@ using System.Windows;
 
 namespace oPenEfficiency.UI.Dialogs
 {
+    public enum SlideSizeLabelAction { None, CreateOrRefresh, Remove }
+
     public class SlideSizeItem
     {
         public int SlideNumber { get; set; }
@@ -18,18 +20,26 @@ namespace oPenEfficiency.UI.Dialogs
                 this.DragMove();
         }
 
-        public bool CreateLabelsRequested { get; private set; }
-        public SlideSizeWindow(List<SlideSizeItem> items)
+        public SlideSizeLabelAction LabelAction { get; private set; }
+        public SlideSizeWindow(List<SlideSizeItem> items, bool hasExistingLabels)
         {
             InitializeComponent();
             DgSlideSizes.ItemsSource = items;
+            BtnRemoveLabels.IsEnabled = hasExistingLabels;
         }
 
         private void BtnShowLabels_Click(object sender, RoutedEventArgs e)
         {
-            CreateLabelsRequested = true;
+            LabelAction = SlideSizeLabelAction.CreateOrRefresh;
             this.DialogResult = true;
             this.Close();
+        }
+
+        private void BtnRemoveLabels_Click(object sender, RoutedEventArgs e)
+        {
+            LabelAction = SlideSizeLabelAction.Remove;
+            DialogResult = true;
+            Close();
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)

@@ -7,6 +7,16 @@
     <Color x:Key="WindowBackgroundColor">#1A1A1F</Color>
     <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#1A1A1F"/>
 
+    <!-- PowerPoint task-pane/sidebar background. Keep separate from openEfficiency windows. -->
+    <Color x:Key="SidebarBackgroundColor">#292929</Color>
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#292929"/>
+
+    <Color x:Key="SidebarSectionHeaderColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="SidebarSectionHeaderBrush" Color="#FFFFFF"/>
+
+    <Color x:Key="SidebarDividerColor">#656565</Color>
+    <SolidColorBrush x:Key="SidebarDividerBrush" Color="#656565"/>
+
     <Color x:Key="SurfaceColor">#25252B</Color>
     <SolidColorBrush x:Key="SurfaceBrush" Color="#25252B"/>
 
@@ -18,6 +28,12 @@
 
     <Color x:Key="SurfaceSelectedColor">#1E3A8A</Color>
     <SolidColorBrush x:Key="SurfaceSelectedBrush" Color="#1E3A8A" Opacity="0.3"/>
+
+    <Color x:Key="IconPreviewBackgroundColor">#F8FAFC</Color>
+    <SolidColorBrush x:Key="IconPreviewBackgroundBrush" Color="#F8FAFC"/>
+
+    <Color x:Key="IconPreviewBorderColor">#CBD5E1</Color>
+    <SolidColorBrush x:Key="IconPreviewBorderBrush" Color="#CBD5E1"/>
 
     <Color x:Key="WindowHeaderColor">#2D2D35</Color>
     <SolidColorBrush x:Key="WindowHeaderBrush" Color="#2D2D35"/>
@@ -51,11 +67,37 @@
     <Color x:Key="TextMutedColor">#9CA3AF</Color>
     <SolidColorBrush x:Key="TextMutedBrush" Color="#9CA3AF"/>
 
+    <!-- Office Icon foreground (Fluent colorNeutralForeground2 dark) -->
+    <Color x:Key="OfficeIconForegroundColor">#D6D6D6</Color>
+    <SolidColorBrush x:Key="OfficeIconForegroundBrush" Color="#D6D6D6"/>
+
+    <Color x:Key="OfficeIconDisabledColor">#525252</Color>
+    <SolidColorBrush x:Key="OfficeIconDisabledBrush" Color="#525252"/>
+
+    <!-- Semantic accent roles for two-layer icon model -->
+    <Color x:Key="AccentBlueColor">#3B82F6</Color>
+    <SolidColorBrush x:Key="AccentBlueBrush" Color="#3B82F6"/>
+
+    <Color x:Key="AccentGreenColor">#10B981</Color>
+    <SolidColorBrush x:Key="AccentGreenBrush" Color="#10B981"/>
+
+    <Color x:Key="SuccessGreenColor">#10B981</Color>
+    <SolidColorBrush x:Key="SuccessGreenBrush" Color="#10B981"/>
+
+    <Color x:Key="AccentYellowColor">#F59E0B</Color>
+    <SolidColorBrush x:Key="AccentYellowBrush" Color="#F59E0B"/>
+
+    <Color x:Key="AccentRedColor">#EF4444</Color>
+    <SolidColorBrush x:Key="AccentRedBrush" Color="#EF4444"/>
+
     <!-- Borders -->
     <Color x:Key="BorderColor">#2D2D35</Color>
     <SolidColorBrush x:Key="BorderBrush" Color="#2D2D35"/>
 
     <Color x:Key="BorderLightColor">#3F3F4A</Color>
     <SolidColorBrush x:Key="BorderLightBrush" Color="#3F3F4A"/>
+
+    <!-- Elevation -->
+    <Color x:Key="ShadowColor">#000000</Color>
 
 </ResourceDictionary>

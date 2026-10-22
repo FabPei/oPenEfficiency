@@ -2,63 +2,82 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Traffic Light Menu"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" ShowInTaskbar="False" SizeToContent="WidthAndHeight"
-        Deactivated="Window_Deactivated" MouseDown="Window_MouseDown">
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Style="{DynamicResource ContextPopupWindowStyle}"
+        Deactivated="Window_Deactivated"
+        PreviewKeyDown="Window_PreviewKeyDown">
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Themes/Dark.xaml"/>
                 <ResourceDictionary Source="../Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Local composition only: preserve shared hit targets while removing popup dead space. -->
+            <Style x:Key="TrafficLightStateButton" TargetType="Button"
+                   BasedOn="{StaticResource CompactIconButton}">
+                <Setter Property="Margin" Value="1,0"/>
+            </Style>
+            <Style x:Key="TrafficLightOptionButton" TargetType="Button"
+                   BasedOn="{StaticResource CompactActionButton}">
+                <Setter Property="Padding" Value="6,0"/>
+                <Setter Property="Margin" Value="2,0"/>
+            </Style>
+            <Style x:Key="TrafficLightSeparator" TargetType="Rectangle">
+                <Setter Property="Width" Value="1"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Fill" Value="{DynamicResource BorderLightBrush}"/>
+                <Setter Property="Margin" Value="4,0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" BorderThickness="1" BorderBrush="{StaticResource BorderBrush}">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="Black"/>
-        </Border.Effect>
-
-        <StackPanel Orientation="Horizontal" Margin="6,4">
-
-            <!-- Red -->
-            <Button x:Name="BtnRed" Margin="2" Padding="6,4" Click="BtnRed_Click" ToolTip="Red" Background="Transparent" BorderThickness="0">
-                <Ellipse x:Name="IconRed" Width="16" Height="16" Fill="#E83232"/>
+    <!-- Golden Reference: Context Popup / On-click Control. -->
+    <Border Style="{DynamicResource ContextPopupShell}">
+        <StackPanel Orientation="Horizontal">
+            <!-- Traffic-light fills are semantic content colors, not theme chrome. -->
+            <Button x:Name="BtnRed" Style="{StaticResource TrafficLightStateButton}"
+                    Click="BtnRed_Click" ToolTip="Set to red" AutomationProperties.Name="Set traffic light to red">
+                <Ellipse x:Name="IconRed" Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}" Fill="#E83232"/>
+            </Button>
+            <Button x:Name="BtnYellow" Style="{StaticResource TrafficLightStateButton}"
+                    Click="BtnYellow_Click" ToolTip="Set to yellow" AutomationProperties.Name="Set traffic light to yellow">
+                <Ellipse x:Name="IconYellow" Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}" Fill="#F5C817"/>
+            </Button>
+            <Button x:Name="BtnGreen" Style="{StaticResource TrafficLightStateButton}"
+                    Click="BtnGreen_Click" ToolTip="Set to green" AutomationProperties.Name="Set traffic light to green">
+                <Ellipse x:Name="IconGreen" Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}" Fill="#4CAF3E"/>
+            </Button>
+            <Button x:Name="BtnOff" Style="{StaticResource TrafficLightStateButton}"
+                    Click="BtnOff_Click" ToolTip="Set to off" AutomationProperties.Name="Turn traffic light off">
+                <Ellipse x:Name="IconOff" Width="{StaticResource IconSizeSmall}" Height="{StaticResource IconSizeSmall}"
+                         Fill="{DynamicResource SurfaceLightBrush}" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1"/>
             </Button>
 
-            <!-- Yellow -->
-            <Button x:Name="BtnYellow" Margin="2" Padding="6,4" Click="BtnYellow_Click" ToolTip="Yellow" Background="Transparent" BorderThickness="0">
-                <Ellipse x:Name="IconYellow" Width="16" Height="16" Fill="#F5C817"/>
+            <Rectangle Style="{StaticResource TrafficLightSeparator}"/>
+
+            <Button x:Name="BtnOrientation" Style="{StaticResource TrafficLightOptionButton}"
+                    Click="BtnOrientation_Click" ToolTip="Toggle horizontal or vertical orientation"
+                    AutomationProperties.Name="Toggle traffic light orientation">
+                <TextBlock x:Name="TxtOrientation" Text="Horiz." FontSize="{StaticResource TypographyCaptionSize}"/>
             </Button>
 
-            <!-- Green -->
-            <Button x:Name="BtnGreen" Margin="2" Padding="6,4" Click="BtnGreen_Click" ToolTip="Green" Background="Transparent" BorderThickness="0">
-                <Ellipse x:Name="IconGreen" Width="16" Height="16" Fill="#4CAF3E"/>
+            <Rectangle Style="{StaticResource TrafficLightSeparator}"/>
+
+            <Button x:Name="BtnBorder" Style="{StaticResource TrafficLightOptionButton}"
+                    Click="BtnBorder_Click" ToolTip="Toggle outline frame"
+                    AutomationProperties.Name="Toggle traffic light outline frame">
+                <TextBlock x:Name="TxtBorder" Text="Frame" FontSize="{StaticResource TypographyCaptionSize}"/>
             </Button>
 
-            <!-- Off -->
-            <Button x:Name="BtnOff" Margin="2" Padding="6,4" Click="BtnOff_Click" ToolTip="Off" Background="Transparent" BorderThickness="0">
-                <Ellipse x:Name="IconOff" Width="16" Height="16" Fill="#CCCCCC" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1"/>
-            </Button>
+            <Rectangle Style="{StaticResource TrafficLightSeparator}"/>
 
-            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
-
-            <!-- Orientation -->
-            <Button x:Name="BtnOrientation" Margin="2" Padding="8,4" Click="BtnOrientation_Click" ToolTip="Toggle Horizontal/Vertical" Background="Transparent" BorderThickness="0">
-                <TextBlock x:Name="TxtOrientation" Text="Horiz." Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/>
-            </Button>
-
-            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
-
-            <!-- Border Toggle -->
-            <Button x:Name="BtnBorder" Margin="2" Padding="8,4" Click="BtnBorder_Click" ToolTip="Toggle Outline Frame" Background="Transparent" BorderThickness="0">
-                <TextBlock x:Name="TxtBorder" Text="Frame" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
-            </Button>
-
-            <Rectangle Width="1" Height="20" Fill="{StaticResource BorderLightBrush}" Margin="6,0"/>
-
-            <ComboBox x:Name="ComboWeight" Width="50" Margin="2" DropDownClosed="ComboWeight_DropDownClosed" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ComboBox x:Name="ComboWeight" Width="56" MinHeight="{StaticResource ControlHeightCompact}"
+                      Margin="2,0" DropDownClosed="ComboWeight_DropDownClosed"
+                      VerticalAlignment="Center" ToolTip="Set outline frame weight in points"
+                      AutomationProperties.Name="Outline frame weight in points">
                 <ComboBoxItem Content="0.5"/>
                 <ComboBoxItem Content="1"/>
                 <ComboBoxItem Content="1.5"/>
@@ -66,7 +85,6 @@
                 <ComboBoxItem Content="3"/>
                 <ComboBoxItem Content="4"/>
             </ComboBox>
-
         </StackPanel>
     </Border>
 </Window>

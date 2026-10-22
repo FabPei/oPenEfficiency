@@ -1,0 +1,2370 @@
+{
+  "SchemaVersion": 1,
+  "Purpose": "Frozen Phase 5 ratchet: listed legacy findings may decrease but any new fingerprint or added duplicate fails validation. LegitimateExceptions is the only semantic exception list.",
+  "GeneratedFromCommit": "337e5310a9659238c42024d242a52a4e0521f38d",
+  "LegitimateExceptions": [
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Menus/TrafficLightMenu.xaml",
+      "Fingerprint": "83be1709159bc2dbdc4f87ec9aa07f864513c2895a00eb10d18a57ee9821d5e5",
+      "Count": 1,
+      "Reason": "Red traffic-light fill is document/content state, not product chrome."
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Menus/TrafficLightMenu.xaml",
+      "Fingerprint": "86fc6e013a2ebf95d28c75afacd4a33830d75db12675583ceda2ebbd1377807c",
+      "Count": 1,
+      "Reason": "Green traffic-light fill is document/content state, not product chrome."
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Menus/TrafficLightMenu.xaml",
+      "Fingerprint": "98e07a428512905e5233b531f92c0221b7556ea371b09d706f1e84623baa4d19",
+      "Count": 1,
+      "Reason": "Yellow traffic-light fill is document/content state, not product chrome."
+    }
+  ],
+  "LegacyViolations": [
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "b7992aca161ca567c0843d0eaa5edc970b1e19223b2770006a93f3595159cf27",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "ccba90509a7577baaf82d1eec56cecbad77c87ef9052a1fc45dd26dc357470bc",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "e3f8eec15b7ac3a6500d840a65434bb0facc09961dcb9d894695a238857de374",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml",
+      "Fingerprint": "9b550afd62d815f0f7e9a9eb99e77d848276dad5b43f1b058ff53c1cacfc3bb8",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ArrangeProWindow.xaml",
+      "Fingerprint": "3108ebd88bef836b7fb38628b541cdce37c92187c90570cabd82fc6fea51748a",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/AutomationWizardWindow.xaml",
+      "Fingerprint": "5dc8061487d40481570466cb52015f6ca937ec74e64cf0834eb865d32de3572c",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/BulkFormatReplacerWindow.xaml",
+      "Fingerprint": "ad41bda5fe2cdd8b1a5436ec6f4b7e7102f8c15d68a29fed99972c6acc7dd835",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ChartOverlayDialog.xaml",
+      "Fingerprint": "3443fa95ac3e1e28ffcc89df73589ca95de660f9441b4ff517bccf398f1e1649",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/CreateFolderDialog.xaml",
+      "Fingerprint": "a174aeabfcc5a5f7c6206b7dbee5ca5a51d0c4fb0a8491f1fb1694fd7fb31896",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/EditAssetDetailsDialog.xaml",
+      "Fingerprint": "b34a00de65c67689e0387d434b3efef0ce16904dbaa2db43655672744b2c665b",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ExcelLinkManagerWindow.xaml",
+      "Fingerprint": "619232cd10ed44738a2cc22300f9b6c4e72c497b4ae0711b37e5a85372704787",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "9742465f1c4c275c8e024bb8638c0257a1c169d97764ba2198993047f493dbc2",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "b38989c0c11cbfec948825fcb0cee57b8e8b78276f670731a2d5ec4da0afe964",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/InsertTableColumnsDialog.xaml",
+      "Fingerprint": "0e5117207c6936f717984fb746e66ddf1fcbbfd5305da3fcb6f20cb580c60789",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/LotteryWindow.xaml",
+      "Fingerprint": "21c230a45d0e902226ef2e3879ea07fada45c71a133c49e1a944a851fc9db74d",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "829fae8835f82df35684edcdbae35d68cf488cdbbd9a52c546d6f3d99b33aeac",
+      "Count": 2
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "9d5bd597b9513987ab3a219181e2083c9a4cddcb79aa5645f83b8641396bac27",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "82f1aabd216ebd72e25aa59e988acb5fa03eee1f726c99ca0a1b368b7ee487ff",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ObjectConnectorWindow.xaml",
+      "Fingerprint": "089c0e423afdeeb730956094768a289211fc295253fa347fd0025722f13e4e74",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/PositionPainterWindow.xaml",
+      "Fingerprint": "49647437d546642f6477d0a540f8c90050e3a425bb9c43c0e0338c65233fea90",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/QRCodeWindow.xaml",
+      "Fingerprint": "7c9c85508f650f086518e4923443843017d21db9eb768aa22c554a4abb23b060",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "e3c24dfeeb3789b1b6b76e665c5dc6d4aa43dcc40b8e629bbd567563aaea82e3",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveToMyAssetsDialog.xaml",
+      "Fingerprint": "1519c6f7c17b856e60d8a3fd1d2d1f401d9bc472616c877eaf2dd56222c19623",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "a76a7e4bc744b6199879df44256cdd6e8f21a7b2cbcbf09a77f63a037b13c7f9",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "4fdc87e154050aee6b7e831b075bc7ee1aee85737d8c88fbe60102d4f7f4ff5f",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ShortcutConfigWindow.xaml",
+      "Fingerprint": "ced345c3bad5c7a6f8ec0a5a2639cd6f0b66520d4925b7dfe1aaa7744e9ddbaf",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml",
+      "Fingerprint": "be41762947fa8c4d1ac13e4628879f35763ec734c7ae899e8cfe796ddeec601d",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SlideSizeWindow.xaml",
+      "Fingerprint": "1f5786de72b3fce494174cb4fd17291a22d812ae8b0045b24f02fc4e692ba75b",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SpellCheckLanguageWindow.xaml",
+      "Fingerprint": "7596b058f071185e1c7f7e1bac43437abecee25f8e70283acfed9fc256fdaf9c",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SplitShapeWindow.xaml",
+      "Fingerprint": "48324cd2cd1513fd85cf032cfbf0f97c2644e247e29fd524426f5b15e57f9473",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/StyleCheckWindow.xaml",
+      "Fingerprint": "6bf0e81beccf0d12262180862e0a2a24483ffdcdc82f5b3ce44c055f2a5832f3",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+      "Fingerprint": "8205953e8f399f344306cfeeb1e90152a1fa1232c6a586e783df8c3fa10ca3e3",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "ad43debd0b447f0ce50778568c31385bb01f1525604ba5177ef5c7162dd3696c",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/TableFormatPainterWindow.xaml",
+      "Fingerprint": "dd420e5ace5c188fa3d2b639852e7b01de092d3364c9f72077027e1ae38df6ab",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "eaee0102dd8b2986921dd060a33d75a00778173f6548ba8ed3146677c39937b0",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/TagInspectorWindow.xaml",
+      "Fingerprint": "e049c52ed74bed6cb7966b581cd9f573bb0932016b0f33c02829bcc994c2d2e3",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/ThemeColorWindow.xaml",
+      "Fingerprint": "f73b0d2c9dc43a0892819a8aa5129e432edb5b45d9ed1bdceac3b762fc04ef6b",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml",
+      "Fingerprint": "78e9c5f40b920ceb1cf9458120a5cf9665860d13b5be4d50e8e08bcda43e3c0b",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/WizardDesignerWindow.xaml",
+      "Fingerprint": "510a10feefc8c1d0cd6aa6e464edb070db6e283abb1f132dfe4b09eabb08912e",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "66ba26118b98e2a2659d9674e5fbd3a73a1a62e35d88245bf375c7a2ff990de1",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "6836dfc357936c553a7b8050cb812d7d0f12dac0c5a11769bba6baa7529b0d3c",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Tabs/ImageLibraryTab.xaml",
+      "Fingerprint": "1507897ec2e5eb19ac62c6f654bc5121d1a983e5e1acc15a1072c3d38be1fa2c",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Tabs/ShapeLibraryTab.xaml",
+      "Fingerprint": "696c7ea2a1b42e01d62e6889f304687eccbb57ee0931ead4649cd2704eef21f4",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Tabs/SlideLibraryTab.xaml",
+      "Fingerprint": "8da053f0f382ed548d9ee4a896c6d85bb1f45e0da95562270cc57891e0e324ec",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "1edde1005acadda41b98d6a28b5858c1ca0d745a5540e6d748be3c21ec36685a",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "9e2d5484785392e3930ffaf340b4de46fc92873715877973214f94d8236cc97a",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "cb1c82cf68ee73db56bc0de714a5a6f546b9c39e01402ff059354888e19678dd",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/GanttResizeHandlesWindow.xaml",
+      "Fingerprint": "42633261b8b9001bd2f675ad2114c598459ded3cddb8e1910fed290a7f62738f",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/NumerationToolbar.xaml",
+      "Fingerprint": "78ec8231c0264fffa8b7d1c02dfbe8786b714631e7f8209512976765125c420a",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentOverlayWindow.xaml",
+      "Fingerprint": "35e9ec2fd203194baa580dcc2690677cfd39961cd8946a836c9f96f2c9ccb38e",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "f955ce428d79b09dfc45d9ba426dc25f83a07aa931e8fa86cd627d05ba6b2754",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar_Simple.xaml",
+      "Fingerprint": "587f217dff6fee0a0a6e3d62c270ca93583a91df625125352abcb11721f8ed5a",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "00f60400b6649e65c1cb15d8414328219f9aa6a2ce7ac699b4c5dc9a741df13d",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "77c911886109dc3d1064c36e5e78522ebf5d23312835f567cdd6238d6fde3dd2",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "8a7e3e37f135be84044480533204b622943976b37ccb544995e6705b14c1f697",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "aec6f702343b7fe538e22ab54cd8acbb67fc65b8ff6617202503a0ae2db1c134",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/SlideNotesWindow.xaml",
+      "Fingerprint": "01c1ed496f0ca1452ca2109e97c5f234095e95dff1d8694680e4f58ba73c6ece",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Toolbars/TransparencyToolbar.xaml",
+      "Fingerprint": "32623286f52942626497a6db6fd8a4f3ef4ea3dcd753b1703d93e5a7d33104b1",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "2674b42c0bb60322ff3fe22dcdea38db87940f59e6007e43a386a222788b1a6b",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "3ff7f414e3361c87fff40e41eb8cbdd50801bbfabd7d48ec3a9bd28f10e30fdf",
+      "Count": 1
+    },
+    {
+      "Rule": "AdHocWindowShadow",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "840cbcbc889d8715c3d46fb355e48601dc7145d6096453bb57a1fc6b7df441bb",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/AlignToTableWindow.xaml",
+      "Fingerprint": "50bb6c7e0d25888eaa90ce413d221adaa5a04afc5abbce2b528d693744b9afd3",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml",
+      "Fingerprint": "4f0c59b99db238c3974860e9461bfe1289d2225369329f4b3ecd2e57f2b01cb6",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ArrangeProWindow.xaml",
+      "Fingerprint": "1351e9302b197f9fa282e1c6828a30ff4e16494de60d12061f0a1f38aff89140",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/BulkFormatReplacerWindow.xaml",
+      "Fingerprint": "272d8f4d182937aff0fb8b0787311307aef810533bf05f2bf0fc8293619b6a9d",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/BulkFormatReplacerWindow.xaml",
+      "Fingerprint": "fd474516a40ac3fb138af56c5bb321a517779474b320fb3c9eab293d836ec5c7",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ChartOverlayDialog.xaml",
+      "Fingerprint": "9c59361bcd00aa960d139c7fc3770d5d9354d3f0c249c6f54bb5520688f8547e",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "09e3880b9cf1c743e85f07f824127ff3f848306765a149fc04e378a5ffaff506",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/LotteryWindow.xaml",
+      "Fingerprint": "0051a820a45cd593cc311f8909c1086621021b60850a2e9f8e52fa9b042b4f14",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "dab73097ca91a478f986e97accb7b14611015fa293cfb113778e8f7519034435",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ObjectConnectorWindow.xaml",
+      "Fingerprint": "ad1fcb425ce7e55be1d036e1c2639bcdae1699c2bac3e45a5b6d7c844fb4307e",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/PositionPainterWindow.xaml",
+      "Fingerprint": "19ca368006d4b891429c0120f736dbcbb4c8cf93c40e1a385d56628053c4b673",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/QRCodeWindow.xaml",
+      "Fingerprint": "606f8a3e3e079ee9347ec012377f1d0db494c6df26011420aa7adc440931a70b",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "bf11b744c60aee7cb0c06b6815e0d326e9c70a957810891e5860a60a6ecbde7b",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "e02a30afa7464edb2cb585d9ff59171a3f423ca43a8d3a5978e6cd6e4a5cd731",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ShortcutConfigWindow.xaml",
+      "Fingerprint": "3658f769361acac9389ad65020fd010e701f58043d965eb2bb8faed9b52e186d",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml",
+      "Fingerprint": "bb1338b6666a73cab68f8fabef0d1659a2459e2cf8aab36769b938e2615b53f6",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "6011c38d6a153ecc37410ab8102d3b5ca9bf2b916815ecc8e11c49ca1f61ad73",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "a2b92ab9afa1430c197c2e30f461a523ea97034365adc997e89ee5a83d5270a4",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/ThemeColorWindow.xaml",
+      "Fingerprint": "9f980939aede7784bff2210890ba8e76f28cc9465a61d7a6b562f6a3b5fb534a",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml",
+      "Fingerprint": "f51e166ecebd702c2e7914b4c8e694f9310117ce415c5f46d7dc8e854596194b",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "8dbde2b647fd26e2c66079351fe26f8ea8142ea23cfd333880f530f7f4126f2c",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "414b976157eb4aa11147d8341d57953658d602b52d0cfca9b7dbde58bba99ac8",
+      "Count": 1
+    },
+    {
+      "Rule": "DuplicateCanonicalStyle",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "30ccaa2cf5d14ffd0892dad22f7f34d9a6b5877c9dfe1a08bb139852c7eb95db",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/FontControl.xaml",
+      "Fingerprint": "242a94901903f68f87d2b43cd13781aeaba161690834fbd86eb6491580a6265d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/FontControl.xaml",
+      "Fingerprint": "832429ce1956f63c2fb08c39f45a37c7f4926a4a5aa52fd1327893164f1b5e22",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/FontSizeControl.xaml",
+      "Fingerprint": "1ef5e953051007080d406a919b7437cf8491bdd5d4c30f78021eae92dd62095f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/FontSizeControl.xaml",
+      "Fingerprint": "bb9ca434c956986a5ea786d6ef17e4c6391d917303a0881a8465d146feb029bf",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/FontSizeControl.xaml",
+      "Fingerprint": "bf2dffd2b9b132c1366689498e950f0b0f1bdf32e89c6ee3ad09e3d7d95202d6",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "0e27b33e6b97dc6edb64bad06df57ec2678b029609a39e1b2ba070dd270d2e6b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "0f12e27a4f75b48f6e0dd779cef775967a916938804de0ac3d3153442c53c0e4",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "2b1d90134e65db045daecad7a52223d5018d44bf3d12d34c2113b0e1924b78b5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "6f45786043f115bdeef31b375080a5c4208355f7189e8650c39468f2e141f63c",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "7c5bf4e13e652ea7fac466fef2dec6d142b67b5f19c1505e464dec0be1b28492",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "c8410856c3a8ebd5d22e3cd484c232afcf9d363ae3e081a337fcee7e5a2455ab",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "d0af47889478f23d65a66b5afcf2592c589a73c9b52ba47a1ae815bc71d64c34",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "d86a870740935fee809d35221e92466e00883f482d9f11b1cea7089283f04502",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "dda0ea644823bc46d3542f41a5b824e4a4b35af725ecac51c6d42e05b706b3e3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "e43d08f90c2a95da7a7e8689012216e971250511a35b61a520114e14ca54429f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "f441282c52e7e9c8267b6b278d03bff4e072eaf12a4b9085632c39b32f22eb3b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml",
+      "Fingerprint": "19d685a804732efccd69fed4f801d621d55e4aeaf1a50990071961801a13c292",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ArrangeProWindow.xaml",
+      "Fingerprint": "a7516449f7df67f663be6d6c574a31d4a3c8d1b29512dce2b341b5b941556f4c",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/AutomationWizardWindow.xaml",
+      "Fingerprint": "c797f3c47cebf12eae958afdc72526feac656ec8104e1c05d16ed93f6352c45f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/BulkFormatReplacerWindow.xaml",
+      "Fingerprint": "0628c763dc9c017dd1e41aa324e16b556f7a28afe37b4f01b46ab47c2afd2652",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ChartOverlayDialog.xaml",
+      "Fingerprint": "856e656a72146c5a8303f3912cafae23a153d85489137753e943fe01ac45530f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/CreateFolderDialog.xaml",
+      "Fingerprint": "116787d92fa51f07c76c077a08de94f2e6fd1ecb1bab02a4c6ea46dbb275acbf",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/EditAssetDetailsDialog.xaml",
+      "Fingerprint": "2d17d3db6c5614485952f14ad8bc0f9899d6adbff7e3791fe0bdfe80f5266159",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ExcelLinkManagerWindow.xaml",
+      "Fingerprint": "05fff678c64916c9e23ae88f0aa77a1d19194802f4de40f74be32350610a035d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "ace99316a84db8216beca2c811d62e322f09a8fcad01443f2b7c6d70469b2b23",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "257792d96569bb31a0b8a66865ba7ae68ae6cef934115e49db0b7bef1ee4083b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "b64aab7bca178c7ba2c6c0ba68a2be0b297c31b1bf398315a103848bbff98b98",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/InsertTableColumnsDialog.xaml",
+      "Fingerprint": "c7d2cffd2418ea8aa6b0e6f2bd98f6f023f772d806f34dc7ac097d0c24f3b25f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/LotteryWindow.xaml",
+      "Fingerprint": "0d27e52a4634d6b55bf91a3993a83cac436ba7506ef0fe7d4bc398b8dde501a5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/LotteryWindow.xaml",
+      "Fingerprint": "34b42b73d424d61bcbf2a8b3025a6a3176932cadcd41b909799fd6b4910e6528",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "10fba96fe6059b4190342bafe9b19ab67add24d79f2b75aadfba487bf3a0c3ad",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "b2a99c2b90398ff7f87931c48211ef7123639f4480f2f38351fa5e9f42e44eb1",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "c3f65b6b4e9fde872a124c66a6e32209d082ab52c4702de326d64d23b965717e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "31a259d3a7f3c8ec306f0d820c66428c5294437f1b0b17f610b4d77da954e091",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "a434e5fd28f8e6d1011ab2edd48be65c5cd5e9cfe362bee308505d4a87d4dc73",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "c202306ebbeb3445ec7ce882f57316e51f936c4e174dee42fc3d58ea98420f0f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ObjectConnectorWindow.xaml",
+      "Fingerprint": "3297db1d0160f962f277a37ac2203c9aac670e3b911dda9d87cf1e0e192ef434",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/PositionPainterWindow.xaml",
+      "Fingerprint": "feeae78070c27d24dcbc05b50fad16313e63161ba100901a3db3b1ad830b4b26",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/QRCodeWindow.xaml",
+      "Fingerprint": "0205efc8757fbff9ba8ca7d61a0c3b7f964a31e7424f15e3261215a17ead1ae5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "3763889a9de4e7d3739d62a2b6045d3686190e98220553d3534a91d379405685",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "39641848b0511c3cc8567300d92bee4bdd9f3d39d4a0c7fa2d06ac7db6bff4ec",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "7c610e2a355b8835481206c7fa09f8c613ff83ec30820098be512b48bcf7cb0d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "84818e64e59945d6f3927df7abfa40af7ea8241db650be4919c0b306295261a7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "91278e6ce88c5f8da6e33dd9766438cc8a669a3cc97f9fd90436c30e55ba71b5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "a7db1da550a6a092c8af497c92fca782fcf1d64b9953693ea82e1855d349043f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "b65483f89249cba293e97fe732ac78c9bce9452ee3d93f045030ec2ec3f2b8de",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "c496d3d1168544df397d98a8522518bcf4248e29adc0a8f8a1667a853ea949a8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "e7089062e1f3f71df281f525f75efbf4012b5d6dd014ab0893546a075d53e154",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveToMyAssetsDialog.xaml",
+      "Fingerprint": "a10ecdb43329ac4f937eb787a29e69e45f7efe443864a3a358b7f6e5cde8b481",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "06f481e7de026b4201b644f1284ef629d7d419fd65c97df94756d5d1cfa2672f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "fa54cb099384b80c67319efb2ebb7f793d0cacea1debbe48ab10abd1104de5f3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "12f4ee6347ccc57064426f4d04a52227c0d9e13300a294073146d252c01b3919",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "32486770635a5ff0c1f469ed548cf9345bc8fc9fb650f75b45861d325f583c5b",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "4ddefef1ef607eb8cd96a3c0e49f5abbe59fac3eb66f1530bd044de47c0adafc",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "516aa31db1684602ad175da827788023f715f2ff4c207c88ce1435570f02e98e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "57509f8a95381953cd14d528c3effec765c1404554eb400d358b179d7f464b4f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "78c672cc2efb80080f64eafd5e62d4da3068e0fea5f0d7373671f0ba3fec5611",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "7ae210d499a9a6cbfd2f33a43e4a176f044af9ea13824b520e3ba3327306e209",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "7e480dc30d2ac32ecdedec3462e64ba94f24f26d697f69fb0c813d1c222835e2",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "843d4a6165e5dd9ad762bc82ac64057baa03a86df278cff82a9737bf3f50659c",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "8ed2725b2ce7165e7252bf98002a3dec10aefc132af523e2dd7dbd192cd605ac",
+      "Count": 4
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "958e753741a33a929d28c77b1bfd075676a30776a03c16f2d8f1213b41c87f32",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "a653f812a552ac8c44be559f5f708565bd5520b28861add7549210e9d05c0fb9",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "aa034498f7bfbdcdc599357751943d11d488827773a112c376419006ce2af258",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "b5f63c542b0100492dc42bdb1add5bf0f1929ef0726ec18a01be2610dad7ef20",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "bb3d78fa6821eb06667a4dae4a437bdf56db2f1d5ea04d0dfa9b759512f52a77",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "d23c87f549070d9081abe5011681d1464b5abae0f60db395b920b4e496933288",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "d62a8d9ebbbe421fb0a187f3b381dc087fdaf2c74f7ed0f099ef145db3a4cb04",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "d7c5708e9fae2cb333fb65469f1b65fd7db788b084a56efd8a1419813c22ebe3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "e0d9bb25e250d58b7888183896149e00999bd8087f314df954d372866830abf3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "e1429a653eab95aa784d40002348094e28159b7840a9b44b0b727d005c641599",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "e24250fc1671e924517e3be22c264794f4eed8749a06cdd1553352d7be11fc94",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "ea11b5ec30a82878a8b64e78fb998c222972ef9f222b22fa83052ca66f8f29a5",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "ece3a7ef25536ae5b9c6b8ce532677469885de917120dbe735875ea46e226a02",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "ee1dd6cce68d6a96170c235c737c8178bc4468e49d5e68ee245b7cca39b2e7ae",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "ff1a919fce2d5417dac3d2223a9a8eb85e5fb51ce3a3fecb3133f088501d1e8d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ShortcutConfigWindow.xaml",
+      "Fingerprint": "f2454045d6af31839c2dee6c2cad187edb0abe51ee5802f5056729583e64e143",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml",
+      "Fingerprint": "9d0845cb0c5c39e1a59d6a9cf0e619873217a511587a53cd2e9eee977a5f813e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SlideSizeWindow.xaml",
+      "Fingerprint": "c36b79ed55528ff7dd2769aec932f5c3826365d76e3639662866e013e2e9316b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SpellCheckLanguageWindow.xaml",
+      "Fingerprint": "19b6aec4c4a1b813979819032bd3d5faa0ea82c047a99e9ad20d75e8d27e3865",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SplitShapeWindow.xaml",
+      "Fingerprint": "b14974108542972a47dfa7fdc355d2140491e579a023c04fa605c7b6abc85eb3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/StorylineDialog.xaml",
+      "Fingerprint": "24c538ab52736bd050a4fc1ea41ee3c2930379987a0735c2832cfd92159fb5bf",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/StyleCheckWindow.xaml",
+      "Fingerprint": "310105f6f918f533b3f7e7a820ad16f17b0469887ebf0e947651e5f1d90e5000",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/StyleCheckWindow.xaml",
+      "Fingerprint": "a3289849e8061480ecf21d664eb8c8cbbabd145a48b177f972108a67b39b59b6",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+      "Fingerprint": "47dc12765c2df917d5d2dfa3422874e89040e5b1af7077944e4f2cac0800eb9a",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+      "Fingerprint": "740786a07ddc9da3c7329109596d5f3ca6f82943d48c9a0ec7ddc2d36f759f61",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "1d95d0afb09aed78af539247879662194acbfed8fbc4ac82266ba264b9de0dc8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "3aaf3b5e6fc3adc09adbfb75ca75a6c05565e559e2db3f468ba188654f694243",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableFormatPainterWindow.xaml",
+      "Fingerprint": "2ec47e21d220764dbe9a77e414600ad95f5c6dccf4794a02702e24bf43472ac7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "57a35fd091357e4a9fc7e51aee32a5b29ea5bba0e1610ec9a1933c079f7cd1e9",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "61b437221ac0d7b0560448c7556b344b340fe87086b55eb8c09423a38f49f37a",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "74dc074a9be113dbb8bae36a93152409c36a3200d8fe79840ad32a50a7147752",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "dffe34add4bf73b1a0d13766e32c1edce3a245ed4758ab679d23efce9db5b3bd",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TagInspectorWindow.xaml",
+      "Fingerprint": "bee250be1bc8dfa5dcfb51934b28d56118b079cfbf154c19062ce29afe74d65d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TagInspectorWindow.xaml",
+      "Fingerprint": "cb2d5c00b38e04abf1c89b7045112e2118b7db29eefc0f1ce6b0e46ed4740400",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/ThemeColorWindow.xaml",
+      "Fingerprint": "36b5c09611c07714e7006ac95d20c5125b34a71da71883739cd6849758ebf4e8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml",
+      "Fingerprint": "5d8f1681a85e900990173f14a5a302c6d708663f04dca6813c437e101ca37fea",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml",
+      "Fingerprint": "de4625bc98d6e29a24a6241bc95dbf681b155ba7fe18ba7b481faee5f7a729b8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WizardDesignerWindow.xaml",
+      "Fingerprint": "1f5aa1720c08998c256214caacf28e34c6f73c5ff66033052577b2bd7861e02e",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WizardDesignerWindow.xaml",
+      "Fingerprint": "c2367de310e15368db2de3915b2a77d0d33a36edc4d1f69f8f8d1519c324b62b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "93c346b59625a4621024cee02580fa27473833f1c6599f1ef72fd4c8f12a3d68",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "c741e0f412f757da32a536085a855ca2589d3c1ff500a4c1d833f3ed8fdf25c9",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "ee1a8f8aca19d98101458b88edf1f89b228a5b19184a97265710a5ab2046e8a9",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "f382c504eaf2178a879a16ae949eadc76355428c0683e4fe3c7a50b3d89cdad8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "32a0f59589bb838c25976477c6cf145fca39c8903fc36a86c2e3bfb318d1df20",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "849d3c2971badfedb239b3666d505fb2480cdcbd99650f053537ce81a66d9319",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "9faa8b5273357aa164a7887b18ffc1b18f394489fcebd9fd4f2fc2e379f26bf2",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "ccc2c3811a10b3abe98933f5a58f970fff2b4f23a7da047339f15c7856fc270b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "defde6bcff50605794289a5c55b92c536e98e023eb6b409fbe8589a3692df924",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/AssetManagerView.xaml",
+      "Fingerprint": "1c149fe78f4eaba7e637afbad758616c3fab036078fc80b92551da930b5426e9",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/AssetManagerView.xaml",
+      "Fingerprint": "5568bc1d141f803a8782f70e91660ec9f863dd00c9abda064f3162a8d75377c1",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "016d0cc9f482bcb37c1753f7b802f7a68930c2227257c70d9de5be9818231762",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "023a50d461054aaa91efe026af2f29918ac8fc92ca863929f949a2b518c9ea8f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "034f5f065a1ec6bf9d7fb275e0b43e36973199e054da7ddc1b92af55a97435b7",
+      "Count": 5
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "0582d640b949977e5b9f86bd584063b8b0c012f46ed85d69cc8bf62425e95e24",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "11ec5c6cd18a6b2cc4551b759ec737efee0034884310a2da609ef474c05fe28a",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "192b6d863cf618aaa520ba6b6dbc86ad7d3bda6ba84f61047aacb3006f55b17d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "1e08a7311a353ad38fd7ee2cbf40bcfb769f8224c3845adfebfd13a653f31fb8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "2636ca59b15240b01fac3ab1932a75650586521220c53cc83d7a2277aac6e127",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "2d256c6b5826c5d0f3404a85e636c28c1600d9bdbac5f4e8de423eacd9abfd7f",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "3b16d62d894a86ab0f60fc93542677e83c39257852c2838792a267dbbe13b5ed",
+      "Count": 6
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "3f3801695ddaa228437cb618ba2c496c96efb04b114750b6e3feb86e5463b05a",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "5015bde492af0001fc013028e3eb66f18bb038b73ea55739a0928cd97219909b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "5521589832ce8e7538a016ad973e147f61d8774a5d19fc430d386ee6f26dba94",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "6e7ddd6d9fe4cba98fd8060bfbffd48d3a509fd14b386ac0f3ce553c7507005e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "741a78607030037134b2701c69862dc3ed864ae8cd8d14b7eb6e2487a6b920d5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "7494f6af8b21bcbf180df8f3822f124abb1ab184715f3587faa5de5eaa4b08a1",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "7a6fbddb065c81627039052051c6287a3102d756c84979028c2928fd8c3e7a08",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "9908bcae81e704d518f9696d36bbba2b524dceeb726773ae5343aea2f3e210d7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "998b534b4da5a0386493a041b252b8304edc4d9a3af86af5c0ef543a6fdbb0ce",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "9de8e69a97b6599d3679afad7c0cc8ba1d4913c5971899773f3dabab8a5e4fbe",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "a7a39b921f773b0c283bc2b9f6b5a3c54ef82514ac8f31837920d10b9eea8ed2",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "ac082a45898527b3f8139d0c8c0d6203680b73c367878da675069a0c53bebcc9",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "b71ea3d5c92360df0df223107cf8980c826c402996fa35da4fbb37947128f793",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "bcec6351ec0b693cc539886065b50c778988a8565e64a127cbf17586e125d2f2",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "c7823d6182f4dc5731c934edd4de7ccc0bc89afde146a839d2a302248929e8a8",
+      "Count": 7
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "c82e5020a1af81590dc1913c3eaa4152062556b3bee4746edb6f9aab3a88a2a6",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "e710ddc0850ceea739e302491e0ff6d590c2d5d9ce161575ab601943326e502a",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/FavoritesTab.xaml",
+      "Fingerprint": "088b3c6f2c07e8e90b9b94c39118cc744e8d90dd22183727bb1d7da2f8a8eda6",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/FavoritesTab.xaml",
+      "Fingerprint": "69c17a8e4055ca0f22cdf398e6da48b838f1f7e6829237d5fa03e4e8260c595c",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/FavoritesTab.xaml",
+      "Fingerprint": "a3375fd79f772eb572a640b100338f55f07b21701599c80069777d4dd39f69cc",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/FavoritesTab.xaml",
+      "Fingerprint": "d3855da7f926c182f28f1f4c968851a020a314422637e439b3d7156aa34297ea",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ImageLibraryTab.xaml",
+      "Fingerprint": "0632a2d9f2167ce78db5cd64bddf8c7030d275ed0c6a7cd0a8e0765a0093b98e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ImageLibraryTab.xaml",
+      "Fingerprint": "0e2d63c4244a12ed7f7e9463e09cce673786d1e9d5007fd8a29b89ef52969096",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ImageLibraryTab.xaml",
+      "Fingerprint": "a984ba81651d5c9111f9d747447f07cc0cf7b3757e92bb1712a5a63887a0a355",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ImageLibraryTab.xaml",
+      "Fingerprint": "d1cf9e6c4414d271631a8e6234bfff6b2653f3ecb5ed34067af11057ff5601e7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ShapeLibraryTab.xaml",
+      "Fingerprint": "0866d14424ca134388e94805b8db2b69041eb4039ca40c53c31c05d97161978e",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ShapeLibraryTab.xaml",
+      "Fingerprint": "1b997603fab8a3c932e7a414d92174eca2a86c08ffdc1535e267097b70971901",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ShapeLibraryTab.xaml",
+      "Fingerprint": "3f5e9f2b2db8e62d9d42034fb1aba71539f41207d891aa9fc5b3d6fd8d40eca7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/ShapeLibraryTab.xaml",
+      "Fingerprint": "9fa4909fcf4f9547ca45589190c6342be2138f99bc6f36471ae292773d6ea9ab",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/SlideLibraryTab.xaml",
+      "Fingerprint": "2947cf024578b25020433f5cbd0c6d7d336dba2cb29a71fb485e1b405496e8c7",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/SlideLibraryTab.xaml",
+      "Fingerprint": "44a2d5e53a2959bd30eb621a2c4e4631c2139363286f5edca5c6d5b95e94d010",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/SlideLibraryTab.xaml",
+      "Fingerprint": "5712041f9243f959793e3007c0eb6fb6b0aa8b2a84c1fcdc70aeed024552a536",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Tabs/SlideLibraryTab.xaml",
+      "Fingerprint": "e79cf36b27fc3bdbb4a526bed71b655cc40edc1b8934d3baf5a73ef91a99bff5",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "22878c946ec828b347ae0fd0a067c0b2ee15e862f268183dc43ad4bd5524bb26",
+      "Count": 3
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "74532e394537d60fd2eed3b70ee9052031c73585ab44a7c8344114cc684a4733",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/NumerationToolbar.xaml",
+      "Fingerprint": "65f3151f124c9bf5dbdbe2992aea6ae1ed4b34473348173eb55ac2a85cec9fdc",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/NumerationToolbar.xaml",
+      "Fingerprint": "f8be7cf86f4f1cdc0d5eed33321cfd4b847b68c38dd07ec7cb693b6c7c454c5e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentOverlayWindow.xaml",
+      "Fingerprint": "6d3c936853ddf38fbf527959be0b1300d6aa7f9469100611046dfeb5dc1d418c",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "25c11f606924d0dbc35642f62e56b5fab5ba9cb81d3b6fbcbbf54c8b89a6a1e0",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "260d6108f32b3d0f5dc474b102fe275be97ebe127e2726fd98461458beb894cf",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "3934d07c44186881ce2f7ca0d8fe047198cc331fb7ba65c76835143f3f5d1492",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "51bc3ec40a144d7e2a45f79a19b4eb48d42c11ed8b5a33abfaeac6db48985493",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "5cc57448df9024a53ac420c1b1a3a3d27c2803602cd017eb9040d199228ab98a",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "8634bb7ac2129452c815442584e87a73322d475b1bc34e4a27d97f33e5ba1650",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "b7363535d99a343cc606520fe829c001dfdc42ace53bffd25ac1ea9659040ba1",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "cc48ae8cb16a2e49dae6145fbcaedc27e0dc8f458ff595b4abe92e95b97c5f70",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "d9edc1534edf8c4465d06cb10ac3c0ce8209e1d1426559beaeb8f3ad18e17347",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "e1e79035db1d261f0e3fdaf5ef68545c326a3a7bff806fc017fa610d7cbfcd92",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar_Simple.xaml",
+      "Fingerprint": "77b5e16e68b00c4236a1df8d7971d6c0bd87bdb85ca4e326185f43059362e8a0",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar_Simple.xaml",
+      "Fingerprint": "8f41890c6d87ad71a7917e0b6f7be55a6a3a5e548f5e5ce8e78b6dc954f55842",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "42e39f8d2df849e53e2082f6899d7c807d46d50e1aa155ee666b08b9a4dba708",
+      "Count": 4
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/SlideNotesWindow.xaml",
+      "Fingerprint": "5099b9ae607333b12c9b07235f996fd31125aaa585e3ef03cae1d14f390e44d8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Toolbars/TransparencyToolbar.xaml",
+      "Fingerprint": "eb911f051e16db5abc5186dd2108c702dd9a417e39642073413cff8d9777bdb8",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "2f8a758c7b071cbc97bd896706481d5637a7a30a42c1b333db87844b5e7ce706",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "3f08c47189a41fe53b8d13d383d9ceb1ed333664375cd34a25f07c42f3f75f9f",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "5d606e4e6b80e424363f3798827e35065a2a1985b9ca0b2e1f122041fa02a047",
+      "Count": 2
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "74dccdf402d7025662bbe081d739b6f6aed7b928740a7a3193bdd531e6a5292b",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "85ec4319e91f2f889b46c770c25f7a2a957b03bb8bc9701325eb685d419a8bc3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "7064555f08cc34404582514148cafd07aa9e3349bd70cce230946f63ef4e2a7d",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "9c87b9062f73116c492a3de0f783fceb8e5362a422ea71721d8ca03b9b8f9ac3",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "9cf55d34c8c052a801e9d6e47cc9d0e8d536164f659e465b4059e243358b939e",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "bed8812a852ca18392850da649695cd0d50d1337dd923207ca4757d0222b2504",
+      "Count": 1
+    },
+    {
+      "Rule": "HardCodedChromeColor",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "d4726a3faf6d01383904dca7afdf6bfb4f0f4d0447c5d31de14e7b8895f3a851",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "90e29c1ef8004c05ab6c46fe6a60ea95188846cafa2c70d2c5fb12fc8bc21962",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/AlignToTableWindow.xaml",
+      "Fingerprint": "c5e0f7a9551ab3f05e73d17969a4983428668d12143f3c8af9b5f6552900c2b8",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml",
+      "Fingerprint": "d6c33cd74a9dd045577ba00a9cdb53a2df21de138e0a89c7e48395100eb3c1ec",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ArrangeProWindow.xaml",
+      "Fingerprint": "e9d00b681fd3961cc94595c355588bfbcab1b4583283d9ad360488701fa8b872",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/AutomationWizardWindow.xaml",
+      "Fingerprint": "19962914b37d8aa6636bbccc7bbb43ce293861bd42cdc7945aab44032df418c3",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/BulkFormatReplacerWindow.xaml",
+      "Fingerprint": "605bcad631799df8fa64802b14582f4d4db873722cf9f7f4eeeefbe95ef6d900",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ChartOverlayDialog.xaml",
+      "Fingerprint": "af979eef37b594a036fa2769e6a661afcfc0c3a045807ecbdbf2a764b8103373",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/CreateFolderDialog.xaml",
+      "Fingerprint": "ecba5b9b9898df2749265dd6c5b02437ce3bb11bc7f6751592334bfa3f897c38",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/EditAssetDetailsDialog.xaml",
+      "Fingerprint": "2ded5af1bf4320348837171df6eb3269519e320e6c6f6f3d79d8287ed548258d",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ExcelLinkManagerWindow.xaml",
+      "Fingerprint": "6c708aac2eb3b3f1eb188ef59fe9f1e10a1274a282090c137429f31117c9fec5",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "5ddbb015f1132bc4af968190c2a290ac91a661d0fa5a75a73a20e059913814f0",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/GanttChartWindow.xaml",
+      "Fingerprint": "4e8bfe817114aef3c9a4946aa5cb661cf75506920cc625ffed916eaeb043c36e",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/HtmlSlideImportOptionsWindow.xaml",
+      "Fingerprint": "4338fae63c65a92c9d29cf778ddce608300d1839ad3cc9e16bbe03c56dbee542",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "c5c137f545333ea0a55c064d707760bdca9b2f3ac253a8ea9ad1f0c4f8a9cbfc",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/InsertTableColumnsDialog.xaml",
+      "Fingerprint": "2741bdceaa8ff9a590a575756e1ddd777551101de811a895377d7496245b5951",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/LotteryWindow.xaml",
+      "Fingerprint": "62f3bda14d8c690f594fcc5f1cab4e2494dcf4e01c5101e086098a0de493f052",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "d5d4380228b62bd02241be9b7c402b4343ec6cc9e39f22a50159765d923b4bc0",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "43c40ed0f83d876691bcae71f78b8d62cc850a93986b32ca06a1e9669674a15a",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ObjectConnectorWindow.xaml",
+      "Fingerprint": "0edc8f303ca7c9fa2c7abcc7dbeb9a12c747873c56dc3c74fa89f8abafd6690e",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/PositionPainterWindow.xaml",
+      "Fingerprint": "c7191c04e8094a695905d8b86e8a1f59cddc5c4c44ca9ca105df6ea08f004b92",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/QRCodeWindow.xaml",
+      "Fingerprint": "bd2e0f9bac0eb85eb23ebc9d8caae305151a10168d9a55105c0ea07926a4e5fd",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow.xaml",
+      "Fingerprint": "37ca2cc886811925f5a9584ef5c7e9dfd49a4bb5f322183f393f9fe110ef4a9e",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveToMyAssetsDialog.xaml",
+      "Fingerprint": "983d6cb773ad5ff888a5bfa93e0a341232ba429adeb3cc8b05b68e3a74ca9612",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "25b6b264aae99ebc25772b582b773d466601c4386fee5f235b028ccc63415a57",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "aa3913de20ebd081786a242f1adb13c87210f7a38579829ff7dcd61d069b40df",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ShortcutConfigWindow.xaml",
+      "Fingerprint": "f16ec42137d47fab0bfd852872d6285bddb4a1820997ee7272d0e839b69d8445",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml",
+      "Fingerprint": "a6b328ca4dd16b59183167da9dba6b8800fe017f62bef279b95c687bba6326f9",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SlideSizeWindow.xaml",
+      "Fingerprint": "0b3e7443c01132f08392d7e6e0256aba6a6a265ab2c048f37cc95c77ec2a2d0d",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml",
+      "Fingerprint": "c9aaacffe325a8189add60dff3e5fd9b4067dfb1c0855692b518c6fde45de0c0",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SpellCheckLanguageWindow.xaml",
+      "Fingerprint": "66dc08acc4f334323371053fbf2bbe2b574d27acdb5bc3e0d05884b946575d6c",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SplitShapeWindow.xaml",
+      "Fingerprint": "7be4789e61d9442b32d6e73d79cd02bc75fbe15f948091a1bfc86194347cacd9",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/StorylineDialog.xaml",
+      "Fingerprint": "b32b042c008bbef7c6cb553d176b984da57ec3f0695952e7de2c9ff7af56e65d",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/StyleCheckWindow.xaml",
+      "Fingerprint": "85471f51bf18811c476fea679776fd040589ebde16db898ae40549da564bf7f2",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+      "Fingerprint": "528ad23b97f9bf03a68d1de812faaf5d27e319a01d25aa7be6c66e29641928aa",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "c417b86e8f36547edd97a5e476f49996941b4d9571673fe3c61bd535dcf0e0ad",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TableFormatPainterWindow.xaml",
+      "Fingerprint": "3e0117f1e6ce588f2a16d62d6272052d8a98610129d290fb7d2025e05b6ed3f2",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "9bc024b81657c6a1a4c8f6e323f35980109da8ffc2952094f02e2b63d9c9be4d",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TagInspectorWindow.xaml",
+      "Fingerprint": "52a96442d1ec3438bf91d171468854cd2949a635a5f3fbafd607a57a874bdbbd",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TemplateManagerWindow.xaml",
+      "Fingerprint": "a768f4c7bbee1a6bb7cce460043ce853e129099d607a086377394d464377a265",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/ThemeColorWindow.xaml",
+      "Fingerprint": "ee895e4c242a2e7ff722adc5e03ab47c6f10d175cd909833472d28ae26632ff0",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml",
+      "Fingerprint": "7474287e05f5114f14f29551d8f4f47ef2d4771c3781ef89dd2454589b07b225",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/WizardDesignerWindow.xaml",
+      "Fingerprint": "280cb2e3e4980df8ede995f3b2885dbf15a61d21cbbe577a576a0368ebbfcb8b",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "7702d8738f869605db5b47fc30da2fe94996b7368f83ba1b410101e113a0f944",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "0350628c1f978939c618649603977a31ec793dff1e011e7a348813ccd9f1e7c3",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Menus/GanttContextMenu.xaml",
+      "Fingerprint": "5224a7d88e52ea46e92a4bf0c9bfeb8c94646bf2edb8385b20902808d8589dad",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "686ee9a3ad3c5285458634a51ce5bc853cb49fc8cd7db372e4ac2baee5d95eb5",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/DiagonalAlignToolbar.xaml",
+      "Fingerprint": "c8af7b817bfe5b724e2e3844114d7f1979c711b25afed9e5f258b1b978b29717",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/GanttResizeHandlesWindow.xaml",
+      "Fingerprint": "4a094497be47a0408e6d05762dd41833b99d57248a252b74815ec07ec3180cbc",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/NumerationToolbar.xaml",
+      "Fingerprint": "3ba06102ed01b879236f9a9da8683f59e6ef99d5a88b581392d2c3e9af90f7ca",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentOverlayWindow.xaml",
+      "Fingerprint": "53515e29e7d41f5b1e2657b1e9df03677b95e8246ac4651a2d68a374d1235b9e",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentsOverviewWindow.xaml",
+      "Fingerprint": "03d758468433090a16726b20fe93a4d4a142324f33543b0ab3d4144595ad0cb0",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "2189f1e0168d15af0288e40807dea25425cfe397a032ba90e79dddc966405e87",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar_Simple.xaml",
+      "Fingerprint": "09443832608ae4089fdb984ba2a74de892ffc3c33bf379e393dcf924430228df",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "fb9a0a6f1b431756c24bba767c2bcc939f88161b63cba2e19fbd6026c5b55251",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/SlideNotesWindow.xaml",
+      "Fingerprint": "722d24277df38fcda37367c2f9732026ae4bac73b5bd36aefe97cf4a49e43761",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Toolbars/TransparencyToolbar.xaml",
+      "Fingerprint": "6fd39c22c688ec46979669f3300ab1d5af341834f6e03bef41a92f62ed6d8ab2",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "45eef41ada651932c6f9033c79b867c732449a99d99768b1089d23e61027367f",
+      "Count": 1
+    },
+    {
+      "Rule": "InvalidArchetypeWindowContract",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "726d7dee22c508027345f346a5ccb0225a485e64717f9feb08cbaf5007707590",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "61817aefa757b1ede02431a4cbaa98f0f276e97074208207411c279aa093e4bb",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "940cfa1092cedcc6deda4a4bdc7cba1f709e65c270b8d32661543ecf7bdee259",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/AlignToTableWindow.xaml",
+      "Fingerprint": "a5e4013e8a81cca373903ee2fd8da6681404e8522bfcb4813e14cd709ee658d2",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "b806fdb9680f2afef5ba7c6890351742e5f6d62c239950314e5d8eddffdf2704",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/FormatNumbersWindow.xaml",
+      "Fingerprint": "ec7f9c0d0ef9bac35acba02d7a8fae71f861670a0306f92e5eea5121c0fa02ba",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "8ba5d2164ca01b7c600c288b2f0c9189447d75acfc27ee31c66e028831263b00",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "0c289bf2dc40585cca6c7dfc66f4c018338f799a9f826f123136d708f0fcafbe",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml",
+      "Fingerprint": "6f8b580daa223d893b0f09e786bc98d97f9fe92ace593f802e31966097579984",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Menus/GanttContextMenu.xaml",
+      "Fingerprint": "f7025cabeea243d8e529ff535b0a1f8b330f771f6db295ea8126cd28bdb03517",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Panels/ShapeSizePanel.xaml",
+      "Fingerprint": "91d30948bb7277928c49be49a488ecdede134248cb1ae18690720e695d789c21",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml",
+      "Fingerprint": "25fc0514a6b8e388932c132e20927b5df0c4712fafa1158815af6a459aaf5d04",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Toolbars/NumerationToolbar.xaml",
+      "Fingerprint": "ce2739dfa26ed93d2b52e711d8f58160d4b50d1e452cd9502ba2a1b6996549aa",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar.xaml",
+      "Fingerprint": "f02af761851d3ae90431df63ac2a3746c577151718f95266c2a8d35ace87e3e7",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Toolbars/ProgressSeriesToolbar_Simple.xaml",
+      "Fingerprint": "ce36fa1e1b1b9c90b44cac4616b187be93ea74ef518f018121ba6f1fc4fcfe6e",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "44a08706fc829f71d6e705f3d59d6ecbd69eaeab12a2cf9268faec884123848a",
+      "Count": 1
+    },
+    {
+      "Rule": "LocalCanonicalButtonTemplate",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "2c3afb2d59baae20c5994e516a7c7a083a1e425e3303c8a0a515ed4dea59bb9a",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Controls/ThermometerAdorner.xaml",
+      "Fingerprint": "3ae76aff782b8a388696e0c780badacc99be05639c3fb38fbe801aece4aa171a",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Dialogs/CreateFolderDialog.xaml",
+      "Fingerprint": "093c612e6b4f3df177bfffd2e9890fce65c6dc95336c8b4ea604a8028159c340",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Dialogs/EditAssetDetailsDialog.xaml",
+      "Fingerprint": "50a260bd70c38158bf26b4af08a0c2397ab4a027b7a5798a170ec70002afae7d",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "902263364731d74598947d4ec2f0d3e7860e5a3408cfdb669a86c8caf3904421",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Dialogs/SaveToMyAssetsDialog.xaml",
+      "Fingerprint": "e7fd1cc51162f4a666419bac6ca9e18c20c7f9ab049e891a3a4257e3559f7b53",
+      "Count": 1
+    },
+    {
+      "Rule": "MissingSharedVisualResources",
+      "Path": "oPenEfficiency/UI/Dialogs/SplitShapeWindow.xaml",
+      "Fingerprint": "1b74b0fcc3dbedee38d9817f81cc788c6788648774221289f92c3713f9f8d4ea",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml",
+      "Fingerprint": "4f5774e8ef8aea1053a176bba31b4bc8638da6e5ca85d02e914e898e61d05f4a",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ArrangeProWindow.xaml",
+      "Fingerprint": "dbb7c450b6bce8b63fbcec65aae7aade2c969ef2de26f65de0645398375235d0",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ChartOverlayDialog.xaml",
+      "Fingerprint": "1694da837a50242b611228a84835ec12d75bf936d03d0e0737cbb7663158b259",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml",
+      "Fingerprint": "88bc2ff370b776539552c6345ed24739f6044ee3b74125e2cd4d4ddc64c6dbba",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/GanttChartWindow.xaml",
+      "Fingerprint": "ba876124d184e06d40b9f62fc46c25ba34a17ad969a22eaa394d30acfe7d759a",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/HtmlSlideImportOptionsWindow.xaml",
+      "Fingerprint": "6318ac44f0269ccd334415eaf1b8eae23eda5945203800892798af57d3d1ad27",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "10d59450066d7c1d74df650575e098dd0d08c97471730516671676d3f73142b7",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/IconBrowserWindow.xaml",
+      "Fingerprint": "d514627d2b106dcd1776809939b037770ae14de2861ac61844ca5bffece8c616",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/InsertTableColumnsDialog.xaml",
+      "Fingerprint": "8a95f2a18758a254bf4905509297125b7ea342b8c6ea450af7f226886da523df",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/MagicResizerWindow.xaml",
+      "Fingerprint": "64c00534a01bda2528f46e972a57ff1c98e3f3c3936645cde915a2aaca516f1c",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/MapWizardWindow.xaml",
+      "Fingerprint": "b16c775d6c0b35f09babf451a4d7bb74da60feb82fd4dce42e95d9cc6511c2ba",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ObjectConnectorWindow.xaml",
+      "Fingerprint": "004e623a6a95f294adca28c363346976344f8f58cac3bdcd41d6bb0327b538c4",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/PositionPainterWindow.xaml",
+      "Fingerprint": "fe5cbabd7d05c590afc4cf810e649e2b1b03eb7047dfc53291b55976da245630",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/QRCodeWindow.xaml",
+      "Fingerprint": "00f794a15922111c53c585310e1cc96de3d39e959260d0781793147593bbbe4c",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "b2655ee511e65f033f65445c6f48a0309b9640ba4208d43caed8504113e79b0b",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SeriesGeneratorWindow.xaml",
+      "Fingerprint": "cef59dad75e9de742294c755670b46c9fd4737a27201f6432cec47abd5346435",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SettingsWindow.xaml",
+      "Fingerprint": "57b369e02d3b2c2cae22ca8a722c6ab61292bfd603043cc850bc938e5b606f47",
+      "Count": 7
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ShortcutConfigWindow.xaml",
+      "Fingerprint": "a12b6f5c5945711640a63e5b527f4262a65bfc863b96207b4a2164a602103dd6",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SlidePasteWindow.xaml",
+      "Fingerprint": "bf7f5abf12ad0bc14fd590133318312fa8bd478d02f211af5d2954aea95dc72c",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SlideSizeWindow.xaml",
+      "Fingerprint": "618f253e3cf1f7a8b29214f1837069f0d4453c24790563aa5b5a0753e7f4afcf",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml",
+      "Fingerprint": "e00cfeb6e3ede2d3c81030b617875105e53f90f43b2f028ba2bbd21e80d7cf42",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SpellCheckLanguageWindow.xaml",
+      "Fingerprint": "ca1a75a93358614ea1f3c743cdb8c541dff5048819cb8f782b34f9fc9e23a103",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SplitShapeWindow.xaml",
+      "Fingerprint": "de98c50c771a6f7012baf7b53d6687af2c1558b046a65a498e677762994ab1b0",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/SyncObjectsWindow.xaml",
+      "Fingerprint": "d3d5e741306d36e1813bf01ab9a239e429bc3f5d46a5a4922c9bb04ae2c8cc40",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/TableBrandingDialog.xaml",
+      "Fingerprint": "ee95864777091a2aa8ecdf8ca62262944ae98004685e58df3d0f867e88970835",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/TableFormatPainterWindow.xaml",
+      "Fingerprint": "11264b2dd264ee3f6afcaeaf738bc8251f4184818a3a44c73cf8c8db6f027e40",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/TableHeatmapDialog.xaml",
+      "Fingerprint": "c2ca3d5ebce7a8d4bcc0229ce04150fbb62f22ac861250c5c071246ce545dd5b",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/TagInspectorWindow.xaml",
+      "Fingerprint": "dd9d4938d45403f331891892184baf46932d1d99eb77a925f3283284d599f698",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/TemplateManagerWindow.xaml",
+      "Fingerprint": "2b4022d9be64dc765ef9e5562970a331f4843b2f0d0ab35ea90f85a5a7817b1b",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/ThemeColorWindow.xaml",
+      "Fingerprint": "380427f27ed81ae2d089080a5134643cce957ad424c1a62dc569ed822039dbab",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "ae23c070cb3b14ded72bdb9b3714a56e3e7bb08ed885d81e946cf2f3fe16117d",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Dialogs/WpfColorPickerDialog.xaml",
+      "Fingerprint": "bb2d293e8905dc7e2b7b57513d7c0dd6b47bd0ba2158538e5157f4ee04fc92f9",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/ImportAgendaLayoutWindow.xaml",
+      "Fingerprint": "828f93ed1787e462d07be6c4ddec922d9614890850762e820b735242a0c51e33",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Menus/GanttContextMenu.xaml",
+      "Fingerprint": "ef7f3cac9437a43a7eebfc926b9cbd97abf5632b56e5fcde3c1a6143e7b5f18c",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Panels/GanttChartPanel.xaml",
+      "Fingerprint": "fc41e7e0e4300a4c8d0ce4320738f8237555c932fff95ba2cba226b010ac4c03",
+      "Count": 5
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Toolbars/GanttResizeHandlesWindow.xaml",
+      "Fingerprint": "628c5210828f1264140867242c380118fea41fe0d2cb3d44f451c2a79aa8d888",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentOverlayWindow.xaml",
+      "Fingerprint": "e6c6487fe60b12ac220365af3ed53a0a6f6cb5d3570f8df9d55f607fb5cdea9f",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Toolbars/PrivateCommentsOverviewWindow.xaml",
+      "Fingerprint": "f24ebce8469982a9db6f64a5d4e92aa2dbbafcd72800cc106ab49a783bd8b440",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Toolbars/RatingToolbar.xaml",
+      "Fingerprint": "e7aca54b1f77f93dbc0db673b4c77da869e8584979737f25c72f59dde3c6c7f4",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Toolbars/SlideNotesWindow.xaml",
+      "Fingerprint": "30e85eb43d622a2858021eb356f8d56d5213473428d0a6ae07360e47aef2ed87",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Wizards/AgendaWizard.xaml",
+      "Fingerprint": "10a7f8d6d772cce3bf7a2ba85340365d55fbbebd20026149ef3f7391dc63fdc1",
+      "Count": 1
+    },
+    {
+      "Rule": "UnauthorizedFontFamily",
+      "Path": "oPenEfficiency/UI/Wizards/ExportWizard.xaml",
+      "Fingerprint": "b19553f9c10cb181fa2e86784bebe1b2f9904b4c72f518d3efbbff6f431e39b0",
+      "Count": 1
+    }
+  ]
+}

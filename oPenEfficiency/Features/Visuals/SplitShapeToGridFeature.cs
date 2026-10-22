@@ -2,6 +2,7 @@
 using Microsoft.Office.Interop.PowerPoint;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Services;
 using oPenEfficiency.Utils;
 using oPenEfficiency.Services.Attributes;
 
@@ -12,15 +13,15 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnSplitShape",
-        Name = "Split to Grid",
-        Tooltip = "Split to grid",
+        Name = "Split Shape into Grid",
+        SearchAliases = new[] { "Split to Grid" },
+        Tooltip = "Split shape into grid",
         IconData = "M2,2H10V10H2V2M14,2H22V10H14V2M2,14H10V22H2V14M14,14H22V22H14V14Z",
         Color = "#F43F5E",
         Description = "Splits the selected shape into a grid of smaller shapes (default 2x2 with no spacing).",
-        DetailedHelpText = "### Split to Grid\nDivides the selected shape into an N x M grid of equally-sized non-overlapping shapes, with configurable row and column counts.",
-        Keywords = "split, grid, divide, chop, partition",
+        DetailedHelpText = "### Split Shape into Grid\nDivides one selected shape into an N × M grid of equally-sized non-overlapping shapes. Right-click for direct 1×2, 2×1, 2×2, 3×2, or 3×3 presets with zero spacing. Direct presets replace the source only after every grid shape has been created successfully.",
         MinSelection = 1,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class SplitShapeToGridFeature
     {
         /// <summary>
@@ -47,34 +48,38 @@ namespace oPenEfficiency.Features
                 float origLeft = original.Left;
                 float origTop = original.Top;
 
-                // Calculate dimensions
-                float newWidth = (totalWidth - ((float)spacingPoints * (columns - 1))) / (float)columns;
-                float newHeight = (totalHeight - ((float)spacingPoints * (rows - 1))) / (float)rows;
-
-                if (newWidth <= 0 || newHeight <= 0) return null;
+                var plannedCells = ShapeGeometryPlanner.SplitGrid(
+                    new ShapeGeometry
+                    {
+                        Id = original.Id,
+                        Left = origLeft,
+                        Top = origTop,
+                        Width = totalWidth,
+                        Height = totalHeight
+                    },
+                    rows,
+                    columns,
+                    (float)spacingPoints);
 
                 // Create grid
                 for (int r = 0; r < rows; r++)
                 {
                     for (int c = 0; c < columns; c++)
                     {
+                        var plannedCell = plannedCells[r * columns + c];
                         var dupRange = original.Duplicate();
                         var dup = dupRange[1];
                         
-                        try
+                        if (dup.HasTextFrame == Office.MsoTriState.msoTrue)
                         {
-                            if (dup.HasTextFrame == Office.MsoTriState.msoTrue)
-                            {
-                                dup.TextFrame.DeleteText();
-                            }
+                            dup.TextFrame.DeleteText();
                         }
-                        catch { }
 
                         // Position
-                        dup.Left = origLeft + (c * (newWidth + (float)spacingPoints));
-                        dup.Top = origTop + (r * (newHeight + (float)spacingPoints));
-                        dup.Width = newWidth;
-                        dup.Height = newHeight;
+                        dup.Left = plannedCell.Left;
+                        dup.Top = plannedCell.Top;
+                        dup.Width = plannedCell.Width;
+                        dup.Height = plannedCell.Height;
                         
                         dup.Visible = Office.MsoTriState.msoTrue;
                         createdShapes.Add(dup);
@@ -88,8 +93,8 @@ namespace oPenEfficiency.Features
                 {
                     for (int c = 1; c < columns; c++)
                     {
-                        float bottomOfPrev = origLeft + ((c - 1) * (newWidth + (float)spacingPoints)) + newWidth;
-                        float topOfCurr = origLeft + (c * (newWidth + (float)spacingPoints));
+                        float bottomOfPrev = plannedCells[c - 1].Left + plannedCells[c - 1].Width;
+                        float topOfCurr = plannedCells[c].Left;
                         float midX = (bottomOfPrev + topOfCurr) / 2f;
 
                         var line = slide.Shapes.AddLine(midX, origTop, midX, origTop + totalHeight);
@@ -104,8 +109,8 @@ namespace oPenEfficiency.Features
                 {
                     for (int r = 1; r < rows; r++)
                     {
-                        float bottomOfPrev = origTop + ((r - 1) * (newHeight + (float)spacingPoints)) + newHeight;
-                        float topOfCurr = origTop + (r * (newHeight + (float)spacingPoints));
+                        float bottomOfPrev = plannedCells[(r - 1) * columns].Top + plannedCells[(r - 1) * columns].Height;
+                        float topOfCurr = plannedCells[r * columns].Top;
                         float midY = (bottomOfPrev + topOfCurr) / 2f;
                         
                         var line = slide.Shapes.AddLine(origLeft, midY, origLeft + totalWidth, midY);
@@ -121,6 +126,36 @@ namespace oPenEfficiency.Features
             {
                 ExceptionLogger.Log(ex, "SplitShapeToGridFeature.Execute");
                 return null;
+            }
+        }
+
+        public static bool ExecutePreset(PowerPointManager manager, int rows, int columns)
+        {
+            var selection = manager?.GetSelectedShapes();
+            if (selection == null || selection.Count != 1) return false;
+            var original = selection[1];
+            System.Collections.Generic.List<PowerPoint.Shape> created = null;
+            try
+            {
+                try { manager.GetApplication()?.StartNewUndoEntry(); } catch { /* Splitting remains valid when undo grouping is unavailable. */ }
+                created = Execute(manager, original, rows, columns, 0, false, false);
+                if (created == null || created.Count != rows * columns) throw new InvalidOperationException("The complete grid could not be created.");
+                original.Delete();
+                try
+                {
+                    var names = new string[created.Count];
+                    for (int index = 0; index < created.Count; index++) names[index] = created[index].Name;
+                    ((Slide)created[0].Parent).Shapes.Range(names).Select();
+                }
+                catch { /* Result selection is optional after a successful split. */ }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (created != null)
+                    foreach (var shape in created) { try { shape.Delete(); } catch { /* Rollback shape may already have been removed. */ } }
+                ExceptionLogger.Log(ex, "SplitShapeToGridFeature.ExecutePreset");
+                return false;
             }
         }
     }

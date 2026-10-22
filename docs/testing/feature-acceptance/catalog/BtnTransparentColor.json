@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTransparentColor",
+  "title": "Color Eraser (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/TransparentColorFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTransparentColor-001",
+      "title": "Color Eraser applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/TransparentColorFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Color Eraser (BtnTransparentColor) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTransparentColor-001",
+      "title": "Transparent Color pixel rule (tolerance limit, alpha gate, inclusive boundary) pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/PixelTransparencyPolicy.cs",
+        "oPenEfficiency/UI/Dialogs/TransparentColorWindow.xaml.cs"
+      ],
+      "expected": "The production pixel rule pins: the squared Cartesian limit follows 3*255^2*tolerance^2 and clamps the tolerance into 0..1; at zero tolerance only exact RGB matches become transparent; already transparent pixels (alpha 0) are never touched; the distance boundary is inclusive exactly as the production float arithmetic computes it (distSq == limit transparent, one unit beyond stays opaque); full tolerance makes every opaque pixel transparent. TransparentColorWindow delegates both the limit and the per-pixel decision to this policy (single production implementation).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~PixelTransparencyPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

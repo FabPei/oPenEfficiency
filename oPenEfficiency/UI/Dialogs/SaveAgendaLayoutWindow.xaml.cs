@@ -15,6 +15,7 @@ namespace oPenEfficiency.UI
     public partial class SaveAgendaLayoutWindow : Window
     {
         private PowerPointManager _manager;
+        private readonly IAgendaLayoutStore _layoutStore = new JsonAgendaLayoutStore();
 
         // Slide level shapes
         private ShapeFormatConfig _slideConfig;
@@ -42,6 +43,7 @@ namespace oPenEfficiency.UI
         public SaveAgendaLayoutWindow(PowerPointManager manager)
         {
             InitializeComponent();
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
             _manager = manager;
             LoadExistingLayouts();
 
@@ -49,15 +51,39 @@ namespace oPenEfficiency.UI
             InfoContent.Visibility = Visibility.Visible;
         }
 
+        private void FitToOwnerWorkArea()
+        {
+            var owner = new System.Windows.Interop.WindowInteropHelper(this).Owner;
+            var screen = System.Windows.Forms.Screen.FromHandle(owner);
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+            double availableWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            double availableHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            MinWidth = Math.Min(MinWidth, availableWidth);
+            MinHeight = Math.Min(MinHeight, availableHeight);
+            MaxWidth = availableWidth;
+            MaxHeight = availableHeight;
+            Width = Math.Min(Width, availableWidth);
+            Height = Math.Min(Height, availableHeight);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                BtnCancel_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
                 this.DragMove();
         }
 
         private void LoadExistingLayouts()
         {
-            _existingLayouts = JsonService.Load<List<AgendaLayoutConfig>>(@"AgendaLayouts\agenda_layouts.json") ?? new List<AgendaLayoutConfig>();
+            _existingLayouts = _layoutStore.Load() ?? new List<AgendaLayoutConfig>();
             
             // Add "Create New Layout" as the first item
             var displayList = new List<AgendaLayoutConfig>();
@@ -393,6 +419,15 @@ namespace oPenEfficiency.UI
                 MessageBox.Show("Please select an existing layout to delete.", "Invalid Selection", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            if (CboExistingLayouts.SelectedItem is AgendaLayoutConfig selectedLayout && selectedLayout.IsBuiltIn)
+            {
+                MessageBox.Show(
+                    "Built-in agenda layouts are always available and cannot be deleted.",
+                    "Built-in Layout",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
 
             // Toggle confirm button visibility
             if (BtnDeleteLayout.Visibility == Visibility.Visible)
@@ -414,21 +449,32 @@ namespace oPenEfficiency.UI
             {
                 try
                 {
-                    string relativePath = @"AgendaLayouts\agenda_layouts.json";
-                    var layouts = JsonService.Load<List<AgendaLayoutConfig>>(relativePath) ?? new List<AgendaLayoutConfig>();
+                    if (layoutToDelete.IsBuiltIn)
+                        throw new InvalidOperationException("Built-in agenda layouts cannot be deleted.");
+                    var layouts = _layoutStore.Load() ?? new List<AgendaLayoutConfig>();
 
-                    int index = layouts.FindIndex(l => l.LayoutName == layoutToDelete.LayoutName);
+                    int index = layouts.FindIndex(l => string.Equals(l.LayoutName, layoutToDelete.LayoutName, StringComparison.OrdinalIgnoreCase));
                     if (index >= 0)
                     {
                         layouts.RemoveAt(index);
-                        JsonService.Save(layouts, relativePath);
+                        if (!_layoutStore.TrySave(layouts))
+                            throw new System.IO.IOException("The layout configuration file could not be updated.");
 
                         // Delete template file if exists
                         string appDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "oPenEfficiency", "AgendaLayouts");
-                        string templatePath = System.IO.Path.Combine(appDataPath, $"{layoutToDelete.LayoutName}.pptx");
+                        string templatePath = System.IO.Path.Combine(appDataPath, GetTemplateFileName(layoutToDelete.LayoutName));
                         if (System.IO.File.Exists(templatePath))
                         {
-                            System.IO.File.Delete(templatePath);
+                            try
+                            {
+                                System.IO.File.Delete(templatePath);
+                            }
+                            catch
+                            {
+                                layouts.Add(layoutToDelete);
+                                _layoutStore.TrySave(layouts);
+                                throw;
+                            }
                         }
 
                         // Reload layouts and clear current config
@@ -578,6 +624,19 @@ namespace oPenEfficiency.UI
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
+            try
+            {
+                SaveLayout();
+            }
+            catch (Exception ex)
+            {
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "SaveAgendaLayoutWindow.BtnSave_Click");
+                MessageBox.Show($"The agenda layout could not be saved.\n\n{ex.Message}", "Save Agenda Layout", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SaveLayout()
+        {
             // Validate minimum required shapes
             if (_itemTextConfig == null)
             {
@@ -598,9 +657,7 @@ namespace oPenEfficiency.UI
                 MessageBox.Show(
                     "The following layout validation errors were found:\n\n" + string.Join("\n\n", validationErrors) + "\n\n" +
                     "Please adjust the shapes on your PowerPoint slide to have valid positions and dimensions.\n\n" +
-                    "Typical valid ranges:\n" +
-                    "• Position (Left/Top): 0 - 720 points (for 4:3 slides) or 0 - 960 points (for 16:9 slides)\n" +
-                    "• Size (Width/Height): 10 - 500 points\n" +
+                    "Valid positions and dimensions are calculated from the active presentation's actual slide size.\n" +
                     "• Item Spacing: 1 - 100 points",
                     "Layout Validation Failed",
                     MessageBoxButton.OK,
@@ -629,6 +686,11 @@ namespace oPenEfficiency.UI
             }
 
             string layoutName = TxtLayoutName.Text.Trim();
+            if (layoutName.Length > 80 || layoutName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) >= 0)
+            {
+                MessageBox.Show("Use a layout name of at most 80 characters without file-name control characters.", "Invalid Layout Name", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             // Get list alignment
             string listAlignment = "Left";
@@ -700,18 +762,51 @@ namespace oPenEfficiency.UI
                 HighlightFillColorRgb = fillColorRgb
             };
 
-            // Save to JSON using JsonService (consistent with other windows)
-            var existingLayouts = JsonService.Load<List<AgendaLayoutConfig>>(@"AgendaLayouts\agenda_layouts.json") ?? new List<AgendaLayoutConfig>();
+            if (AgendaLayoutCatalog.IsBuiltInName(layoutName))
+            {
+                MessageBox.Show(
+                    $"'{AgendaLayoutCatalog.StandardAgendaName}' is a built-in layout and cannot be overwritten. Choose a different name for your custom layout.",
+                    "Built-in Layout",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                return;
+            }
+
+            var existingLayouts = _layoutStore.Load() ?? new List<AgendaLayoutConfig>();
+            bool replacesExisting = existingLayouts.Any(l => l.LayoutName.Equals(layoutName, StringComparison.OrdinalIgnoreCase));
+            if (replacesExisting)
+            {
+                var overwrite = MessageBox.Show(
+                    $"An agenda layout named '{layoutName}' already exists. Replace its configuration and local template?",
+                    "Replace Agenda Layout",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (overwrite != MessageBoxResult.Yes) return;
+            }
             existingLayouts.RemoveAll(l => l.LayoutName.Equals(layoutName, StringComparison.OrdinalIgnoreCase));
             existingLayouts.Add(newLayout);
-            JsonService.Save(existingLayouts, @"AgendaLayouts\agenda_layouts.json");
 
             // Setup AppData Directory for backup/templates
             string appDataPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "oPenEfficiency", "AgendaLayouts");
             System.IO.Directory.CreateDirectory(appDataPath);
+            string finalTemplatePath = System.IO.Path.Combine(appDataPath, GetTemplateFileName(layoutName));
+            byte[] previousTemplate = System.IO.File.Exists(finalTemplatePath) ? System.IO.File.ReadAllBytes(finalTemplatePath) : null;
 
             // Export clean slide template
             ExportCleanSlideTemplate(layoutName, newLayout, appDataPath);
+
+            if (!_layoutStore.TrySave(existingLayouts))
+            {
+                if (previousTemplate == null)
+                {
+                    if (System.IO.File.Exists(finalTemplatePath)) System.IO.File.Delete(finalTemplatePath);
+                }
+                else
+                {
+                    System.IO.File.WriteAllBytes(finalTemplatePath, previousTemplate);
+                }
+                throw new System.IO.IOException("The layout configuration file could not be written.");
+            }
 
             MessageBox.Show($"Agenda Layout '{layoutName}' saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             this.Close();
@@ -721,7 +816,7 @@ namespace oPenEfficiency.UI
         {
             var app = _manager.GetApplication();
             if (app == null || app.ActivePresentation == null || app.ActiveWindow == null || app.ActiveWindow.View.Slide == null)
-                return;
+                throw new InvalidOperationException("No active PowerPoint slide is available for the layout template.");
 
             Slide activeSlide = (Microsoft.Office.Interop.PowerPoint.Slide)app.ActiveWindow.View.Slide;
 
@@ -749,27 +844,62 @@ namespace oPenEfficiency.UI
             if (config.SubItemDurationShape != null) idsToDelete.Add(config.SubItemDurationShape.ShapeId);
             if (config.SubItemResponsibleShape != null) idsToDelete.Add(config.SubItemResponsibleShape.ShapeId);
 
-            // Create invisible temporary presentation
-            Presentation tempPres = app.Presentations.Add(Microsoft.Office.Core.MsoTriState.msoFalse);
-            tempPres.PageSetup.SlideWidth = app.ActivePresentation.PageSetup.SlideWidth;
-            tempPres.PageSetup.SlideHeight = app.ActivePresentation.PageSetup.SlideHeight;
-
-            activeSlide.Copy();
-            Slide pastedSlide = tempPres.Slides.Paste()[1];
-
-            // Delete marker shapes
-            for (int i = pastedSlide.Shapes.Count; i >= 1; i--)
+            var namesToDelete = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (int shapeId in idsToDelete)
             {
-                var shape = pastedSlide.Shapes[i];
-                if (idsToDelete.Contains(shape.Id))
+                for (int i = 1; i <= activeSlide.Shapes.Count; i++)
                 {
-                    shape.Delete();
+                    if (activeSlide.Shapes[i].Id == shapeId)
+                    {
+                        namesToDelete.Add(activeSlide.Shapes[i].Name);
+                        break;
+                    }
                 }
             }
 
-            string templatePath = System.IO.Path.Combine(backupDir, $"{layoutName}.pptx");
-            tempPres.SaveAs(templatePath);
-            tempPres.Close();
+            Presentation tempPres = null;
+            string temporaryPath = System.IO.Path.Combine(backupDir, "oPE_AgendaLayout_" + Guid.NewGuid().ToString("N") + ".pptx");
+            try
+            {
+                tempPres = app.Presentations.Add(Microsoft.Office.Core.MsoTriState.msoFalse);
+                tempPres.PageSetup.SlideWidth = app.ActivePresentation.PageSetup.SlideWidth;
+                tempPres.PageSetup.SlideHeight = app.ActivePresentation.PageSetup.SlideHeight;
+
+                activeSlide.Copy();
+                Slide pastedSlide = tempPres.Slides.Paste()[1];
+                for (int i = pastedSlide.Shapes.Count; i >= 1; i--)
+                {
+                    var shape = pastedSlide.Shapes[i];
+                    if (idsToDelete.Contains(shape.Id) || namesToDelete.Contains(shape.Name)) shape.Delete();
+                }
+
+                tempPres.SaveAs(temporaryPath);
+                tempPres.Close();
+                tempPres = null;
+
+                string templatePath = System.IO.Path.Combine(backupDir, GetTemplateFileName(layoutName));
+                System.IO.File.Copy(temporaryPath, templatePath, true);
+            }
+            finally
+            {
+                if (tempPres != null)
+                {
+                    try { tempPres.Close(); }
+                    catch (Exception ex) { oPenEfficiency.Utils.ExceptionLogger.Log(ex, "SaveAgendaLayoutWindow.ExportCleanSlideTemplate.Close"); }
+                }
+                if (System.IO.File.Exists(temporaryPath))
+                {
+                    try { System.IO.File.Delete(temporaryPath); }
+                    catch (Exception ex) { oPenEfficiency.Utils.ExceptionLogger.Log(ex, "SaveAgendaLayoutWindow.ExportCleanSlideTemplate.Cleanup"); }
+                }
+            }
+        }
+
+        private static string GetTemplateFileName(string layoutName)
+        {
+            string safeName = string.Concat((layoutName ?? "Agenda Layout").Split(System.IO.Path.GetInvalidFileNameChars()));
+            if (string.IsNullOrWhiteSpace(safeName)) safeName = "Agenda Layout";
+            return safeName + ".pptx";
         }
 
         private void BtnToggleInfo_Click(object sender, RoutedEventArgs e)
@@ -875,34 +1005,27 @@ namespace oPenEfficiency.UI
         {
             if (config == null) return; // Not assigned, skip validation
 
-            const float MinPosition = 0f;
-            const float MaxPosition = 1000f; // Generous upper limit to accommodate different slide sizes
-            const float MinDimension = 5f;   // Minimum reasonable size
-            const float MaxDimension = 500f; // Maximum reasonable size
-
-            if (config.Left < MinPosition || config.Left > MaxPosition)
+            float slideWidth = 960f;
+            float slideHeight = 540f;
+            try
             {
-                errors.Add($"{fieldName}: Left position ({config.Left:F1} pts) is outside valid range ({MinPosition}-{MaxPosition} pts). " +
-                          $"Shape may be positioned off-slide to the left or too far right.");
+                var presentation = _manager?.GetApplication()?.ActivePresentation;
+                if (presentation != null)
+                {
+                    slideWidth = presentation.PageSetup.SlideWidth;
+                    slideHeight = presentation.PageSetup.SlideHeight;
+                }
             }
+            catch (Exception ex) { oPenEfficiency.Utils.ExceptionLogger.Log(ex, "SaveAgendaLayoutWindow.ValidateShapeConfig.PageSetup"); }
 
-            if (config.Top < MinPosition || config.Top > MaxPosition)
-            {
-                errors.Add($"{fieldName}: Top position ({config.Top:F1} pts) is outside valid range ({MinPosition}-{MaxPosition} pts). " +
-                          $"Shape may be positioned off-slide above or below.");
-            }
+            if (config.Left < 0 || config.Top < 0)
+                errors.Add($"{fieldName}: Shape position ({config.Left:F1}, {config.Top:F1}) must be on the slide.");
 
-            if (config.Width < MinDimension || config.Width > MaxDimension)
-            {
-                errors.Add($"{fieldName}: Width ({config.Width:F1} pts) is outside valid range ({MinDimension}-{MaxDimension} pts). " +
-                          $"Shape may be too small to see or too large for the slide.");
-            }
+            if (config.Width < 5 || config.Width > slideWidth)
+                errors.Add($"{fieldName}: Width ({config.Width:F1} pts) must be between 5 and the slide width ({slideWidth:F1} pts).");
 
-            if (config.Height < MinDimension || config.Height > MaxDimension)
-            {
-                errors.Add($"{fieldName}: Height ({config.Height:F1} pts) is outside valid range ({MinDimension}-{MaxDimension} pts). " +
-                          $"Shape may be too small to see or too large for the slide.");
-            }
+            if (config.Height < 5 || config.Height > slideHeight)
+                errors.Add($"{fieldName}: Height ({config.Height:F1} pts) must be between 5 and the slide height ({slideHeight:F1} pts).");
 
             // Margin validation
             float hMargins = Math.Abs(config.MarginLeft) + Math.Abs(config.MarginRight);
@@ -918,9 +1041,6 @@ namespace oPenEfficiency.UI
                           "Please reduce the text margins in PowerPoint for this shape.");
             }
 
-            // Check if shape extends beyond typical slide boundaries
-            float slideWidth = 960f; // Assume 16:9, will work for 4:3 too
-            float slideHeight = 540f;
             if (config.Left + config.Width > slideWidth)
             {
                 errors.Add($"{fieldName}: Shape extends beyond right edge of slide " +

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnParagraphDialog",
+  "title": "Paragraph & Line Spacing (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnParagraphDialog-001",
+      "title": "Paragraph & Line Spacing applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Paragraph & Line Spacing (BtnParagraphDialog) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnParagraphDialog-002",
+      "title": "Line-spacing presets and paragraph-spacing removal pinned on a real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/ParagraphSpacingContextActions.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host the deterministic right-click presets run on a two-paragraph text shape whose paragraph spacing was pre-set to 10pt before and after: the 1.5 preset lands on ParagraphFormat.SpaceWithin=1.5, the single preset on 1.0, and RemoveParagraphSpacing zeroes SpaceBefore and SpaceAfter. The run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "paragraph-spacing"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

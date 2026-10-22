@@ -1,4 +1,5 @@
 using System;
+using oPenEfficiency.Utils;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -75,7 +76,7 @@ namespace oPenEfficiency.UI
                             return;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "RatingToolbar.Initialize.FindParentRating"); }
                 }
             }
 
@@ -130,7 +131,7 @@ namespace oPenEfficiency.UI
                 if (this.Top < 0) this.Top = 10;
                 if (this.Left < 0) this.Left = 10;
             }
-            catch { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "RatingToolbar.PositionWindow"); }
         }
 
         private void ParseTag(string altText)
@@ -225,7 +226,8 @@ namespace oPenEfficiency.UI
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            try { DragMove(); } catch { }
+            try { DragMove(); }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "RatingToolbar.DragMove"); }
         }
 
         private void Window_Deactivated(object sender, EventArgs e)
@@ -335,12 +337,12 @@ namespace oPenEfficiency.UI
                                     _targetShape = parent;
                                 }
                             }
-                            catch { }
+                            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "RatingToolbar.SelectionChange.FindParent"); }
                         }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "RatingToolbar.SelectionChange"); }
         }
     }
 }

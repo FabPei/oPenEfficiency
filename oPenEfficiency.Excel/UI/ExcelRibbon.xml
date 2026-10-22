@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="Ribbon_Load">
+  <ribbon>
+    <tabs>
+      <tab id="TabOPenEfficiency" label="openEfficiency">
+        <group id="GrpData" label="Data">
+          <button id="BtnRemoveDuplicates"
+                  label="Remove Duplicates"
+                  size="large"
+                  imageMso="RemoveDuplicates"
+                  onAction="OnRemoveDuplicates"
+                  screentip="Remove duplicates in the selected range"
+                  supertip="Removes duplicate rows from the currently selected cell range." />
+          <button id="BtnValidateDates"
+                  label="Validate Dates"
+                  size="large"
+                  imageMso="DateAndTimeInsert"
+                  onAction="OnValidateDates"
+                  screentip="Find invalid date values"
+                  supertip="Highlights cells in the selected range whose text looks like a date but is not a real calendar date (for example, 35.02.2026)." />
+        </group>
+        <group id="GrpChartScanner" label="Chart Scanner">
+          <button id="BtnChartScanner"
+                  label="Digitize Chart"
+                  size="large"
+                  imageMso="ChartTypeColumnInsertGallery"
+                  onAction="OnChartScanner"
+                  screentip="Convert a chart image into Excel data"
+                  supertip="Captures a chart image (screenshot, clipboard, or file), calibrates the value axis, and extracts the data points into an Excel table." />
+        </group>
+        <group id="GrpView" label="View">
+          <toggleButton id="BtnShowFormulas"
+                        label="Show Formulas"
+                        size="large"
+                        imageMso="FunctionWizard"
+                        getPressed="GetFormulasPressed"
+                        onAction="OnToggleFormulas"
+                        screentip="Show formulas instead of cell values"
+                        supertip="Displays the formula used in each cell instead of the calculated value. Click again to restore the cell values." />
+        </group>
+        <group id="GrpAuditing" label="Formula Auditing">
+          <button id="BtnTracePrecedents"
+                  label="Trace Precedents"
+                  size="large"
+                  imageMso="TracePrecedents"
+                  onAction="OnTracePrecedents"
+                  screentip="Show precedent arrows"
+                  supertip="Displays tracer arrows showing which cells feed into the active cell's formula." />
+          <button id="BtnTraceDependents"
+                  label="Trace Dependents"
+                  size="large"
+                  imageMso="TraceDependents"
+                  onAction="OnTraceDependents"
+                  screentip="Show dependent arrows"
+                  supertip="Displays tracer arrows showing which cells depend on the active cell." />
+          <button id="BtnClearArrows"
+                  label="Remove Arrows"
+                  size="large"
+                  imageMso="RemoveAllArrows"
+                  onAction="OnClearArrows"
+                  screentip="Remove all tracer arrows"
+                  supertip="Removes all visible tracer arrows from the active worksheet." />
+        </group>
+        <group id="GrpPowerPoint" label="PowerPoint">
+          <labelControl id="LblAddInBuild" getLabel="GetBuildStampLabel" />
+          <button id="BtnInsertSlideSnapshot"
+                  label="Insert Slide"
+                  size="large"
+                  imageMso="PictureInsertFromFile"
+                  onAction="OnInsertSlideSnapshot"
+                  screentip="Insert a PowerPoint slide as an image"
+                  supertip="Inserts an image of a PowerPoint slide and stores the file path plus slide number for later refresh." />
+          <button id="BtnRefreshSlideSnapshot"
+                  label="Refresh Slide"
+                  size="large"
+                  imageMso="Refresh"
+                  onAction="OnRefreshSlideSnapshot"
+                  screentip="Refresh a linked slide image"
+                  supertip="Re-exports the linked slide and replaces the picture at the same position and size." />
+          <splitButton id="SplitLinkRangeToPptTable" size="large">
+            <button id="BtnLinkRangeToPptTable"
+                    label="Link as Table"
+                    imageMso="TableInsertGallery"
+                    onAction="OnLinkRangeToPptTable"
+                    screentip="Link the range to PowerPoint as a table (values only)"
+                    supertip="Creates a native table on the active PowerPoint slide from the selected cell range and stores the data source for later refresh. Transfers displayed values only." />
+            <menu id="MnuLinkRangeToPptTable">
+              <button id="BtnLinkRangeValues"
+                      label="Values Only"
+                      imageMso="TableInsertGallery"
+                      onAction="OnLinkRangeValues"
+                      screentip="Link without formatting"
+                      supertip="Transfers only the displayed cell values, without font, fill, alignment, or borders." />
+              <button id="BtnLinkRangeFormatted"
+                      label="With Formatting"
+                      imageMso="TableStyleMediumGallery"
+                      onAction="OnLinkRangeFormatted"
+                      screentip="Link with formatting"
+                      supertip="Also transfers font family, size, bold/italic, color, cell fill, alignment, and borders from Excel." />
+            </menu>
+          </splitButton>
+          <button id="BtnLinkedPptRanges"
+                  label="Linked Ranges"
+                  imageMso="WatchWindow"
+                  onAction="OnLinkedPptRanges"
+                  screentip="Find ranges linked to PowerPoint"
+                  supertip="Lists all linked ranges in this workbook and selects the range you choose. Broken references are removed from the registry." />
+          <toggleButton id="BtnHighlightLinkedPptRanges"
+                        label="Highlight Links"
+                        imageMso="ConditionalFormattingHighlightCellsRules"
+                        getPressed="GetLinkedRangeHighlightsPressed"
+                        onAction="OnToggleLinkedRangeHighlights"
+                        screentip="Temporarily highlight linked PowerPoint ranges"
+                        supertip="Temporarily gives every linked range a distinct color. Click again to restore the normal worksheet view; original cell formatting is not changed." />
+          <labelControl id="LblPptLinkStatus" getLabel="GetPptLinkStatus" />
+        </group>
+        <group id="GrpOeRound" label="OE Rounding">
+          <dropDown id="DdlOePrecision" label="Precision" onAction="OnOePrecision" screentip="Rounding precision (multiple)">
+            <item id="oep_1" label="1" />
+            <item id="oep_0_5" label="0,5" />
+            <item id="oep_0_01" label="0,01" />
+            <item id="oep_5" label="5" />
+            <item id="oep_10" label="10" />
+            <item id="oep_100" label="100" />
+          </dropDown>
+          <button id="BtnOeRound" label="OEROUND" onAction="OnOeRound"
+                  screentip="Round consistently" supertip="Rounds to the nearest multiple, while deviating where needed so totals stay consistent." />
+          <button id="BtnOeRoundUp" label="OEROUNDUP" onAction="OnOeRoundUp"
+                  screentip="Round up" supertip="Forces rounding up (away from 0)." />
+          <button id="BtnOeRoundDown" label="OEROUNDDOWN" onAction="OnOeRoundDown"
+                  screentip="Round down" supertip="Forces rounding down (toward 0)." />
+          <button id="BtnOeRoundNear" label="OEROUNDNEAR" onAction="OnOeRoundNear"
+                  screentip="Round to nearest" supertip="Forces rounding to the nearest multiple." />
+          <button id="BtnOeRemove" label="Remove" onAction="OnOeRemove"
+                  screentip="Remove OEROUND" supertip="Removes the OEROUND functions from the selected cells." />
+          <button id="BtnOeHighlight" label="Highlight" onAction="OnOeHighlight"
+                  screentip="Highlight adjusted cells" supertip="Highlights cells that were rounded to the farther multiple." />
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

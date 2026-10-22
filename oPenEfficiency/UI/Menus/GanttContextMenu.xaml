@@ -1,0 +1,157 @@
+<Window x:Class="oPenEfficiency.UI.Menus.GanttContextMenu"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gantt Context Menu"
+        SizeToContent="WidthAndHeight"
+        MinWidth="200" MinHeight="100"
+        WindowStyle="None" AllowsTransparency="True" Topmost="True" ShowInTaskbar="False" Deactivated="Window_Deactivated"
+        Background="Transparent"
+        FontFamily="Segoe UI Variable Small, Segoe UI"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1" CornerRadius="4" Padding="1">
+        <StackPanel>
+            <Button x:Name="BtnToggleShade" Click="ToggleShade_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Toggle Column Shade" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+            <Separator x:Name="ShadeSeparator" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+
+            <Button Click="AddTaskAbove_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Task Above" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+            <Button Click="AddTaskBelow_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Task Below" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator x:Name="IndentSeparator" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+            <Button x:Name="BtnIndent" Click="Indent_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="→  Indent" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="BtnOutdent" Click="Outdent_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="←  Outdent" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator x:Name="RoadmapSeparator1" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+
+            <Button x:Name="BtnAddSubMilestone" Click="AddSubMilestone_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Sub-Milestone at this Date" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="BtnAddSubBar" Click="AddSubBar_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Sub-Task Bar at this Date" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator x:Name="RoadmapSeparator2" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+
+            <Button Click="AddMilestone_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Milestone" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+            <Button Click="AddEventLine_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Add Event Line" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator x:Name="HighlightSeparator" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+            <Button x:Name="BtnHighlightRow" Click="HighlightRow_Click" Style="{StaticResource MenuButtonStyle}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="TxtHighlightRow" Text="Highlight Row" Margin="5,0"/>
+                </StackPanel>
+            </Button>
+
+            <Separator x:Name="TaskShapeSeparator" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+            <TextBlock x:Name="TxtTaskShapeHeader" Text="Task Shape:" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" Margin="15,5,0,2"/>
+            <StackPanel x:Name="PanelTaskShapes" Orientation="Horizontal" Margin="10,0,10,5">
+                <Button Click="SetTaskShape_Click" Tag="Rectangle" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Use rectangle task bar" AutomationProperties.Name="Use rectangle task bar">
+                    <TextBlock Text="▬" FontSize="14"/>
+                </Button>
+                <Button Click="SetTaskShape_Click" Tag="RoundedRectangle" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Rounded Rectangle">
+                    <TextBlock Text="▢" FontSize="14"/>
+                </Button>
+                <Button Click="SetTaskShape_Click" Tag="RightArrow" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Arrow">
+                    <TextBlock Text="▶" FontSize="14"/>
+                </Button>
+                <Button Click="SetTaskShape_Click" Tag="Chevron" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Chevron">
+                    <TextBlock Text="❯" FontSize="14"/>
+                </Button>
+                <Button Click="SetTaskShape_Click" Tag="Pentagon" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Pentagon">
+                    <TextBlock Text="⬠" FontSize="14"/>
+                </Button>
+            </StackPanel>
+
+            <Separator x:Name="MilestoneSeparator" Margin="2,1" Background="{DynamicResource BorderBrush}" Height="1"/>
+            <TextBlock x:Name="TxtMilestoneHeader" Text="Milestone Shape:" Foreground="{DynamicResource TextMutedBrush}" FontSize="10" Margin="15,5,0,2"/>
+            <StackPanel x:Name="PanelMilestoneShapes" Orientation="Horizontal" Margin="10,0,10,5">
+                <Button Click="SetMilestoneShape_Click" Tag="Diamond" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Diamond">
+                    <TextBlock Text="◆" FontSize="14"/>
+                </Button>
+                <Button Click="SetMilestoneShape_Click" Tag="Square" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Square">
+                    <TextBlock Text="■" FontSize="14"/>
+                </Button>
+                <Button Click="SetMilestoneShape_Click" Tag="Star" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Star">
+                    <TextBlock Text="★" FontSize="14"/>
+                </Button>
+                <Button Click="SetMilestoneShape_Click" Tag="Triangle" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Triangle">
+                    <TextBlock Text="▲" FontSize="14"/>
+                </Button>
+                <Button Click="SetMilestoneShape_Click" Tag="Circle" Style="{StaticResource MenuButtonStyle}" Padding="8,4" ToolTip="Circle">
+                    <TextBlock Text="●" FontSize="14"/>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

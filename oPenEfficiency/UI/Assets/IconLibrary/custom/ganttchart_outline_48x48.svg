@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <g stroke="#000000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Rahmen -->
+    <rect x="6" y="7" width="36" height="34" rx="2"/>
+    <!-- Kopfzeile -->
+    <path d="M6 14H42"/>
+    <!-- Linke Spalte -->
+    <path d="M17 14V41"/>
+    <!-- Zeilen -->
+    <path d="M6 23H42"/>
+    <path d="M6 32H42"/>
+
+    <!-- Task-Markierungen links -->
+    <path d="M10 18.5H13"/>
+    <path d="M10 27.5H13"/>
+    <path d="M10 36.5H13"/>
+
+    <!-- Gantt-Balken -->
+    <rect x="20" y="17" width="10" height="3.5" rx="1"/>
+    <rect x="25" y="26" width="12" height="3.5" rx="1"/>
+    <rect x="19" y="35" width="15" height="3.5" rx="1"/>
+  </g>
+</svg>

@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "featureId": "SHARED-INFRA",
+  "title": "Shared Office and UI infrastructure sentinels",
+  "sourcePaths": [
+    "oPenEfficiency/ThisAddIn.cs",
+    "oPenEfficiency/ThisAddIn.Automation.cs",
+    "oPenEfficiency/Services/PowerPointManager.cs",
+    "oPenEfficiency/Services/SelectionUpdateCoordinator.cs",
+    "oPenEfficiency/Services/ShortcutManager.cs",
+    "oPenEfficiency/Services/PersistenceManager.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs",
+    "oPenEfficiency/Utils/Win32MouseHook.cs",
+    "oPenEfficiency/UI/Styles/Controls.xaml"
+  ],
+  "scenarios": [
+    {
+      "id": "SENTINEL-COMMAND-GUARD-BINDING-001",
+      "title": "The distribute commands apply the production rule plan (built-code binding)",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/DistributeFeatures.cs",
+        "oPenEfficiency.Core/Services/DistributeSelectionRule.cs",
+        "oPenEfficiency.Command.Tests/DistributeRouteBindingTests.cs"
+      ],
+      "expected": "oPenEfficiency.Command.Tests/DistributeRouteBindingTests.cs reads the IL of both DistributeHorizontalFeature.Execute and DistributeVerticalFeature.Execute in the built add-in and asserts three things: the call to ResolvePlan binds to oPenEfficiency.Services.DistributeSelectionRule from the oPenEfficiency.Core assembly (a second rule class in another assembly cannot capture the call), the plan's RelativeToSlide field is read exactly once and at an IL offset between the rule call and the ShapeRange.Distribute call (so the route the rule resolved is the value the distribution receives), and the only non-interop add-in method the command calls is the pinned PowerPointManager.GetApplication. Review round 6g measured that all three could be broken while every text-based gate stayed green.",
+      "blockedReason": "",
+      "ownedBy": "feature-acceptance-tree",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~DistributeRouteBindingTests"
+      }
+    },
+    {
+      "id": "SENTINEL-STARTUP-001",
+      "title": "Add-in startup marker and lifecycle stability",
+      "tier": "office-automated",
+      "automationStatus": "blocked",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.cs",
+        "oPenEfficiency/ThisAddIn.*.cs",
+        "*StartupBuildLog*"
+      ],
+      "expected": "In an isolated Office environment the add-in loads, writes its stamped build marker to %TEMP%\\oPenEfficiency\\startup_YYYYMMDD.log, creates the sidebar for the active window and produces no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log."
+    },
+    {
+      "id": "SENTINEL-LIFECYCLE-TIMER-001",
+      "title": "Office host timers and message pumping stay on the dispatcher contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn*.cs",
+        "oPenEfficiency/Services/*Timer*.cs",
+        "*DispatcherTimer*"
+      ],
+      "expected": "No Office host project creates a WinForms WM_TIMER timer or pumps messages on the automation surface, and every dispatcher timer unsubscribes its Tick handler next to Stop() during shutdown.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Test-Architecture.ps1",
+        "arguments": []
+      }
+    },
+    {
+      "id": "SENTINEL-SELECTION-001",
+      "title": "Selection-change pipeline does not retain transient COM objects",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/Selection*.cs",
+        "*SelectionUpdateCoordinator*",
+        "oPenEfficiency/ThisAddIn.cs"
+      ],
+      "expected": "The debounced selection path holds no PowerPoint Selection RCW beyond the debounce window and no Application.DoEvents call is reintroduced into the selection pipeline.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~SelectionDebounceDoesNotRetainTransientComObjects"
+      }
+    },
+    {
+      "id": "SENTINEL-SIDEBAR-DISPATCH-001",
+      "title": "Sidebar and context-command dispatch stays registered and failure-visible",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Panels/MainSidebar*.cs",
+        "oPenEfficiency/Services/Commands/CommandRegistry.cs"
+      ],
+      "expected": "A registered sidebar dialog failure surfaces instead of being swallowed and the modeless sidebar window keeps its documented lifecycle.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~RegisteredSidebarDialogFailuresPropagate"
+      }
+    },
+    {
+      "id": "SENTINEL-MODELESS-WINDOW-001",
+      "title": "Modeless window lifecycle and dispatcher fallback",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs",
+        "oPenEfficiency/ThisAddIn.cs",
+        "*Window*.cs"
+      ],
+      "expected": "The modeless sidebar window follows its documented create/close lifecycle and an unhandled WPF dispatcher exception reaches the process-wide fallback instead of crashing the host.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~SidebarModelessWindowLifecycleIsValid|FullyQualifiedName~WpfDispatcherFailuresAreVisible"
+      }
+    },
+    {
+      "id": "SENTINEL-INPUT-HOOK-001",
+      "title": "Mouse and keyboard hook callbacks never touch COM",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Utils/Win32MouseHook.cs",
+        "oPenEfficiency/Services/ShortcutManager.cs",
+        "*MouseHook*"
+      ],
+      "expected": "Global hook callbacks stay free of COM calls and the shared mouse hook is created exactly once and disposed with the add-in.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~MouseHookCallbacksAreComFree"
+      }
+    },
+    {
+      "id": "SENTINEL-COM-WRAPPER-001",
+      "title": "PowerPointManager stays the only COM access path with deferred UI work",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/PowerPointManager.cs",
+        "oPenEfficiency/Services/PowerPoint*.cs"
+      ],
+      "expected": "A representative shape mutation executed through PowerPointManager on a fixture deck keeps every COM call on the UI thread, defers late-bound work to the dispatcher and leaves the deck unchanged when the call fails."
+    },
+    {
+      "id": "SENTINEL-SHAPE-MUTATION-001",
+      "title": "Representative shape mutation is atomic and undoable",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/PowerPointManager.cs",
+        "oPenEfficiency/Features/Alignment/*",
+        "oPenEfficiency/Features/Shapes/*"
+      ],
+      "expected": "One alignment command applied to two selected shapes on a fixture deck produces the documented geometry, adds exactly one PowerPoint Undo entry and restores the original geometry on Undo."
+    },
+    {
+      "id": "SENTINEL-PERSISTENT-FEATURE-001",
+      "title": "A persistent feature survives save, reopen and copy",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/PersistenceManager.cs",
+        "oPenEfficiency/Services/AgendaService.cs",
+        "*ShapeLocking*",
+        "*Tags*"
+      ],
+      "expected": "A persistent feature state stored through the shape-tag/AlternativeText pattern is unchanged after save/reopen and its copy semantics are the documented ones."
+    },
+    {
+      "id": "SENTINEL-PERSISTENCE-001",
+      "title": "Saved layout and configuration persistence migrates instead of resetting",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/SidebarConfig.cs",
+        "oPenEfficiency.Core/Models/*Config*.cs",
+        "*Persistence*"
+      ],
+      "expected": "A saved layout name and the serialized configuration migrate to the current schema without discarding user customization.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~SavedLayoutNamesMigrate"
+      }
+    },
+    {
+      "id": "SENTINEL-CATALOG-CONTRACT-001",
+      "title": "Feature catalog, naming and command registrations stay consistent",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/Features/*"
+      ],
+      "expected": "The resolved catalog stays valid, keeps one display-name owner per feature, keeps naming/behavior consistency and exposes a command for every visible feature.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~NamingAndBehaviorConsistencyIsValid"
+      }
+    },
+    {
+      "id": "SENTINEL-THEME-001",
+      "title": "Shared theme and control resources stay consistent",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Styles/*",
+        "oPenEfficiency/UI/Styles/Themes/*"
+      ],
+      "expected": "Shared controls keep their required keys and dynamic theme roles; the visual-consistency validator reports no new finding outside the accepted legacy baseline.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Test-VisualConsistency.ps1",
+        "arguments": []
+      }
+    },
+    {
+      "id": "SENTINEL-INSTALLER-LOAD-001",
+      "title": "Installer and VSTO runtime load behaviour",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "installer/*",
+        "eng/Ensure-VstoRuntime.ps1",
+        "eng/Invoke-MsiLifecycleTests.ps1",
+        "Directory.Build.props"
+      ],
+      "expected": "The MSI installs, register-loads and uninstalls the add-in on a clean Office configuration without leaving a broken add-in registration behind.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Invoke-MsiLifecycleTests.ps1",
+        "arguments": []
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

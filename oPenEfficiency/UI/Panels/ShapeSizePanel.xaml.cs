@@ -1,9 +1,11 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -14,11 +16,12 @@ namespace oPenEfficiency.UI
     /// </summary>
     public partial class ShapeSizePanel : UserControl
     {
-        private const double PtsPerCm = 28.3464567;
         private const double StepCm   = 0.1;
 
         private PowerPointManager _ppManager;
         private bool _isUpdating = false;
+        private string _displayedWidthText;
+        private string _displayedHeightText;
 
         public ShapeSizePanel(PowerPointManager ppManager)
         {
@@ -35,46 +38,11 @@ namespace oPenEfficiency.UI
         {
             try
             {
-                if (sel == null)
-                {
-                    ClearDisplay();
-                    return;
-                }
-
-                float widthPts = 0;
-                float heightPts = 0;
-                bool hasValidSelection = false;
-
-                if (sel.Type == PpSelectionType.ppSelectionShapes && sel.ShapeRange.Count > 0)
-                {
-                    // For multi-selection, show the bounding box (width/height of the range)
-                    widthPts = sel.ShapeRange.Width;
-                    heightPts = sel.ShapeRange.Height;
-                    hasValidSelection = true;
-                }
-                else if (sel.Type == PpSelectionType.ppSelectionText)
-                {
-                    // Text is selected inside a shape - show the parent shape's dimensions
-                    var textRange = sel.TextRange;
-                    if (textRange != null && textRange.Parent is Shape parentShape)
-                    {
-                        widthPts = parentShape.Width;
-                        heightPts = parentShape.Height;
-                        hasValidSelection = true;
-                    }
-                }
-
-                if (hasValidSelection)
-                {
-                    SetDisplay(PtsToCm(widthPts), PtsToCm(heightPts));
-                }
-                else
-                {
-                    ClearDisplay();
-                }
+                UpdateDisplay(GetShapesFromSelection(sel));
             }
-            catch
+            catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "ShapeSizePanel.OnSelectionChange");
                 ClearDisplay();
             }
         }
@@ -87,9 +55,29 @@ namespace oPenEfficiency.UI
             try
             {
                 if (shape == null) return;
-                SetDisplay(PtsToCm(shape.Width), PtsToCm(shape.Height));
+                UpdateDisplay(new List<Shape> { shape });
             }
-            catch { }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeSizePanel.UpdateSize"); }
+        }
+
+        public void FocusWidth()
+        {
+            FocusDimension(TxtWidth);
+        }
+
+        public void FocusHeight()
+        {
+            FocusDimension(TxtHeight);
+        }
+
+        private void FocusDimension(TextBox textBox)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                textBox.Focus();
+                Keyboard.Focus(textBox);
+                textBox.SelectAll();
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
 
         // ─── Spin buttons ─────────────────────────────────────────────────────────
@@ -101,14 +89,12 @@ namespace oPenEfficiency.UI
 
         private void AdjustWidth(double deltaCm)
         {
-            if (!TryParseDisplay(TxtWidth.Text, out double current)) return;
-            ApplyWidth(Math.Max(0.01, current + deltaCm));
+            AdjustDimension(deltaCm, isWidth: true);
         }
 
         private void AdjustHeight(double deltaCm)
         {
-            if (!TryParseDisplay(TxtHeight.Text, out double current)) return;
-            ApplyHeight(Math.Max(0.01, current + deltaCm));
+            AdjustDimension(deltaCm, isWidth: false);
         }
 
         // ─── Text box keyboard / focus handlers ───────────────────────────────────
@@ -133,80 +119,169 @@ namespace oPenEfficiency.UI
         private void ApplyFromTextBox(TextBox box, bool isWidth)
         {
             if (_isUpdating) return;
-            if (!TryParseDisplay(box.Text, out double cm) || cm <= 0) { RefreshFromSelection(); return; }
+            string displayedText = isWidth ? _displayedWidthText : _displayedHeightText;
+            if (string.Equals(box.Text, displayedText, StringComparison.Ordinal)) return;
+            if (!TryParseDisplay(box.Text, out double cm) || !Core.Services.ShapeSizePolicy.IsValidTypedCm(cm)) { RefreshFromSelection(); return; }
             if (isWidth) ApplyWidth(cm); else ApplyHeight(cm);
         }
 
         private void ApplyWidth(double cm)
         {
-            try
-            {
-                var sel = _ppManager?.GetApplication()?.ActiveWindow?.Selection;
-                if (sel == null) return;
-
-                var shape = GetShapeFromSelection(sel);
-                if (shape == null) return;
-
-                shape.Width = (float)CmToPts(cm);
-                SetDisplay(cm, PtsToCm(shape.Height));
-            }
-            catch { RefreshFromSelection(); }
+            ApplyDimension(cm, isWidth: true);
         }
 
         private void ApplyHeight(double cm)
         {
+            ApplyDimension(cm, isWidth: false);
+        }
+
+        private void ApplyDimension(double cm, bool isWidth)
+        {
             try
             {
                 var sel = _ppManager?.GetApplication()?.ActiveWindow?.Selection;
                 if (sel == null) return;
 
-                var shape = GetShapeFromSelection(sel);
-                if (shape == null) return;
-
-                shape.Height = (float)CmToPts(cm);
-                SetDisplay(PtsToCm(shape.Width), cm);
+                var shapes = GetShapesFromSelection(sel);
+                float targetPoints = (float)CmToPts(cm);
+                ApplyDimensionChanges(shapes, isWidth, shape => targetPoints);
             }
-            catch { RefreshFromSelection(); }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, isWidth ? "ShapeSizePanel.ApplyWidth" : "ShapeSizePanel.ApplyHeight");
+                RefreshFromSelection();
+            }
         }
 
-        /// <summary>
-        /// Gets the shape from selection, handling both shape selection and text range selection.
-        /// </summary>
-        private Shape GetShapeFromSelection(Selection sel)
+        private void AdjustDimension(double deltaCm, bool isWidth)
         {
+            try
+            {
+                var sel = _ppManager?.GetApplication()?.ActiveWindow?.Selection;
+                if (sel == null) return;
+                var shapes = GetShapesFromSelection(sel);
+                ApplyDimensionChanges(
+                    shapes,
+                    isWidth,
+                    shape => (float)Core.Services.ShapeSizePolicy.TargetAfterAdjust(isWidth ? shape.Width : shape.Height, deltaCm));
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, isWidth ? "ShapeSizePanel.AdjustWidth" : "ShapeSizePanel.AdjustHeight");
+                RefreshFromSelection();
+            }
+        }
+
+        private void ApplyDimensionChanges(IList<Shape> shapes, bool isWidth, Func<Shape, float> getTarget)
+        {
+            if (shapes == null || shapes.Count == 0) return;
+
+            var states = new List<DimensionState>();
+            foreach (var shape in shapes)
+            {
+                float target = getTarget(shape);
+                float current = isWidth ? shape.Width : shape.Height;
+                if (!Core.Services.ShapeSizePolicy.NeedsDimensionChange(current, target)) continue;
+                states.Add(new DimensionState(shape, target));
+            }
+            if (states.Count == 0)
+            {
+                UpdateDisplay(shapes);
+                return;
+            }
+
+            try
+            {
+                try { _ppManager?.GetApplication()?.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ShapeSizePanel.StartNewUndoEntry"); }
+
+                foreach (var state in states)
+                {
+                    if (isWidth) state.Shape.Width = state.Target;
+                    else state.Shape.Height = state.Target;
+                }
+                UpdateDisplay(shapes);
+            }
+            catch
+            {
+                foreach (var state in states)
+                {
+                    try
+                    {
+                        state.Shape.LockAspectRatio = Microsoft.Office.Core.MsoTriState.msoFalse;
+                        state.Shape.Width = state.Width;
+                        state.Shape.Height = state.Height;
+                        state.Shape.Left = state.Left;
+                        state.Shape.Top = state.Top;
+                        state.Shape.LockAspectRatio = state.LockAspectRatio;
+                    }
+                    catch (Exception rollbackEx) { ExceptionLogger.Log(rollbackEx, "ShapeSizePanel.Rollback"); }
+                }
+                throw;
+            }
+        }
+
+        private static List<Shape> GetShapesFromSelection(Selection sel)
+        {
+            var shapes = new List<Shape>();
+            if (sel == null) return shapes;
+
             if (sel.Type == PpSelectionType.ppSelectionShapes && sel.ShapeRange.Count > 0)
             {
-                // For single shape selection, return the first shape
-                // ShapeRange[1] returns a Shape object
-                return sel.ShapeRange[1];
+                for (int i = 1; i <= sel.ShapeRange.Count; i++) shapes.Add(sel.ShapeRange[i]);
             }
             else if (sel.Type == PpSelectionType.ppSelectionText)
             {
                 var textRange = sel.TextRange;
-                if (textRange != null && textRange.Parent is Shape parentShape)
-                {
-                    return parentShape;
-                }
+                if (textRange != null && textRange.Parent is Shape parentShape) shapes.Add(parentShape);
             }
-            return null;
+            return shapes;
         }
 
         // ─── Display helpers ──────────────────────────────────────────────────────
 
-        private void SetDisplay(double widthCm, double heightCm)
+        private void UpdateDisplay(IList<Shape> shapes)
         {
-            _isUpdating = true;
-            TxtWidth.Text  = FormatCm(widthCm);
-            TxtHeight.Text = FormatCm(heightCm);
-            _isUpdating = false;
+            if (shapes == null || shapes.Count == 0)
+            {
+                ClearDisplay();
+                return;
+            }
+
+            double? widthCm = PtsToCm(shapes[0].Width);
+            double? heightCm = PtsToCm(shapes[0].Height);
+            for (int i = 1; i < shapes.Count; i++)
+            {
+                if (!Core.Services.ShapeSizePolicy.AreUniform(shapes[0].Width, shapes[i].Width)) widthCm = null;
+                if (!Core.Services.ShapeSizePolicy.AreUniform(shapes[0].Height, shapes[i].Height)) heightCm = null;
+            }
+            SetDisplay(widthCm, heightCm);
+        }
+
+        private void SetDisplay(double? widthCm, double? heightCm)
+        {
+            try
+            {
+                _isUpdating = true;
+                _displayedWidthText = widthCm.HasValue ? FormatCm(widthCm.Value) : "Mixed";
+                _displayedHeightText = heightCm.HasValue ? FormatCm(heightCm.Value) : "Mixed";
+                TxtWidth.Text = _displayedWidthText;
+                TxtHeight.Text = _displayedHeightText;
+            }
+            finally { _isUpdating = false; }
         }
 
         private void ClearDisplay()
         {
-            _isUpdating = true;
-            TxtWidth.Text  = "—";
-            TxtHeight.Text = "—";
-            _isUpdating = false;
+            try
+            {
+                _isUpdating = true;
+                _displayedWidthText = "—";
+                _displayedHeightText = "—";
+                TxtWidth.Text = _displayedWidthText;
+                TxtHeight.Text = _displayedHeightText;
+            }
+            finally { _isUpdating = false; }
         }
 
         private void RefreshFromSelection()
@@ -220,39 +295,45 @@ namespace oPenEfficiency.UI
                     return;
                 }
 
-                var shape = GetShapeFromSelection(sel);
-                if (shape != null)
-                {
-                    SetDisplay(PtsToCm(shape.Width), PtsToCm(shape.Height));
-                }
-                else
-                {
-                    ClearDisplay();
-                }
+                UpdateDisplay(GetShapesFromSelection(sel));
             }
-            catch { ClearDisplay(); }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ShapeSizePanel.RefreshFromSelection");
+                ClearDisplay();
+            }
         }
 
         // ─── Utility ──────────────────────────────────────────────────────────────
 
-        private static double PtsToCm(double pts) => pts / PtsPerCm;
-        private static double CmToPts(double cm)  => cm  * PtsPerCm;
+        private static double PtsToCm(double pts) => Core.Services.ShapeSizePolicy.PointsToCm(pts);
+        private static double CmToPts(double cm)  => Core.Services.ShapeSizePolicy.CmToPoints(cm);
 
-        private static string FormatCm(double cm)
-            => cm.ToString("0.##", CultureInfo.CurrentCulture) + " cm";
+        private static string FormatCm(double cm) => Core.Services.ShapeSizePolicy.FormatCm(cm);
 
         private static bool TryParseDisplay(string text, out double cm)
+            => Core.Services.ShapeSizePolicy.TryParseDisplay(text, out cm);
+
+        private sealed class DimensionState
         {
-            // Strip unit and whitespace, handle both "." and "," decimal separators
-            text = (text ?? "").Replace("cm", "").Trim();
-            return double.TryParse(text,
-                NumberStyles.Any,
-                CultureInfo.CurrentCulture,
-                out cm)
-                || double.TryParse(text,
-                NumberStyles.Any,
-                CultureInfo.InvariantCulture,
-                out cm);
+            public Shape Shape { get; }
+            public float Target { get; }
+            public float Left { get; }
+            public float Top { get; }
+            public float Width { get; }
+            public float Height { get; }
+            public Microsoft.Office.Core.MsoTriState LockAspectRatio { get; }
+
+            public DimensionState(Shape shape, float target)
+            {
+                Shape = shape;
+                Target = target;
+                Left = shape.Left;
+                Top = shape.Top;
+                Width = shape.Width;
+                Height = shape.Height;
+                LockAspectRatio = shape.LockAspectRatio;
+            }
         }
     }
 }

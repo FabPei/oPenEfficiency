@@ -8,6 +8,19 @@ namespace oPenEfficiency.Models
         Categorical // Specific color mapping per discrete label
     }
 
+    public enum MapProjection
+    {
+        Mercator,
+        Natural
+    }
+
+    public enum MapRemoteRegionMode
+    {
+        Geographic,
+        CompactInsets,
+        Exclude
+    }
+
     public class MapDataRow
     {
         public string Region { get; set; }
@@ -19,6 +32,8 @@ namespace oPenEfficiency.Models
     public class MapWizardConfig
     {
         public MapColorMode Mode { get; set; } = MapColorMode.Continuous;
+        public MapProjection Projection { get; set; } = MapProjection.Mercator;
+        public MapRemoteRegionMode RemoteRegionMode { get; set; } = MapRemoteRegionMode.Geographic;
         
         // Colors for Continuous Mode
         public string LowColorHex { get; set; } = "#E3F2FD"; // Light Blue

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnPasteXY",
+  "title": "Paste XY-Coordinates (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/PasteCoordinatesFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnPasteXY-001",
+      "title": "Paste XY-Coordinates applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/PasteCoordinatesFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Paste XY-Coordinates (BtnPasteXY) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnPasteXY-002",
+      "title": "Coordinate clipboard payload contract is pinned by the production Core tests",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/CoordinateClipboardPayload.cs",
+        "oPenEfficiency/Features/Utilities/PasteCoordinatesFeature.cs",
+        "oPenEfficiency/Features/Utilities/CopyCoordinatesFeature.cs"
+      ],
+      "expected": "The position-only clipboard payload serializes finite coordinates invariant under the branded 'openEfficiency:XY:v1:' prefix, rejects non-finite values, and TryParseForPaste deliberately accepts both the branded current format and the retained markerless legacy two- and four-value formats (permissive for paste compatibility, explicitly not an ownership check). These behaviors are already driven by the production CoordinateClipboardPayloadTests (24 test cases across the serialization and parse methods, including DataRow variants) used by Copy/Paste XY-Coordinates, so this scenario binds the existing runner instead of duplicating it.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~CoordinateClipboardPayloadTests"
+      }
+    },
+    {
+      "id": "QA9-BtnPasteXY-003",
+      "title": "Paste XY-Coordinates applies the payload to the selected shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Paste XY-Coordinates with a payload for (250,180) moves the selected rectangle to exactly Left=250 Top=180 while Width and Height stay unchanged, returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "paste-xy"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

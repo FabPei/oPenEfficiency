@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using Microsoft.Office.Core;
+using oPenEfficiency.Core.Services;
 using oPenEfficiency.Services;
 using oPenEfficiency.Utils;
 
@@ -19,7 +20,11 @@ namespace oPenEfficiency.UI.Dialogs
 
         private int _pointCount = 0;
 
-        public ChartOverlayDialog(PowerPointManager manager, Microsoft.Office.Interop.PowerPoint.Chart chart, Microsoft.Office.Interop.PowerPoint.Shape chartShape)
+        public ChartOverlayDialog(
+            PowerPointManager manager,
+            Microsoft.Office.Interop.PowerPoint.Chart chart,
+            Microsoft.Office.Interop.PowerPoint.Shape chartShape,
+            oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset preset = oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset.Default)
         {
             InitializeComponent();
             _manager = manager;
@@ -27,6 +32,29 @@ namespace oPenEfficiency.UI.Dialogs
             _chartShape = chartShape;
 
             LoadDataPoints();
+            ApplyPreset(preset);
+        }
+
+        private void ApplyPreset(oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset preset)
+        {
+            switch (preset)
+            {
+                case oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset.Cagr:
+                    OverlayCagrRadio.IsChecked = true;
+                    break;
+                case oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset.Growth:
+                    OverlayPercentRadio.IsChecked = true;
+                    break;
+                case oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset.AverageLevel:
+                    OverlayReferenceRadio.IsChecked = true;
+                    break;
+                case oPenEfficiency.Features.Charts.ChartOverlayFeature.OverlayPreset.Outliers:
+                    OverlayOutlierRadio.IsChecked = true;
+                    break;
+                default:
+                    OverlayDeltaRadio.IsChecked = true;
+                    break;
+            }
         }
 
         private void LoadDataPoints()
@@ -106,31 +134,30 @@ namespace oPenEfficiency.UI.Dialogs
             int seriesCount = seriesObject.Count;
             dynamic series = seriesObject.Item(1);
 
-            // Compute Stacked Values (sum of all series for the index)
-            double startVal = 0;
-            double endVal = 0;
-            double[] allIndexSums = new double[_pointCount];
-
+            // Compute Stacked Values (sum of all series for the index).
+            // The historical cross-series aggregation is now host-neutral and acceptance-tested.
+            double[][] seriesValues = new double[seriesCount][];
             for (int s = 1; s <= seriesCount; s++)
             {
                 Array sVals = (Array)seriesObject.Item(s).Values;
-                startVal += Convert.ToDouble(sVals.GetValue(sIndex));
-                endVal += Convert.ToDouble(sVals.GetValue(eIndex));
-
+                double[] values = new double[_pointCount];
                 for (int i = 0; i < _pointCount; i++)
-                {
-                    allIndexSums[i] += Convert.ToDouble(sVals.GetValue(i + 1));
-                }
+                    values[i] = Convert.ToDouble(sVals.GetValue(i + 1));
+                seriesValues[s - 1] = values;
             }
 
-            var slide = (Microsoft.Office.Interop.PowerPoint.Slide)_chartShape.Parent;
+            double[] allIndexSums = ChartOverlayMathPolicy.AggregateSeriesTotals(seriesValues, _pointCount);
+            double startVal = allIndexSums[sIndex - 1];
+            double endVal = allIndexSums[eIndex - 1];
+
+            var slide = _manager.GetCurrentSlide();
+            if (slide == null)
+                throw new InvalidOperationException("No active slide is available for the chart overlay.");
 
             if (OverlayReferenceRadio.IsChecked == true)
             {
                 // Average Level Line
-                double sum = 0;
-                foreach (double v in allIndexSums) sum += v;
-                double mean = sum / _pointCount;
+                double mean = ChartOverlayMathPolicy.CalculateMean(allIndexSums);
 
                 DrawLevelLine(slide, mean, "Average: " + (InsertRoundedCheckBox.IsChecked == true ? Math.Round(mean, 1) : mean));
                 return;
@@ -138,20 +165,13 @@ namespace oPenEfficiency.UI.Dialogs
             if (OverlayOutlierRadio.IsChecked == true)
             {
                 // Outlier Detection (StdDev > 1.5)
-                double sum = 0;
-                foreach (double v in allIndexSums) sum += v;
-                double mean = sum / _pointCount;
-                double sumSq = 0;
-                foreach (double v in allIndexSums) sumSq += Math.Pow(v - mean, 2);
-                double stdDev = Math.Sqrt(sumSq / _pointCount);
-                
-                double thresholdUpper = mean + 1.2 * stdDev;
-                double thresholdLower = mean - 1.2 * stdDev;
+                double mean = ChartOverlayMathPolicy.CalculateMean(allIndexSums);
+                double stdDev = ChartOverlayMathPolicy.CalculatePopulationStdDev(allIndexSums, mean);
 
                 bool foundOutlier = false;
                 for (int i = 0; i < _pointCount; i++)
                 {
-                    if (allIndexSums[i] > thresholdUpper || allIndexSums[i] < thresholdLower)
+                    if (ChartOverlayMathPolicy.IsHistoricalOutlier(allIndexSums[i], mean, stdDev))
                     {
                         DrawOutlierOval(slide, i + 1, series);
                         foundOutlier = true;
@@ -167,21 +187,20 @@ namespace oPenEfficiency.UI.Dialogs
 
             if (OverlayDeltaRadio.IsChecked == true)
             {
-                double delta = endVal - startVal;
+                double delta = ChartOverlayMathPolicy.CalculateDelta(startVal, endVal);
                 if (InsertRoundedCheckBox.IsChecked == true) delta = Math.Round(delta, 1);
                 labelText = (delta > 0 ? "+" : "") + delta.ToString();
             }
             else if (OverlayCagrRadio.IsChecked == true)
             {
-                double years = eIndex - sIndex;
-                if (years == 0) years = 1;
-                double cagr = (Math.Pow(endVal / startVal, 1.0 / years) - 1.0) * 100.0;
+                int periods = eIndex - sIndex;
+                double cagr = ChartOverlayMathPolicy.CalculateCagr(startVal, endVal, periods);
                 if (InsertRoundedCheckBox.IsChecked == true) cagr = Math.Round(cagr, 1);
                 labelText = "CAGR " + (cagr > 0 ? "+" : "") + cagr.ToString() + "%";
             }
             else 
             {
-                double pct = ((endVal - startVal) / Math.Abs(startVal)) * 100.0;
+                double pct = ChartOverlayMathPolicy.CalculateGrowth(startVal, endVal);
                 if (InsertRoundedCheckBox.IsChecked == true) pct = Math.Round(pct, 1);
                 labelText = (pct > 0 ? "+" : "") + pct.ToString() + "%";
             }

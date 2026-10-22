@@ -12,7 +12,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Themes/Dark.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <local:BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -79,6 +79,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Mirrored target of the header SearchBox (host hides per-tab chrome); kept out of layout. -->
+        <TextBox x:Name="TxtSearch" Visibility="Collapsed" TextChanged="TxtSearch_TextChanged"/>
+
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="220" MinWidth="150" MaxWidth="400"/>
@@ -123,7 +126,7 @@
             <!-- Main Content: Galleries -->
             <ScrollViewer Grid.Column="2" x:Name="MainGalleryScroll" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="20">
-                    <TextBlock x:Name="TitleSlides" Text="⭐ Favorite Slides" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="TitleSlides" Text="⭐ Favorite Slides" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
                     <ListBox x:Name="SlideGallery" 
                              PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
@@ -133,7 +136,7 @@
                              SelectionMode="Extended">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                                <WrapPanel IsItemsHost="True" ItemWidth="178" ItemHeight="148" Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
@@ -149,7 +152,7 @@
                                     <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
                                         <Button Content="Insert" Click="BtnInsertSlide_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
                                     </Border>
-                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" ToolTip="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 </Grid>
                                 <DataTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -160,7 +163,7 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <TextBlock x:Name="TitleShapes" Text="⭐ Favorite Objects" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,30,0,15"/>
+                    <TextBlock x:Name="TitleShapes" Text="⭐ Favorite Objects" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="0,14,0,6"/>
                     <ListBox x:Name="ShapeGallery" 
                              PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
@@ -170,7 +173,7 @@
                              SelectionMode="Extended">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                                <WrapPanel IsItemsHost="True" ItemWidth="178" ItemHeight="148" Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
@@ -186,7 +189,7 @@
                                     <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
                                         <Button Content="Insert" Click="BtnInsertShape_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
                                     </Border>
-                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" ToolTip="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 </Grid>
                                 <DataTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -197,7 +200,7 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <TextBlock x:Name="TitleImages" Text="⭐ Favorite Pictures" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,30,0,15"/>
+                    <TextBlock x:Name="TitleImages" Text="⭐ Favorite Pictures" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="0,14,0,6"/>
                     <ListBox x:Name="ImageGallery" 
                              PreviewMouseLeftButtonDown="Gallery_PreviewMouseLeftButtonDown" PreviewMouseMove="Gallery_PreviewMouseMove"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" 
@@ -207,7 +210,7 @@
                              SelectionMode="Extended">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel IsItemsHost="True" ItemWidth="180" ItemHeight="160" Orientation="Horizontal"/>
+                                <WrapPanel IsItemsHost="True" ItemWidth="178" ItemHeight="148" Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
@@ -223,7 +226,7 @@
                                     <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
                                         <Button Content="Insert" Click="BtnInsertImage_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="10,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
                                     </Border>
-                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" ToolTip="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 </Grid>
                                 <DataTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">

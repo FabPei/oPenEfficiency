@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableSortAZ",
+  "title": "Sort A-Z (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableSortAZ-001",
+      "title": "Sort A-Z applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Sort A-Z (BtnTableSortAZ) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableSortAZ-001",
+      "title": "Sort A-Z is stable for equal keys and supports descending mixed value columns",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives TableTextPlanner.SortRows for Sort A-Z: equal keys keep their original order (stable), and a descending sort over a column with mixed numbers and text keeps every row intact.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.SortRowsIsStableAndSupportsDescendingMixedValues"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSortAZ-002",
+      "title": "Flexible number parsing is independent of the process culture",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives FlexibleNumberParser for Sort A-Z: '1,234.5', '1.234,5' and '1 234,5' all parse to 1234.5 under en-US, de-DE and fr-FR, so the ordering decision this command makes never depends on the process culture.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.FlexibleNumberParsingDoesNotDependOnProcessCulture"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSortAZ-003",
+      "title": "An ambiguous single separator follows the current culture's decimal separator",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives FlexibleNumberParser for Sort A-Z: '1,234' parses as 1234 under en-US (the separator is a grouping separator) but as 1.234 under de-DE (the separator is the decimal separator), so a single ambiguous separator is resolved by the current culture instead of a fixed guess.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.AmbiguousSingleSeparatorUsesCurrentCulture"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSortAZ-004",
+      "title": "Sort A-Z interactive multi-cell selection",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSortFeature.cs"
+      ],
+      "expected": "The interactive multi-cell selection path of the feature behaves as documented on a real PowerPoint host: the selected cell range is processed, one Undo restores the previous state, and refusals report without corrupting the table.",
+      "ownerSteps": [
+        "Open a table, select at least two vertical cells in one column with mixed numeric and text values.",
+        "Run Sort A-Z from the sidebar.",
+        "Verify numeric values sort numerically, text sorts culture-aware case-insensitive, equal values stay stable, and one PowerPoint Undo restores the previous texts."
+      ],
+      "technicalReason": "Deterministic automation is not feasible for this interactive selection leg: the PowerPoint object model has no multi-cell range selection (Microsoft.Office.Interop.PowerPoint.Cell.Selected is read-only, PIA-verified CanWrite=False; Cell.Select() selects a single cell) while the feature requires a vertical/rectangular multi-cell selection, and its refusal paths run through modal MessageBoxes that block a headless host. The deterministic sorting/totals behavior is covered by the TableTextPlanner core runners; this leg stays a human check until a reviewed seam technique exists."
+    },
+    {
+      "id": "QA9-BtnTableSortAZ-005",
+      "title": "Sort A-Z whole-row overload reorders rows and keeps payloads attached in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSortBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Sort A-Z whole-row overload (SortType.AZ_WholeRow) on a 3x2 fixture table whose first column reads delta/alpha/charlie reorders the rows to alpha,charlie,delta and keeps each payload cell travelling with its key (a2,c2,d2), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSortBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "table-sort-az"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

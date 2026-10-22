@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="Ribbon_Load">
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="Ribbon_Load" loadImage="GetRibbonImage">
   <ribbon>
     <tabs>
       <tab idMso="TabHome">
-        <group id="oPenEfficiencyGroup" label="oPen Efficiency" insertAfterMso="GroupEditingExcel">
+        <group id="oPenEfficiencyGroup" label="openEfficiency">
            <button id="ToggleButtonSidebar"
-                   label="Toggle Sidebar"
-                   size="normal"
+                   label="openEfficiency"
+                   size="large"
                    onAction="OnToggleSidebar"
-                   imageMso="FunctionsLogicalInsertClassic" />
+                   image="RibbonIcon"
+                   screentip="Show/hide openEfficiency Sidebar"
+                   supertip="Shows or hides the openEfficiency Sidebar for the current PowerPoint window." />
+           <button id="BtnQAFeatureAcceptance"
+                   label="QA Status"
+                   size="normal"
+                   onAction="OnOpenFeatureAcceptanceWindow"
+                   getVisible="GetQaWindowVisible"
+                   image="RibbonIcon"
+                   screentip="Feature acceptance status (dev)"
+                   supertip="Opens the developer/QA window for the feature acceptance harness. Visible only in dev builds (repository checkout reachable)." />
+           <labelControl id="LblBuildStamp" getLabel="GetBuildStampLabel" />
         </group>
       </tab>
     </tabs>

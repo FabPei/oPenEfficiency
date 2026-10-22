@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Input;
 using oPenEfficiency.Utils;
@@ -14,21 +14,28 @@ namespace oPenEfficiency.UI
             InitializeComponent();
             _powerPointManager = powerPointManager;
 
-            // Position near selection
-            _powerPointManager.GetSelectionScreenLocation(out int x, out int y);
+            Loaded += (s, e) => PositionNearSelection();
+        }
 
-            // Convert physical pixels (PowerPoint) to logical pixels (WPF)
-            double dpiScaleX = 1.0;
-            double dpiScaleY = 1.0;
-            var source = PresentationSource.FromVisual(this);
-            if (source?.CompositionTarget != null)
+        private void PositionNearSelection()
+        {
+            try
             {
-                dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
-                dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
-            }
+                _powerPointManager.GetSelectionScreenLocation(out int x, out int y);
 
-            this.Left = (x / dpiScaleX) - (this.Width / 2);
-            this.Top = (y / dpiScaleY) - (this.Height / 2);
+                double dpiScaleX = 1.0;
+                double dpiScaleY = 1.0;
+                var source = PresentationSource.FromVisual(this);
+                if (source?.CompositionTarget != null)
+                {
+                    dpiScaleX = source.CompositionTarget.TransformToDevice.M11;
+                    dpiScaleY = source.CompositionTarget.TransformToDevice.M22;
+                }
+
+                Left = Math.Max(SystemParameters.WorkArea.Left, Math.Min((x / dpiScaleX) - (ActualWidth / 2), SystemParameters.WorkArea.Right - ActualWidth));
+                Top = Math.Max(SystemParameters.WorkArea.Top, Math.Min((y / dpiScaleY) - (ActualHeight / 2), SystemParameters.WorkArea.Bottom - ActualHeight));
+            }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "AlignToTableWindow.PositionNearSelection"); }
         }
 
         private void Align_Click(object sender, RoutedEventArgs e)
@@ -38,7 +45,8 @@ namespace oPenEfficiency.UI
             {
                 try
                 {
-                    oPenEfficiency.Features.AlignToTableCellFeature.Align(_powerPointManager, btn.Tag.ToString());
+                    if (!oPenEfficiency.Features.AlignToTableCellFeature.Align(_powerPointManager, btn.Tag.ToString()))
+                        MessageBox.Show(this, "No selected shape center is inside a visible table cell.", "Align to Cell", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
@@ -52,9 +60,18 @@ namespace oPenEfficiency.UI
             this.Close();
         }
 
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+                e.Handled = true;
+            }
+        }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
                 this.DragMove();
         }
     }

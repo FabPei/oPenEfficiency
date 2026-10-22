@@ -1,29 +1,55 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Services;
+using oPenEfficiency.Utils;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 
 namespace oPenEfficiency.UI
 {
+    public enum ExportWizardStartFormat
+    {
+        Pptx,
+        Pdf,
+        PptxAndPdf,
+        Html
+    }
+
+    public enum ExportWizardStartScope
+    {
+        EntirePresentation,
+        SelectedSlides
+    }
+
     public partial class ExportWizard : Window
     {
         private PowerPointManager _manager;
+        private readonly PowerPoint.Application _application;
         private bool _isManualFilename = false;
 
-        public ExportWizard()
+        public ExportWizard(
+            ExportWizardStartFormat startFormat = ExportWizardStartFormat.Pptx,
+            ExportWizardStartScope startScope = ExportWizardStartScope.EntirePresentation,
+            PowerPointManager manager = null)
         {
             InitializeComponent();
-            
-            var app = Globals.ThisAddIn?.Application;
+
+            _manager = manager;
+            var app = _application = manager?.GetApplication();
             if (app != null)
             {
-                _manager = new PowerPointManager(app);
+                new System.Windows.Interop.WindowInteropHelper(this).Owner = (IntPtr)app.HWND;
                 InitializeData();
             }
+
+            ApplyStartSelection(startFormat, startScope);
 
             // Hook events for auto-filename
             TxtTheme.TextChanged += (s, e) => UpdateFilename();
@@ -33,20 +59,30 @@ namespace oPenEfficiency.UI
             TxtFinalFilename.TextChanged += (s, e) => { if (TxtFinalFilename.IsFocused) _isManualFilename = true; };
         }
 
+        public void ApplyStartSelection(ExportWizardStartFormat startFormat, ExportWizardStartScope startScope)
+        {
+            FormatPPTX.IsChecked = startFormat == ExportWizardStartFormat.Pptx;
+            FormatPDF.IsChecked = startFormat == ExportWizardStartFormat.Pdf;
+            FormatBoth.IsChecked = startFormat == ExportWizardStartFormat.PptxAndPdf;
+            FormatHTML.IsChecked = startFormat == ExportWizardStartFormat.Html;
+            ScopeAll.IsChecked = startScope == ExportWizardStartScope.EntirePresentation;
+            ScopeSelected.IsChecked = startScope == ExportWizardStartScope.SelectedSlides;
+        }
+
         private void InitializeData()
         {
             try
             {
-                var pres = Globals.ThisAddIn.Application.ActivePresentation;
+                var pres = _application.ActivePresentation;
                 int totalSlides = pres.Slides.Count;
                 TxtScopeAll.Text = $"Entire Presentation ({totalSlides})";
 
                 int selectedCount = 0;
                 try
                 {
-                    selectedCount = Globals.ThisAddIn.Application.ActiveWindow.Selection.SlideRange.Count;
+                    selectedCount = _application.ActiveWindow.Selection.SlideRange.Count;
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalExportFailure(ex, "ExportWizard.LoadScope.SelectedSlides"); }
                 TxtScopeSelected.Text = $"Selected Slides ({selectedCount})";
 
                 bool hasHidden = false;
@@ -61,11 +97,13 @@ namespace oPenEfficiency.UI
                 ChkOnlyVisible.IsEnabled = hasHidden;
 
                 // Load properties
+                string presentationTitle = string.Empty;
                 try
                 {
                     dynamic props = pres.BuiltInDocumentProperties;
                     TxtPropAuthor.Text = LoadProp(props, "Author");
-                    TxtPropTitle.Text = LoadProp(props, "Title");
+                    presentationTitle = LoadProp(props, "Title");
+                    TxtPropTitle.Text = presentationTitle;
                     TxtPropSubject.Text = LoadProp(props, "Subject");
                     TxtPropComments.Text = LoadProp(props, "Comments");
                     TxtPropKeywords.Text = LoadProp(props, "Keywords");
@@ -77,12 +115,18 @@ namespace oPenEfficiency.UI
                     TxtPropStatus.Text = LoadProp(props, "Content status");
                     TxtPropHyperlinkBase.Text = LoadProp(props, "Hyperlink base");
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalExportFailure(ex, "ExportWizard.LoadProperties"); }
+
+                if (string.IsNullOrWhiteSpace(presentationTitle))
+                {
+                    presentationTitle = Path.GetFileNameWithoutExtension(pres.Name);
+                }
+                TxtTheme.Text = presentationTitle;
 
                 PickerDate.SelectedDate = DateTime.Now;
                 UpdateFilename();
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalExportFailure(ex, "ExportWizard.Initialize"); }
         }
 
         private string LoadProp(dynamic props, string name)
@@ -95,14 +139,17 @@ namespace oPenEfficiency.UI
             if (_isManualFilename) return;
 
             string dateStr = PickerDate.SelectedDate?.ToString("yyMMdd") ?? DateTime.Now.ToString("yyMMdd");
-            string theme = TxtTheme.Text.Replace(" ", "_");
+            string theme = SanitizeFilenameComponent(TxtTheme.Text);
             string initials = TxtInitials.Text.ToUpper();
             string version = "v" + TxtVersion.Text;
 
             TxtFinalFilename.Text = $"{dateStr}_{theme}_{initials}_{version}";
         }
 
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        private static string SanitizeFilenameComponent(string value)
+            => Core.Services.ExportWizardPolicy.SanitizeFilenameComponent(value);
+
+        private void Header_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) this.DragMove();
         }
@@ -114,35 +161,20 @@ namespace oPenEfficiency.UI
 
         private void BtnOK_Click(object sender, RoutedEventArgs e)
         {
+            BtnOK.IsEnabled = false;
             try
             {
-                var pres = Globals.ThisAddIn.Application.ActivePresentation;
-                
-                // 1. Update Properties if requested
-                if (ChkApplyPropsOnExport.IsChecked == true)
-                {
-                    try
-                    {
-                        dynamic props = pres.BuiltInDocumentProperties;
-                        props["Author"].Value = TxtPropAuthor.Text;
-                        props["Title"].Value = TxtPropTitle.Text;
-                        props["Subject"].Value = TxtPropSubject.Text;
-                        props["Comments"].Value = TxtPropComments.Text;
-                        props["Keywords"].Value = TxtPropKeywords.Text;
-                        props["Category"].Value = TxtPropCategory.Text;
-                        props["Manager"].Value = TxtPropManager.Text;
-                        props["Company"].Value = TxtPropCompany.Text;
-                        props["Content status"].Value = TxtPropStatus.Text;
-                        props["Hyperlink base"].Value = TxtPropHyperlinkBase.Text;
-                    }
-                    catch { }
-                }
+                var pres = _application.ActivePresentation;
+                List<int> exportSlideIndices = GetExportSlideIndices(pres);
 
                 bool isMail = DestMail.IsChecked == true;
                 bool isClipboard = DestClipboard.IsChecked == true;
                 
                 string baseFolder;
-                string finalName = TxtFinalFilename.Text;
+                string overwriteConfirmedBySaveDialog = null;
+                string finalName = TxtFinalFilename.Text.Trim();
+                if (string.IsNullOrWhiteSpace(finalName) || finalName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                    throw new InvalidOperationException("Enter a valid export filename.");
 
                 if (isMail || isClipboard)
                 {
@@ -154,75 +186,105 @@ namespace oPenEfficiency.UI
                     // Open Save File Dialog
                     var sfd = new Microsoft.Win32.SaveFileDialog();
                     string initialDir = "";
-                    try { initialDir = Path.GetDirectoryName(pres.FullName); } catch { }
+                    try { initialDir = Path.GetDirectoryName(pres.FullName); }
+                    catch (Exception ex) { ReportOptionalExportFailure(ex, "ExportWizard.SelectOutputPath.InitialDirectory"); }
                     if (string.IsNullOrEmpty(initialDir)) initialDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
                     sfd.InitialDirectory = initialDir;
                     sfd.FileName = TxtFinalFilename.Text;
 
                     if (FormatPPTX.IsChecked == true) { sfd.DefaultExt = ".pptx"; sfd.Filter = "PowerPoint Presentation|*.pptx"; }
-                    else if (FormatPDF.IsChecked == true || FormatProtected.IsChecked == true) { sfd.DefaultExt = ".pdf"; sfd.Filter = "PDF Document|*.pdf"; }
-                    else { sfd.Filter = "PowerPoint or PDF|*.pptx;*.pdf"; }
+                    else if (FormatHTML.IsChecked == true) { sfd.DefaultExt = ".html"; sfd.Filter = "Editable HTML Presentation|*.html"; }
+                    else if (FormatPDF.IsChecked == true) { sfd.DefaultExt = ".pdf"; sfd.Filter = "PDF Document|*.pdf"; }
+                    else { sfd.DefaultExt = ".pptx"; sfd.Filter = "PowerPoint Presentation|*.pptx"; }
 
-                    if (sfd.ShowDialog() != true) return;
+                    if (sfd.ShowDialog() != true)
+                    {
+                        BtnOK.IsEnabled = true;
+                        return;
+                    }
 
                     baseFolder = Path.GetDirectoryName(sfd.FileName);
                     finalName = Path.GetFileNameWithoutExtension(sfd.FileName);
+                    overwriteConfirmedBySaveDialog = Path.GetFullPath(sfd.FileName);
                 }
 
                 string pptPath = Path.Combine(baseFolder, finalName + ".pptx");
                 string pdfPath = Path.Combine(baseFolder, finalName + ".pdf");
-
-                PpPrintRangeType rangeType = PpPrintRangeType.ppPrintAll;
-                var selectedSlideIds = new System.Collections.Generic.List<int>();
-                if (ScopeSelected.IsChecked == true)
-                {
-                    rangeType = PpPrintRangeType.ppPrintSelection;
-                    try
-                    {
-                        foreach (PowerPoint.Slide s in Globals.ThisAddIn.Application.ActiveWindow.Selection.SlideRange)
-                        {
-                            selectedSlideIds.Add(s.SlideID);
-                        }
-                    }
-                    catch { }
-                }
+                string htmlPath = Path.Combine(baseFolder, finalName + ".html");
 
                 bool exportPpt = FormatPPTX.IsChecked == true || FormatBoth.IsChecked == true;
-                bool exportPdf = FormatPDF.IsChecked == true || FormatBoth.IsChecked == true || FormatProtected.IsChecked == true;
+                bool exportPdf = FormatPDF.IsChecked == true || FormatBoth.IsChecked == true;
+                bool exportHtml = FormatHTML.IsChecked == true;
+
+                if (!isMail && !isClipboard)
+                {
+                    var existingTargets = new List<string>();
+                    if (exportPpt && File.Exists(pptPath) && !PathsEqual(pptPath, overwriteConfirmedBySaveDialog)) existingTargets.Add(pptPath);
+                    if (exportPdf && File.Exists(pdfPath) && !PathsEqual(pdfPath, overwriteConfirmedBySaveDialog)) existingTargets.Add(pdfPath);
+                    if (exportHtml && File.Exists(htmlPath) && !PathsEqual(htmlPath, overwriteConfirmedBySaveDialog)) existingTargets.Add(htmlPath);
+                    if (existingTargets.Count > 0)
+                    {
+                        var overwrite = MessageBox.Show(
+                            "The following export file(s) already exist and will be replaced:\n\n" +
+                            string.Join("\n", existingTargets.Select(Path.GetFileName)) +
+                            "\n\nContinue?",
+                            "Replace Existing Export Files",
+                            MessageBoxButton.OKCancel,
+                            MessageBoxImage.Warning);
+                        if (overwrite != MessageBoxResult.OK)
+                        {
+                            BtnOK.IsEnabled = true;
+                            return;
+                        }
+                    }
+                }
 
                 if (exportPpt)
                 {
                     pres.SaveCopyAs(pptPath);
-                    if (ChkCleanComments.IsChecked == true || ChkCleanHiddenSlides.IsChecked == true || 
-                        ChkCleanNotes.IsChecked == true || ChkCleanMetadata.IsChecked == true || 
-                        ChkCleanDeveloperNotes.IsChecked == true || ScopeSelected.IsChecked == true)
-                    {
-                        ProcessCleanup(pptPath, selectedSlideIds);
-                    }
+                    ProcessExportCopy(pptPath, exportSlideIndices);
                 }
 
                 if (exportPdf)
                 {
-                    pres.ExportAsFixedFormat(pdfPath, PpFixedFormatType.ppFixedFormatTypePDF, 
-                        PpFixedFormatIntent.ppFixedFormatIntentScreen, 
-                        ChkPdfFrame.IsChecked == true ? Office.MsoTriState.msoTrue : Office.MsoTriState.msoFalse, 
-                        PpPrintHandoutOrder.ppPrintHandoutHorizontalFirst, 
-                        PpPrintOutputType.ppPrintOutputSlides, Office.MsoTriState.msoFalse, 
-                        null, rangeType, "", true, true, true, true, 
-                        ChkPdfA.IsChecked == true);
+                    if (exportPpt)
+                    {
+                        ExportPdfFromCopy(pptPath, pdfPath);
+                    }
+                    else
+                    {
+                        ExportPdfFromTemporaryCopy(pres, exportSlideIndices, pdfPath);
+                    }
+                }
+
+                HtmlExportReport htmlReport = null;
+                string htmlPackagePath = null;
+                if (exportHtml)
+                {
+                    htmlReport = new HtmlPresentationExportService().Export(pres, exportSlideIndices, htmlPath);
+                    if (isMail || isClipboard)
+                    {
+                        htmlPackagePath = CreateHtmlPackage(htmlPath, htmlReport.AssetDirectory);
+                    }
+                }
+
+                if (ChkApplyPropsOnExport.IsChecked == true)
+                {
+                    ApplyDocumentProperties(pres);
                 }
 
                 // Handle Actions
                 if (isMail)
                 {
-                    OpenOutlook(exportPpt ? pptPath : pdfPath, (exportPpt && exportPdf) ? pdfPath : null);
+                    OpenOutlook(exportHtml ? htmlPackagePath : (exportPpt ? pptPath : pdfPath), (exportPpt && exportPdf) ? pdfPath : null);
                 }
                 else if (isClipboard)
                 {
                     var fileList = new System.Collections.Specialized.StringCollection();
                     if (exportPpt) fileList.Add(pptPath);
                     if (exportPdf) fileList.Add(pdfPath);
+                    if (exportHtml) fileList.Add(htmlPackagePath);
                     Clipboard.SetFileDropList(fileList);
                     MessageBox.Show("Files copied to clipboard.", "Success");
                 }
@@ -231,7 +293,7 @@ namespace oPenEfficiency.UI
                     // Open folder and select file
                     try
                     {
-                        string pathToSelect = exportPpt ? pptPath : pdfPath;
+                        string pathToSelect = exportHtml ? htmlPath : (exportPpt ? pptPath : pdfPath);
                         if (File.Exists(pathToSelect))
                         {
                             System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{pathToSelect}\"");
@@ -241,35 +303,112 @@ namespace oPenEfficiency.UI
                             System.Diagnostics.Process.Start(baseFolder);
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { ReportOptionalExportFailure(ex, "ExportWizard.RemoveMetadata.Shape"); }
+                }
+
+                if (htmlReport != null && htmlReport.Warnings.Count > 0 && !isMail && !isClipboard)
+                {
+                    MessageBox.Show("The editable HTML was created. " + htmlReport.Warnings.Count + " complex object(s) were exported as PNG fallbacks.", "HTML export", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
 
                 this.Close();
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "ExportWizard.BtnOK_Click");
                 MessageBox.Show("Error converting/saving: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                BtnOK.IsEnabled = true;
             }
         }
 
-        private void ProcessCleanup(string filePath, System.Collections.Generic.List<int> keepSlideIds = null)
+        private List<int> GetExportSlideIndices(Presentation presentation)
         {
+            var indices = new List<int>();
+            if (ScopeSelected.IsChecked == true)
+            {
+                try
+                {
+                    SlideRange selectedSlides = _application.ActiveWindow.Selection.SlideRange;
+                    for (int index = 1; index <= selectedSlides.Count; index++)
+                    {
+                        indices.Add(selectedSlides[index].SlideIndex);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "ExportWizard.GetExportSlideIndices.SelectedSlides");
+                }
+
+                if (indices.Count == 0)
+                    throw new InvalidOperationException("Select at least one slide before exporting the selected-slide scope.");
+            }
+            else
+            {
+                indices.AddRange(Enumerable.Range(1, presentation.Slides.Count));
+            }
+
+            bool excludeHiddenSlides = ChkOnlyVisible.IsChecked == true || ChkCleanHiddenSlides.IsChecked == true;
+            if (excludeHiddenSlides)
+            {
+                indices = indices
+                    .Where(index => presentation.Slides[index].SlideShowTransition.Hidden != Office.MsoTriState.msoTrue)
+                    .ToList();
+            }
+
+            indices = indices.Distinct().OrderBy(index => index).ToList();
+            if (indices.Count == 0)
+                throw new InvalidOperationException("The selected export options do not include any slides.");
+
+            return indices;
+        }
+
+        private static bool PathsEqual(string first, string second)
+            => Core.Services.ExportWizardPolicy.PathsEqual(first, second);
+
+        private static string CreateHtmlPackage(string htmlPath, string assetDirectory)
+        {
+            string packagePath = Path.ChangeExtension(htmlPath, ".zip");
+            if (File.Exists(packagePath)) File.Delete(packagePath);
+
+            using (ZipArchive archive = ZipFile.Open(packagePath, ZipArchiveMode.Create))
+            {
+                archive.CreateEntryFromFile(htmlPath, Path.GetFileName(htmlPath));
+                if (Directory.Exists(assetDirectory))
+                {
+                    string assetRoot = Path.GetDirectoryName(assetDirectory);
+                    foreach (string assetPath in Directory.GetFiles(assetDirectory, "*", SearchOption.AllDirectories))
+                    {
+                        string archivePath = assetPath.Substring(assetRoot.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        archive.CreateEntryFromFile(assetPath, archivePath);
+                    }
+                }
+            }
+
+            return packagePath;
+        }
+
+        private void ProcessExportCopy(string filePath, ICollection<int> includedSlideIndices)
+        {
+            Presentation tempPres = null;
             try
             {
-                var app = Globals.ThisAddIn.Application;
-                // Open saved copy silently
-                var tempPres = app.Presentations.Open(filePath, WithWindow: Office.MsoTriState.msoFalse);
+                var app = _application;
+                tempPres = app.Presentations.Open(filePath, WithWindow: Office.MsoTriState.msoFalse);
                 bool changed = false;
 
-                if (keepSlideIds != null && keepSlideIds.Count > 0)
+                var included = new HashSet<int>(includedSlideIndices);
+                for (int index = tempPres.Slides.Count; index >= 1; index--)
                 {
-                    for (int i = tempPres.Slides.Count; i >= 1; i--)
+                    if (!included.Contains(index))
                     {
-                        if (!keepSlideIds.Contains(tempPres.Slides[i].SlideID))
-                        {
-                            tempPres.Slides[i].Delete();
-                        }
+                        tempPres.Slides[index].Delete();
+                        changed = true;
                     }
+                }
+
+                if (ChkCleanMetadata.IsChecked != true)
+                {
+                    ApplyDocumentProperties(tempPres);
                     changed = true;
                 }
 
@@ -278,16 +417,6 @@ namespace oPenEfficiency.UI
                     foreach (PowerPoint.Slide s in tempPres.Slides)
                     {
                         for (int i = s.Comments.Count; i >= 1; i--) s.Comments[i].Delete();
-                    }
-                    changed = true;
-                }
-
-                if (ChkCleanHiddenSlides.IsChecked == true)
-                {
-                    for (int i = tempPres.Slides.Count; i >= 1; i--)
-                    {
-                        if (tempPres.Slides[i].SlideShowTransition.Hidden == Office.MsoTriState.msoTrue)
-                            tempPres.Slides[i].Delete();
                     }
                     changed = true;
                 }
@@ -310,10 +439,7 @@ namespace oPenEfficiency.UI
 
                 if (ChkCleanDeveloperNotes.IsChecked == true)
                 {
-                    foreach (PowerPoint.Slide s in tempPres.Slides)
-                    {
-                        try { s.Tags.Delete("oPE_SlideNotes"); } catch { }
-                    }
+                    oPenEfficiency.Services.PrivateCommentsService.DeleteAll(tempPres);
                     changed = true;
                 }
 
@@ -324,11 +450,115 @@ namespace oPenEfficiency.UI
                 }
 
                 if (changed) tempPres.Save();
-                tempPres.Close();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Export Cleanup failed: " + ex.Message);
+                ExceptionLogger.Log(ex, "ExportWizard.ProcessExportCopy");
+                throw new InvalidOperationException("The exported presentation copy could not be scoped or cleaned safely.", ex);
+            }
+            finally
+            {
+                if (tempPres != null)
+                {
+                    try { tempPres.Close(); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "ExportWizard.ProcessExportCopy.Close"); }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(tempPres),
+                        "ExportWizard.ProcessExportCopy.ReleasePresentation");
+                }
+            }
+        }
+
+        private void ExportPdfFromTemporaryCopy(Presentation sourcePresentation, ICollection<int> slideIndices, string pdfPath)
+        {
+            string tempDirectory = Path.Combine(Path.GetTempPath(), "oPE_PdfExport_" + Guid.NewGuid().ToString("N"));
+            string tempPptPath = Path.Combine(tempDirectory, "export-source.pptx");
+            Directory.CreateDirectory(tempDirectory);
+
+            try
+            {
+                sourcePresentation.SaveCopyAs(tempPptPath);
+                ProcessExportCopy(tempPptPath, slideIndices);
+                ExportPdfFromCopy(tempPptPath, pdfPath);
+            }
+            finally
+            {
+                try { Directory.Delete(tempDirectory, true); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ExportWizard.ExportPdfFromTemporaryCopy.Cleanup"); }
+            }
+        }
+
+        private void ExportPdfFromCopy(string pptPath, string pdfPath)
+        {
+            Presentation exportPresentation = null;
+            try
+            {
+                exportPresentation = _application.Presentations.Open(
+                    pptPath,
+                    ReadOnly: Office.MsoTriState.msoTrue,
+                    WithWindow: Office.MsoTriState.msoFalse);
+
+                exportPresentation.ExportAsFixedFormat(
+                    pdfPath,
+                    PpFixedFormatType.ppFixedFormatTypePDF,
+                    PpFixedFormatIntent.ppFixedFormatIntentScreen,
+                    ChkPdfFrame.IsChecked == true ? Office.MsoTriState.msoTrue : Office.MsoTriState.msoFalse,
+                    PpPrintHandoutOrder.ppPrintHandoutHorizontalFirst,
+                    PpPrintOutputType.ppPrintOutputSlides,
+                    Office.MsoTriState.msoTrue,
+                    null,
+                    PpPrintRangeType.ppPrintAll,
+                    "",
+                    ChkCleanMetadata.IsChecked != true,
+                    true,
+                    true,
+                    true,
+                    ChkPdfA.IsChecked == true);
+            }
+            finally
+            {
+                if (exportPresentation != null)
+                {
+                    try { exportPresentation.Close(); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "ExportWizard.ExportPdfFromCopy.Close"); }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(exportPresentation),
+                        "ExportWizard.ExportPdfFromCopy.ReleasePresentation");
+                }
+            }
+        }
+
+        private static void ReportOptionalExportFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // Optional metadata and selection details do not prevent exporting the remaining content.
+        }
+
+        private void ApplyDocumentProperties(Presentation presentation)
+        {
+            dynamic props = presentation.BuiltInDocumentProperties;
+            SetDocumentProperty(props, "Author", TxtPropAuthor.Text);
+            SetDocumentProperty(props, "Title", TxtPropTitle.Text);
+            SetDocumentProperty(props, "Subject", TxtPropSubject.Text);
+            SetDocumentProperty(props, "Comments", TxtPropComments.Text);
+            SetDocumentProperty(props, "Keywords", TxtPropKeywords.Text);
+            SetDocumentProperty(props, "Category", TxtPropCategory.Text);
+            SetDocumentProperty(props, "Manager", TxtPropManager.Text);
+            SetDocumentProperty(props, "Company", TxtPropCompany.Text);
+            SetDocumentProperty(props, "Content status", TxtPropStatus.Text);
+            SetDocumentProperty(props, "Hyperlink base", TxtPropHyperlinkBase.Text);
+        }
+
+        private static void SetDocumentProperty(dynamic properties, string name, string value)
+        {
+            try
+            {
+                properties[name].Value = value ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ExportWizard.SetDocumentProperty." + name);
             }
         }
 

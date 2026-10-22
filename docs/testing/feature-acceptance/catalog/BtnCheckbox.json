@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnCheckbox",
+  "title": "Checkbox (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/CheckboxFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnCheckbox-001",
+      "title": "Checkbox applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/CheckboxFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Checkbox (BtnCheckbox) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnCheckbox-002",
+      "title": "Checkbox state codec, Wingdings symbol map and insert placement are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/CheckboxStatePolicy.cs",
+        "oPenEfficiency/Features/Visuals/CheckboxFeature.cs",
+        "oPenEfficiency/UI/Toolbars/CheckboxToolbar.xaml.cs"
+      ],
+      "expected": "The persistent AlternativeText codec writes 'oPE_Checkbox|{state}|{frame}|{size}|{color}' with invariant numbers (a fractional font size never carries a locale decimal comma; the -1 keep-color sentinel is written verbatim) and the lenient reader parses invariant first with a current-culture fallback so legacy current-culture tags keep their size, leaving caller defaults for missing or short tags and zero values for malformed fields; the state maps to the Wingdings tick, cross and space glyphs with the historical empty default for unknown states; a fresh checkbox is centered on the slide.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~CheckboxStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnCheckbox-003",
+      "title": "Checkbox creates exactly one shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Checkbox command on an empty slide adds exactly one shape (measured shapeCountDelta=1), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "checkbox"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -21,37 +21,23 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnHarveyBall",
         Name = "Harvey Ball",
-        Tooltip = "Harvey ball",
+        Tooltip = "Insert or cycle a Harvey Ball value",
         IconData = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z",
         Color = "#F43F5E",
         Description = "Cycles through Harvey Ball states (0%, 25%, 50%, 75%, 100%) to represent progress or qualitative data.",
         DetailedHelpText = "### Harvey Ball\nInserts or updates a circular progress indicator (Harvey Ball).\n**Usage:**\n* Left-click to cycle through 0 -> 25 -> 50 -> 75 -> 100% fill.\n**Right-Click Options:**\n* Jump directly to a specific fill level (0%, 25%, 50%, 75%, or 100%).",
-        Keywords = "harvey balls, circular progress, qualitative data, pie chart indicator",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class HarveyBallFeature
     {
-        private const string HarveyBallTag = "oPE_HarveyBall";
+        private const string HarveyBallTag = oPenEfficiency.Core.Services.HarveyBallStatePolicy.HarveyBallTag;
 
         /// <summary>
-        /// Cycles through 0 → 25 → 50 → 75 → 100 → 0% when a Harvey Ball is selected;
-        /// inserts a new 25% ball otherwise.
+        /// Wrapper for auto-discovery - inserts Harvey Ball with default 25% fill.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            var selection = manager?.GetSelectedShapes();
-            float nextPercentage = 0.25f;
-            if (selection != null && selection.Count == 1)
-            {
-                var selected = selection[1];
-                if (IsHarveyBall(selected))
-                {
-                    float current = GetCurrentPercentage(selected);
-                    nextPercentage = current + 0.25f;
-                    if (nextPercentage > 1.01f) nextPercentage = 0f;
-                }
-            }
-            return Execute(manager, nextPercentage);
+            return Execute(manager, 0.25f);
         }
 
         public static bool Execute(PowerPointManager manager, float percentage = 0.25f)
@@ -96,7 +82,7 @@ namespace oPenEfficiency.Features
 
                 var items = new string[] { bg.Name, pie.Name };
                 var group = slide.Shapes.Range(items).Group();
-                group.AlternativeText = $"{HarveyBallTag}|{percentage}";
+                group.AlternativeText = oPenEfficiency.Core.Services.HarveyBallStatePolicy.FormatTag(percentage);
                 group.Name = "HarveyBall_" + Guid.NewGuid().ToString().Substring(0, 8);
 
                 return true;
@@ -148,11 +134,7 @@ namespace oPenEfficiency.Features
         public static float GetCurrentPercentage(Shape shape)
         {
             if (shape == null) return 0f;
-            if (shape.AlternativeText != null && shape.AlternativeText.StartsWith(HarveyBallTag))
-            {
-                var parts = shape.AlternativeText.Split('|');
-                if (parts.Length == 2 && float.TryParse(parts[1], out float current)) return current;
-            }
+            if (oPenEfficiency.Core.Services.HarveyBallStatePolicy.TryParseTag(shape.AlternativeText, out float current)) return current;
 
             if (shape.Type == Office.MsoShapeType.msoGroup)
             {
@@ -167,7 +149,7 @@ namespace oPenEfficiency.Features
                             if (pct < 0) pct += 1.0f;
                             return (float)Math.Round(pct * 4f) / 4f;
                         }
-                        catch { }
+                        catch { /* Optional parent-group detection falls back to the selected segment. */ }
                     }
                 }
             }

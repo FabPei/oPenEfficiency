@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnOptimizeFreeForm",
+  "title": "Simplify Freeform Nodes (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/OptimizeFreeFormFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnOptimizeFreeForm-001",
+      "title": "Simplify Freeform Nodes applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/OptimizeFreeFormFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Simplify Freeform Nodes (BtnOptimizeFreeForm) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnOptimizeFreeForm-002",
+      "title": "Freeform vertex decimation is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/FreeformDecimationPolicy.cs",
+        "oPenEfficiency/Features/Shapes/OptimizeFreeFormFeature.cs",
+        "oPenEfficiency.Core.Tests/FreeformDecimationPolicyTests.cs"
+      ],
+      "expected": "Walking from the second-to-last node down to the third, a node is deleted when its distance to its immediate ORIGINAL predecessor is strictly below the minimum distance (an exact distance is kept); because deletions happen at strictly descending indices every comparison pairs original adjacent points, node 1 and the last node are never deleted, freeforms with three or fewer nodes are never optimized, and the returned indices are descending so the caller deletes them in order against the live collection.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FreeformDecimationPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnOptimizeFreeForm-003",
+      "title": "Optimize Freeform removes near-collinear nodes while keeping the bounds in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointUtilities.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Optimize Freeform on a hand-built freeform carrying near-collinear points within the 0.5 pt minimum removes at least one node (measured 8 to 6), keeps the shape bounds within 1 pt, reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointUtilities.ps1",
+        "arguments": [
+          "-Mode",
+          "optimize-freeform"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

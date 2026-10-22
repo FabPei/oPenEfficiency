@@ -5,12 +5,15 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Features;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
     public partial class ThemeColorControl : UserControl
     {
         private PowerPointManager _manager;
+        private Microsoft.Office.Interop.PowerPoint.Application _application;
         private static Color[] _savedCustomColors = new Color[20];
 
         public event Action<int> ColorSelected;
@@ -18,13 +21,27 @@ namespace oPenEfficiency.UI
         public ThemeColorControl()
         {
             InitializeComponent();
+            Unloaded += ThemeColorControl_Unloaded;
         }
 
         public bool IsVerticalLayout { get; set; } = false;
 
+        public void FocusTarget(PickColorFeature.ApplyTarget target)
+        {
+            if (IsVerticalLayout) return;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (target == PickColorFeature.ApplyTarget.Line) BorderHeader.BringIntoView();
+                else if (target == PickColorFeature.ApplyTarget.Text) TextHeader.BringIntoView();
+                else FillHeader.BringIntoView();
+            }));
+        }
+
         public void Initialize(PowerPointManager manager, bool vertical = false)
         {
+            UnsubscribeFromPowerPoint();
             _manager = manager;
+            _application = manager?.GetApplication();
             IsVerticalLayout = vertical;
             
             StandardLayout.Visibility = IsVerticalLayout ? Visibility.Collapsed : Visibility.Visible;
@@ -32,6 +49,26 @@ namespace oPenEfficiency.UI
             
             ApplySettings();
             LoadThemeColors();
+            if (_application != null)
+                _application.WindowActivate += Application_WindowActivate;
+        }
+
+        private void Application_WindowActivate(Presentation presentation, DocumentWindow window)
+        {
+            Dispatcher.BeginInvoke(new Action(LoadThemeColors));
+        }
+
+        private void ThemeColorControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            UnsubscribeFromPowerPoint();
+        }
+
+        private void UnsubscribeFromPowerPoint()
+        {
+            if (_application == null) return;
+            try { _application.WindowActivate -= Application_WindowActivate; }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "ThemeColorControl.UnsubscribeFromPowerPoint"); }
+            _application = null;
         }
 
         private void ApplySettings()
@@ -43,13 +80,15 @@ namespace oPenEfficiency.UI
 
                 if (!string.IsNullOrEmpty(config.BackgroundColor))
                 {
-                    try { this.Background = (Brush)new BrushConverter().ConvertFromString(config.BackgroundColor); } catch { }
+                    try { this.Background = (Brush)new BrushConverter().ConvertFromString(config.BackgroundColor); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "ThemeColorControl.ApplySettings.Background"); }
                 }
 
                 Brush txtBrush = null;
                 if (!string.IsNullOrEmpty(config.SectionFontColor))
                 {
-                    try { txtBrush = (Brush)new BrushConverter().ConvertFromString(config.SectionFontColor); } catch { }
+                    try { txtBrush = (Brush)new BrushConverter().ConvertFromString(config.SectionFontColor); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "ThemeColorControl.ApplySettings.FontColor"); }
                 }
 
                 double fontSize = config.SectionFontSize > 0 ? config.SectionFontSize : 9;
@@ -74,7 +113,7 @@ namespace oPenEfficiency.UI
                 ApplyTextBlockStyle(StandardLayout);
                 ApplyTextBlockStyle(VerticalLayout);
             }
-            catch { }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "ThemeColorControl.ApplySettings"); }
         }
 
         private void LoadThemeColors()
@@ -159,7 +198,10 @@ namespace oPenEfficiency.UI
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThemeColorControl.LoadThemeColors");
+            }
         }
 
         private Color ApplyTint(Color color, float factor)
@@ -223,6 +265,8 @@ namespace oPenEfficiency.UI
                 border.Child = tb;
             }
 
+            System.Windows.Automation.AutomationProperties.SetName(btn,
+                $"Apply {type.ToLowerInvariant()} color {color}");
             btn.Content = border;
             btn.Click += (s, e) => ApplyColor(idx, type, tint);
             return btn;
@@ -235,46 +279,22 @@ namespace oPenEfficiency.UI
                 var app = _manager.GetApplication();
                 var scheme = app.ActivePresentation.SlideMaster.Theme.ThemeColorScheme;
                 int rgb = scheme.Colors(idx).RGB;
-                
-                // If we have a tint, we should probably resolve it to an absolute RGB for the "Replace" window
-                // But PowerPoint's RGB property for theme colors is handled automatically if we set ObjectThemeColor.
-                // For the "Replace" window, we want the absolute RGB.
-                
                 Color baseColor = ConvertRgb(rgb);
                 Color tinted = ApplyTint(baseColor, tint);
                 int finalRgb = (tinted.R) | (tinted.G << 8) | (tinted.B << 16);
 
                 ColorSelected?.Invoke(finalRgb);
-
-                var shapes = _manager.GetSelectedShapes();
-                if (shapes == null || shapes.Count == 0) return;
-
-                for (int i = 1; i <= shapes.Count; i++)
-                {
-                    var shape = shapes[i];
-                    if (type == "Fill")
-                    {
-                        shape.Fill.ForeColor.ObjectThemeColor = (Office.MsoThemeColorIndex)idx;
-                        shape.Fill.ForeColor.TintAndShade = tint;
-                        shape.Fill.Visible = Office.MsoTriState.msoTrue;
-                    }
-                    else if (type == "Border")
-                    {
-                        shape.Line.ForeColor.ObjectThemeColor = (Office.MsoThemeColorIndex)idx;
-                        shape.Line.ForeColor.TintAndShade = tint;
-                        shape.Line.Visible = Office.MsoTriState.msoTrue;
-                    }
-                    else if (type == "Text")
-                    {
-                        if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
-                        {
-                            shape.TextFrame.TextRange.Font.Color.ObjectThemeColor = (Office.MsoThemeColorIndex)idx;
-                            shape.TextFrame.TextRange.Font.Color.TintAndShade = tint;
-                        }
-                    }
-                }
+                ApplyAbsoluteColor(finalRgb, type);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThemeColorControl.ApplyColor");
+                MessageBox.Show(
+                    "The theme color could not be resolved or applied.",
+                    "Theme Color Palette (RGB)",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private Button CreateCustomButton(int index)
@@ -310,6 +330,8 @@ namespace oPenEfficiency.UI
                 };
             }
 
+            System.Windows.Automation.AutomationProperties.SetName(btn,
+                $"Custom fill color slot {index + 1}");
             btn.Content = border;
             btn.Click += (s, e) => {
                 if (_savedCustomColors[index].A > 0)
@@ -348,16 +370,34 @@ namespace oPenEfficiency.UI
             {
                 int rgb = (color.B << 16) | (color.G << 8) | color.R;
                 ColorSelected?.Invoke(rgb);
-
-                var shapes = _manager.GetSelectedShapes();
-                if (shapes == null || shapes.Count == 0) return;
-                for (int i = 1; i <= shapes.Count; i++)
-                {
-                    shapes[i].Fill.ForeColor.RGB = rgb;
-                    shapes[i].Fill.Visible = Office.MsoTriState.msoTrue;
-                }
+                ApplyAbsoluteColor(rgb, "Fill");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThemeColorControl.ApplyCustomColor");
+                MessageBox.Show(
+                    "The custom fill color could not be applied.",
+                    "Theme Color Palette (RGB)",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ApplyAbsoluteColor(int rgb, string type)
+        {
+            PickColorFeature.ApplyTarget target;
+            if (type == "Border")
+                target = PickColorFeature.ApplyTarget.Line;
+            else if (type == "Text")
+                target = PickColorFeature.ApplyTarget.Text;
+            else
+                target = PickColorFeature.ApplyTarget.Fill;
+
+            PickColorFeature.ApplyColorToSelection(
+                _manager,
+                rgb,
+                target,
+                "ThemeColorControl.ApplyAbsoluteColor");
         }
 
         private Color ConvertRgb(int rgb)

@@ -15,13 +15,12 @@ namespace oPenEfficiency.Features
         IconData = "M4,2H20V20H4V2M6,4V18H18V4H6M8,6H16V16H8V6Z",
         Color = "#F43F5E",
         Description = "Inserts a progress series visualization with configurable shape type and layout.",
-        DetailedHelpText = "### Progress Series\nInserts a horizontal progress bar or segmented series bar with adjustable fill percentage. Ideal for KPI tracking slides and dashboards.",
-        Keywords = "progress bar, segmented bar, kpi tracker, linear progress",
+        DetailedHelpText = "### Progress Series\nInserts an editable numbered or bullet progress series. Right-click for common three-step, five-step, horizontal, vertical, and bullet presets; selecting an existing series updates it in place. If you manually recolor the active segment in PowerPoint, opening the contextual toolbar reads that visible fill without ungrouping the series and retains it until you choose another color.",
         MinSelection = 0,
-        RequiredType = PowerPoint.PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class ProgressSeriesFeature
     {
-        public const string SeriesTag = "oPE_Series";
+        public const string SeriesTag = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.SeriesTag;
 
         public struct SeriesSettings
         {
@@ -34,28 +33,28 @@ namespace oPenEfficiency.Features
 
             public static SeriesSettings Default() => new SeriesSettings
             {
-                Count = 5,
-                ActiveIndex = 3,
-                Mode = "Numbers",
-                Layout = "H",
-                HighlightColor = "#E53935",
-                ShapeType = "Square"
+                Count = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultCount,
+                ActiveIndex = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultActiveIndex,
+                Mode = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultMode,
+                Layout = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultLayout,
+                HighlightColor = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultHighlightColor,
+                ShapeType = oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.DefaultShapeType
             };
 
-            public string ToTag() => $"{SeriesTag}|{Count}|{ActiveIndex}|{Mode}|{Layout}|{HighlightColor}|{ShapeType}";
+            public string ToTag() => oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.FormatTag(Count, ActiveIndex, Mode, Layout, HighlightColor, ShapeType);
 
             public static SeriesSettings FromTag(string tag)
             {
                 var settings = Default();
-                if (string.IsNullOrEmpty(tag) || !tag.StartsWith(SeriesTag)) return settings;
-
-                var parts = tag.Split('|');
-                if (parts.Length >= 2) int.TryParse(parts[1], out settings.Count);
-                if (parts.Length >= 3) int.TryParse(parts[2], out settings.ActiveIndex);
-                if (parts.Length >= 4) settings.Mode = parts[3];
-                if (parts.Length >= 5) settings.Layout = parts[4];
-                if (parts.Length >= 6) settings.HighlightColor = parts[5];
-                if (parts.Length >= 7) settings.ShapeType = parts[6];
+                if (oPenEfficiency.Core.Services.ProgressSeriesStatePolicy.TryParseTag(tag, out int count, out int activeIndex, out string mode, out string layout, out string highlightColor, out string shapeType))
+                {
+                    settings.Count = count;
+                    settings.ActiveIndex = activeIndex;
+                    settings.Mode = mode;
+                    settings.Layout = layout;
+                    settings.HighlightColor = highlightColor;
+                    settings.ShapeType = shapeType;
+                }
 
                 return settings;
             }
@@ -124,7 +123,7 @@ namespace oPenEfficiency.Features
                                     existingGroup = parent;
                                 }
                             }
-                            catch { }
+                            catch { /* Optional parent-group detection falls back to the selected segment. */ }
                         }
                     }
                 }

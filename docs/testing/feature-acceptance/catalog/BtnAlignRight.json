@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignRight",
+  "title": "Align Right (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/AlignToFirstRightFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignRight-001",
+      "title": "Align Right applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstRightFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Align Right (BtnAlignRight) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignRight-001",
+      "title": "Align Right never moves a shape to the left",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstRightFeature.cs",
+        "oPenEfficiency.Core/Services/DirectionalGuideSelector.cs",
+        "oPenEfficiency.Core.Tests/GuideSnapAcceptanceTests.cs"
+      ],
+      "expected": "The right edge 405 snaps to the nearest guide at or after it (500 of 0/120/500/900) and never leftwards; guides left of the edge are ignored and the slide's right edge is the fallback; a guide exactly on the edge keeps the shape in place and a repeated alignment moves nothing.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GuideSnapAcceptanceTests.AlignRightSnapsToTheNearestVerticalGuideAtOrAfterTheRightEdge"
+      }
+    },
+    {
+      "id": "QA9-BtnAlignRight-002",
+      "title": "Align Right aligns a real multi-selection to the reference shape right edge",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstRightFeature.cs",
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointAlignFirst.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Right runs its primary multi-select route: three probe shapes created at distinct right edges (90/180/270 pt) are selected and aligned, every probe right edge equals the reference shape right edge afterwards, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointAlignFirst.ps1",
+        "arguments": [
+          "-Directions",
+          "right"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

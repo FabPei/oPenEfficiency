@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Linq;
+using System.Windows.Interop;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
@@ -14,26 +15,40 @@ namespace oPenEfficiency.Features.Tables
     /// </summary>
     [FeatureMetadata(
         Id = "BtnTableBranding",
-        Name = "Table Branding",
-        Tooltip = "Table branding",
+        Name = "Table Style Library",
+        SearchAliases = new[] { "Table Branding" },
+        Tooltip = "Save and apply reusable table styles",
         IconData = "M3,3H21V21H3V3M5,5V10H10V5H5M11,5V10H19V5H11M5,11V19H10V11H5M11,11V19H19V11H11M14,13H17V16H14V13Z",
         Color = "#F43F5E",
-        Description = "Save and apply table branding/styles. Opens dialog for style configuration.",
-        DetailedHelpText = "### Table Branding\nApplies a predefined corporate color scheme to the selected table, including header row fill, alternating row shading, border colors, and font styles, in one click.",
-        Keywords = "style, brand, format, colors, theme, design",
+        Description = "Saves reusable table styles and applies their header, body, alternating-row, border, font, and uniform-height settings.",
+        DetailedHelpText = "### Table Style Library\n\nSave the selected table's detected header, body, alternating-row, font, four-side border, and uniform row-height styling under a unique name. Applying a style changes formatting but keeps cell text and table structure. Saving an existing name asks before replacement, storage errors are reported, and deleting a style requires confirmation. Header detection uses PowerPoint's table setting when available and otherwise compares the first body rows. Non-uniform source row heights are not flattened into one saved value.",
         MinSelection = 0,
         RequiresTable = true)]
     public static class TableBrandingFeature
     {
         /// <summary>
-        /// Wrapper for auto-discovery - returns false as Table Branding requires dialog interaction.
-        /// Manual switch in MainSidebar.xaml.cs handles opening the TableBrandingDialog.
+        /// Opens the style manager for sidebar, search, and Feature Explorer execution.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            // Requires dialog for style configuration
-            // Handled by manual switch in MainSidebar.xaml.cs
-            return false;
+            if (manager == null) return false;
+            try
+            {
+                var dialog = new UI.Dialogs.TableBrandingDialog();
+                var app = manager.GetApplication();
+                if (app != null) new WindowInteropHelper(dialog).Owner = (IntPtr)app.HWND;
+                if (dialog.ShowDialog() != true) return false;
+                if (dialog.Action == "Save" && !string.IsNullOrWhiteSpace(dialog.StyleToSave))
+                    return SaveTableStyle(manager, dialog.StyleToSave);
+                if (dialog.Action == "Apply" && dialog.SelectedStyle != null)
+                    return ApplyTableStyle(manager, dialog.SelectedStyle);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TableBrandingFeature.Execute");
+                throw;
+            }
         }
 
         private const string StylesFileName = "table_styles.json";
@@ -94,10 +109,11 @@ namespace oPenEfficiency.Features.Tables
         /// </summary>
         public static bool SaveTableStyle(PowerPointManager manager, string styleName)
         {
-            if (manager == null) return false;
+            if (manager == null || string.IsNullOrWhiteSpace(styleName)) return false;
 
             try
             {
+                styleName = styleName.Trim();
                 if (!TableHelper.GetSelectedTable(manager, out Shape tableShape, out Table table))
                 {
                     System.Windows.Forms.MessageBox.Show(
@@ -108,15 +124,29 @@ namespace oPenEfficiency.Features.Tables
                     return false;
                 }
 
-                // Extract style from table
+                var styles = LoadStyles();
+                var existing = styles.FirstOrDefault(item => string.Equals(item.Name, styleName, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    var overwrite = System.Windows.Forms.MessageBox.Show(
+                        $"A table style named '{existing.Name}' already exists. Replace it?",
+                        "Replace Table Style",
+                        System.Windows.Forms.MessageBoxButtons.YesNo,
+                        System.Windows.Forms.MessageBoxIcon.Question);
+                    if (overwrite != System.Windows.Forms.DialogResult.Yes) return false;
+                    styles.RemoveAll(item => string.Equals(item.Name, styleName, StringComparison.OrdinalIgnoreCase));
+                }
+
                 var style = ExtractStyleFromTable(table, tableShape);
                 style.Name = styleName;
                 style.CreatedDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
-                // Load existing styles and add new one
-                var styles = LoadStyles();
                 styles.Add(style);
-                SaveStyles(styles);
+                if (!SaveStyles(styles))
+                {
+                    System.Windows.Forms.MessageBox.Show("The table style could not be saved. The existing style file was left unchanged.", "Table Style Library", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+                    return false;
+                }
 
                 System.Windows.Forms.MessageBox.Show(
                     $"Table style '{styleName}' saved successfully!",
@@ -141,7 +171,12 @@ namespace oPenEfficiency.Features.Tables
         /// <summary>
         /// Applies a saved style to the selected table.
         /// </summary>
-        public static bool ApplyTableStyle(PowerPointManager manager, TableStyle style)
+        /// <param name="showMessages">
+        /// False selects the message-box-free programmatic path (acceptance seam); the table
+        /// styling behavior and return value are identical either way. Default is true, so the
+        /// dialog-driven user path is unchanged.
+        /// </param>
+        public static bool ApplyTableStyle(PowerPointManager manager, TableStyle style, bool showMessages = true)
         {
             if (manager == null || style == null) return false;
 
@@ -149,32 +184,42 @@ namespace oPenEfficiency.Features.Tables
             {
                 if (!TableHelper.GetSelectedTable(manager, out Shape tableShape, out Table table))
                 {
-                    System.Windows.Forms.MessageBox.Show(
-                        "Please select a table to apply the style to.",
-                        "Error",
-                        System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    if (showMessages)
+                    {
+                        System.Windows.Forms.MessageBox.Show(
+                            "Please select a table to apply the style to.",
+                            "Error",
+                            System.Windows.Forms.MessageBoxButtons.OK,
+                            System.Windows.Forms.MessageBoxIcon.Warning);
+                    }
                     return false;
                 }
 
+                try { manager.GetApplication().StartNewUndoEntry(); } catch { /* Branding remains valid when undo grouping is unavailable. */ }
                 ApplyStyleToTable(table, tableShape, style);
 
-                System.Windows.Forms.MessageBox.Show(
-                    $"Table style '{style.Name}' applied successfully!",
-                    "Style Applied",
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Information);
+                if (showMessages)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        $"Table style '{style.Name}' applied successfully!",
+                        "Style Applied",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Information);
+                }
 
                 return true;
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableBrandingFeature.ApplyTableStyle");
-                System.Windows.Forms.MessageBox.Show(
-                    $"Error applying table style: {ex.Message}",
-                    "Error",
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                if (showMessages)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "The table style could not be applied completely. Use PowerPoint Undo to restore the previous formatting.",
+                        "Error",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Error);
+                }
                 return false;
             }
         }
@@ -184,12 +229,12 @@ namespace oPenEfficiency.Features.Tables
         /// </summary>
         private static TableStyle ExtractStyleFromTable(Table table, Shape tableShape)
         {
-            var style = new TableStyle
-            {
-                HasHeaderRow = table.Application.CommandBars.GetEnabledMso("TableStyleOptions1") ||
-                               DetectHeaderRow(table),
-                HasAlternatingRows = false
-            };
+            bool hasHeaderRow;
+            try { hasHeaderRow = table.FirstRow; }
+            catch { hasHeaderRow = DetectHeaderRow(table); }
+            if (!hasHeaderRow) hasHeaderRow = DetectHeaderRow(table);
+
+            var style = new TableStyle { HasHeaderRow = hasHeaderRow, HasAlternatingRows = false };
 
             int totalRows = table.Rows.Count;
             if (totalRows == 0) return style;
@@ -215,7 +260,7 @@ namespace oPenEfficiency.Features.Tables
             // Extract row height
             if (table.Rows.Count >= 1)
             {
-                style.RowHeight = table.Rows[1].Height;
+                style.RowHeight = GetUniformRowHeight(table);
             }
 
             return style;
@@ -256,7 +301,7 @@ namespace oPenEfficiency.Features.Tables
                     }
                 }
             }
-            catch { }
+            catch { /* Unsupported optional table text formatting retains the existing cell style. */ }
 
             return false;
         }
@@ -327,7 +372,7 @@ namespace oPenEfficiency.Features.Tables
                     style.BodyFontSize = cell.TextFrame.TextRange.Font.Size;
                 }
             }
-            catch { }
+            catch { /* Unsupported optional table border formatting retains the existing border. */ }
         }
 
         /// <summary>
@@ -371,7 +416,7 @@ namespace oPenEfficiency.Features.Tables
                 // Header bottom border (special case for header row)
                 if (isHeader)
                 {
-                    var line = cell.Line;
+                    var line = table.Cell(rowNumber, 1).Borders[PpBorderType.ppBorderBottom];
                     style.HeaderBottomBorder = new BorderStyle
                     {
                         Visible = line.Visible == Office.MsoTriState.msoTrue,
@@ -458,15 +503,6 @@ namespace oPenEfficiency.Features.Tables
                 ApplyRowStyle(table, i, style, isHeader: false, isAltRow: isAltRow);
             }
 
-            // Apply borders to all cells
-            for (int i = 1; i <= totalRows; i++)
-            {
-                for (int j = 1; j <= totalCols; j++)
-                {
-                    ApplyBorderStyle(table.Cell(i, j).Shape, style);
-                }
-            }
-
             // Apply row height if specified
             if (style.RowHeight.HasValue)
             {
@@ -543,6 +579,7 @@ namespace oPenEfficiency.Features.Tables
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableBrandingFeature.ApplyRowStyle");
+                throw;
             }
         }
 
@@ -555,56 +592,16 @@ namespace oPenEfficiency.Features.Tables
             {
                 var borders = cell.Borders;
 
-                // Apply outside borders
-                if (style.TopBorder != null && style.TopBorder.Visible)
-                {
-                    var border = borders[PpBorderType.ppBorderTop];
-                    border.Visible = Office.MsoTriState.msoTrue;
-                    if (style.TopBorder.Color.HasValue) border.ForeColor.RGB = (int)style.TopBorder.Color.Value;
-                    if (style.TopBorder.Weight.HasValue) border.Weight = style.TopBorder.Weight.Value;
-                    if (style.TopBorder.Style.HasValue) border.Style = style.TopBorder.Style.Value;
-                }
-
-                if (style.BottomBorder != null && style.BottomBorder.Visible)
-                {
-                    var border = borders[PpBorderType.ppBorderBottom];
-                    border.Visible = Office.MsoTriState.msoTrue;
-                    if (style.BottomBorder.Color.HasValue) border.ForeColor.RGB = (int)style.BottomBorder.Color.Value;
-                    if (style.BottomBorder.Weight.HasValue) border.Weight = style.BottomBorder.Weight.Value;
-                    if (style.BottomBorder.Style.HasValue) border.Style = style.BottomBorder.Style.Value;
-                }
-
-                if (style.LeftBorder != null && style.LeftBorder.Visible)
-                {
-                    var border = borders[PpBorderType.ppBorderLeft];
-                    border.Visible = Office.MsoTriState.msoTrue;
-                    if (style.LeftBorder.Color.HasValue) border.ForeColor.RGB = (int)style.LeftBorder.Color.Value;
-                    if (style.LeftBorder.Weight.HasValue) border.Weight = style.LeftBorder.Weight.Value;
-                    if (style.LeftBorder.Style.HasValue) border.Style = style.LeftBorder.Style.Value;
-                }
-
-                if (style.RightBorder != null && style.RightBorder.Visible)
-                {
-                    var border = borders[PpBorderType.ppBorderRight];
-                    border.Visible = Office.MsoTriState.msoTrue;
-                    if (style.RightBorder.Color.HasValue) border.ForeColor.RGB = (int)style.RightBorder.Color.Value;
-                    if (style.RightBorder.Weight.HasValue) border.Weight = style.RightBorder.Weight.Value;
-                    if (style.RightBorder.Style.HasValue) border.Style = style.RightBorder.Style.Value;
-                }
+                ApplySingleBorder(borders, PpBorderType.ppBorderTop, style.TopBorder);
+                ApplySingleBorder(borders, PpBorderType.ppBorderBottom, style.BottomBorder);
+                ApplySingleBorder(borders, PpBorderType.ppBorderLeft, style.LeftBorder);
+                ApplySingleBorder(borders, PpBorderType.ppBorderRight, style.RightBorder);
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableBrandingFeature.ApplyCellBorders");
+                throw;
             }
-        }
-
-        /// <summary>
-        /// Applies border style to a cell.
-        /// </summary>
-        private static void ApplyBorderStyle(Shape cell, TableStyle style)
-        {
-            // Borders are applied through table cell Borders collection, not shape
-            // This method is a placeholder - borders are applied in ApplyRowStyle
         }
 
         /// <summary>
@@ -640,8 +637,12 @@ namespace oPenEfficiency.Features.Tables
         {
             try
             {
-                var styles = JsonService.Load<List<TableStyle>>(StylesFileName);
-                return styles ?? new List<TableStyle>();
+                var styles = JsonService.Load<List<TableStyle>>(StylesFileName) ?? new List<TableStyle>();
+                return styles
+                    .Where(style => style != null && !string.IsNullOrWhiteSpace(style.Name))
+                    .GroupBy(style => style.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.Last())
+                    .ToList();
             }
             catch
             {
@@ -652,16 +653,28 @@ namespace oPenEfficiency.Features.Tables
         /// <summary>
         /// Saves table styles to JSON file.
         /// </summary>
-        public static void SaveStyles(List<TableStyle> styles)
+        public static bool SaveStyles(List<TableStyle> styles)
         {
             try
             {
-                JsonService.Save(styles, StylesFileName);
+                return JsonService.TrySave(styles ?? new List<TableStyle>(), StylesFileName);
             }
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "TableBrandingFeature.SaveStyles");
+                return false;
             }
+        }
+
+        private static float? GetUniformRowHeight(Table table)
+        {
+            if (table.Rows.Count == 0) return null;
+            float first = table.Rows[1].Height;
+            for (int row = 2; row <= table.Rows.Count; row++)
+            {
+                if (Math.Abs(table.Rows[row].Height - first) > 0.1f) return null;
+            }
+            return first;
         }
 
         /// <summary>

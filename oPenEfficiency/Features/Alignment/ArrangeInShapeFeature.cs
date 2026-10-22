@@ -1,25 +1,41 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
+using oPenEfficiency.Services;
 using oPenEfficiency.Services.Attributes;
 
 namespace oPenEfficiency.Features
 {
+    public enum ArrangeProAnchorMode
+    {
+        SelectionCenter,
+        FirstShape,
+        LastShape
+    }
+
+    public enum ArrangeProOrder
+    {
+        Selection,
+        LeftToRight,
+        TopToBottom
+    }
+
     /// <summary>
     /// Feature: Arrange selected shapes in various shapes (Circle, Triangle, Heart, etc.).
     /// </summary>
     [FeatureMetadata(
         Id = "BtnArrangeInShape",
-        Name = "Arrange in Shape",
-        Tooltip = "Arrange in shape",
+        Name = "Arrange Shapes in Pattern",
+        SearchAliases = new[] { "Arrange in Shape" },
+        Tooltip = "Arrange shapes in a geometric pattern",
         IconData = "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,4C16.42,4 20,7.58 20,12C20,16.42 16.42,20 12,20C7.58,20 4,16.42 4,12C4,7.58 7.58,4 12,4Z",
         Color = "#F43F5E",
         Description = "Arranges selected shapes in a circular, triangular, or other pattern.",
-        DetailedHelpText = "### Arrange in Shape\nDistributes selected shapes into a geometric pattern within their total bounding area.\n\n**Right-Click Options:**\n* **Patterns**: Choose between Circle, Triangle, Square, Star, Octagon, or Pentagon.\n* **Pro Mode**: Opens a dialog for fine-tuned control over radius, start angle, and auto-rotation towards center.",
-        Keywords = "circle layout, geometric pattern, radial arrangement, polygon",
-        MinSelection = 2)]
+        DetailedHelpText = "### Arrange Shapes in Pattern\nDistributes selected shapes into a geometric pattern within their total bounding area.\n\n**Right-Click Options:**\n* **Patterns**: Choose between Circle, Triangle, Square, Star, Octagon, or Pentagon.\n* **Pro Mode**: Opens a dialog for fine-tuned control over radius, start angle, and auto-rotation towards center.",
+        MinSelection = 2,
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class ArrangeInShapeFeature
     {
         /// <summary>
@@ -51,35 +67,77 @@ namespace oPenEfficiency.Features
             return ArrangeInShapePro(manager, shapeType, shapeRange.Count, radius, 0, false, false, false);
         }
 
-        public static bool ArrangeInShapePro(PowerPointManager manager, string shapeType, int instances, float radius, float startAngleDegree, bool centerOnSlide, bool rotateToCenter, bool fillShape = false, float? anchorX = null, float? anchorY = null)
+        public static bool ArrangeInShapePro(
+            PowerPointManager manager,
+            string shapeType,
+            int instances,
+            float radius,
+            float startAngleDegree,
+            bool centerOnSlide,
+            bool rotateToCenter,
+            bool fillShape = false,
+            float? anchorX = null,
+            float? anchorY = null,
+            ArrangeProAnchorMode anchorMode = ArrangeProAnchorMode.SelectionCenter,
+            ArrangeProOrder order = ArrangeProOrder.Selection,
+            bool clockwise = true,
+            float arcSpanDegrees = 270f,
+            bool avoidOverlap = false,
+            IDictionary<int, Tuple<float, float>> originalOrderPositions = null)
         {
             if (manager == null) return false;
+            var originalStates = new List<Tuple<Shape, float, float, float>>();
+            var createdInstances = new List<Shape>();
             try
             {
                 var app = manager.GetApplication();
                 var selection = manager.GetSelectedShapes();
-                if (selection == null || selection.Count == 0) return false;
+                if (app == null || selection == null || selection.Count == 0 || instances < 1 || radius <= 0 || float.IsNaN(radius) || float.IsInfinity(radius)) return false;
+
+                string normalizedShapeType = (shapeType ?? string.Empty).Trim().ToLowerInvariant();
+                if (normalizedShapeType != "circle" && normalizedShapeType != "arc" &&
+                    normalizedShapeType != "triangle" && normalizedShapeType != "square" &&
+                    normalizedShapeType != "pentagon" && normalizedShapeType != "octagon" &&
+                    normalizedShapeType != "star" && normalizedShapeType != "heart") return false;
+                if (normalizedShapeType == "arc" &&
+                    (arcSpanDegrees <= 0 || arcSpanDegrees > 360 ||
+                     float.IsNaN(arcSpanDegrees) || float.IsInfinity(arcSpanDegrees))) return false;
+
+                try { app.StartNewUndoEntry(); } catch { /* Arrangement remains valid when undo grouping is unavailable. */ }
 
                 List<Shape> shapesToArrange = new List<Shape>();
+                Shape anchorShape = null;
                 const string InstanceTag = "oPE_ArrangePro_Instance";
+                const string SourceTag = "oPE_ArrangePro_Source";
+                var instancesToDelete = new List<Shape>();
 
                 if (selection.Count == 1)
                 {
                     var baseShape = selection[1];
-                    shapesToArrange.Add(baseShape);
+                    originalStates.Add(Tuple.Create(baseShape, baseShape.Left, baseShape.Top, baseShape.Rotation));
+                    bool useBaseAsAnchor = anchorMode == ArrangeProAnchorMode.FirstShape ||
+                                           anchorMode == ArrangeProAnchorMode.LastShape;
+                    if (useBaseAsAnchor)
+                        anchorShape = baseShape;
+                    else
+                        shapesToArrange.Add(baseShape);
 
                     var slide = (Slide)baseShape.Parent;
                     var existingInstances = new List<Shape>();
                     for (int i = 1; i <= slide.Shapes.Count; i++)
                     {
                         var s = slide.Shapes[i];
-                        if (s.Tags[InstanceTag] == "true") existingInstances.Add(s);
+                        if (s.Tags[InstanceTag] == "true" && s.Tags[SourceTag] == baseShape.Id.ToString())
+                        {
+                            existingInstances.Add(s);
+                            originalStates.Add(Tuple.Create(s, s.Left, s.Top, s.Rotation));
+                        }
                     }
 
-                    int needed = instances - 1;
+                    int needed = useBaseAsAnchor ? instances : instances - 1;
                     while (existingInstances.Count > needed && existingInstances.Count > 0)
                     {
-                        existingInstances[existingInstances.Count - 1].Delete();
+                        instancesToDelete.Add(existingInstances[existingInstances.Count - 1]);
                         existingInstances.RemoveAt(existingInstances.Count - 1);
                     }
 
@@ -88,20 +146,38 @@ namespace oPenEfficiency.Features
                         var dup = baseShape.Duplicate();
                         var newShape = dup[1];
                         newShape.Tags.Add(InstanceTag, "true");
+                        newShape.Tags.Add(SourceTag, baseShape.Id.ToString());
                         existingInstances.Add(newShape);
+                        createdInstances.Add(newShape);
                     }
 
                     shapesToArrange.AddRange(existingInstances);
                 }
                 else
                 {
-                    for (int i = 1; i <= selection.Count; i++) shapesToArrange.Add(selection[i]);
+                    for (int i = 1; i <= selection.Count; i++)
+                    {
+                        var selectedShape = selection[i];
+                        originalStates.Add(Tuple.Create(selectedShape, selectedShape.Left, selectedShape.Top, selectedShape.Rotation));
+                        if ((anchorMode == ArrangeProAnchorMode.FirstShape && i == 1) ||
+                            (anchorMode == ArrangeProAnchorMode.LastShape && i == selection.Count))
+                            anchorShape = selectedShape;
+                        else
+                            shapesToArrange.Add(selectedShape);
+                    }
                 }
 
+                SortShapes(shapesToArrange, order, originalOrderPositions);
                 int count = shapesToArrange.Count;
+                if (count == 0) return false;
                 float centerX, centerY;
-                
-                if (anchorX.HasValue && anchorY.HasValue)
+
+                if (anchorShape != null)
+                {
+                    centerX = anchorShape.Left + anchorShape.Width / 2f;
+                    centerY = anchorShape.Top + anchorShape.Height / 2f;
+                }
+                else if (anchorX.HasValue && anchorY.HasValue)
                 {
                     centerX = anchorX.Value;
                     centerY = anchorY.Value;
@@ -125,150 +201,163 @@ namespace oPenEfficiency.Features
                     centerY = (minT + maxB) / 2f;
                 }
 
-                double startAngleRad = (startAngleDegree * Math.PI) / 180.0;
-
-                Action<Shape, float, float> applyTrans = (shape, rawX, rawY) => {
-                    double dx = rawX - centerX;
-                    double dy = rawY - centerY;
-                    float tx = centerX + (float)(dx * Math.Cos(startAngleRad) - dy * Math.Sin(startAngleRad));
-                    float ty = centerY + (float)(dx * Math.Sin(startAngleRad) + dy * Math.Cos(startAngleRad));
-
-                    shape.Left = tx - (shape.Width / 2f);
-                    shape.Top = ty - (shape.Height / 2f);
-
-                    if (rotateToCenter) {
-                        double dx2 = tx - centerX;
-                        double dy2 = ty - centerY;
-                        double rotAngleRad = Math.Atan2(dy2, dx2);
-                        shape.Rotation = (float)(rotAngleRad * 180.0 / Math.PI) + 90; 
-                    } else {
-                        shape.Rotation = 0;
-                    }
-                };
-
-                if (fillShape && shapeType.ToLower() == "square")
+                float effectiveRadius = radius;
+                List<Tuple<float, float>> targets = null;
+                int attempts = avoidOverlap ? 100 : 1;
+                for (int attempt = 0; attempt < attempts; attempt++)
                 {
-                    int gridSize = (int)Math.Ceiling(Math.Sqrt(count));
-                    float spacing = gridSize > 1 ? 2 * radius / (gridSize - 1) : 0;
-                    int rCount = (int)Math.Ceiling((double)count / gridSize);
-                    float totalHeight = (rCount - 1) * spacing;
-                    float startY = centerY - totalHeight / 2f;
-                    
-                    int placed = 0;
-                    for (int r = 0; r < rCount; r++) {
-                        int itemsInRow = Math.Min(gridSize, count - placed);
-                        float rowWidth = (itemsInRow - 1) * spacing;
-                        float startX = centerX - rowWidth / 2f;
-                        float ty_raw = startY + r * spacing;
-                        
-                        for (int c = 0; c < itemsInRow; c++) {
-                            float tx_raw = startX + c * spacing;
-                            applyTrans(shapesToArrange[placed], tx_raw, ty_raw);
-                            placed++;
-                        }
-                    }
+                    targets = PatternPlacementPlanner.BuildTargets(
+                        normalizedShapeType,
+                        count,
+                        effectiveRadius,
+                        centerX,
+                        centerY,
+                        startAngleDegree,
+                        fillShape,
+                        clockwise,
+                        arcSpanDegrees,
+                        anchorShape != null);
+
+                    if (!avoidOverlap || !HasOverlap(shapesToArrange, targets, anchorShape, 4f))
+                        break;
+
+                    effectiveRadius *= 1.08f;
+                    targets = null;
                 }
-                else if (fillShape && shapeType.ToLower() == "triangle")
+
+                if (targets == null)
+                    throw new InvalidOperationException("Arrange Shapes Geometrically could not find a collision-free radius.");
+
+                for (int i = 0; i < count; i++)
                 {
-                    int R = (int)Math.Ceiling((-1 + Math.Sqrt(1 + 8 * count)) / 2);
-                    if (R < 1) R = 1;
-                    float rCircum = radius * 2.0f;
-                    float triHeight = 1.5f * rCircum;
-                    float maxRowWidth = (float)(rCircum * Math.Sqrt(3));
-                    float spacingY = R > 1 ? triHeight / (R - 1) : 0;
-                    float spacingX = R > 1 ? maxRowWidth / (R - 1) : 0;
-                    float startY = centerY - rCircum; 
-                    
-                    int[] rowCounts = new int[R];
-                    int rem = count;
-                    for (int r = R - 1; r >= 0; r--) {
-                        int take = Math.Min(r + 1, rem);
-                        rowCounts[r] = take;
-                        rem -= take;
-                        if (rem <= 0) break;
-                    }
-                    
-                    int placed = 0;
-                    for (int r = 0; r < R; r++) {
-                        int itemsInRow = rowCounts[r];
-                        if (itemsInRow == 0) continue;
-                        float rowWidth = (itemsInRow - 1) * spacingX;
-                        float startX = centerX - rowWidth / 2f;
-                        float ty_raw = startY + r * spacingY;
-                        for (int c = 0; c < itemsInRow; c++) {
-                            float tx_raw = startX + c * spacingX;
-                            applyTrans(shapesToArrange[placed], tx_raw, ty_raw);
-                            placed++;
-                        }
-                    }
-                }
-                else if (fillShape) 
-                {
-                    float goldenAngle = (float)(Math.PI * (3.0 - Math.Sqrt(5.0)));
-                    for (int i = 0; i < count; i++) {
-                        float r_i = radius * (count > 1 ? (float)Math.Sqrt((double)i / (count - 1)) : 0);
-                        float theta = (float)startAngleRad + i * goldenAngle - (float)Math.PI/2;
-                        float tx = centerX + r_i * (float)Math.Cos(theta);
-                        float ty = centerY + r_i * (float)Math.Sin(theta);
-                        applyTrans(shapesToArrange[i], tx, ty);
-                    }
-                }
-                else
-                {
-                    // Basic shapes on outline
-                    for (int i = 0; i < count; i++)
+                    var shape = shapesToArrange[i];
+                    float targetX = targets[i].Item1;
+                    float targetY = targets[i].Item2;
+                    shape.Left = targetX - shape.Width / 2f;
+                    shape.Top = targetY - shape.Height / 2f;
+
+                    if (rotateToCenter)
                     {
-                        double angle = (2.0 * Math.PI * i / count);
-                        float tx_raw = 0, ty_raw = 0;
-
-                        switch (shapeType.ToLower())
-                        {
-                            case "heart":
-                                float t = (float)angle;
-                                tx_raw = centerX + radius * (float)(16 * Math.Pow(Math.Sin(t), 3)) / 16f;
-                                ty_raw = centerY - radius * (float)(13 * Math.Cos(t) - 5 * Math.Cos(2 * t) - 2 * Math.Cos(3 * t) - Math.Cos(4 * t)) / 16f;
-                                break;
-                            case "triangle":
-                                float t_tri = (float)angle;
-                                if (t_tri < 2 * Math.PI / 3) {
-                                    float p = t_tri / (float)(2 * Math.PI / 3);
-                                    tx_raw = centerX + radius * (float)((1 - p) * Math.Sin(0) + p * Math.Sin(2 * Math.PI / 3));
-                                    ty_raw = centerY - radius * (float)((1 - p) * Math.Cos(0) + p * Math.Cos(2 * Math.PI / 3));
-                                } else if (t_tri < 4 * Math.PI / 3) {
-                                    float p = (t_tri - (float)(2 * Math.PI / 3)) / (float)(2 * Math.PI / 3);
-                                    tx_raw = centerX + radius * (float)((1 - p) * Math.Sin(2 * Math.PI / 3) + p * Math.Sin(4 * Math.PI / 3));
-                                    ty_raw = centerY - radius * (float)((1 - p) * Math.Cos(2 * Math.PI / 3) + p * Math.Cos(4 * Math.PI / 3));
-                                } else {
-                                    float p = (t_tri - (float)(4 * Math.PI / 3)) / (float)(2 * Math.PI / 3);
-                                    tx_raw = centerX + radius * (float)((1 - p) * Math.Sin(4 * Math.PI / 3) + p * Math.Sin(2 * Math.PI));
-                                    ty_raw = centerY - radius * (float)((1 - p) * Math.Cos(4 * Math.PI / 3) + p * Math.Cos(2 * Math.PI));
-                                }
-                                break;
-                            case "square":
-                                float t_sq = (float)(angle + Math.PI / 4) % (float)(2 * Math.PI);
-                                float side = (float)(2 * Math.PI / 4);
-                                int sideIdx = (int)(t_sq / side);
-                                float p_sq = (t_sq % side) / side;
-                                float[,] corners = { {1,-1}, {1,1}, {-1,1}, {-1,-1}, {1,-1} };
-                                tx_raw = centerX + radius * (corners[sideIdx, 0] * (1 - p_sq) + corners[sideIdx + 1, 0] * p_sq);
-                                ty_raw = centerY + radius * (corners[sideIdx, 1] * (1 - p_sq) + corners[sideIdx + 1, 1] * p_sq);
-                                break;
-                            case "circle":
-                            default:
-                                tx_raw = centerX + radius * (float)Math.Cos(angle - Math.PI / 2);
-                                ty_raw = centerY + radius * (float)Math.Sin(angle - Math.PI / 2);
-                                break;
-                        }
-                        applyTrans(shapesToArrange[i], tx_raw, ty_raw);
+                        double rotation = Math.Atan2(targetY - centerY, targetX - centerX);
+                        shape.Rotation = (float)(rotation * 180.0 / Math.PI) + 90f;
                     }
                 }
+
+                foreach (var extraInstance in instancesToDelete) extraInstance.Delete();
                 return true;
             }
             catch (Exception ex)
             {
+                foreach (var state in originalStates)
+                {
+                    try { state.Item1.Left = state.Item2; state.Item1.Top = state.Item3; state.Item1.Rotation = state.Item4; } catch { /* Preserve the primary error if a stale shape cannot be restored. */ }
+                }
+                foreach (var created in createdInstances)
+                {
+                    try { created.Delete(); } catch { /* Rollback shape may already have been removed by PowerPoint. */ }
+                }
                 ExceptionLogger.Log(ex, "ArrangeInShapeFeature.ArrangeInShapePro");
                 return false;
             }
         }
+
+        private static void SortShapes(
+            List<Shape> shapes,
+            ArrangeProOrder order,
+            IDictionary<int, Tuple<float, float>> originalOrderPositions)
+        {
+            if (order == ArrangeProOrder.LeftToRight)
+            {
+                shapes.Sort((left, right) =>
+                {
+                    var leftPosition = GetOrderPosition(left, originalOrderPositions);
+                    var rightPosition = GetOrderPosition(right, originalOrderPositions);
+                    int horizontal = leftPosition.Item1.CompareTo(rightPosition.Item1);
+                    return horizontal != 0
+                        ? horizontal
+                        : leftPosition.Item2.CompareTo(rightPosition.Item2);
+                });
+            }
+            else if (order == ArrangeProOrder.TopToBottom)
+            {
+                shapes.Sort((left, right) =>
+                {
+                    var leftPosition = GetOrderPosition(left, originalOrderPositions);
+                    var rightPosition = GetOrderPosition(right, originalOrderPositions);
+                    int vertical = leftPosition.Item2.CompareTo(rightPosition.Item2);
+                    return vertical != 0
+                        ? vertical
+                        : leftPosition.Item1.CompareTo(rightPosition.Item1);
+                });
+            }
+        }
+
+        private static Tuple<float, float> GetOrderPosition(
+            Shape shape,
+            IDictionary<int, Tuple<float, float>> originalOrderPositions)
+        {
+            Tuple<float, float> position;
+            if (originalOrderPositions != null &&
+                originalOrderPositions.TryGetValue(shape.Id, out position))
+                return position;
+
+            return Tuple.Create(shape.Left + shape.Width / 2f, shape.Top + shape.Height / 2f);
+        }
+
+        private static bool HasOverlap(
+            IList<Shape> shapes,
+            IList<Tuple<float, float>> targets,
+            Shape anchorShape,
+            float gap)
+        {
+            for (int i = 0; i < shapes.Count; i++)
+            {
+                if (anchorShape != null &&
+                    RectanglesOverlap(
+                        targets[i].Item1,
+                        targets[i].Item2,
+                        shapes[i].Width,
+                        shapes[i].Height,
+                        anchorShape.Left + anchorShape.Width / 2f,
+                        anchorShape.Top + anchorShape.Height / 2f,
+                        anchorShape.Width,
+                        anchorShape.Height,
+                        gap))
+                    return true;
+
+                for (int j = i + 1; j < shapes.Count; j++)
+                {
+                    if (RectanglesOverlap(
+                        targets[i].Item1,
+                        targets[i].Item2,
+                        shapes[i].Width,
+                        shapes[i].Height,
+                        targets[j].Item1,
+                        targets[j].Item2,
+                        shapes[j].Width,
+                        shapes[j].Height,
+                        gap))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool RectanglesOverlap(
+            float firstX,
+            float firstY,
+            float firstWidth,
+            float firstHeight,
+            float secondX,
+            float secondY,
+            float secondWidth,
+            float secondHeight,
+            float gap)
+        {
+            return Math.Abs(firstX - secondX) < (firstWidth + secondWidth) / 2f + gap &&
+                   Math.Abs(firstY - secondY) < (firstHeight + secondHeight) / 2f + gap;
+        }
+
     }
 }

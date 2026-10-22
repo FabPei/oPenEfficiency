@@ -5,20 +5,45 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
 using oPenEfficiency.Services;
+using oPenEfficiency.Features;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
     public partial class StyleCheckWindow : Window
     {
         private PowerPointManager _powerPointManager;
+        private StyleCheckScope _scope;
+        private bool _scopeSelectorReady;
 
-        public StyleCheckWindow(PowerPointManager powerPointManager)
+        public StyleCheckWindow(
+            PowerPointManager powerPointManager,
+            StyleCheckScope scope = StyleCheckScope.SelectedSlides)
         {
             InitializeComponent();
             _powerPointManager = powerPointManager;
+            SetScope(scope, false);
+            _scopeSelectorReady = true;
             RefreshData();
+        }
+
+        public void SetScope(StyleCheckScope scope, bool refresh = true)
+        {
+            _scope = scope;
+            if (ScopeSelector != null && ScopeSelector.SelectedIndex != (int)scope)
+            {
+                bool wasReady = _scopeSelectorReady;
+                _scopeSelectorReady = false;
+                ScopeSelector.SelectedIndex = (int)scope;
+                _scopeSelectorReady = wasReady;
+            }
+            if (ScopeSummaryText != null)
+            {
+                ScopeSummaryText.Text = GetScopeDisplayName(scope);
+            }
+            if (refresh) RefreshData();
         }
 
         public void RefreshData()
@@ -26,7 +51,7 @@ namespace oPenEfficiency.UI
             try
             {
                 var app = _powerPointManager.GetApplication();
-                var slides = GetSelectedSlidesList(app);
+                var slides = GetSlidesForScope(app, _scope);
                 
                 var styleErrors = StyleScanner.ScanSlides(app, slides);
                 var consistencyErrors = ConsistencyScanner.ScanSlides(app, slides);
@@ -44,12 +69,37 @@ namespace oPenEfficiency.UI
             RefreshData();
         }
 
-        private List<Slide> GetSelectedSlidesList(Microsoft.Office.Interop.PowerPoint.Application app)
+        private void ScopeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_scopeSelectorReady || ScopeSelector.SelectedIndex < 0) return;
+            SetScope((StyleCheckScope)ScopeSelector.SelectedIndex);
+        }
+
+        private List<Slide> GetSlidesForScope(
+            Microsoft.Office.Interop.PowerPoint.Application app,
+            StyleCheckScope scope)
         {
             var slides = new List<Slide>();
             try
             {
                 if (app.ActiveWindow == null) return slides;
+
+                if (scope == StyleCheckScope.EntirePresentation)
+                {
+                    foreach (Slide slide in app.ActivePresentation.Slides)
+                    {
+                        slides.Add(slide);
+                    }
+                    return slides;
+                }
+
+                if (scope == StyleCheckScope.CurrentSlide)
+                {
+                    try { slides.Add((Slide)app.ActiveWindow.View.Slide); }
+                    catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.GetSlides.CurrentSlide"); }
+                    return slides;
+                }
+
                 var selection = app.ActiveWindow.Selection;
 
                 if (selection.Type == PpSelectionType.ppSelectionSlides)
@@ -65,16 +115,31 @@ namespace oPenEfficiency.UI
                         {
                             foreach (Slide s in slideRange) slides.Add(s);
                         }
-                    } catch { }
+                    }
+                    catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.GetSlides.SelectedSlides"); }
                 }
 
                 if (slides.Count == 0)
                 {
-                    try { slides.Add((Slide)app.ActiveWindow.View.Slide); } catch { }
+                    try { slides.Add((Slide)app.ActiveWindow.View.Slide); }
+                    catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.GetSlides.SelectionFallback"); }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.GetSlides"); }
             return slides.Distinct().ToList();
+        }
+
+        private static string GetScopeDisplayName(StyleCheckScope scope)
+        {
+            switch (scope)
+            {
+                case StyleCheckScope.CurrentSlide:
+                    return "Current slide";
+                case StyleCheckScope.EntirePresentation:
+                    return "Entire presentation";
+                default:
+                    return "Selected slides";
+            }
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -98,20 +163,20 @@ namespace oPenEfficiency.UI
                     var pres = app.ActivePresentation;
                     Slide slide = null;
                     
-                    try { slide = pres.Slides[item.SlideNumber]; } catch { }
+                    try { slide = pres.Slides[item.SlideNumber]; }
+                    catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.ResultDoubleClick.FindSlide"); }
                     if (slide == null) return;
 
                     if (item.ShapeName == "Slide")
                     {
-                        slide.Tags.Add(item.ErrorCategory == "Consistency" ? "oPE_IgnoreConsistencyCheck" : "oPE_IgnoreStyleCheck", "True");
+                        StyleCheckRuleIgnore.Ignore(slide, item.ErrorCategory, item.RuleId);
                     }
                     else
                     {
-                        Shape shape = null;
-                        try { shape = slide.Shapes[item.ShapeName]; } catch { }
+                        Shape shape = FindShapeByName(slide, item.ShapeName);
                         if (shape != null)
                         {
-                            shape.Tags.Add(item.ErrorCategory == "Consistency" ? "oPE_IgnoreConsistencyCheck" : "oPE_IgnoreStyleCheck", "True");
+                            StyleCheckRuleIgnore.Ignore(shape, item.ErrorCategory, item.RuleId);
                         }
                     }
                     
@@ -126,22 +191,88 @@ namespace oPenEfficiency.UI
         }
 
         
-        private void FixAll_Click(object sender, RoutedEventArgs e)
+        private void FixSafeIssues_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is UnifiedCheckViewModel vm)
             {
                 var fixableItems = vm.BySlide.SelectMany(s => s.Errors)
-                    .Where(err => err.CanAutoCorrect)
+                    .Where(err => err.IsSafeAutoCorrect)
                     .OrderByDescending(err => err.TextStart)
                     .ToList();
                 
-                if (fixableItems.Count == 0) return;
+                if (fixableItems.Count == 0)
+                {
+                    MessageBox.Show(
+                        "No safe automatic corrections are available in the current scope.",
+                        "Style Check",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
 
+                string preview = string.Join(
+                    Environment.NewLine,
+                    fixableItems
+                        .GroupBy(item => item.ErrorType)
+                        .OrderBy(group => group.Key)
+                        .Select(group => $"• {group.Key}: {group.Count()}"));
+
+                var result = MessageBox.Show(
+                    $"Style Check can apply {fixableItems.Count} low-risk corrections:\n\n{preview}\n\n" +
+                    "Only suggested brand-color replacements, double-space fixes, and repeated-word fixes are included. Continue?",
+                    "Preview Safe Corrections",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                if (result != MessageBoxResult.Yes) return;
+
+                try { _powerPointManager.GetApplication().StartNewUndoEntry(); }
+                catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.FixAll.StartUndoEntry"); }
                 foreach (var item in fixableItems)
                 {
                     ApplyAutoFix(item, false);
                 }
                 RefreshData();
+            }
+        }
+
+        private void Jump_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is UnifiedErrorItem item)
+            {
+                NavigateToItem(item);
+            }
+        }
+
+        private void NavigateToItem(UnifiedErrorItem item)
+        {
+            try
+            {
+                var app = _powerPointManager.GetApplication();
+                var slide = app.ActivePresentation.Slides[item.SlideNumber];
+                app.ActiveWindow.View.GotoSlide(slide.SlideIndex);
+
+                if (item.ShapeName == "Slide") return;
+
+                Shape shape = FindShapeByName(slide, item.ShapeName);
+                if (shape == null) return;
+
+                shape.Select();
+                if (item.TextStart > 0 &&
+                    item.TextLength > 0 &&
+                    shape.HasTextFrame == Office.MsoTriState.msoTrue)
+                {
+                    try
+                    {
+                        shape.TextFrame.TextRange
+                            .Characters(item.TextStart, item.TextLength)
+                            .Select();
+                    }
+                    catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.ApplyAutoFix.SelectText"); }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not navigate to the finding: " + ex.Message);
             }
         }
 
@@ -160,11 +291,11 @@ namespace oPenEfficiency.UI
                 var app = _powerPointManager.GetApplication();
                 var pres = app.ActivePresentation;
                 Slide slide = null;
-                try { slide = pres.Slides[item.SlideNumber]; } catch { }
+                try { slide = pres.Slides[item.SlideNumber]; }
+                catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.ApplyAutoFix.FindSlide"); }
                 if (slide == null) return;
 
-                Shape shape = null;
-                try { shape = slide.Shapes[item.ShapeName]; } catch { }
+                Shape shape = FindShapeByName(slide, item.ShapeName);
                 if (shape == null) return;
 
                 if (item.ErrorCategory == "Style" && item.IsColor && !string.IsNullOrEmpty(item.SuggestedCorrection))
@@ -218,6 +349,49 @@ namespace oPenEfficiency.UI
             }
         }
 
+        private static Shape FindShapeByName(Slide slide, string shapeName)
+        {
+            if (slide == null || string.IsNullOrEmpty(shapeName)) return null;
+
+            foreach (Shape shape in slide.Shapes)
+            {
+                Shape match = FindShapeByName(shape, shapeName);
+                if (match != null) return match;
+            }
+
+            return null;
+        }
+
+        private static Shape FindShapeByName(Shape shape, string shapeName)
+        {
+            try
+            {
+                if (string.Equals(shape.Name, shapeName, StringComparison.Ordinal))
+                {
+                    return shape;
+                }
+
+                if (shape.Type == Office.MsoShapeType.msoGroup)
+                {
+                    foreach (Shape child in shape.GroupItems)
+                    {
+                        Shape match = FindShapeByName(child, shapeName);
+                        if (match != null) return match;
+                    }
+                }
+            }
+            catch (Exception ex) { ReportOptionalStyleCheckFailure(ex, "StyleCheckWindow.FindShapeByName"); }
+
+            return null;
+        }
+
+        private static void ReportOptionalStyleCheckFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // A stale selection or shape proxy skips only the affected style-check item.
+        }
+
         private void SlideName_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is TextBlock tb && tb.DataContext is UnifiedSlideSummaryItem slideItem)
@@ -244,6 +418,7 @@ namespace oPenEfficiency.UI
 
     public class UnifiedErrorItem
     {
+        public string RuleId { get; set; }
         public string ErrorCategory { get; set; } // "Style" or "Consistency"
         public string ErrorType { get; set; }
         public string Value { get; set; }
@@ -254,6 +429,11 @@ namespace oPenEfficiency.UI
         public int TextLength { get; set; } = 0;
 
         public bool CanAutoCorrect => !string.IsNullOrEmpty(SuggestedCorrection);
+        public bool IsSafeAutoCorrect =>
+            CanAutoCorrect &&
+            ((ErrorCategory == "Style" && IsColor) ||
+             (ErrorCategory == "Consistency" &&
+              (RuleId == "DoubleSpaces" || RuleId == "RepeatedWord")));
         public bool IsColor => ErrorCategory == "Style" && ErrorType.Contains("Color");
     }
 
@@ -291,6 +471,7 @@ namespace oPenEfficiency.UI
             {
                 unifiedErrors.Add(new UnifiedErrorItem
                 {
+                    RuleId = se.RuleId ?? se.ErrorType,
                     ErrorCategory = "Style",
                     ErrorType = se.ErrorType,
                     Value = se.Value,
@@ -306,6 +487,7 @@ namespace oPenEfficiency.UI
             {
                 unifiedErrors.Add(new UnifiedErrorItem
                 {
+                    RuleId = ce.RuleId ?? ce.ErrorType,
                     ErrorCategory = "Consistency",
                     ErrorType = ce.ErrorType,
                     Value = ce.Description,

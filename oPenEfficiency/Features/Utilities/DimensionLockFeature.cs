@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
@@ -12,15 +13,15 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnLockDimensions",
-        Name = "Dimension Lock",
-        Tooltip = "Dimension lock",
+        Name = "Lock/Unlock Aspect Ratio",
+        SearchAliases = new[] { "Aspect Ratio Lock" },
+        Tooltip = "Toggle proportional resizing for selected shapes",
         IconData = "M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M12,7H14V12H12V7M12,14H14V17H12V14Z",
         Color = "#6B7280",
-        Description = "Locks or unlocks the dimensions (width and height) of selected shapes.",
-        DetailedHelpText = "### Dimension Lock\nPrevents the width and height of selected shapes from being changed while allowing them to be moved.\n**Right-Click Options:**\n* **Global Toggle**: Apply or remove dimension locks for all shapes across the entire presentation.",
-        Keywords = "freeze, aspect ratio, prevent resize, safeguard, restrict",
+        Description = "Locks or unlocks the aspect ratio of selected shapes while still allowing proportional resizing.",
+        DetailedHelpText = "### Lock/Unlock Aspect Ratio\nLocks the width-to-height ratio of all selected shapes. Shapes can still be moved and resized proportionally. If the selection has mixed states, clicking locks all selected shapes; clicking again unlocks all. Right-click to lock or unlock every slide shape in the presentation.",
         MinSelection = 1,
-        RequiredType = PpSelectionType.ppSelectionShapes,
+        RequiredType = OfficeSelectionType.Shapes,
         IsToggle = true)]
     public static class DimensionLockFeature
     {
@@ -40,12 +41,10 @@ namespace oPenEfficiency.Features
                 var selection = manager.GetSelectedShapes();
                 if (selection == null || selection.Count == 0) return false;
 
-                bool targetState = true;
-                if (forceState == null)
-                {
-                    targetState = !IsDimensionLocked(selection[1]);
-                }
-                else targetState = forceState.Value;
+                bool targetState = forceState ?? selection.Cast<Shape>().Any(shape => !IsDimensionLocked(shape));
+
+                try { manager.GetApplication()?.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "DimensionLockFeature.SetSelectionDimensionLock.StartUndo"); }
 
                 for (int i = 1; i <= selection.Count; i++)
                 {
@@ -68,27 +67,15 @@ namespace oPenEfficiency.Features
                 var app = manager.GetApplication();
                 if (app.ActivePresentation == null) return false;
 
-                bool targetState = true;
-                if (forceState == null)
-                {
-                    bool found = false;
-                    foreach (Slide slide in app.ActivePresentation.Slides)
-                    {
-                        if (slide.Shapes.Count > 0)
-                        {
-                            targetState = !IsDimensionLocked(slide.Shapes[1]);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) return false;
-                }
-                else targetState = forceState.Value;
+                var shapes = app.ActivePresentation.Slides.Cast<Slide>()
+                    .SelectMany(slide => slide.Shapes.Cast<Shape>()).ToList();
+                if (shapes.Count == 0) return false;
+                bool targetState = forceState ?? shapes.Any(shape => !IsDimensionLocked(shape));
 
-                foreach (Slide slide in app.ActivePresentation.Slides)
-                {
-                    foreach (Shape shape in slide.Shapes) SetDimensionLock(shape, targetState);
-                }
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "DimensionLockFeature.SetGlobalDimensionLock.StartUndo"); }
+
+                foreach (var shape in shapes) SetDimensionLock(shape, targetState);
                 return true;
             }
             catch (Exception ex)
@@ -126,8 +113,8 @@ namespace oPenEfficiency.Features
 
             try
             {
-                // Store custom tag for dimension lock state
-                shape.Tags.Add("oPE_DimensionLocked", lockState.ToString().ToLower());
+                if (lockState) shape.Tags.Add("oPE_DimensionLocked", "true");
+                else shape.Tags.Delete("oPE_DimensionLocked");
             }
             catch (Exception)
             {
@@ -135,7 +122,7 @@ namespace oPenEfficiency.Features
                 {
                     // If tag already exists, delete it and add again
                     shape.Tags.Delete("oPE_DimensionLocked");
-                    shape.Tags.Add("oPE_DimensionLocked", lockState.ToString().ToLower());
+                    if (lockState) shape.Tags.Add("oPE_DimensionLocked", "true");
                 }
                 catch (Exception ex2)
                 {

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnCharacterSpacing",
+  "title": "Character Spacing (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnCharacterSpacing-001",
+      "title": "Character Spacing applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Character Spacing (BtnCharacterSpacing) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnCharacterSpacing-002",
+      "title": "Character Spacing documents the toggle-gallery-only contract (REG-TEXTFONTPROPS-001 disposition b)",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Production catalog and context menu carry the corrected contract: Character Spacing exposes exactly one catalog variant 'More Spacing...' and Strikethrough exactly one 'Toggle Strikethrough Formatting'; the Feature Explorer discovery help no longer advertises the dead explicit-action paths (no 'Right-click to apply Very Tight', no 'Apply/Remove Strikethrough Formatting'); each context-menu block dispatches only the working native route (CharacterSpacingFeature.ExecuteMoreSpacing, FormatStrikethroughFeature.Execute) and resurrecting a dead explicit-action route (CharacterSpacingFeature.ExecuteSpecific, FormatStrikethroughFeature.Apply/Remove) fails the pin.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~ToggleGalleryOnlyTextContract"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

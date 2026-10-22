@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnHtmlSlideImport",
+  "title": "Import HTML Slides (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/HtmlSlideImportFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnHtmlSlideImport-001",
+      "title": "Import HTML Slides applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/HtmlSlideImportFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Import HTML Slides (BtnHtmlSlideImport) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnHtmlSlideImport-002",
+      "title": "HTML import pipeline boundaries are pinned by the production Core tests",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/HtmlImportPipeline.cs",
+        "oPenEfficiency.Core/Services/HtmlLayoutEngine.cs",
+        "oPenEfficiency.Core/Services/HtmlRenderRouting.cs",
+        "oPenEfficiency/Services/HtmlPresentationImportService.cs"
+      ],
+      "expected": "The host-free HTML import pipeline parses supported AI-generated presentation HTML into slide models (sections with slide classes, entity-decoded text, footer spans), strips script/canvas/video content, enforces the documented limits (HTML byte cap with HtmlImportLimitException) and never executes JavaScript; these behaviors are already driven by the production HtmlPipelineBoundaryTests (17 tests) used by HtmlPresentationImportService, so this scenario binds the existing runner instead of duplicating it.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~HtmlPipelineBoundaryTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

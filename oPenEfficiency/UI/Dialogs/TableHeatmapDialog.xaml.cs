@@ -11,28 +11,65 @@ using Forms = System.Windows.Forms;
 
 namespace oPenEfficiency.UI.Dialogs
 {
+    public enum TableHeatmapScope
+    {
+        Row,
+        Column,
+        EntireTable
+    }
+
     public partial class TableHeatmapDialog : Window
     {
         private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left &&
+                e.ButtonState == System.Windows.Input.MouseButtonState.Pressed)
                 this.DragMove();
         }
+        private void FitToOwnerWorkArea()
+        {
+            var helper = new System.Windows.Interop.WindowInteropHelper(this);
+            var screen = Forms.Screen.FromHandle(helper.Owner);
+            var dpi = VisualTreeHelper.GetDpi(this);
+            MaxWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            MaxHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            Width = Math.Min(Width, MaxWidth);
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                CancelButton_Click(sender, e);
+                e.Handled = true;
+            }
+        }
+
         private PowerPointManager _manager;
         private Microsoft.Office.Interop.PowerPoint.Shape _tableShape;
         private Table _table;
+
 
         // Custom colors default to standard RGBs
         private System.Drawing.Color _lowColor = System.Drawing.Color.FromArgb(248, 113, 113); // Red
         private System.Drawing.Color? _midColor = System.Drawing.Color.FromArgb(251, 191, 36);  // Yellow
         private System.Drawing.Color _highColor = System.Drawing.Color.FromArgb(52, 211, 153); // Green
 
-        public TableHeatmapDialog(PowerPointManager manager, Microsoft.Office.Interop.PowerPoint.Shape tableShape, Table table)
+        public TableHeatmapDialog(
+            PowerPointManager manager,
+            Microsoft.Office.Interop.PowerPoint.Shape tableShape,
+            Table table,
+            TableHeatmapScope initialScope = TableHeatmapScope.Row)
         {
             InitializeComponent();
             _manager = manager;
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
             _tableShape = tableShape;
             _table = table;
+            ScopeRowRadio.IsChecked = initialScope == TableHeatmapScope.Row;
+            ScopeColRadio.IsChecked = initialScope == TableHeatmapScope.Column;
+            ScopeTableRadio.IsChecked = initialScope == TableHeatmapScope.EntireTable;
+            UpdatePreview();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -44,8 +81,7 @@ namespace oPenEfficiency.UI.Dialogs
         {
             try
             {
-                ApplyHeatmap();
-                this.Close();
+                if (ApplyHeatmap()) this.Close();
             }
             catch (Exception ex)
             {
@@ -66,6 +102,7 @@ namespace oPenEfficiency.UI.Dialogs
             {
                 CustomColorPanel.Visibility = Visibility.Collapsed;
             }
+            UpdatePreview();
         }
 
         private void ApplyType_Changed(object sender, RoutedEventArgs e)
@@ -83,6 +120,7 @@ namespace oPenEfficiency.UI.Dialogs
             {
                 ColorPresetsComboBox_SelectionChanged(null, null);
             }
+            UpdatePreview();
         }
 
         private void BtnLowColor_Click(object sender, RoutedEventArgs e)
@@ -93,6 +131,7 @@ namespace oPenEfficiency.UI.Dialogs
                 _lowColor = color.Value;
                 RectLowColor.Background = new SolidColorBrush(Color.FromRgb(_lowColor.R, _lowColor.G, _lowColor.B));
             }
+            UpdatePreview();
         }
 
         private void BtnMidColor_Click(object sender, RoutedEventArgs e)
@@ -103,12 +142,14 @@ namespace oPenEfficiency.UI.Dialogs
                 _midColor = color.Value;
                 RectMidColor.Background = new SolidColorBrush(Color.FromRgb(color.Value.R, color.Value.G, color.Value.B));
             }
+            UpdatePreview();
         }
 
         private void BtnClearMidColor_Click(object sender, RoutedEventArgs e)
         {
             _midColor = null;
             RectMidColor.Background = Brushes.Transparent;
+            UpdatePreview();
         }
 
         private void BtnHighColor_Click(object sender, RoutedEventArgs e)
@@ -119,6 +160,7 @@ namespace oPenEfficiency.UI.Dialogs
                 _highColor = color.Value;
                 RectHighColor.Background = new SolidColorBrush(Color.FromRgb(_highColor.R, _highColor.G, _highColor.B));
             }
+            UpdatePreview();
         }
 
         private System.Drawing.Color? PickColor(System.Drawing.Color initialColor)
@@ -135,306 +177,221 @@ namespace oPenEfficiency.UI.Dialogs
             return null;
         }
 
-        private void ApplyHeatmap()
+        // REG-TABLEHEATMAP-PREVIEW-001: sample data for the live preview. The top row doubles as
+        // the header row demo for the Exclude-header option; the last cell is blank to show the
+        // empty-cell option. Ranges differ per row so scope normalization is visible at a glance.
+        private static readonly double?[,] PreviewValues =
         {
-            // Gather options
-            bool isRowScope = ScopeRowRadio.IsChecked == true;
-            bool isColScope = ScopeColRadio.IsChecked == true;
-            bool isTableScope = ScopeTableRadio.IsChecked == true;
-            
-            bool applyToFill = ApplyFillRadio.IsChecked == true;
-            bool applyIcons = ApplyIconsRadio.IsChecked == true;
-            bool excludeHeader = ExcludeHeaderCheckBox.IsChecked == true;
-            bool ignoreEmpty = IgnoreEmptyCheckBox.IsChecked == true;
+            { 100, 200, 300, 400 },
+            { 10, 20, 30, 40 },
+            { 5, 15, 25, 35 },
+            { 60, 70, 80, null }
+        };
 
-            int presetIndex = ColorPresetsComboBox.SelectedIndex;
-            int iconPresetIndex = IconPresetsComboBox.SelectedIndex;
+        private void Scope_Changed(object sender, RoutedEventArgs e) => UpdatePreview();
 
-            System.Drawing.Color low, high;
-            System.Drawing.Color? mid = null;
+        private void PreviewOption_Changed(object sender, RoutedEventArgs e) => UpdatePreview();
 
-            System.Drawing.Color green = System.Drawing.Color.FromArgb(99, 190, 123);
-            System.Drawing.Color yellow = System.Drawing.Color.FromArgb(255, 235, 132);
-            System.Drawing.Color red = System.Drawing.Color.FromArgb(248, 105, 107);
-            System.Drawing.Color white = System.Drawing.Color.FromArgb(255, 255, 255);
-            System.Drawing.Color blue = System.Drawing.Color.FromArgb(90, 138, 198);
-
-            switch (presetIndex)
-            {
-                case 0: // 3-Color: Red to Yellow to Green
-                    low = red; mid = yellow; high = green; break;
-                case 1: // 3-Color: Green to Yellow to Red
-                    low = green; mid = yellow; high = red; break;
-                case 2: // 3-Color: Red to White to Green
-                    low = red; mid = white; high = green; break;
-                case 3: // 3-Color: Green to White to Red
-                    low = green; mid = white; high = red; break;
-                case 4: // 3-Color: Red to White to Blue
-                    low = red; mid = white; high = blue; break;
-                case 5: // 3-Color: Blue to White to Red
-                    low = blue; mid = white; high = red; break;
-                case 6: // 2-Color: White to Red
-                    low = white; high = red; break;
-                case 7: // 2-Color: Red to White
-                    low = red; high = white; break;
-                case 8: // 2-Color: White to Green
-                    low = white; high = green; break;
-                case 9: // 2-Color: Green to White
-                    low = green; high = white; break;
-                case 10: // 2-Color: Yellow to Green
-                    low = yellow; high = green; break;
-                case 11: // 2-Color: Green to Yellow
-                    low = green; high = yellow; break;
-                case 12: // Custom
-                default:
-                    low = _lowColor;
-                    mid = _midColor;
-                    high = _highColor;
-                    break;
-            }
-
-            int rows = _table.Rows.Count;
-            int cols = _table.Columns.Count;
-            int startRow = excludeHeader && rows > 1 ? 2 : 1;
-
-            if (isTableScope)
-            {
-                // Find Global Min/Max
-                double globalMin = double.MaxValue;
-                double globalMax = double.MinValue;
-                bool foundAny = false;
-
-                for (int r = startRow; r <= rows; r++)
-                {
-                    for (int c = 1; c <= cols; c++)
-                    {
-                        if (TryParseCell(_table.Cell(r, c), out double val))
-                        {
-                            if (val < globalMin) globalMin = val;
-                            if (val > globalMax) globalMax = val;
-                            foundAny = true;
-                        }
-                    }
-                }
-
-                if (foundAny)
-                {
-                    for (int r = startRow; r <= rows; r++)
-                    {
-                        for (int c = 1; c <= cols; c++)
-                        {
-                            ApplyFormattingToCell(_table.Cell(r, c), globalMin, globalMax, low, mid, high, applyToFill, applyIcons, iconPresetIndex, ignoreEmpty);
-                        }
-                    }
-                }
-            }
-            else if (isRowScope)
-            {
-                for (int r = startRow; r <= rows; r++)
-                {
-                    double rowMin = double.MaxValue;
-                    double rowMax = double.MinValue;
-                    bool foundAny = false;
-
-                    for (int c = 1; c <= cols; c++)
-                    {
-                        if (TryParseCell(_table.Cell(r, c), out double val))
-                        {
-                            if (val < rowMin) rowMin = val;
-                            if (val > rowMax) rowMax = val;
-                            foundAny = true;
-                        }
-                    }
-
-                    if (foundAny)
-                    {
-                        for (int c = 1; c <= cols; c++)
-                        {
-                            ApplyFormattingToCell(_table.Cell(r, c), rowMin, rowMax, low, mid, high, applyToFill, applyIcons, iconPresetIndex, ignoreEmpty);
-                        }
-                    }
-                }
-            }
-            else if (isColScope)
-            {
-                for (int c = 1; c <= cols; c++)
-                {
-                    double colMin = double.MaxValue;
-                    double colMax = double.MinValue;
-                    bool foundAny = false;
-
-                    for (int r = startRow; r <= rows; r++)
-                    {
-                        if (TryParseCell(_table.Cell(r, c), out double val))
-                        {
-                            if (val < colMin) colMin = val;
-                            if (val > colMax) colMax = val;
-                            foundAny = true;
-                        }
-                    }
-
-                    if (foundAny)
-                    {
-                        for (int r = startRow; r <= rows; r++)
-                        {
-                            ApplyFormattingToCell(_table.Cell(r, c), colMin, colMax, low, mid, high, applyToFill, applyIcons, iconPresetIndex, ignoreEmpty);
-                        }
-                    }
-                }
-            }
-        }
-
-        private bool TryParseCell(Cell cell, out double value)
+        /// <summary>
+        /// Renders the sample grid with the exact color/icon math the applier applies to real cells
+        /// (TableHeatmapApplier.ComputeColor / ComputeIcon), including the applier's grouping,
+        /// header and empty-cell semantics, so the preview can never drift from the result.
+        /// </summary>
+        private void UpdatePreview()
         {
-            value = 0;
-            try
+            if (PreviewGrid == null || ColorPresetsComboBox == null) return;
+
+            var options = new oPenEfficiency.Features.Tables.TableHeatmapOptions
             {
-                var shape = cell.Shape;
-                if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
+                ApplyToFill = ApplyFillRadio.IsChecked == true,
+                ApplyIcons = ApplyIconsRadio.IsChecked == true,
+                ExcludeHeader = ExcludeHeaderCheckBox.IsChecked == true,
+                IgnoreEmpty = IgnoreEmptyCheckBox.IsChecked == true,
+                ColorPresetIndex = ColorPresetsComboBox.SelectedIndex,
+                IconPresetIndex = IconPresetsComboBox.SelectedIndex,
+                CustomLow = _lowColor,
+                CustomMid = _midColor,
+                CustomHigh = _highColor
+            };
+
+            int rows = PreviewValues.GetLength(0);
+            int cols = PreviewValues.GetLength(1);
+            int startRow = options.ExcludeHeader ? 1 : 0;
+
+            // Mirror TableHeatmapApplier grouping: row, column, or entire-table min/max groups.
+            var groups = new List<List<int[]>>();
+            if (ScopeTableRadio.IsChecked == true)
+            {
+                var cells = new List<int[]>();
+                for (int r = startRow; r < rows; r++) for (int c = 0; c < cols; c++) cells.Add(new[] { r, c });
+                groups.Add(cells);
+            }
+            else if (ScopeColRadio.IsChecked == true)
+            {
+                for (int c = 0; c < cols; c++)
                 {
-                    string text = shape.TextFrame.TextRange.Text.Trim();
-                    // Clean up common formatting (currency, percent)
-                    text = text.Replace("$", "").Replace("€", "").Replace("%", "").Trim();
-                    // Try parsing with any number style in current culture or invariant
-                    if (double.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out value)) return true;
-                    if (double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) return true;
+                    var cells = new List<int[]>();
+                    for (int r = startRow; r < rows; r++) cells.Add(new[] { r, c });
+                    groups.Add(cells);
                 }
             }
-            catch { }
-            return false;
-        }
-
-        private void ApplyFormattingToCell(Cell cell, double min, double max, System.Drawing.Color lowColor, System.Drawing.Color? midColor, System.Drawing.Color highColor, bool applyToFill, bool applyIcons, int iconPresetIndex, bool ignoreEmpty)
-        {
-            try
+            else
             {
-                if (!TryParseCell(cell, out double value))
+                for (int r = startRow; r < rows; r++)
                 {
-                    if (ignoreEmpty) return;
-                    value = min; // Default fallback if not ignored
+                    var cells = new List<int[]>();
+                    for (int c = 0; c < cols; c++) cells.Add(new[] { r, c });
+                    groups.Add(cells);
                 }
+            }
 
-                double normalized = 0;
-                if (max > min)
+            double?[,] normalized = new double?[rows, cols];
+            foreach (var group in groups)
+            {
+                double minimum = double.MaxValue;
+                double maximum = double.MinValue;
+                bool found = false;
+                foreach (var cell in group)
                 {
-                    normalized = (value - min) / (max - min);
+                    double? sample = PreviewValues[cell[0], cell[1]];
+                    if (!sample.HasValue) continue;
+                    minimum = Math.Min(minimum, sample.Value);
+                    maximum = Math.Max(maximum, sample.Value);
+                    found = true;
                 }
-
-                if (applyIcons)
+                if (!found) continue;
+                foreach (var cell in group)
                 {
-                    ApplyIconToCell(cell, normalized, iconPresetIndex);
-                    return;
+                    int r = cell[0];
+                    int c = cell[1];
+                    bool numeric = PreviewValues[r, c].HasValue;
+                    if (!numeric && options.IgnoreEmpty) continue;
+                    double value = numeric ? PreviewValues[r, c].Value : minimum;
+                    normalized[r, c] = maximum > minimum ? (value - minimum) / (maximum - minimum) : 0;
                 }
+            }
 
-                System.Drawing.Color finalColor;
+            PreviewGrid.Children.Clear();
+            PreviewGrid.RowDefinitions.Clear();
+            PreviewGrid.ColumnDefinitions.Clear();
+            for (int c = 0; c < cols; c++)
+                PreviewGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            for (int r = 0; r < rows; r++)
+                PreviewGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-                if (midColor.HasValue)
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
                 {
-                    if (normalized < 0.5)
+                    bool headerCell = r == 0 && options.ExcludeHeader;
+                    double? norm = normalized[r, c];
+                    string sampleText = PreviewValues[r, c]?.ToString(CultureInfo.InvariantCulture) ?? "–";
+
+                    var text = new TextBlock
                     {
-                        double n = normalized * 2; // scale 0-0.5 to 0-1
-                        finalColor = InterpolateColor(lowColor, midColor.Value, n);
+                        Text = sampleText,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 2, 0, 2)
+                    };
+                    var cell = new Border
+                    {
+                        Padding = new Thickness(6, 4, 6, 4),
+                        Margin = new Thickness(1),
+                        CornerRadius = new CornerRadius(2),
+                        BorderBrush = (Brush)FindResource("BorderBrush"),
+                        BorderThickness = new Thickness(1),
+                        Child = text
+                    };
+
+                    if (!norm.HasValue || headerCell)
+                    {
+                        text.Foreground = (Brush)FindResource("TextSecondaryBrush");
+                    }
+                    else if (options.ApplyIcons)
+                    {
+                        oPenEfficiency.Features.Tables.TableHeatmapApplier.ComputeIcon(
+                            norm.Value, options.IconPresetIndex, out string icon, out System.Drawing.Color iconColor);
+                        var iconRun = new System.Windows.Documents.Run(icon + " ");
+                        iconRun.Foreground = new SolidColorBrush(Color.FromRgb(iconColor.R, iconColor.G, iconColor.B));
+                        text.Inlines.Clear();
+                        text.Inlines.Add(iconRun);
+                        text.Inlines.Add(new System.Windows.Documents.Run(sampleText));
+                        text.Foreground = (Brush)FindResource("TextPrimaryBrush");
                     }
                     else
                     {
-                        double n = (normalized - 0.5) * 2; // scale 0.5-1 to 0-1
-                        finalColor = InterpolateColor(midColor.Value, highColor, n);
+                        System.Drawing.Color finalColor = oPenEfficiency.Features.Tables.TableHeatmapApplier.ComputeColor(
+                            norm.Value, options.ColorPresetIndex, options);
+                        var brush = new SolidColorBrush(Color.FromRgb(finalColor.R, finalColor.G, finalColor.B));
+                        if (options.ApplyToFill)
+                        {
+                            cell.Background = brush;
+                            text.Foreground = ContrastBrush(finalColor);
+                        }
+                        else
+                        {
+                            text.Foreground = brush;
+                        }
                     }
-                }
-                else
-                {
-                    finalColor = InterpolateColor(lowColor, highColor, normalized);
-                }
 
-                int bgr = System.Drawing.ColorTranslator.ToOle(finalColor);
-
-                if (applyToFill)
-                {
-                    cell.Shape.Fill.Visible = Microsoft.Office.Core.MsoTriState.msoTrue;
-                    cell.Shape.Fill.ForeColor.RGB = bgr;
-                }
-                else
-                {
-                    if (cell.Shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && cell.Shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
-                    {
-                        cell.Shape.TextFrame.TextRange.Font.Color.RGB = bgr;
-                    }
+                    Grid.SetRow(cell, r);
+                    Grid.SetColumn(cell, c);
+                    PreviewGrid.Children.Add(cell);
                 }
             }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "TableHeatmapDialog.ApplyColorToCell");
-            }
+
+            string scopeText = ScopeTableRadio.IsChecked == true ? "Entire table: one normalization for all values."
+                : ScopeColRadio.IsChecked == true ? "Column-wise: each column normalized separately."
+                : "Row-wise: each row normalized separately.";
+            string emptyText = options.IgnoreEmpty ? " Blank cells are left unchanged." : " Blank cells receive the group's lowest color.";
+            PreviewCaption.Text = scopeText + emptyText + " Real cells follow the same rules with your table's values.";
         }
 
-        private System.Drawing.Color InterpolateColor(System.Drawing.Color c1, System.Drawing.Color c2, double fraction)
+        private static Brush ContrastBrush(System.Drawing.Color background)
         {
-            fraction = Math.Max(0, Math.Min(1, fraction));
-            int r = (int)(c1.R + (c2.R - c1.R) * fraction);
-            int g = (int)(c1.G + (c2.G - c1.G) * fraction);
-            int b = (int)(c1.B + (c2.B - c1.B) * fraction);
-            return System.Drawing.Color.FromArgb(r, g, b);
+            double luminance = (0.299 * background.R + 0.587 * background.G + 0.114 * background.B) / 255;
+            return luminance > 0.6 ? Brushes.Black : Brushes.White;
         }
 
-        private void ApplyIconToCell(Cell cell, double normalized, int presetIndex)
+        private bool ApplyHeatmap()
         {
-            try
+            var options = new oPenEfficiency.Features.Tables.TableHeatmapOptions
             {
-                string icon = "";
-                System.Drawing.Color color = System.Drawing.Color.Black;
+                Scope = ScopeTableRadio.IsChecked == true ? TableHeatmapScope.EntireTable
+                    : ScopeColRadio.IsChecked == true ? TableHeatmapScope.Column
+                    : TableHeatmapScope.Row,
+                ApplyToFill = ApplyFillRadio.IsChecked == true,
+                ApplyIcons = ApplyIconsRadio.IsChecked == true,
+                ExcludeHeader = ExcludeHeaderCheckBox.IsChecked == true,
+                IgnoreEmpty = IgnoreEmptyCheckBox.IsChecked == true,
+                ColorPresetIndex = ColorPresetsComboBox.SelectedIndex,
+                IconPresetIndex = IconPresetsComboBox.SelectedIndex,
+                CustomLow = _lowColor,
+                CustomMid = _midColor,
+                CustomHigh = _highColor
+            };
 
-                switch (presetIndex)
-                {
-                    case 0: // 3 Arrows (▲ ▶ ▼)
-                        if (normalized >= 0.66) { icon = "▲"; color = System.Drawing.Color.FromArgb(99, 190, 123); } // Green
-                        else if (normalized >= 0.33) { icon = "▶"; color = System.Drawing.Color.FromArgb(255, 235, 132); } // Yellow
-                        else { icon = "▼"; color = System.Drawing.Color.FromArgb(248, 105, 107); } // Red
-                        break;
-                    case 1: // 4 Arrows (▲ ↗ ↘ ▼)
-                        if (normalized >= 0.75) { icon = "▲"; color = System.Drawing.Color.FromArgb(99, 190, 123); } 
-                        else if (normalized >= 0.50) { icon = "↗"; color = System.Drawing.Color.FromArgb(255, 235, 132); } 
-                        else if (normalized >= 0.25) { icon = "↘"; color = System.Drawing.Color.FromArgb(248, 105, 107); } 
-                        else { icon = "▼"; color = System.Drawing.Color.FromArgb(248, 105, 107); } 
-                        break;
-                    case 2: // 3 Traffic Lights (● ● ●)
-                        if (normalized >= 0.66) { icon = "●"; color = System.Drawing.Color.FromArgb(99, 190, 123); }
-                        else if (normalized >= 0.33) { icon = "●"; color = System.Drawing.Color.FromArgb(255, 235, 132); }
-                        else { icon = "●"; color = System.Drawing.Color.FromArgb(248, 105, 107); }
-                        break;
-                    case 3: // 3 Indicators (✔ ❗ ✖)
-                        if (normalized >= 0.66) { icon = "✔"; color = System.Drawing.Color.FromArgb(99, 190, 123); }
-                        else if (normalized >= 0.33) { icon = "❗"; color = System.Drawing.Color.FromArgb(255, 235, 132); }
-                        else { icon = "✖"; color = System.Drawing.Color.FromArgb(248, 105, 107); }
-                        break;
-                    case 4: // 3 Ratings (★)
-                        if (normalized >= 0.66) { icon = "★"; color = System.Drawing.Color.FromArgb(255, 235, 132); }
-                        else if (normalized >= 0.33) { icon = "★"; color = System.Drawing.Color.Silver; }
-                        else { icon = "★"; color = System.Drawing.Color.SandyBrown; }
-                        break;
-                }
-
-                if (cell.Shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && cell.Shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
-                {
-                    string oldText = cell.Shape.TextFrame.TextRange.Text;
-                    
-                    // Clean existing icons
-                    string[] knownIcons = { "▲", "▶", "▼", "↗", "↘", "●", "✔", "❗", "✖", "★", "☆" };
-                    foreach (var k in knownIcons)
-                    {
-                        if (oldText.StartsWith(k + " ")) oldText = oldText.Substring(k.Length + 1);
-                        else if (oldText.StartsWith(k)) oldText = oldText.Substring(k.Length);
-                    }
-                    
-                    cell.Shape.TextFrame.TextRange.Text = icon + " " + oldText;
-                    var firstChar = cell.Shape.TextFrame.TextRange.Characters(1, 1);
-                    firstChar.Font.Color.RGB = System.Drawing.ColorTranslator.ToOle(color);
-                    firstChar.Font.Name = "Segoe UI Symbol";
-                }
-            }
-            catch (Exception ex)
+            // The application core (scoping, normalization, color and icon math) moved verbatim to
+            // TableHeatmapApplier so the identical behavior runs for this dialog and for the
+            // dialog-free automation entry; every user-facing message stays here.
+            var result = oPenEfficiency.Features.Tables.TableHeatmapApplier.Apply(_manager, _table, options);
+            if (result.NoDataRows)
             {
-                ExceptionLogger.Log(ex, "TableHeatmapDialog.ApplyIconToCell");
+                MessageBox.Show(this, "No data rows remain after excluding the header.", "Apply Table Heatmap", MessageBoxButton.OK, MessageBoxImage.Information);
+                return false;
             }
+            if (result.NoNumericValues)
+            {
+                MessageBox.Show(this, "No numeric values were found in the selected heatmap scope.", "Apply Table Heatmap", MessageBoxButton.OK, MessageBoxImage.Information);
+                return false;
+            }
+            if (result.Failed > 0)
+            {
+                MessageBox.Show(this, $"Formatted {result.Formatted} cell(s), but {result.Failed} cell(s) failed. Use PowerPoint Undo to restore the previous formatting before retrying.", "Apply Table Heatmap", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            return result.Formatted > 0;
         }
     }
 }

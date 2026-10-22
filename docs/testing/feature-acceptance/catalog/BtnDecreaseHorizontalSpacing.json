@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnDecreaseHorizontalSpacing",
+  "title": "Decrease Horizontal Spacing (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnDecreaseHorizontalSpacing-001",
+      "title": "Decrease Horizontal Spacing applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Decrease Horizontal Spacing (BtnDecreaseHorizontalSpacing) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnDecreaseHorizontalSpacing-001",
+      "title": "Decrease Horizontal Spacing removes the configured increment between neighbours",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency.Core.Tests/SpacingAdjustmentAcceptanceTests.cs"
+      ],
+      "expected": "The -10 decrement leaves the left-most shape anchored and shortens the two horizontal gaps from 50 and 60 to 40 and 50, exactly one increment each; the vertical geometry is untouched.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SpacingAdjustmentAcceptanceTests.DecreaseHorizontalSpacingRemovesTheIncrementBetweenNeighbours"
+      }
+    },
+    {
+      "id": "QA9-BtnDecreaseHorizontalSpacing-002",
+      "title": "BtnDecreaseHorizontalSpacing deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Decrease horizontal spacing removes the documented increment between neighbours without reordering them."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Decrease horizontal spacing removes the documented increment between neighbours without reordering them.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/AdjustSpacingFeatureHelper.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingMatch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSpacingMatch.ps1",
+        "arguments": [
+          "-Commands",
+          "decrease-h"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Core.Tests/SpacingAdjustmentAcceptanceTests.cs",
+              "line": 1,
+              "item": "SpacingAdjustmentAcceptanceTests.DecreaseHorizontalSpacingRemovesTheIncrementBetweenNeighbours",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnDecreaseHorizontalSpacing-003",
+      "title": "BtnDecreaseHorizontalSpacing centered context-menu step deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "In an isolated real PowerPoint host, the deployed centered Decrease Horizontal Spacing context-menu entry tightens the selection by the documented increment (-5) while the preserveCenter compensation keeps the average horizontal coordinate of the ordered selection fixed (per-index offset 7.5 - 5*i over the four-probe fixture), leaves the other axis untouched, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed centered Decrease Horizontal Spacing context-menu entry tightens the selection by the documented increment (-5) while the preserveCenter compensation keeps the average horizontal coordinate of the ordered selection fixed (per-index offset 7.5 - 5*i over the four-probe fixture), leaves the other axis untouched, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/AdjustSpacingFeatureHelper.cs",
+        "oPenEfficiency/Features/Visuals/AdjustHorizontalSpacingFeature.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingMatch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSpacingMatch.ps1",
+        "arguments": [
+          "-Commands",
+          "decrease-h-center"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md"
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

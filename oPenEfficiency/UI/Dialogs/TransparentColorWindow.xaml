@@ -1,7 +1,7 @@
 <Window x:Class="oPenEfficiency.UI.TransparentColorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Magic Color Erase" Width="360" SizeToContent="Height"
+        Title="Color Eraser" Width="360" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" WindowStartupLocation="Manual"
         MouseDown="Window_MouseDown">
@@ -33,8 +33,7 @@
             <!-- Header -->
             <Grid Margin="0,0,0,15">
                 <StackPanel>
-                    <TextBlock Text="MAGIC COLOR ERASE" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Remove specific colors using tolerance." Style="{StaticResource DialogSubtitleText}" Margin="0,2,0,0"/>
+                    <TextBlock Text="COLOR ERASER" Style="{StaticResource DialogTitleText}"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" />
             </Grid>
@@ -62,7 +61,7 @@
 
             <Button Content="ERASE COLOR" Click="BtnApply_Click" Style="{StaticResource AccentButton}" Height="36" FontWeight="Bold"/>
             
-            <TextBlock Text="Note: This works best on solid colors. Complex gradients might leave artifacts." Foreground="#666" FontSize="10" Margin="0,15,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
+            <TextBlock Text="The selected shape is replaced with a PNG. Editable text, vector data, animations, links, and shape metadata are not preserved. Use Undo if needed." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="10" Margin="0,15,0,0" TextWrapping="Wrap" TextAlignment="Center"/>
         </StackPanel>
     </Border>
 </Window>

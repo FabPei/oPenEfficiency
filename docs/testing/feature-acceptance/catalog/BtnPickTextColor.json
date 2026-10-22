@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnPickTextColor",
+  "title": "Pick Text Color (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/PickTextColorFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnPickTextColor-001",
+      "title": "Pick Text Color applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/PickTextColorFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+      ],
+      "expected": "Pick Text Color (BtnPickTextColor) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnPickTextColor-001",
+      "title": "Pick Text Color applies the sampled absolute RGB to all text of the selection",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/PickColorFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host the picker's production post-sampling path runs on the fixture 3x3 table with a 40x20 text probe selected: the probe's text font color becomes the sampled absolute OLE red 255 while its text content and geometry stay unchanged and the table remains intact (3x3 rows of 50, cells 100 wide, table 300x150 at 40/40); the run reports execution, writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry and tears down cleanly.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "pick-color-apply"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using oPenEfficiency.Features;
+using oPenEfficiency.Utils;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 
@@ -40,7 +42,7 @@ namespace oPenEfficiency.UI
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ProgressSeriesToolbar constructor error: {ex.Message}");
+                ExceptionLogger.Log(ex, "ProgressSeriesToolbar.Constructor");
                 throw;
             }
         }
@@ -71,7 +73,7 @@ namespace oPenEfficiency.UI
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"LoadSettings error: {ex.Message}");
+                ExceptionLogger.Log(ex, "ProgressSeriesToolbar.LoadSettings");
                 _settings = ProgressSeriesFeature.SeriesSettings.Default();
                 _originalShapeColor = GetActualShapeColor();
                 _userChangedColor = false;
@@ -80,30 +82,57 @@ namespace oPenEfficiency.UI
 
         private string GetActualShapeColor()
         {
+            string fallbackColor = string.IsNullOrWhiteSpace(_settings.HighlightColor)
+                ? "#E53935"
+                : _settings.HighlightColor;
+            PowerPoint.Shape seriesGroup = null;
+            PowerPoint.Shape activeShape = null;
+            bool releaseSeriesGroup = false;
+
             try
             {
-                if (_targetShape == null) 
+                if (_targetShape == null) return fallbackColor;
+
+                seriesGroup = _targetShape;
+                if (_targetShape.Child == Office.MsoTriState.msoTrue)
                 {
-                    System.Diagnostics.Debug.WriteLine("GetActualShapeColor: _targetShape is null");
-                    return "#E53935";
+                    seriesGroup = _targetShape.ParentGroup;
+                    releaseSeriesGroup = true;
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"GetActualShapeColor: Analyzing shape {_targetShape.Name}, type {_targetShape.Type}");
-                
-                // For now, use the tag color to avoid COM exceptions from ungrouping
-                // TODO: Implement safer color detection without ungrouping
-                System.Diagnostics.Debug.WriteLine("GetActualShapeColor: Using tag color to avoid COM exceptions");
-                return _settings.HighlightColor;
+
+                if (!ProgressSeriesFeature.IsProgressSeries(seriesGroup) ||
+                    seriesGroup.Type != Office.MsoShapeType.msoGroup ||
+                    _settings.ActiveIndex < 1 ||
+                    _settings.ActiveIndex > seriesGroup.GroupItems.Count)
+                {
+                    return fallbackColor;
+                }
+
+                activeShape = seriesGroup.GroupItems[_settings.ActiveIndex];
+                if (activeShape.Fill.Visible != Office.MsoTriState.msoTrue)
+                    return fallbackColor;
+
+                return ColorConstants.ToHex(activeShape.Fill.ForeColor.RGB);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ExceptionPolicy.IsExpectedComFailure(ex))
             {
-                System.Diagnostics.Debug.WriteLine($"GetActualShapeColor error: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                return fallbackColor;
             }
-            
-            // Fallback to default color
-            System.Diagnostics.Debug.WriteLine("GetActualShapeColor: Using fallback default color");
-            return "#E53935";
+            finally
+            {
+                if (activeShape != null)
+                {
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(activeShape),
+                        "ProgressSeriesToolbar.GetActualShapeColor.ReleaseActiveShape");
+                }
+                if (releaseSeriesGroup && seriesGroup != null)
+                {
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(seriesGroup),
+                        "ProgressSeriesToolbar.GetActualShapeColor.ReleaseSeriesGroup");
+                }
+            }
         }
 
         private void UpdateUI()

@@ -13,13 +13,38 @@ namespace oPenEfficiency.UI
         public ImportAgendaLayoutWindow()
         {
             InitializeComponent();
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
             _importService = new ExternalAgendaImportService();
-            // Owner is automatically set to the active window when ShowDialog() is called
+            // The caller assigns the owner before showing this dialog.
+        }
+
+        private void FitToOwnerWorkArea()
+        {
+            var owner = new System.Windows.Interop.WindowInteropHelper(this).Owner;
+            var screen = System.Windows.Forms.Screen.FromHandle(owner);
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
+            double availableWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            double availableHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            MinWidth = Math.Min(MinWidth, availableWidth);
+            MinHeight = Math.Min(MinHeight, availableHeight);
+            MaxWidth = availableWidth;
+            MaxHeight = availableHeight;
+            Width = Math.Min(Width, availableWidth);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                BtnClose_Click(sender, e);
+                e.Handled = true;
+            }
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            DragMove();
+            if (e.ChangedButton == MouseButton.Left && e.ButtonState == MouseButtonState.Pressed)
+                DragMove();
         }
 
         private void BtnClose_Click(object sender, RoutedEventArgs e)
@@ -30,8 +55,8 @@ namespace oPenEfficiency.UI
         private void BtnBrowseFile_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Microsoft.Win32.OpenFileDialog();
-            dialog.Filter = "AgendaCreator XML|AgendaCreator.xml|All files|*.*";
-            dialog.Title = "Select AgendaCreator.xml file";
+            dialog.Filter = "Agenda layout XML|AgendaCreator.xml;AgendaWizard.xml|All XML files|*.xml|All files|*.*";
+            dialog.Title = "Select AgendaCreator.xml or AgendaWizard.xml file";
 
             if (dialog.ShowDialog() == true)
             {
@@ -43,7 +68,7 @@ namespace oPenEfficiency.UI
         {
             var dialog = new System.Windows.Forms.FolderBrowserDialog
             {
-                Description = "Select folder containing AgendaCreator.xml files",
+                Description = "Select a folder containing AgendaCreator.xml or AgendaWizard.xml files",
                 ShowNewFolderButton = false
             };
 
@@ -98,7 +123,7 @@ namespace oPenEfficiency.UI
                 }
                 else
                 {
-                    ShowResult("No layouts were imported. The folder may not contain valid AgendaCreator.xml files.", true);
+                    ShowResult("No layouts were imported. The folder may not contain valid AgendaCreator.xml or AgendaWizard.xml files.", true);
                 }
             }
             catch (Exception ex)
@@ -112,13 +137,13 @@ namespace oPenEfficiency.UI
             try
             {
                 BtnAutoDetect.IsEnabled = false;
-                TxtAutoDetectStatus.Text = "Searching for AgendaCreator.xml files...";
+                TxtAutoDetectStatus.Text = "Searching for AgendaCreator.xml and AgendaWizard.xml files...";
 
                 var files = _importService.FindAgendaCreatorFiles();
 
                 if (files.Count == 0)
                 {
-                    TxtAutoDetectStatus.Text = "No AgendaCreator.xml files found.";
+                    TxtAutoDetectStatus.Text = "No supported agenda layout XML files found.";
                     BtnAutoDetect.IsEnabled = true;
                     return;
                 }
@@ -162,11 +187,9 @@ namespace oPenEfficiency.UI
             TxtResult.Text = message;
             ResultBorder.Visibility = Visibility.Visible;
 
-            if (isError)
-            {
-                ResultBorder.Background = (Brush)new BrushConverter().ConvertFrom("#3A1D1E");
-                ResultBorder.BorderBrush = (Brush)new BrushConverter().ConvertFrom("#5A2D2E");
-            }
+            string brushKey = isError ? "ErrorBrush" : "SuccessBrush";
+            ResultBorder.SetResourceReference(System.Windows.Controls.Border.BorderBrushProperty, brushKey);
+            TxtResultHeading.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, brushKey);
         }
     }
 }

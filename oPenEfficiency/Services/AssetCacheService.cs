@@ -16,15 +16,34 @@ namespace oPenEfficiency.Services
     public class AssetCacheService
     {
         private readonly string _cacheBasePath;
+        private readonly Func<List<string>> _loadSharedFolders;
+        private readonly Action<List<string>> _saveSharedFolders;
         private const string SourcePathFile = "source.path";
         private const string TimestampFile = "cache.timestamp";
         private const string SharedFoldersConfig = "shared_cache_folders.json";
 
         public AssetCacheService()
+            : this(
+                Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "oPenEfficiency",
+                    "cache"),
+                () => JsonService.Load<List<string>>(SharedFoldersConfig),
+                folders => JsonService.Save(folders, SharedFoldersConfig))
         {
-            // %APPDATA%\oPenEfficiency\cache\
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            _cacheBasePath = Path.Combine(appDataPath, "oPenEfficiency", "cache");
+        }
+
+        internal AssetCacheService(
+            string cacheBasePath,
+            Func<List<string>> loadSharedFolders,
+            Action<List<string>> saveSharedFolders)
+        {
+            if (string.IsNullOrWhiteSpace(cacheBasePath))
+                throw new ArgumentException("A cache base path is required.", nameof(cacheBasePath));
+
+            _cacheBasePath = Path.GetFullPath(cacheBasePath);
+            _loadSharedFolders = loadSharedFolders ?? throw new ArgumentNullException(nameof(loadSharedFolders));
+            _saveSharedFolders = saveSharedFolders ?? throw new ArgumentNullException(nameof(saveSharedFolders));
 
             // Ensure base cache directory exists
             if (!Directory.Exists(_cacheBasePath))
@@ -38,8 +57,8 @@ namespace oPenEfficiency.Services
         /// </summary>
         public List<string> GetSharedFolders()
         {
-            var list = JsonService.Load<List<string>>(SharedFoldersConfig);
-            return list ?? new List<string>();
+            var list = _loadSharedFolders();
+            return list == null ? new List<string>() : new List<string>(list);
         }
 
         /// <summary>
@@ -51,7 +70,7 @@ namespace oPenEfficiency.Services
             if (!list.Contains(path, StringComparer.OrdinalIgnoreCase))
             {
                 list.Add(path);
-                JsonService.Save(list, SharedFoldersConfig);
+                _saveSharedFolders(list);
             }
         }
 
@@ -61,9 +80,11 @@ namespace oPenEfficiency.Services
         public void RemoveSharedFolder(string path)
         {
             var list = GetSharedFolders();
-            if (list.Remove(path))
+            int removed = list.RemoveAll(item =>
+                string.Equals(item, path, StringComparison.OrdinalIgnoreCase));
+            if (removed > 0)
             {
-                JsonService.Save(list, SharedFoldersConfig);
+                _saveSharedFolders(list);
             }
         }
 
@@ -76,16 +97,26 @@ namespace oPenEfficiency.Services
                 return false;
 
             var sharedFolders = GetSharedFolders();
-            string normalizedPath = Path.GetFullPath(filePath).ToLowerInvariant();
+            string normalizedPath = NormalizeDirectoryBoundary(filePath);
 
             foreach (var sharedFolder in sharedFolders)
             {
-                string normalizedShared = Path.GetFullPath(sharedFolder).ToLowerInvariant();
-                if (normalizedPath.StartsWith(normalizedShared))
+                if (string.IsNullOrWhiteSpace(sharedFolder)) continue;
+                string normalizedShared = NormalizeDirectoryBoundary(sharedFolder);
+                if (string.Equals(normalizedPath, normalizedShared, StringComparison.OrdinalIgnoreCase) ||
+                    normalizedPath.StartsWith(
+                        normalizedShared + Path.DirectorySeparatorChar,
+                        StringComparison.OrdinalIgnoreCase))
                     return true;
             }
 
             return false;
+        }
+
+        private static string NormalizeDirectoryBoundary(string path)
+        {
+            return Path.GetFullPath(path)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         /// <summary>
@@ -474,11 +505,11 @@ namespace oPenEfficiency.Services
                                     var info = new FileInfo(file);
                                     totalBytes += info.Length;
                                 }
-                                catch { }
+                                catch { /* Invalid cached metadata is skipped and regenerated on demand. */ }
                             }
                         }
                     }
-                    catch { }
+                    catch { /* A corrupt cache entry must not prevent scanning the remaining assets. */ }
                 }
             }
 

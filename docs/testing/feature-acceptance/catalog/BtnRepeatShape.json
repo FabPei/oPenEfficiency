@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnRepeatShape",
+  "title": "Repeat Shape (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/RepeatShapeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnRepeatShape-001",
+      "title": "Repeat Shape applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/RepeatShapeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Repeat Shape (BtnRepeatShape) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnRepeatShape-002",
+      "title": "Repeat Shape gap inference and duplicate placement are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/RepeatShapeGeometryPlanner.cs",
+        "oPenEfficiency/Features/Visuals/RepeatShapeFeature.cs"
+      ],
+      "expected": "The gap between the two selected rectangles resolves to the edge-to-edge distance when they are disjoint and to the absolute offset when they overlap; the duplicate is placed in the requested direction anchored on the second selected shape, with Left/Up placement using the duplicate's own width/height as before.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~RepeatShapeGeometryPlannerTests"
+      }
+    },
+    {
+      "id": "QA9-BtnRepeatShape-003",
+      "title": "Repeat Shape adds the next copy one inferred step right in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointRepeatSelectSplit.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Repeat Shape on two equal-sized shapes 80 pt apart adds exactly one new shape whose top-left is exactly 2*b - a (within 0.5 pt: measured expected 420,150) and whose size equals the second shape, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointRepeatSelectSplit.ps1",
+        "arguments": [
+          "-Mode",
+          "repeat-right"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

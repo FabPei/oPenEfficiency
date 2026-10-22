@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTemplateManager",
+  "title": "Template Library (Libraries)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTemplateManager-001",
+      "title": "Template Library applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Template Library (BtnTemplateManager) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTemplateManager-002",
+      "title": "Template library merge rules (priority, first-wins, blacklist, extensions) pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/TemplateLibraryPolicy.cs",
+        "oPenEfficiency/Services/TemplateService.cs"
+      ],
+      "expected": "The production library rules pin: only .potx/.pot/.pptx/.pptm count (case-insensitive, final extension only); the three sources merge in priority order (registered files, watched directories, default locations); the result de-duplicates by path case-insensitively keeping the FIRST occurrence so a registered file wins over the same path found by a scan; blank paths are dropped; the blacklist removes hits case-insensitively; and all-empty inputs produce an empty library. TemplateService delegates both rules (its merge keeps the first item's metadata per path).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TemplateLibraryPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

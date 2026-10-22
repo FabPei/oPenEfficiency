@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnRefreshLinkedTable",
+  "title": "Refresh Linked Table (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/TableLinkFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnRefreshLinkedTable-001",
+      "title": "Refresh Linked Table applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/TableLinkFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Refresh Linked Table (BtnRefreshLinkedTable) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnRefreshLinkedTable-002",
+      "title": "Linked-table tag codec is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/TableLinkStatePolicy.cs",
+        "oPenEfficiency/Features/Utilities/TableLinkFeature.cs",
+        "oPenEfficiency.Core.Tests/TableLinkStatePolicyTests.cs"
+      ],
+      "expected": "The oPE_TableLink AlternativeText codec writes the flags token ('F' formatting, 'R' auto-resize, 'V' neither) and parses it back leniently: an optional flags token directly after the tag distinguishes the new format from the legacy flag-less layout (a workbook path can never look like a flags token), the range is always the last field, and interior pipes rejoin into the sheet name; malformed or non-tag payloads are rejected.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableLinkStatePolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

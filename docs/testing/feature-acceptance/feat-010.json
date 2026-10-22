@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "featureId": "FEAT-010",
+  "title": "Timeline / Gantt",
+  "sourcePaths": [
+    "oPenEfficiency/Services/Gantt*",
+    "oPenEfficiency/UI/Panels/Gantt*",
+    "oPenEfficiency/ThisAddIn.GanttUi.cs",
+    "oPenEfficiency.Gantt.Tests/*"
+  ],
+  "scenarios": [
+    {
+      "id": "TL-CORE-001",
+      "title": "Existing Gantt automated suite",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/*Gantt*",
+        "oPenEfficiency.Gantt.Tests/*"
+      ],
+      "expected": "The existing Gantt test project passes before any real-host acceptance.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Gantt.Tests/oPenEfficiency.Gantt.Tests.csproj"
+      }
+    },
+    {
+      "id": "TL-PERSIST-001",
+      "title": "Create save reopen edit",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/Gantt*",
+        "oPenEfficiency/UI/Panels/Gantt*"
+      ],
+      "expected": "A created Gantt remains editable after save, PowerPoint close and reopen.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-persist-roundtrip"
+        ]
+      }
+    },
+    {
+      "id": "TL-COPY-001",
+      "title": "Copied Gantt is independent",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/Gantt*",
+        "oPenEfficiency/UI/Panels/Gantt*"
+      ],
+      "expected": "Editing a copied Gantt does not mutate the original and both retain independent identity after save/reopen.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-copy-independent"
+        ]
+      }
+    },
+    {
+      "id": "TL-WBS-001",
+      "title": "Rendered WBS numbering follows hierarchy",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*GanttRenderer.cs",
+        "*GanttPanelViewModel.cs",
+        "*GanttProjectOperations*"
+      ],
+      "expected": "Starting from tasks 4/5/6, indenting task 5 under 4 renders 4 / 4.1 / 5 on the slide; outdent/reorder recomputes immediately and save/reopen preserves it.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-wbs-indent"
+        ]
+      }
+    },
+    {
+      "id": "TL-RIGHT-EDGE-001",
+      "title": "Timeline has deterministic right outer edge",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*GanttRenderer.cs"
+      ],
+      "expected": "A right outer boundary exists exactly at the timeline extent and remains correct after rerender, resize, date-range change and copy.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-render-edge"
+        ]
+      }
+    },
+    {
+      "id": "FEAT-010-GANTT-INTERACTION-EVIDENCE-001-TREE",
+      "title": "Interaktions-Semantik am Gantt (Office-automated Evidence)",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/GanttRenderer.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "Am echten Host aufgezeichnet: Dependency-Arrows fuer PredecessorLinks (arrows>=1) und Drag-Recovery via SyncFromSlide (dragSynced=true) ohne neue ErrorLog-Eintraege. Die End-Daten-Adoption verbreiterter Bars bleibt ein offener Fund (Ledger REG-GANTT-RESIZE-ADOPT-001; die Note meldet die Messwerte barWidth/duration), Undo/Redo ist im versteckten Automation-Host nicht verfuegbar (Owner-Leg LIM-GANTT-UNDO-001) - beide erscheinen als note, nie als Pass.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "gantt-interaction"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

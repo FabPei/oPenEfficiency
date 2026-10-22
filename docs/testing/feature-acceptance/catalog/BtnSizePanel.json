@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSizePanel",
+  "title": "Shape Size Panel (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSizePanel-001",
+      "title": "Shape Size Panel applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+      ],
+      "expected": "Shape Size Panel (BtnSizePanel) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSizePanel-001",
+      "title": "Shape Size Panel decisions (conversion, parsing, floor, change detection, uniform display) pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ShapeSizePolicy.cs",
+        "oPenEfficiency/UI/Panels/ShapeSizePanel.xaml.cs"
+      ],
+      "expected": "The production rules pin: the 28.3464567 pt/cm conversion both ways; typed dimension parsing strips the pt/cm suffix (pt converts to cm) and falls back across current culture, invariant culture and comma-replaced invariant (de-DE '12,5' and en-US '12.5' work, junk/empty/null rejected, NaN/Infinity rejected); typed values must be positive; stepping floors at the 0.01 cm minimum; the apply change detection skips zero/NaN/Infinity targets and differences below the 0.001 pt epsilon (float reality: a difference of exactly the epsilon constant counts as uniform, 100 vs 100.01 pt is mixed); and the panel delegates all rules instead of inlining them (the local PtsPerCm constant is gone).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ShapeSizePolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

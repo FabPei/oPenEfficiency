@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Save or Send..." Height="750" Width="800"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterScreen" MouseDown="Window_MouseDown"
+        WindowStartupLocation="CenterOwner"
         FontFamily="Segoe UI Variable Small, Segoe UI">
     
     <Window.Resources>
@@ -67,7 +67,7 @@
 
             <!-- Header -->
             <DockPanel Grid.Row="0" Margin="0,0,0,20">
-                <TextBlock Text="Save or Send..." FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBlock Text="Save or Send..." FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" MouseLeftButtonDown="Header_MouseLeftButtonDown"/>
                 <Button x:Name="BtnClose" Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" />
             </DockPanel>
 
@@ -133,14 +133,29 @@
                                                         <TextBlock Text="PPTX + PDF"/>
                                                     </StackPanel>
                                                 </RadioButton>
-                                                <RadioButton x:Name="FormatProtected" GroupName="Format" Style="{StaticResource FormatToggleStyle}" Margin="0,0,0,10">
+                                                <RadioButton x:Name="FormatHTML" GroupName="Format" Style="{StaticResource FormatToggleStyle}">
                                                     <StackPanel Orientation="Horizontal">
-                                                        <Path Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15C10,16.11 10.9,17 12,17M18,8H17V6A5,5 0 0,0 12,1A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M9,6A3,3 0 0,1 12,3A3,3 0 0,1 15,6V8H9V6Z" Fill="#607D8B" Width="16" Height="16" Margin="0,0,8,0" Stretch="Uniform"/>
-                                                        <TextBlock Text="Protected PDF"/>
+                                                        <Path Data="M4,3H20A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5A2,2 0 0,1 4,3M8.5,8L5,12L8.5,16L10,14.5L8,12L10,9.5L8.5,8M15.5,8L14,9.5L16,12L14,14.5L15.5,16L19,12L15.5,8Z" Fill="#0EA5E9" Width="16" Height="16" Margin="0,0,8,0" Stretch="Uniform"/>
+                                                        <StackPanel>
+                                                            <TextBlock Text="Editable HTML"/>
+                                                            <TextBlock Text="Text, tables, shapes and images" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                        </StackPanel>
                                                     </StackPanel>
                                                 </RadioButton>
-                                                
                                                 <StackPanel Margin="24,10,0,0" x:Name="PdfOptionsPanel">
+                                                    <StackPanel.Style>
+                                                        <Style TargetType="StackPanel">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsChecked, ElementName=FormatPDF}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsChecked, ElementName=FormatBoth}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </StackPanel.Style>
                                                     <CheckBox x:Name="ChkPdfA" Content="PDF/A Compliance (ISO 19005-1)" FontSize="11" Margin="0,0,0,5"/>
                                                     <CheckBox x:Name="ChkPdfFrame" Content="Add Frame around Slides" FontSize="11"/>
                                                 </StackPanel>
@@ -164,11 +179,8 @@
                                                 <StackPanel Margin="0,10,0,0">
                                                     <TextBlock Text="Date" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
                                                     <DatePicker x:Name="PickerDate" Height="28"/>
-                                                    <CheckBox x:Name="ChkAutoDate" Content="Auto" IsChecked="True" Margin="0,10,0,0"/>
-
                                                     <TextBlock Text="Version" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,5"/>
                                                     <TextBox x:Name="TxtVersion" Text="1" Width="50" HorizontalAlignment="Left" Padding="5,2" Margin="0,0,0,10"/>
-                                                    <CheckBox x:Name="ChkAutoVersion" Content="Auto" IsChecked="True"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
@@ -298,7 +310,7 @@
                                     </StackPanel>
                                 </Expander>
                                 
-                                <CheckBox x:Name="ChkApplyPropsOnExport" Content="Save properties permanently in original file" IsChecked="True" Margin="0,0,0,20"/>
+                                <CheckBox x:Name="ChkApplyPropsOnExport" Content="Also apply these properties to the open presentation" IsChecked="False" Margin="0,0,0,20"/>
                             </StackPanel>
                         </Grid>
                     </ScrollViewer>
@@ -315,7 +327,7 @@
                                         <CheckBox x:Name="ChkCleanComments" Content="Remove Comments" IsChecked="False" Margin="0,0,0,10"/>
                                         <CheckBox x:Name="ChkCleanHiddenSlides" Content="Remove Hidden Slides" IsChecked="False" Margin="0,0,0,10"/>
                                         <CheckBox x:Name="ChkCleanNotes" Content="Remove Speaker Notes" IsChecked="False" Margin="0,0,0,10"/>
-                                        <CheckBox x:Name="ChkCleanDeveloperNotes" Content="Remove Developer Notes (oPE Scratchpad)" IsChecked="False" Margin="0,0,0,10"/>
+                                        <CheckBox x:Name="ChkCleanDeveloperNotes" Content="Remove Private Review Notes" IsChecked="False" Margin="0,0,0,10"/>
                                         <CheckBox x:Name="ChkCleanMetadata" Content="Remove Personal Info / Metadata (Author, etc.)" IsChecked="False" Margin="0,0,0,10"/>
                                     </StackPanel>
                                 </Border>
@@ -336,7 +348,7 @@
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-                    <Button  Content="Cancel" Style="{StaticResource SecondaryButton}" Width="100" Height="36" Click="BtnCancel_Click" Margin="0,0,10,0">
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="100" Height="36" Click="BtnCancel_Click" Margin="0,0,10,0" IsCancel="True">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
@@ -345,7 +357,7 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-                    <Button x:Name="BtnOK" Content="OK" Style="{StaticResource AccentButton}" Width="120" Height="36" Click="BtnOK_Click">
+                    <Button x:Name="BtnOK" Content="Export" Style="{StaticResource AccentButton}" Width="120" Height="36" Click="BtnOK_Click" IsDefault="True">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="bdr" Background="{TemplateBinding Background}" CornerRadius="4">

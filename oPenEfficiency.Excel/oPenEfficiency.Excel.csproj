@@ -1,0 +1,257 @@
+<Project ToolsVersion="18.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <ProjectTypeGuids>{BAA0C2D2-18E2-41B9-852F-F413020CAA33};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C1D2E3F4-2222-4333-8444-555566667777}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <RootNamespace>oPenEfficiency.Excel</RootNamespace>
+    <AssemblyName>oPenEfficiency.Excel</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <DefineConstants>VSTO40</DefineConstants>
+    <ResolveComReferenceSilent>true</ResolveComReferenceSilent>
+    <IsWebBootstrapper>False</IsWebBootstrapper>
+    <EnableWpfTempProjectReferences>true</EnableWpfTempProjectReferences>
+    <WpfTempProjectUseHostEnvironment>true</WpfTempProjectUseHostEnvironment>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
+    <BootstrapperEnabled>false</BootstrapperEnabled>
+    <PublishUrl>Publish\</PublishUrl>
+    <InstallUrl />
+    <TargetCulture>de</TargetCulture>
+    <ApplicationVersion>2026.10.22.1</ApplicationVersion>
+    <AutoIncrementApplicationRevision>false</AutoIncrementApplicationRevision>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>days</UpdateIntervalUnits>
+    <ProductName>openEfficiency for Excel</ProductName>
+    <PublisherName>FabPei</PublisherName>
+    <FriendlyName>openEfficiency for Excel</FriendlyName>
+    <OfficeApplicationDescription />
+    <LoadBehavior>3</LoadBehavior>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.8">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.8 %28x86 und x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.VSTORuntime.4.0">
+      <Visible>False</Visible>
+      <ProductName>Microsoft Visual Studio 2010-Tools für Office-Laufzeit %28x86 und x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <PropertyGroup>
+    <OfficeApplication>Excel</OfficeApplication>
+  </PropertyGroup>
+  <!-- Define WINRT_OCR only when the Windows 10 SDK winmd is present, so WindowsChartOcr
+       is compiled and wired up; otherwise the add-in falls back to manual value entry. -->
+  <PropertyGroup Condition="Exists('C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd')">
+    <DefineConstants>$(DefineConstants);WINRT_OCR</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Accessibility" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Office.Tools.v4.0.Framework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Tools.Applications.Runtime, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Tools.Common, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Office.Tools.Common.v4.0.Utilities, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Office.Interop.Excel" Version="15.0.4795.1001">
+      <GeneratePathProperty>true</GeneratePathProperty>
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Office.Interop.PowerPoint" Version="15.0.4420.1018">
+      <GeneratePathProperty>true</GeneratePathProperty>
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
+    <PackageReference Include="MicrosoftOfficeCore" Version="15.0.0">
+      <GeneratePathProperty>true</GeneratePathProperty>
+      <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>all</ExcludeAssets>
+    </PackageReference>
+    <Reference Include="Microsoft.Office.Interop.Excel">
+      <HintPath>$(PkgMicrosoft_Office_Interop_Excel)\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.PowerPoint">
+      <HintPath>$(PkgMicrosoft_Office_Interop_PowerPoint)\lib\net20\Microsoft.Office.Interop.PowerPoint.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="office">
+      <HintPath>$(PkgMicrosoftOfficeCore)\lib\net35\Office.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="stdole, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <!--
+    WinRT projection for the built-in Windows OCR engine (Windows.Media.Ocr), consumed
+    from .NET Framework 4.8. Requires the Windows 10 SDK (UnionMetadata) to be installed.
+    Guarded with Condition="Exists" so a machine without the SDK still builds (OCR then
+    degrades to manual entry via NullChartOcr / the WindowsChartOcr try-catch).
+  -->
+  <ItemGroup Condition="Exists('C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd')">
+    <Reference Include="Windows">
+      <HintPath>C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Runtime.WindowsRuntime">
+      <HintPath>C:\Windows\Microsoft.NET\Framework\v4.0.30319\System.Runtime.WindowsRuntime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Runtime.InteropServices.WindowsRuntime">
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades\System.Runtime.InteropServices.WindowsRuntime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThisAddIn.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ThisAddIn.Designer.cs">
+      <DependentUpon>ThisAddIn.Designer.xml</DependentUpon>
+    </Compile>
+    <None Include="ThisAddIn.Designer.xml">
+      <DependentUpon>ThisAddIn.cs</DependentUpon>
+    </None>
+    <Compile Include="Services\ExcelManager.cs" />
+    <Compile Include="Services\SlideSnapshotService.cs" />
+    <Compile Include="Services\PowerPointConnector.cs" />
+    <Compile Include="UI\ExcelRibbon.cs" />
+    <Compile Include="Features\Data\RemoveDuplicatesFeature.cs" />
+    <Compile Include="Features\Data\DateValidator.cs" />
+    <Compile Include="Features\Data\DateFindingsWindow.cs" />
+    <Compile Include="Features\Data\DateValidationFeature.cs" />
+    <Compile Include="Features\View\ShowFormulasFeature.cs" />
+    <Compile Include="Features\Auditing\FormulaAuditingFeatures.cs" />
+    <Compile Include="Features\PowerPointLink\SlideSnapshotFeatures.cs" />
+    <Compile Include="Features\PowerPointLink\LinkTableFeatures.cs" />
+    <!-- Linked source: the link creation uses the same cell transfer as the PowerPoint-side
+         refresh (oPenEfficiency/Features/Utilities/DataLinkFormatTransfer.cs). -->
+    <Compile Include="..\oPenEfficiency\Features\Utilities\DataLinkFormatTransfer.cs">
+      <Link>Features\PowerPointLink\DataLinkFormatTransfer.cs</Link>
+    </Compile>
+    <Compile Include="Features\PowerPointLink\LinkedRangeRegistry.cs" />
+    <Compile Include="Features\Rounding\OeRound.cs" />
+    <Compile Include="Features\Rounding\OeRoundEngine.cs" />
+    <Compile Include="Features\Rounding\OeRoundFunctions.cs" />
+    <Compile Include="Features\Rounding\OeRoundActions.cs" />
+    <Compile Include="Features\ChartScanner\ChartScanModels.cs" />
+    <Compile Include="Features\ChartScanner\AxisCalibration.cs" />
+    <Compile Include="Features\ChartScanner\ChartOcr.cs" />
+    <Compile Include="Features\ChartScanner\WindowsChartOcr.cs" Condition="Exists('C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd')" />
+    <Compile Include="Features\ChartScanner\ImageInterop.cs" />
+    <Compile Include="Features\ChartScanner\BarDetector.cs" />
+    <Compile Include="Features\ChartScanner\LineTracer.cs" />
+    <Compile Include="Features\ChartScanner\ScreenCaptureOverlay.cs" />
+    <Compile Include="Features\ChartScanner\PromptDialog.cs" />
+    <Compile Include="Features\ChartScanner\ChartScannerWindow.cs" />
+    <Compile Include="Features\ChartScanner\ChartScannerExport.cs" />
+    <Compile Include="Features\ChartScanner\ChartScannerFeature.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="UI\ExcelRibbon.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <Content Include="..\LICENSE">
+      <Link>LICENSE</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\THIRD_PARTY_NOTICES.md">
+      <Link>THIRD_PARTY_NOTICES.md</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Host-neutral shared library (feature metadata, logging, etc.). -->
+    <ProjectReference Include="..\oPenEfficiency.Core\oPenEfficiency.Core.csproj">
+      <Project>{d4e5f6a7-1111-4222-8333-444455556666}</Project>
+      <Name>oPenEfficiency.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <VSToolsPath Condition="!Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v17.0</VSToolsPath>
+    <VSToolsPath Condition="!Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v16.0</VSToolsPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>oPenEfficiency.Excel_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>CA0718748DF1D14D5F4F520F7D66A82B95FC42A1</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <Import Project="..\eng\LocalSigning.props" Condition="Exists('..\eng\LocalSigning.props')" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets" Condition="Exists('$(VSToolsPath)\OfficeTools\Microsoft.VisualStudio.Tools.Office.targets')" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{BAA0C2D2-18E2-41B9-852F-F413020CAA33}">
+        <ProjectProperties HostName="Excel" HostPackage="{29A7B9D7-A7F1-4328-8EF0-6B2D1A56B2C1}" OfficeVersion="15.0" VstxVersion="4.0" ApplicationType="Excel" Language="cs" TemplatesPath="" DebugInfoExeName="#Software\Microsoft\Office\16.0\Excel\InstallRoot\Path#excel.exe" AddItemTemplatesGuid="{51063C3A-E220-4D12-8922-BDA915ACD783}" />
+        <Host Name="Excel" GeneratedCodeNamespace="oPenEfficiency.Excel" IconIndex="0">
+          <HostItem Name="ThisAddIn" Code="ThisAddIn.cs" CanonicalName="AddIn" CanActivate="false" IconIndex="1" Blueprint="ThisAddIn.Designer.xml" GeneratedCode="ThisAddIn.Designer.cs" />
+        </Host>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- Command-line source builds preserve the user's live Office add-in registration. -->
+  <PropertyGroup Condition="'$(OpenEfficiencySkipOfficeRegistration)' == 'true'">
+    <PrepareForRunDependsOn>$([MSBuild]::Unescape($([System.String]::Copy('$(PrepareForRunDependsOn)').Replace('RegisterOfficeAddin', ''))))</PrepareForRunDependsOn>
+  </PropertyGroup>
+</Project>

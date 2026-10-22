@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnArrangeCircle",
+  "title": "Arrange Shapes in Circle (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnArrangeCircle-001",
+      "title": "Arrange Shapes in Circle applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Arrange Shapes in Circle (BtnArrangeCircle) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnArrangeCircle-001",
+      "title": "BtnArrangeCircle places the selection as shape centers on the documented circle",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "BtnArrangeCircle applies Arrange Shapes in Pattern with the circle pattern and its documented defaults (radius = max(bounding-box width, height) / 2 around the selection bounding-box center, start angle 0, clockwise)."
+        }
+      ],
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented pattern placement",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic host-free scenario places the probe centers on the documented circle and passes; bind-office-evidence-and-reviews (office-only gate) remains until QA9-BtnArrangeCircle-002 has real-host evidence and review.",
+          "status": "open",
+          "type": "acceptance",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Core.Tests/PatternPlacementPlannerTests.cs",
+              "line": 23,
+              "item": "PatternPlacementPlannerTests.CirclePatternPlacesCountPointsOnTheRadiusClockwiseFromTop",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "acceptance",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "QA9-BtnArrangeCircle-002",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "expected": "On a four-shape selection with bounding box 40,40..360,255 (center 200,147.5, radius 160), the circle pattern places the four shape centers exactly at (200,-12.5), (360,147.5), (200,307.5), (40,147.5) - clockwise from the top anchor with start angle 0 - and counterclockwise traversal or a start angle rotates the same path accordingly.",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/PatternPlacementPlanner.cs",
+        "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+        "oPenEfficiency.Core.Tests/PatternPlacementPlannerTests.cs"
+      ],
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~PatternPlacementPlannerTests.CirclePatternPlacesCountPointsOnTheRadiusClockwiseFromTop"
+      }
+    },
+    {
+      "id": "QA9-BtnArrangeCircle-002",
+      "title": "BtnArrangeCircle deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Real-host acceptance for the circle placement of selected shapes."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented pattern placement",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "eng/Smoke-PowerPointArrangePattern.ps1",
+              "line": 1,
+              "item": "eng/Smoke-PowerPointArrangePattern.ps1",
+              "type": "runner"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host arrange-pattern run for circle",
+              "type": "evidence"
+            }
+          ]
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed BtnArrangeCircle arranges four fixed probes (bounding box 40,40..360,255) so that every probe shape center matches the hard-coded documented circle positions within 1 pt, the feature reports execution, all probes remain, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/ArrangeInShapeFeature.cs",
+        "oPenEfficiency.Core/Services/PatternPlacementPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointArrangePattern.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointArrangePattern.ps1",
+        "arguments": [
+          "-Patterns",
+          "circle"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

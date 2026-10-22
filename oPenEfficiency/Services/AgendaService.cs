@@ -41,7 +41,7 @@ namespace oPenEfficiency
                 {
                     isPresThinkCellProtected = !string.IsNullOrEmpty(pres.Tags["THINKCELLPRESENTATIONDONOTDELETE"]);
                 } 
-                catch { }
+                catch { /* Missing Think-Cell presentation tags mean the presentation is not protected. */ }
 
                 // 2. Iterate through sections to create/update slides
                 // We go backwards to avoid index shifting issues if we were deleting, 
@@ -97,7 +97,7 @@ namespace oPenEfficiency
                     }
                 }
             }
-            catch { }
+            catch { /* A stale slide or shape proxy is treated as not Think-Cell protected. */ }
 
             return false;
         }

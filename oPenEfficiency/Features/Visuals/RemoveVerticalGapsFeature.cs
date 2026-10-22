@@ -14,10 +14,9 @@ namespace oPenEfficiency.Features
         IconData = "M5,3V5H19V3H5M5,19V21H19V19H5M12,6V18",
         Color = "#10B981",
         Description = "Removes vertical gaps between selected shapes.",
-        DetailedHelpText = "### Remove Vertical Gaps\nCollapses all vertical spacing between selected shapes to zero, sliding them together with no gap on the vertical axis.",
-        Keywords = "gap, remove, vertical, collapse, pack",
+        DetailedHelpText = "### Remove Vertical Gaps\nSelect at least two shapes. The command removes the vertical gaps while keeping the first selected shape in place and preserving the top-to-bottom order. Right-click the sidebar button and choose **Remove Vertical Gaps & Center** to center the packed group within its original vertical bounds instead.",
         MinSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class RemoveVerticalGapsFeature
     {
         public static bool Execute(PowerPointManager manager)

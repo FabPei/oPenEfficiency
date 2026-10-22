@@ -1,7 +1,7 @@
 <Window x:Class="oPenEfficiency.UI.Toolbars.DiagonalAlignToolbar"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Diagonal Align" 
+        Title="Align Diagonally"
         Height="310" Width="300"
         WindowStyle="None" 
         ResizeMode="NoResize" 
@@ -34,7 +34,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="0,0,0,15">
-            <TextBlock Text="Diagonal Align" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="Align Diagonally" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             <Button Style="{DynamicResource WindowCloseButton}" Click="BtnClose_Click" ToolTip="Close"/>
         </Grid>
 

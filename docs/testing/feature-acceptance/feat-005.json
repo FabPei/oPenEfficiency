@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "featureId": "FEAT-005",
+  "title": "Excel / PowerPoint Data Links",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ExcelValueFeature.cs",
+    "oPenEfficiency/Features/Utilities/TableLinkFeature.cs",
+    "oPenEfficiency/UI/Dialogs/ExcelLinkManagerWindow*",
+    "oPenEfficiency.Excel/Services/PowerPointConnector.cs",
+    "oPenEfficiency.Excel/Features/PowerPointLink/*"
+  ],
+  "scenarios": [
+    {
+      "id": "DL-LIVE-001",
+      "title": "Unsaved open-workbook table refresh",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*TableLinkFeature.cs",
+        "oPenEfficiency.Excel/*"
+      ],
+      "expected": "Changing a source cell in an already-open workbook without saving and refreshing PowerPoint updates the linked table from the in-memory Excel value.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointLifecycle.ps1",
+        "arguments": [
+          "-RequireAddIn"
+        ]
+      }
+    },
+    {
+      "id": "DL-INLINE-002",
+      "title": "Whole-shape refresh updates all inline values",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*ExcelValueFeature.cs",
+        "*ThisAddIn*"
+      ],
+      "expected": "When a text box contains two inline Excel links and the shape is selected, refresh updates both links; a cursor-targeted floating-toolbar refresh updates only the selected link.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointInlineValues.ps1",
+        "arguments": [
+          "-RequireAddIn"
+        ]
+      }
+    },
+    {
+      "id": "DL-LINKMGR-001",
+      "title": "Link Manager row and checkbox selection",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*ExcelLinkManagerWindow*"
+      ],
+      "expected": "Rows and checkboxes are selectable and selected-scope actions receive exactly the selected links.",
+      "ownerSteps": [
+        "Open a deck containing at least two links.",
+        "Open Excel Link Manager.",
+        "Click a row, then a checkbox, then select multiple entries.",
+        "Run Go To or Refresh Selected."
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-LinkManagerSelection.ps1"
+      }
+    },
+    {
+      "id": "DL-RELINK-001",
+      "title": "Relink completes after range selection",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*ExcelLinkManagerWindow*",
+        "*TableLinkFeature.cs"
+      ],
+      "expected": "Relink from SourceA to SourceB completes through workbook, sheet and range selection without focus/modal deadlock; the existing destination refreshes from SourceB.",
+      "ownerSteps": [
+        "Select one linked table in Excel Link Manager.",
+        "Start Relink Source.",
+        "Choose a different workbook and worksheet.",
+        "Enter/select a valid range and confirm.",
+        "Refresh the existing PowerPoint object."
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointRelinkWorkflow.ps1"
+      }
+    },
+    {
+      "id": "DL-MULTIPPT-001",
+      "title": "Two PowerPoint processes fail closed",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*PowerPointConnector.cs",
+        "oPenEfficiency.Excel/*"
+      ],
+      "expected": "With two distinct POWERPNT.EXE PIDs, Excel-side link creation reports an ambiguous target and writes to neither deck.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointMultiInstance.ps1"
+      }
+    },
+    {
+      "id": "DL-FORMAT-NOFILL-001",
+      "title": "Formatted linked table preserves Excel No Fill appearance",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*TableLinkFeature.cs",
+        "oPenEfficiency.Excel/Features/PowerPointLink/*"
+      ],
+      "expected": "With Formatting, Excel cells with No Fill do not expose an unintended gray PowerPoint table-style fill on initial creation or refresh; explicit solid fills still match Excel.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableFormatting.ps1",
+        "arguments": [
+          "-RequireAddIn"
+        ]
+      }
+    },
+    {
+      "id": "DL-FORMAT-CREATE-002",
+      "title": "Formatted table creation transfers the same formatting as a refresh",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*DataLinkFormatTransfer.cs",
+        "*DataLinkFormatPolicy.cs",
+        "*TableLinkFeature.cs",
+        "oPenEfficiency.Excel/Features/PowerPointLink/*"
+      ],
+      "expected": "A table link created with formatting through the Excel ribbon command carries the same cell formatting a formatted refresh produces: displayed values complete and unshifted, an explicit Excel fill in the Excel BGR color, Excel No Fill as explicit white, bold and font color applied; the column widths stay PowerPoint-side and are never the Excel column widths. The same holds for the range shape the owner links: a mostly empty 4x5 range whose two filled cells carry NO text must arrive with those Excel fills (palette orange 255,192,0 and palette yellow 255,255,0) and with No Fill as explicit white in the object model AND in the rendered slide - sampled from a 3x PNG export of the created table, because the owner judges the picture.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableFormatting.ps1",
+        "arguments": [
+          "-RequireAddIn"
+        ]
+      }
+    },
+    {
+      "id": "DL-CONNECTOR-ROT-001",
+      "title": "Single PowerPoint PID without visible frame has a PID-safe fallback",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*PowerPointConnector.cs"
+      ],
+      "expected": "With exactly one live POWERPNT process but no enumerable visible PPTFrameClass window, connector behavior is explicit and PID-safe: attach through ROT to the same PID when available or fail closed with a diagnostic.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointConnectorRot.ps1"
+      }
+    },
+    {
+      "id": "DL-BASELINE-001",
+      "title": "Existing PowerPoint integration link/refresh smoke",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/*",
+        "oPenEfficiency.Excel/*"
+      ],
+      "expected": "The established isolated PowerPoint integration suite completes its Excel-to-PowerPoint link/refresh path with no new error-log entries.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Invoke-PowerPointIntegrationTests.ps1",
+        "arguments": [
+          "-RequireAddIn"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

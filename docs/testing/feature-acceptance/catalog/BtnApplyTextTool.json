@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnApplyTextTool",
+  "title": "Replace Text (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnApplyTextTool-001",
+      "title": "Replace Text applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Replace Text (BtnApplyTextTool) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml.cs",
+        "oPenEfficiency/UI/Panels/SidebarNavigationService.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "replace-text-from-last"
+        ]
+      },
+      "id": "QA9-BtnApplyTextTool-001",
+      "title": "Replace Text from First Selected anchors on shapes[1] and replaces collectable ranges",
+      "expected": "In an isolated real PowerPoint host the first selected shape becomes the text anchor: its text reaches the second text shape and all nine cells of the selected 3x3 table (no cell selected -> the table is replaced as a whole), the two-shape group is not recursed so its child texts stay 'group_child_a_before'/'group_child_b_before', the anchor keeps its own text, the run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry."
+    },
+    {
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/ApplyTextWindow.xaml.cs",
+        "oPenEfficiency/UI/Panels/SidebarNavigationService.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "replace-text-from-last"
+        ]
+      },
+      "id": "QA9-BtnApplyTextTool-002",
+      "title": "Replace Text from Last Selected anchors on shapes[shapes.Count] and replaces collectable ranges",
+      "expected": "In an isolated real PowerPoint host the last selected shape becomes the text anchor: its text reaches the second text shape and all nine cells of the selected 3x3 table (no cell selected -> the table is replaced as a whole), the two-shape group is not recursed so its child texts stay 'group_child_a_before'/'group_child_b_before', the anchor keeps its own text, the run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry."
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

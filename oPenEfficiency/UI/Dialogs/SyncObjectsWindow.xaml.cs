@@ -27,18 +27,49 @@ namespace oPenEfficiency.UI
         {
             InitializeComponent();
             _manager = manager;
+            SourceInitialized += (sender, args) => FitToOwnerWorkArea();
 
             _tempDir = Path.Combine(Path.GetTempPath(), "oPenEfficiency_Sync_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
 
             Loaded += OnLoaded;
+            Loaded += (sender, args) => UpdateHeaderCaption();
+            HeaderDragRegion.SizeChanged += (sender, args) => UpdateHeaderCaption();
             Closed += OnClosed;
         }
 
-        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        private void FitToOwnerWorkArea()
         {
-            if (e.ChangedButton == MouseButton.Left)
-                this.DragMove();
+            var helper = new System.Windows.Interop.WindowInteropHelper(this);
+            var screen = System.Windows.Forms.Screen.FromHandle(helper.Owner);
+            var dpi = VisualTreeHelper.GetDpi(this);
+            double availableWidth = Math.Max(1, (screen.WorkingArea.Width / dpi.DpiScaleX) - 32);
+            double availableHeight = Math.Max(1, (screen.WorkingArea.Height / dpi.DpiScaleY) - 32);
+            MinWidth = Math.Min(MinWidth, availableWidth);
+            MinHeight = Math.Min(MinHeight, availableHeight);
+            MaxWidth = availableWidth;
+            MaxHeight = availableHeight;
+            Width = Math.Min(Width, availableWidth);
+            Height = Math.Min(Height, availableHeight);
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                Close();
+                e.Handled = true;
+            }
+        }
+
+        private void UpdateHeaderCaption()
+        {
+            var chrome = System.Windows.Shell.WindowChrome.GetWindowChrome(this);
+            if (chrome == null || HeaderDragRegion.ActualHeight <= 0) return;
+            // REG-SYNC-WINDOW-UI-001: native caption hit testing includes the shell's top padding
+            // and follows header wrapping/DPI layout. Close remains an interactive client control.
+            chrome.CaptionHeight = HeaderDragRegion.TranslatePoint(
+                new System.Windows.Point(0, HeaderDragRegion.ActualHeight), this).Y;
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -70,7 +101,7 @@ namespace oPenEfficiency.UI
                     if (app.ActiveWindow?.View?.Slide != null)
                         activeIndex = ((Slide)app.ActiveWindow.View.Slide).SlideIndex;
                 }
-                catch { }
+                catch { /* A stale candidate shape is skipped while populating the synchronization list. */ }
 
                 for (int i = 1; i <= count; i++)
                 {
@@ -115,132 +146,58 @@ namespace oPenEfficiency.UI
 
         private void AddSlideItem(int slideIndex, BitmapImage thumbnail, bool isSelectedInitially)
         {
-            var itemBorder = new Border
-            {
-                Width = ThumbW + 8,
-                Height = ThumbH + 26,
-                Margin = new Thickness(5),
-                Padding = new Thickness(3),
-                BorderThickness = new Thickness(2),
-                BorderBrush = Brushes.Transparent,
-                CornerRadius = new CornerRadius(4),
-                Cursor = Cursors.Hand,
-                Tag = slideIndex
-            };
-
-            var stack = new StackPanel { Orientation = Orientation.Vertical };
-
-            var imgGrid = new Grid
-            {
-                Width = ThumbW,
-                Height = ThumbH
-            };
-
-            var img = new System.Windows.Controls.Image
+            var stack = new StackPanel();
+            stack.Children.Add(new System.Windows.Controls.Image
             {
                 Source = thumbnail,
                 Width = ThumbW,
                 Height = ThumbH,
-                Stretch = Stretch.Fill,
-                SnapsToDevicePixels = true
-            };
-
-            var selectionOverlay = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(100, 59, 130, 246)),
-                Visibility = Visibility.Collapsed
-            };
-
-            var checkmark = new TextBlock
-            {
-                Text = "✓",
-                Foreground = Brushes.White,
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Visibility = Visibility.Collapsed
-            };
-
-            imgGrid.Children.Add(img);
-            imgGrid.Children.Add(selectionOverlay);
-            imgGrid.Children.Add(checkmark);
-
+                Stretch = Stretch.Uniform
+            });
             var numberLabel = new TextBlock
             {
-                Text = slideIndex.ToString(),
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 4, 0, 0)
+                Text = $"Slide {slideIndex}",
+                FontSize = (double)FindResource("TypographyCaptionSize"),
+                HorizontalAlignment = HorizontalAlignment.Center
             };
-
-            stack.Children.Add(imgGrid);
+            numberLabel.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondaryBrush");
             stack.Children.Add(numberLabel);
-            itemBorder.Child = stack;
 
-            Action<bool> setSelectionState = (selected) =>
+            var item = new System.Windows.Controls.CheckBox
             {
-                if (selected)
-                {
-                    _selectedIndices.Add(slideIndex);
-                    itemBorder.BorderBrush = (Brush)FindResource("AccentBrush") ?? new SolidColorBrush(Color.FromRgb(59, 130, 246));
-                    itemBorder.Background = new SolidColorBrush(Color.FromArgb(20, 59, 130, 246));
-                    selectionOverlay.Visibility = Visibility.Visible;
-                    checkmark.Visibility = Visibility.Visible;
-                }
-                else
-                {
-                    _selectedIndices.Remove(slideIndex);
-                    itemBorder.BorderBrush = Brushes.Transparent;
-                    itemBorder.Background = Brushes.Transparent;
-                    selectionOverlay.Visibility = Visibility.Collapsed;
-                    checkmark.Visibility = Visibility.Collapsed;
-                }
+                Content = stack,
+                Width = ThumbW + 36,
+                MinHeight = ThumbH + 26,
+                Margin = (Thickness)FindResource("Space4"),
+                VerticalContentAlignment = VerticalAlignment.Center,
+                IsChecked = isSelectedInitially,
+                ToolTip = $"Target slide {slideIndex} (Space to select or clear)"
             };
-
-            setSelectionState(isSelectedInitially);
-
-            itemBorder.MouseLeftButtonUp += (s, e) =>
-            {
-                bool isCurrentlySelected = _selectedIndices.Contains(slideIndex);
-                setSelectionState(!isCurrentlySelected);
-            };
-
-            itemBorder.MouseEnter += (s, e) =>
-            {
-                if (!_selectedIndices.Contains(slideIndex))
-                {
-                    itemBorder.BorderBrush = (Brush)FindResource("BorderLightBrush") ?? Brushes.LightGray;
-                }
-            };
-            itemBorder.MouseLeave += (s, e) =>
-            {
-                if (!_selectedIndices.Contains(slideIndex))
-                {
-                    itemBorder.BorderBrush = Brushes.Transparent;
-                }
-            };
-
-            SlidesPanel.Children.Add(itemBorder);
+            item.Style = (Style)FindResource(typeof(System.Windows.Controls.CheckBox));
+            System.Windows.Automation.AutomationProperties.SetName(item, $"Target slide {slideIndex}");
+            if (isSelectedInitially) _selectedIndices.Add(slideIndex);
+            else _selectedIndices.Remove(slideIndex);
+            item.Checked += (sender, args) => _selectedIndices.Add(slideIndex);
+            item.Unchecked += (sender, args) => _selectedIndices.Remove(slideIndex);
+            SlidesPanel.Children.Add(item);
         }
 
         private void BtnDistribute_Click(object sender, RoutedEventArgs e)
         {
             if (_selectedIndices.Count == 0)
             {
-                ShowStatus("No target slides selected.", Colors.Orange);
+                ShowStatus("No target slides selected.", "WarningBrush");
                 return;
             }
 
             bool success = SyncObjectsFeature.DistributeShapesToSlides(_manager, _selectedIndices.ToList());
             if (success)
             {
-                ShowStatus("Shapes distributed successfully!", Colors.LightGreen);
+                ShowStatus("Shapes distributed successfully!", "SuccessBrush");
             }
             else
             {
-                ShowStatus("Failed to distribute. Ensure shapes are selected.", Colors.Red);
+                ShowStatus("Failed to distribute. Ensure shapes are selected.", "ErrorBrush");
             }
         }
 
@@ -253,18 +210,18 @@ namespace oPenEfficiency.UI
             bool success = SyncObjectsFeature.SyncShapeProperties(_manager, format, position, content);
             if (success)
             {
-                ShowStatus("Synchronization complete!", Colors.LightGreen);
+                ShowStatus("Synchronization complete!", "SuccessBrush");
             }
             else
             {
-                ShowStatus("Sync failed. Check if a valid tagged shape is selected.", Colors.Red);
+                ShowStatus("Sync failed. Check if a valid tagged shape is selected.", "ErrorBrush");
             }
         }
 
-        private void ShowStatus(string message, Color color)
+        private void ShowStatus(string message, string brushKey)
         {
             TxtStatus.Text = message;
-            TxtStatus.Foreground = new SolidColorBrush(color);
+            TxtStatus.SetResourceReference(TextBlock.ForegroundProperty, brushKey);
             TxtStatus.Visibility = Visibility.Visible;
         }
 

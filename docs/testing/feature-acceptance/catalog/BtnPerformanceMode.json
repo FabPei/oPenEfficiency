@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnPerformanceMode",
+  "title": "Performance Mode (SettingsAndHelp)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ExternalAddInPerformanceModeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnPerformanceMode-001",
+      "title": "Performance Mode applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ExternalAddInPerformanceModeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Performance Mode (BtnPerformanceMode) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

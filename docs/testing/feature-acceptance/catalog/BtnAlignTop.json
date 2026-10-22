@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignTop",
+  "title": "Align Top (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/AlignToFirstTopFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignTop-001",
+      "title": "Align Top applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstTopFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Align Top (BtnAlignTop) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignTop-001",
+      "title": "Align Top never moves a shape downwards",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstTopFeature.cs",
+        "oPenEfficiency.Core/Services/DirectionalGuideSelector.cs",
+        "oPenEfficiency.Core.Tests/GuideSnapAcceptanceTests.cs"
+      ],
+      "expected": "With horizontal guides at 0 and 100 the top edge 250 snaps to 100 and never downwards; without a qualifying guide the slide edge 0 is the fallback; a guide exactly on the edge keeps the shape in place and a repeated alignment moves nothing.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GuideSnapAcceptanceTests.AlignTopSnapsToTheNearestHorizontalGuideAtOrBeforeTheTopEdge"
+      }
+    },
+    {
+      "id": "QA9-BtnAlignTop-002",
+      "title": "Align Top aligns a real multi-selection to the reference shape top edge",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstTopFeature.cs",
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointAlignFirst.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Top runs its primary multi-select route: three probe shapes created at distinct top edges (40/100/160 pt) are selected and aligned, every probe top edge equals the reference shape top edge afterwards, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointAlignFirst.ps1",
+        "arguments": [
+          "-Directions",
+          "top"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

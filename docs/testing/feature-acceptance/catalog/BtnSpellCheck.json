@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSpellCheck",
+  "title": "Set Spell Check Language (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/SpellCheckLanguageFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSpellCheck-001",
+      "title": "Set Spell Check Language applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SpellCheckLanguageFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Set Spell Check Language (BtnSpellCheck) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSpellCheck-002",
+      "title": "Proofing-language scope application (selection incl. cells/groups, presentation) pinned on a real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Services/ProofingLanguageService.cs",
+        "oPenEfficiency/Features/Text/SpellCheckLanguageFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host the production ProofingLanguageService applies German to a French pre-set fixture: the selection scope changes exactly seven ranges (one text shape, four table cells, two group children) and leaves slide 2's French shape untouched; the presentation scope then sweeps the whole deck (27 changes including masters/layouts) and switches slide 2 to German. The run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "set-proofing-language"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

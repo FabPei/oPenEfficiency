@@ -9,14 +9,13 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnMatchSize",
         Name = "Match Size",
-        Tooltip = "Match size",
+        Tooltip = "Match selected shapes to the anchor's width and height",
         IconData = "M3,3H9V9H3V3M11,11H21V21H11V11M3,11H9V17H3V11M11,3H17V9H11V3Z",
         Color = "#10B981",
         Description = "Forces all selected objects to match the exact Width and Height of the anchor object.",
-        DetailedHelpText = "### Match Size\nResizes all selected shapes to match the exact width AND height of the first shape simultaneously.",
-        Keywords = "same size, copy dimensions, identical size, match width and height",
+        DetailedHelpText = "### Match Size\n\nResizes every non-anchor shape to the exact width and height of the first or last selected anchor configured in Settings. Right-click any Match Size, Match Width, or Match Height button to choose width, height, or both dimensions directly. Existing aspect-ratio lock states are preserved, and the operation can be undone as one PowerPoint step.",
         MinSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class MatchSizeFeature
     {
         /// <summary>
@@ -28,7 +27,7 @@ namespace oPenEfficiency.Features
         }
 
         /// <summary>
-        /// Full method with parameters for manual switch usage.
+        /// Full method with parameters for explicit command variants.
         /// </summary>
         public static bool Execute(PowerPointManager manager, bool width = true, bool height = true)
         {

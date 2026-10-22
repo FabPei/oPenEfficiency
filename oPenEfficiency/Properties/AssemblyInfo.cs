@@ -6,11 +6,11 @@ using System.Security;
 // Allgemeine Informationen über eine Assembly werden über folgende 
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die einer Assembly zugeordnet sind.
-[assembly: AssemblyTitle("oPenEfficiency")]
+[assembly: AssemblyTitle("openEfficiency")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("FabPei")]
-[assembly: AssemblyProduct("oPenEfficiency")]
+[assembly: AssemblyProduct("openEfficiency")]
 [assembly: AssemblyCopyright("Copyright © 2026 FabPei")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -32,7 +32,8 @@ using System.Security;
 //
 // Sie können alle Werte angeben oder die standardmäßigen Build- und Revisionsnummern 
 // übernehmen, indem Sie "*" eingeben:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2026.05.14.1145")]
-[assembly: AssemblyFileVersion("2026.05.14.1145")]
+// Assembly version and file version are stamped per build by Directory.Build.props
+// (StampBuildIdentity -> BuildStampInfo.cs). Do not set them here again: a constant
+// version lets the Office VSTO shadow copy keep serving an old DLL after a rebuild.
+[assembly: InternalsVisibleTo("oPenEfficiency.Command.Tests")]
 

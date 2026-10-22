@@ -1,7 +1,7 @@
 <Window x:Class="oPenEfficiency.UI.Toolbars.TransparencyToolbar"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Transparency" Height="65" Width="320"
+        Title="Adjust Transparency" Height="65" Width="320"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False"
         MouseDown="Window_MouseDown"

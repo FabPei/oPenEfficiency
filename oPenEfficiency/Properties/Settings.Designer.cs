@@ -56,5 +56,17 @@ namespace oPenEfficiency.Properties {
                 this["SmallImageThresholdKB"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string RecentMapSelections {
+            get {
+                return ((string)(this["RecentMapSelections"]));
+            }
+            set {
+                this["RecentMapSelections"] = value;
+            }
+        }
     }
 }

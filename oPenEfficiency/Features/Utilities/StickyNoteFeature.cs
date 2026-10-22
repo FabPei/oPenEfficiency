@@ -18,13 +18,22 @@ namespace oPenEfficiency.Features
         IconData = "M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M14,17H7V15H14V17M17,13H7V11H17V13M17,9H7V7H17V9Z",
         Color = "#FBBF24",
         Description = "Inserts a sticky note at the top-right of the slide. Style is configurable in Settings.",
-        DetailedHelpText = "### Sticky Note\nInserts a styled sticky-note annotation shape onto the slide for review comments or reminders directly on the canvas.",
-        Keywords = "sticky note, post-it, comment, reminder, review, feedback",
+        DetailedHelpText = "### Sticky Note\nInserts a styled sticky-note annotation at the top-right of the current slide. Theme, Consulting, and Compact Banner each keep their own background and font colors in Settings; Compact Banner also uses its characteristic offset shadow block. Default text and font are shared. New notes are marked with an openEfficiency tag so Sticky Note Manager can identify them safely.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class StickyNoteFeature
     {
-        public static bool Execute(PowerPointManager manager, string text = null, Slide targetSlide = null)
+        public enum StickyNoteStyle
+        {
+            Theme,
+            Consulting,
+            CompactBanner
+        }
+
+        public const string StickyNoteTag = "oPE_StickyNote";
+        public const string StickyNoteStyleTag = "oPE_StickyNoteStyle";
+
+        public static bool Execute(PowerPointManager manager, string text = null)
         {
             if (manager == null) return false;
 
@@ -43,24 +52,52 @@ namespace oPenEfficiency.Features
                 style = "Theme";
             }
 
+            StickyNoteStyle selectedStyle;
             switch (style)
             {
                 case "Consulting":
-                    return AddConsultingStickyNote(manager, text, targetSlide);
+                    selectedStyle = StickyNoteStyle.Consulting;
+                    break;
                 case "GreenB":
-                    return AddGreenBSticker(manager, text, targetSlide);
+                    selectedStyle = StickyNoteStyle.CompactBanner;
+                    break;
                 case "Theme":
                 default:
-                    return InsertRealisticStickyNote(manager, text, targetSlide);
+                    selectedStyle = StickyNoteStyle.Theme;
+                    break;
+            }
+
+            return ExecuteStyle(manager, selectedStyle, text);
+        }
+
+        public static bool ExecuteStyle(
+            PowerPointManager manager,
+            StickyNoteStyle style,
+            string text = null)
+        {
+            if (manager == null) return false;
+
+            try { manager.GetApplication()?.StartNewUndoEntry(); }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "StickyNoteFeature.ExecuteStyle.StartUndo"); }
+
+            switch (style)
+            {
+                case StickyNoteStyle.Consulting:
+                    return AddConsultingStickyNote(manager, text);
+                case StickyNoteStyle.CompactBanner:
+                    return AddGreenBSticker(manager, text);
+                default:
+                    return InsertRealisticStickyNote(manager, text);
             }
         }
 
-        public static bool AddGreenBSticker(PowerPointManager manager, string text = null, Slide targetSlide = null)
+        public static bool AddGreenBSticker(PowerPointManager manager, string text = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null) return false;
+                var slide = app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
@@ -72,11 +109,13 @@ namespace oPenEfficiency.Features
                 float top = 0f;
 
                 var config = oPenEfficiency.JsonService.Load<SidebarConfig>("sidebar_config.json");
-                string bgColorHex = "#FFFF00"; // GreenB sticky note always uses yellow
-                string fontColorHex = config?.StickyNoteFontColor ?? "#575757";
+                var appearance = StickerPreviewModel.CreateStickyNote(config, null, "GreenB");
+                string bgColorHex = appearance.BackgroundColor;
+                string fontColorHex = appearance.FontColor;
 
                 var shape = slide.Shapes.AddShape(Office.MsoAutoShapeType.msoShapeRectangle, left, top, width, height);
                 shape.Name = "StickyNote_GreenB_" + Guid.NewGuid().ToString().Substring(0, 8);
+                MarkStickyNote(shape, "GreenB");
                 shape.Fill.ForeColor.RGB = HexToRgb(bgColorHex);
                 shape.Fill.Solid();
 
@@ -127,17 +166,17 @@ namespace oPenEfficiency.Features
                     return app.ActivePresentation.SlideMaster.Theme.ThemeFontScheme.MinorFont.Item(Office.MsoFontLanguageIndex.msoThemeLatin).Name;
                 }
             }
-            catch { }
+            catch { /* Missing theme font data falls back to Segoe UI. */ }
             return "Segoe UI";
         }
 
-        public static bool InsertRealisticStickyNote(PowerPointManager manager, string text = null, Slide targetSlide = null)
+        public static bool InsertRealisticStickyNote(PowerPointManager manager, string text = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                if (app.ActiveWindow == null && targetSlide == null) return false;
-                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null) return false;
+                var slide = app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
@@ -160,10 +199,12 @@ namespace oPenEfficiency.Features
                 shape.TextFrame.MarginBottom = marginCm;
 
                 var config = oPenEfficiency.JsonService.Load<SidebarConfig>("sidebar_config.json");
-                string bgColorHex = "#FFF494"; // Standard sticky note uses light yellow
-                string fontColorHex = config?.StickyNoteFontColor ?? "#323232";
+                var appearance = StickerPreviewModel.CreateStickyNote(config, null, "Theme");
+                string bgColorHex = appearance.BackgroundColor;
+                string fontColorHex = appearance.FontColor;
 
                 shape.Fill.ForeColor.RGB = HexToRgb(bgColorHex);
+                MarkStickyNote(shape, "Theme");
                 shape.Fill.Solid();
                 shape.Line.Visible = Office.MsoTriState.msoFalse;
 
@@ -225,12 +266,13 @@ namespace oPenEfficiency.Features
             }
         }
 
-        public static bool AddConsultingStickyNote(PowerPointManager manager, string text = null, Slide targetSlide = null)
+        public static bool AddConsultingStickyNote(PowerPointManager manager, string text = null)
         {
             try
             {
                 var app = manager.GetApplication();
-                var slide = targetSlide ?? app.ActiveWindow.View.Slide as Slide;
+                if (app.ActiveWindow == null) return false;
+                var slide = app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
                 float cmToPt = 28.346f;
@@ -246,10 +288,12 @@ namespace oPenEfficiency.Features
                 shape.Name = "StickyNote_Consulting_" + Guid.NewGuid().ToString().Substring(0, 8);
 
                 var config = oPenEfficiency.JsonService.Load<SidebarConfig>("sidebar_config.json");
-                string bgColorHex = "#FFFF99"; // Consulting sticky note uses light yellow
-                string fontColorHex = config?.StickyNoteFontColor ?? "#333333";
+                var appearance = StickerPreviewModel.CreateStickyNote(config, null, "Consulting");
+                string bgColorHex = appearance.BackgroundColor;
+                string fontColorHex = appearance.FontColor;
 
                 shape.Fill.ForeColor.RGB = HexToRgb(bgColorHex);
+                MarkStickyNote(shape, "Consulting");
                 shape.Fill.Solid();
 
                 shape.Line.Visible = Office.MsoTriState.msoTrue;
@@ -288,6 +332,26 @@ namespace oPenEfficiency.Features
                 ExceptionLogger.Log(ex, "StickyNoteFeature.AddConsultingStickyNote");
                 return false;
             }
+        }
+
+        public static void MarkStickyNote(Shape shape, string style)
+        {
+            if (shape == null) return;
+            shape.Tags.Add(StickyNoteTag, "True");
+            if (!string.IsNullOrWhiteSpace(style)) shape.Tags.Add(StickyNoteStyleTag, style);
+        }
+
+        public static bool IsStickyNote(Shape shape)
+        {
+            if (shape == null) return false;
+            try
+            {
+                if (string.Equals(shape.Tags[StickyNoteTag], "True", StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            catch { /* Optional sticky-note metadata does not block creating the note. */ }
+
+            // Backward compatibility for notes created before the oPE tag was introduced.
+            return shape.Name != null && shape.Name.StartsWith("StickyNote_", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

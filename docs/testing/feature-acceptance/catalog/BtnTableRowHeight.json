@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableRowHeight",
+  "title": "Copy Row Heights (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableRowHeightFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableRowHeight-001",
+      "title": "Copy Row Heights applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableRowHeightFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+      ],
+      "expected": "Copy Row Heights (BtnTableRowHeight) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableRowHeight-001",
+      "title": "Copy Row Heights is a fixed point: copying the same heights onto the same total twice does not drift",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableRowHeightFeature.cs",
+        "oPenEfficiency.Core/Services/TableDimensionScaler.cs",
+        "oPenEfficiency.Core.Tests/TableDimensionAcceptanceTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives the host-neutral production code of Copy Row Heights (Tables): TableDimensionScaler.ScaleToTotal is asserted against the real scaling contract - copy Row Heights is a fixed point: copying the same heights onto the same total twice does not drift.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableDimensionAcceptanceTests.ScaleToTotalIsAFixedPointWhenTheTotalDoesNotChange"
+      }
+    },
+    {
+      "id": "QA9-BtnTableRowHeight-002",
+      "title": "BtnTableRowHeight equalize deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, with the fixture 3x3 table's rows mutated to 50/70/90 pt before the call, the Copy Row Heights equalize action makes every row 70 pt high while preserving the 210 pt total height, keeps all texts, column widths and the table position, reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, with the fixture 3x3 table's rows mutated to 50/70/90 pt before the call, the Copy Row Heights equalize action makes every row 70 pt high while preserving the 210 pt total height, keeps all texts, column widths and the table position, reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableRowHeightFeature.cs",
+        "oPenEfficiency/Features/Tables/TableDimensionsFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "equalize-row-heights"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

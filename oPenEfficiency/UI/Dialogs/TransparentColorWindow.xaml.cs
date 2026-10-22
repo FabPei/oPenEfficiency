@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -14,10 +15,12 @@ namespace oPenEfficiency.UI
         private PowerPointManager _manager;
         private System.Drawing.Color _selectedColor = System.Drawing.Color.Empty;
 
-        public TransparentColorWindow(PowerPointManager manager)
+        public TransparentColorWindow(PowerPointManager manager, double initialTolerance = 10)
         {
             InitializeComponent();
             _manager = manager;
+            ToleranceSlider.Value = Math.Max(ToleranceSlider.Minimum,
+                Math.Min(ToleranceSlider.Maximum, initialTolerance));
 
             // Set Owner
             try
@@ -27,7 +30,11 @@ namespace oPenEfficiency.UI
                 {
                     new WindowInteropHelper(this).Owner = hwnd;
                 }
-            } catch { }
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TransparentColorWindow.SetOwner");
+            }
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -75,7 +82,10 @@ namespace oPenEfficiency.UI
                             System.Windows.Media.Color.FromRgb(_selectedColor.R, _selectedColor.G, _selectedColor.B));
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "TransparentColorWindow.PickColor");
+                }
                 finally
                 {
                     overlay.Close();
@@ -98,6 +108,8 @@ namespace oPenEfficiency.UI
                 return;
             }
 
+            string tempIn = null;
+            string tempOut = null;
             try
             {
                 var app = _manager.GetApplication();
@@ -119,8 +131,8 @@ namespace oPenEfficiency.UI
 
                 string templateTemp = Path.GetTempFileName();
                 File.Delete(templateTemp);
-                string tempIn = templateTemp + "_in.png";
-                string tempOut = templateTemp + "_out.png";
+                tempIn = templateTemp + "_in.png";
+                tempOut = templateTemp + "_out.png";
 
                 // Export current shape
                 targetShape.Export(tempIn, PpShapeFormat.ppShapeFormatPNG);
@@ -136,37 +148,40 @@ namespace oPenEfficiency.UI
                         }
 
                         double tolerancePercent = ToleranceSlider.Value / 100.0;
-                        float limitSq = (float)(3 * 255 * 255 * (tolerancePercent * tolerancePercent)); // Cartesian distance limit^2
+                        // The squared Cartesian limit and the per-pixel decision live in the shared
+                        // production policy so the tolerance contract is testable host-free.
                         
                         Rectangle rect = new Rectangle(0, 0, dest.Width, dest.Height);
                         BitmapData bmpData = dest.LockBits(rect, ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
 
-                        int bytes = Math.Abs(bmpData.Stride) * dest.Height;
-                        byte[] rgbValues = new byte[bytes];
-                        System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, rgbValues, 0, bytes);
-
-                        for (int i = 0; i < rgbValues.Length; i += 4)
+                        try
                         {
-                            byte b = rgbValues[i];
-                            byte g = rgbValues[i+1];
-                            byte r = rgbValues[i+2];
-                            byte a = rgbValues[i+3];
+                            int bytes = Math.Abs(bmpData.Stride) * dest.Height;
+                            byte[] rgbValues = new byte[bytes];
+                            System.Runtime.InteropServices.Marshal.Copy(bmpData.Scan0, rgbValues, 0, bytes);
 
-                            if (a > 0)
+                            for (int i = 0; i < rgbValues.Length; i += 4)
                             {
-                                float distSq = (r - _selectedColor.R)*(r - _selectedColor.R) +
-                                               (g - _selectedColor.G)*(g - _selectedColor.G) +
-                                               (b - _selectedColor.B)*(b - _selectedColor.B);
+                                byte b = rgbValues[i];
+                                byte g = rgbValues[i + 1];
+                                byte r = rgbValues[i + 2];
+                                byte a = rgbValues[i + 3];
 
-                                if (distSq <= limitSq)
+                                if (Core.Services.PixelTransparencyPolicy.ShouldMakeTransparent(
+                                    r, g, b, a,
+                                    _selectedColor.R, _selectedColor.G, _selectedColor.B,
+                                    tolerancePercent))
                                 {
-                                    rgbValues[i + 3] = 0; // Make transparent
+                                    rgbValues[i + 3] = 0;
                                 }
                             }
-                        }
 
-                        System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, bmpData.Scan0, bytes);
-                        dest.UnlockBits(bmpData);
+                            System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, bmpData.Scan0, bytes);
+                        }
+                        finally
+                        {
+                            dest.UnlockBits(bmpData);
+                        }
 
                         dest.Save(tempOut, ImageFormat.Png);
                     }
@@ -190,15 +205,30 @@ namespace oPenEfficiency.UI
                 targetShape.Delete();
                 newShape.Select();
                 
-                // Cleanup temp files safely without throwing if in use
-                try { File.Delete(tempIn); } catch { }
-                try { File.Delete(tempOut); } catch { }
-
                 this.Close();
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TransparentColorWindow.Apply");
                 MessageBox.Show("Failed to erase color: " + ex.Message);
+            }
+            finally
+            {
+                TryDeleteTempFile(tempIn);
+                TryDeleteTempFile(tempOut);
+            }
+        }
+
+        private static void TryDeleteTempFile(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "TransparentColorWindow.CleanupTempFile");
             }
         }
     }

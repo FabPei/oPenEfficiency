@@ -13,5 +13,8 @@
     <Setting Name="SmallImageThresholdKB" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">70</Value>
     </Setting>
+    <Setting Name="RecentMapSelections" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

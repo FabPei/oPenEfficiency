@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSettings",
+  "title": "Settings (SettingsAndHelp)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/ThisAddIn.Automation.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSettings-001",
+      "title": "Settings applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs"
+      ],
+      "expected": "Settings (BtnSettings) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSettings-001",
+      "title": "The icon-colour mode resolves to the documented theme resources and layers",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureIconColorPolicy.cs",
+        "oPenEfficiency.Core.Tests/FeatureIconColorPolicyTests.cs",
+        "oPenEfficiency/Services/FeatureIconColorResolver.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "FeatureIconColorPolicy resolves the persisted icon-colour mode for every consumer: a disabled icon uses the muted resource in both modes, 'PowerPoint' keeps the neutral base layer and ignores a stored feature colour, accent layers map to their audited semantic resources (create and success green stay independent), and 'Feature colors' hands the stored colour to both layers.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureIconColorPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnSettings-002",
+      "title": "The comma-delimited settings boundary preserves its legacy token contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/DelimitedSettingTokens.cs",
+        "oPenEfficiency.Core.Tests/DelimitedSettingTokensTests.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "DelimitedSettingTokens round-trips the persisted token format: parsing trims entries, drops empty ones and de-duplicates case-insensitively, serialization joins with ', ', hex colours normalize to upper-case six or eight digit tokens and reject invalid input, and font names are trimmed while a comma disqualifies a candidate.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~DelimitedSettingTokensTests"
+      }
+    },
+    {
+      "id": "REG-ACCEPTANCE-ARGS-001-TREE",
+      "title": "Acceptance runner arguments bind to the runner's named parameters",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "eng/Invoke-FeatureAcceptance.ps1",
+        "*Catalog.Tests*"
+      ],
+      "expected": "The acceptance driver parses powershell-script runner arguments into named parameters and splats them as a hashtable (switches bind as true, value lists as lists), and a token that is not a parameter name fails loudly - never a positional array splat, which passes '-Commands' as a literal value and makes the runner's parameter binder reject it. The host-free pin AcceptanceRunnerArgumentsBindByName reddens on the positional splat.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~AcceptanceRunnerArgumentsBindByName"
+      }
+    },
+    {
+      "id": "REG-ADDIN-STARTUP-001-TREE",
+      "title": "PowerPoint startup recovers from a stale debug add-in registration",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "eng/Smoke-PowerPointAddinStartup.ps1",
+        "eng/Reset-AddInRegistration.ps1",
+        "oPenEfficiency/ThisAddIn*",
+        "oPenEfficiency/Properties/*"
+      ],
+      "expected": "On the real PowerPoint host a baseline start completes add-in startup; pointing the registration at a stale bin\\Debug manifest degrades startup (no add-in startup log within the observation window, or a load penalty above 2.5x the healthy baseline); the canonical reset restores the Release manifest with LoadBehavior=3 and a subsequent host start completes startup again. The run records healthy-before, the degraded stale phase, registry recovery and healthy-after as evidence.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointAddinStartup.ps1",
+        "arguments": []
+      }
+    },
+    {
+      "id": "REG-BUILD-STAMP-HOUR-001-TREE",
+      "title": "The deployment identity gate normalizes build-stamp version components",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Build.ps1",
+        "*DeploymentIdentity*",
+        "*AssemblyInfo*",
+        "*Catalog.Tests*"
+      ],
+      "expected": "A build stamp with a zero-padded hour component (yyyy.M.d.HHmm, e.g. 2026.9.28.0020) equals its read-back System.Version after normalization, so the canonical checkpoint passes at any time of day, while a genuinely different identity still fails. The host-free test BuildStampIdentityComparisonNormalizesVersionComponents pins the normalized comparison.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~BuildStampIdentityComparisonNormalizesVersionComponents"
+      }
+    },
+    {
+      "id": "REG-SETTINGS-COMBOBOX-001-TREE",
+      "title": "Settings ComboBoxes use the themed template",
+      "tier": "visual-review",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Settings*"
+      ],
+      "expected": "Every Settings ComboBox (including Anchor Object) uses the themed template for closed field, popup surface, arrow area, ComboBoxItem rows and selected/focused states in Light and Dark mode.",
+      "ownerSteps": [
+        "Open Settings and inspect the Anchor Object ComboBox in Light mode: no native/system chrome.",
+        "Switch to Dark mode and confirm the ComboBox, its popup and item rows follow the theme.",
+        "Open the dropdown and check hover/focus states on the rows."
+      ]
+    },
+    {
+      "id": "REG-SETTINGS-THEME-CRASH-001-TREE",
+      "title": "Changing the application theme never terminates powerpnt.exe",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Settings*",
+        "*Styles*",
+        "*Theme*"
+      ],
+      "expected": "Applying a different theme while a shown window owns a HWND mutates neither AllowsTransparency nor WindowStyle; the WPF invalidation of the window style never throws System.InvalidOperationException and the host survives. The office leg opens the Settings dialog, swaps Light/Dark on the UI thread, and closes it: PASS means windowObserved=True, themeSwapped=True, survived=True with zero new error-log entries.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "settings-theme-switch"
+        ]
+      }
+    },
+    {
+      "id": "REG-SIDEBAR-DARKMODE-001-TREE",
+      "title": "Sidebar follows live Light/Dark theme switching",
+      "tier": "visual-review",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Sidebar*",
+        "*Theme*"
+      ],
+      "expected": "Switching the application theme to Dark updates the live Sidebar tree and its dynamically created controls immediately; a persisted appearance value never overrides the selected theme.",
+      "ownerSteps": [
+        "Open the Sidebar, switch the application theme from Settings to Dark and confirm the live tree re-renders immediately.",
+        "Switch back to Light and confirm the same immediate re-render.",
+        "Set a custom background, switch themes and confirm the custom background persists while theme-tracking surfaces follow the theme."
+      ]
+    },
+    {
+      "id": "REG-SIDEBAR-NOOP-001-TREE",
+      "title": "Sidebar window commands open their windows",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Sidebar*",
+        "*Settings*"
+      ],
+      "expected": "A Sidebar command that is expected to open UI either opens the window (activating an already-open one) or reports a user-visible failure; it never ends as a silent no-op. The office leg proves the open half for BtnSettings and BtnExploreFeatures on a real host.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "sidebar-window-commands"
+        ]
+      }
+    },
+    {
+      "id": "REG-VSTO-IDENTITY-NESTED-001-TREE",
+      "title": "Installer builds keep the committed release identity across nested builds",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Build.ps1",
+        "Directory.Build.props",
+        "Directory.Build.targets",
+        "*DeploymentIdentity*",
+        "*Catalog.Tests*"
+      ],
+      "expected": "An installer build stamps the committed release CalVer and every nested build it starts (feature-acceptance runner projects) reuses that identity mode instead of re-stamping the deployment manifests with the per-build stamp, so the deployment identity gate validates exactly the identity Office will load. The host-free test InstallerIdentityModeReachesNestedBuilds pins the hand-off.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~InstallerIdentityModeReachesNestedBuilds"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

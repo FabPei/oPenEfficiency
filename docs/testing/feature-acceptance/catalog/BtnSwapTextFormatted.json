@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSwapTextFormatted",
+  "title": "Swap Text (Formatted) (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/SwapTextFormattedFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSwapTextFormatted-001",
+      "title": "Swap Text (Formatted) applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SwapTextFormattedFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Swap Text (Formatted) (BtnSwapTextFormatted) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSwapTextFormatted-002",
+      "title": "Swap Text with formatting exchanges texts and carries the format marker in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextSwap.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Swap Text with formatting on two text boxes (one bold marker text, one plain marker text) exchanges the texts exactly, reports execution, keeps the shape count unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable. The evidence additionally records whether the bold marker travelled with its text (reported, not asserted).",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextSwap.ps1",
+        "arguments": [
+          "-Mode",
+          "swap-formatted"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTextDirection",
+  "title": "Text Direction (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTextDirection-001",
+      "title": "Text Direction applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Text Direction (BtnTextDirection) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTextDirection-002",
+      "title": "Text Direction rotates the selection's text 90 degrees",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "The direct rotate-90 action sets the probe text frame's orientation to upward, leaving text content and geometry unchanged and producing one PowerPoint Undo entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "text-direction-upward"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnTextDirection-003",
+      "title": "Text Direction sets the vertical orientation via the bounded overload in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextSwap.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Text Direction vertical action on a horizontally oriented text box sets TextFrame.Orientation to vertical, reports execution, leaves the text content unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextSwap.ps1",
+        "arguments": [
+          "-Mode",
+          "direction-vertical"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

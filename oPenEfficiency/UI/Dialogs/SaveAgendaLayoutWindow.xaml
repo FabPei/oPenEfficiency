@@ -2,9 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:oPenEfficiency.UI"
-        Title="Agenda Layout Creator" Height="880" Width="750"
+        Title="Agenda Layout Designer" Height="760" Width="750" MinHeight="480" MinWidth="640"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterScreen" Topmost="True" MouseDown="Window_MouseDown" ShowInTaskbar="False">
+        WindowStartupLocation="CenterOwner" KeyDown="Window_KeyDown" ShowInTaskbar="False">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -12,19 +12,13 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Section Colors -->
-            <SolidColorBrush x:Key="SlideLevelBrush" Color="#3B82F6"/>
-            <SolidColorBrush x:Key="MainItemBrush" Color="#10B981"/>
-            <SolidColorBrush x:Key="SubItemBrush" Color="#6B7280"/>
-            <SolidColorBrush x:Key="SettingsBrush" Color="#8B5CF6"/>
             <local:ItemSpacingConverter x:Key="ItemSpacingConverter"/>
         </ResourceDictionary>
     </Window.Resources>
 
-    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5" Color="Black"/>
-        </Border.Effect>
-        <Grid Margin="20">
+    <Window.Style><StaticResource ResourceKey="LargeWorkspaceWindowStyle"/></Window.Style>
+    <Border Style="{StaticResource WorkspaceShell}">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/> <!-- Header -->
                 <RowDefinition Height="*"/>    <!-- Content -->
@@ -32,24 +26,24 @@
             </Grid.RowDefinitions>
 
             <!-- Header (Draggable Title Bar) -->
-            <Grid Grid.Row="0" Margin="0,0,0,15" Background="Transparent">
+            <Grid Grid.Row="0" MinHeight="{StaticResource WorkspaceHeaderHeight}" Margin="{StaticResource WorkspaceHeaderContentGap}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="AGENDA LAYOUT CREATOR" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Select a shape in PowerPoint, then click Assign" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" FontStyle="Italic" Margin="0,4,0,0"/>
-                </StackPanel>
-                <Button Grid.Column="1" Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" />
+                <Border Grid.Column="0" Background="Transparent" MouseLeftButtonDown="Window_MouseDown"><StackPanel>
+                    <TextBlock Text="AGENDA LAYOUT DESIGNER" Style="{StaticResource DialogTitleText}"/>
+                    <TextBlock Text="Select a shape in PowerPoint, then click Assign" Style="{StaticResource ContextMetaText}" FontStyle="Italic" Margin="0,4,0,0"/>
+                </StackPanel></Border>
+                <Button Grid.Column="1" Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" ToolTip="Close (Esc)" AutomationProperties.Name="Close Agenda Layout Designer"/>
             </Grid>
 
             <!-- Scrollable Content -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                <StackPanel Margin="0,0,15,0">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Focusable="False">
+                <StackPanel Margin="0,0,10,0">
                     <!-- Collapsible Info Panel -->
-                    <Border x:Name="InfoPanel" Background="{DynamicResource SurfaceLightBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,0,15">
-                        <StackPanel Margin="15">
+                    <Border x:Name="InfoPanel" Background="{DynamicResource SurfaceLightBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="{StaticResource SectionGapCompact}">
+                        <StackPanel Margin="{StaticResource Space10}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -62,7 +56,7 @@
                                 <Button Grid.Column="1" x:Name="BtnToggleInfo" Content="▼ Info" Width="100" Height="30" Padding="10,2" Background="{DynamicResource SurfaceHoverBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderThickness="0" Cursor="Hand" Click="BtnToggleInfo_Click" FontSize="12" VerticalAlignment="Center"/>
                             </Grid>
 
-                            <StackPanel x:Name="InfoContent" Margin="0,10,0,0">
+                            <StackPanel x:Name="InfoContent" Margin="0,8,0,0">
                                 <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" LineHeight="18">
                                     <Run FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}">1. PREPARE:</Run> Place shapes on your PowerPoint slide as you want them to appear in the final agenda<LineBreak/>
                                     <Run FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}">2. ASSIGN:</Run> Select one shape at a time, click "Assign" for the corresponding field below<LineBreak/>
@@ -75,7 +69,7 @@
                     </Border>
 
                     <!-- Load Layout Section -->
-                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="15" Margin="0,0,0,15">
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="{StaticResource CompactOuterPadding}" Margin="{StaticResource SectionGapCompact}">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -100,7 +94,7 @@
                     </Border>
 
                     <!-- Slide Level Elements -->
-                    <Expander Header="SLIDE LEVEL ELEMENTS (3 fields)" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{StaticResource SlideLevelBrush}" BorderThickness="1" Margin="0,0,0,15" Padding="10">
+                    <Expander Header="SLIDE LEVEL ELEMENTS (3 fields)" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Margin="{StaticResource SectionGapCompact}" Padding="10">
                         <StackPanel>
                             <StackPanel Margin="10">
                                 <!-- Agenda Slide -->
@@ -112,7 +106,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{StaticResource SlideLevelBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Agenda Slide" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     <ComboBox Grid.Column="2" x:Name="CboSlideStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -129,7 +123,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{StaticResource SlideLevelBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Agenda Headline" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     <ComboBox Grid.Column="2" x:Name="CboHeadlineStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -146,7 +140,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{StaticResource SlideLevelBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Agenda Sub-headline" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     <ComboBox Grid.Column="2" x:Name="CboSubHeadlineStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -159,7 +153,7 @@
                     </Expander>
 
                     <!-- Main Item Elements -->
-                    <Expander Header="MAIN ITEM ELEMENTS (6 fields - required core)" IsExpanded="True" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{StaticResource MainItemBrush}" BorderThickness="1" Margin="0,0,0,15" Padding="10">
+                    <Expander Header="MAIN ITEM ELEMENTS (6 fields - required core)" IsExpanded="True" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" Margin="{StaticResource SectionGapCompact}" Padding="10">
                         <StackPanel>
                             <StackPanel Margin="10">
                                 <!-- Item Numbering -->
@@ -171,7 +165,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" Foreground="{StaticResource MainItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Item Numbering" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     <ComboBox Grid.Column="2" x:Name="CboItemNumberingStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -188,7 +182,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="T" FontWeight="Bold" Foreground="{StaticResource MainItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="T" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <TextBlock Text="Item Text" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                         <TextBlock Text="*" Foreground="#FF5555" FontSize="16" FontWeight="Bold" Margin="3,-2,0,0"/>
@@ -208,7 +202,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="B" FontWeight="Bold" Foreground="{StaticResource MainItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="B" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Item Background" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         <TextBlock Text="(placed behind text)" Foreground="{DynamicResource TextMutedBrush}" FontSize="9"/>
@@ -278,7 +272,7 @@
                     </Expander>
 
                     <!-- Sub-Item Elements -->
-                    <Expander Header="SUB-ITEM ELEMENTS (6 fields - optional)" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{StaticResource SubItemBrush}" BorderThickness="1" Margin="0,0,0,15" Padding="10">
+                    <Expander Header="SUB-ITEM ELEMENTS (6 fields - optional)" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource TextSecondaryBrush}" BorderThickness="1" Margin="{StaticResource SectionGapCompact}" Padding="10">
                         <StackPanel>
                             <StackPanel Margin="10">
                                 <!-- Sub-Item Numbering -->
@@ -290,7 +284,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" Foreground="{StaticResource SubItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="#" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Sub-Item Numbering" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     <ComboBox Grid.Column="2" x:Name="CboSubItemNumberingStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -307,7 +301,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="T" FontWeight="Bold" Foreground="{StaticResource SubItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="T" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="Sub-Item Text" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                                     <ComboBox Grid.Column="2" x:Name="CboSubItemTextStatus" Height="26" Margin="10,0" VerticalContentAlignment="Center">
                                         <ComboBoxItem Content="Not Assigned" Tag="0"/>
@@ -324,7 +318,7 @@
                                         <ColumnDefinition Width="70"/>
                                         <ColumnDefinition Width="70"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="B" FontWeight="Bold" Foreground="{StaticResource SubItemBrush}" FontSize="14" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="0" Text="B" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Sub-Item Background" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                         <TextBlock Text="(uses Item if empty)" Foreground="{DynamicResource TextMutedBrush}" FontSize="9"/>
@@ -391,7 +385,7 @@
                     </Expander>
 
                     <!-- Settings Section -->
-                    <Expander Header="LAYOUT SETTINGS" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{StaticResource SettingsBrush}" BorderThickness="1" Margin="0,0,0,15" Padding="10">
+                    <Expander Header="LAYOUT SETTINGS" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1" Margin="{StaticResource SectionGapCompact}" Padding="10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -409,32 +403,32 @@
                             </Grid.RowDefinitions>
 
                             <!-- Layout Name -->
-                            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Text="Layout Name:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                            <TextBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="TxtLayoutName" Height="32" VerticalContentAlignment="Center" Margin="0,0,0,15"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Layout Name:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <TextBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" x:Name="TxtLayoutName" AutomationProperties.Name="Agenda layout name" Height="32" VerticalContentAlignment="Center" Margin="{StaticResource SectionGapCompact}"/>
 
                             <!-- List Alignment -->
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="List Alignment:" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="CboListAlignment" Height="32" VerticalContentAlignment="Center" Margin="0,0,0,15">
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="List Alignment:" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1" x:Name="CboListAlignment" Height="32" VerticalContentAlignment="Center" Margin="{StaticResource SectionGapCompact}">
                                 <ComboBoxItem Content="Left" IsSelected="True"/>
                                 <ComboBoxItem Content="Center"/>
                                 <ComboBoxItem Content="Right"/>
                             </ComboBox>
 
                             <!-- List Orientation -->
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="List Orientation:" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <ComboBox Grid.Row="4" Grid.Column="1" x:Name="CboListOrientation" Height="32" VerticalContentAlignment="Center" Margin="0,0,0,15">
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="List Orientation:" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1" x:Name="CboListOrientation" Height="32" VerticalContentAlignment="Center" Margin="{StaticResource SectionGapCompact}">
                                 <ComboBoxItem Content="Vertical" IsSelected="True"/>
                                 <ComboBoxItem Content="Horizontal"/>
                             </ComboBox>
 
                             <!-- Item Spacing -->
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Item Spacing (pts):" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <Grid Grid.Row="5" Grid.Column="1">
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Item Spacing (pts):" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <Grid Grid.Row="4" Grid.Column="1">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <TextBox Grid.Row="0" x:Name="TxtItemSpacing" Height="32" Text="15" VerticalContentAlignment="Center" Margin="0,0,0,4"/>
+                                <TextBox Grid.Row="0" x:Name="TxtItemSpacing" AutomationProperties.Name="Spacing between agenda items" Height="32" Text="15" VerticalContentAlignment="Center" Margin="0,0,0,4"/>
                                 <TextBlock Grid.Row="1" FontSize="10" Foreground="{DynamicResource TextMutedBrush}">
                                     <TextBlock.Text>
                                         <Binding ElementName="TxtItemSpacing" Path="Text" Converter="{StaticResource ItemSpacingConverter}" FallbackValue="15 pts | 0.53 cm | 0.21 in"/>
@@ -443,21 +437,21 @@
                             </Grid>
 
                             <!-- Align Middle Option -->
-                            <CheckBox Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ChkAlignMiddle" Content="Align agenda items middle (vertical orientation)" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                            <CheckBox Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ChkAlignMiddle" Content="Align agenda items middle (vertical orientation)" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8"/>
 
                             <!-- Align Info Shapes with Item -->
-                            <CheckBox Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ChkAlignInfoShapes" Content="Align info shapes &amp; numbering at same height as item text" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,15"/>
+                            <CheckBox Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ChkAlignInfoShapes" Content="Align info shapes &amp; numbering at same height as item text" Foreground="{DynamicResource TextPrimaryBrush}" Margin="{StaticResource SectionGapCompact}"/>
 
                             <!-- Highlight Options -->
-                            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,15,0,0">
+                            <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Margin="{StaticResource SectionGapCompactTop}">
                                 <TextBlock Text="Highlight Current Item Text:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
                                 <WrapPanel Orientation="Horizontal">
-                                    <CheckBox x:Name="ChkHighlightBold" Content="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,15,5" VerticalAlignment="Center"/>
-                                    <CheckBox x:Name="ChkHighlightItalic" Content="Italic" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,15,5" VerticalAlignment="Center"/>
-                                    <CheckBox x:Name="ChkHighlightUnderline" Content="Underline" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,15,5" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="ChkHighlightBold" Content="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,10,4" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="ChkHighlightItalic" Content="Italic" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,10,4" VerticalAlignment="Center"/>
+                                    <CheckBox x:Name="ChkHighlightUnderline" Content="Underline" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,10,4" VerticalAlignment="Center"/>
                                     
                                     <!-- Font Color -->
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,15,5">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4">
                                         <CheckBox x:Name="ChkHighlightFontColor" Content="Font Color" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                         <Button x:Name="BtnHighlightFontColor" Width="20" Height="20" Click="BtnHighlightFontColor_Click" Cursor="Hand">
                                             <Border x:Name="RectHighlightFontColor" Background="Black" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
@@ -465,7 +459,7 @@
                                     </StackPanel>
 
                                     <!-- Fill Color -->
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,15,5">
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,10,4">
                                         <CheckBox x:Name="ChkHighlightFillColor" Content="Fill Color" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                                         <Button x:Name="BtnHighlightFillColor" Width="20" Height="20" Click="BtnHighlightFillColor_Click" Cursor="Hand">
                                             <Border x:Name="RectHighlightFillColor" Background="Transparent" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
@@ -478,13 +472,12 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- Footer -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
-                <Button Content="💾 Save Agenda Layout" Style="{StaticResource AccentButton}" Width="180" Height="40" 
-                       Click="BtnSave_Click" Margin="0,0,15,0"/>
-                <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="120" Height="40" 
-                       Click="BtnCancel_Click"/>
-            </StackPanel>
+            <Grid Grid.Row="2" Margin="{StaticResource Space4}">
+                <WrapPanel HorizontalAlignment="Right">
+                    <Button Content="Save Agenda Layout" Style="{StaticResource PrimaryButton}" Click="BtnSave_Click" Margin="{StaticResource Space2}"/>
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Click="BtnCancel_Click" Margin="{StaticResource Space2}"/>
+                </WrapPanel>
+            </Grid>
         </Grid>
     </Border>
 </Window>

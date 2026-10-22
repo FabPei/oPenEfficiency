@@ -1,7 +1,7 @@
 ﻿using Microsoft.Office.Interop.PowerPoint;
-using System.Globalization;
 using oPenEfficiency.Utils;
 using oPenEfficiency.Services.Attributes;
+using oPenEfficiency.Services;
 
 namespace oPenEfficiency.Features
 {
@@ -12,23 +12,18 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnPasteXY",
         Name = "Paste XY-Coordinates",
-        Tooltip = "Paste XY-Coordinates",
+        SearchAliases = new[] { "Paste Coordinates", "Paste Position" },
+        Tooltip = "Apply copied X/Y position to the selected shape",
         Color = "#F59E0B",
-        Description = "Applies copied coordinates or size to the selected shape. Right-click for more options.",
-        DetailedHelpText = "### Paste XY-Coordinates\nApplies geometric properties from the clipboard to the selection.\n\n**Usage:**\n1. Copy coordinates from a source shape using 'Copy XY'.\n2. Select target shapes.\n3. Click to paste both Position and Size.\n\n**Right-Click Options:**\n* **Paste Coordinates**: Apply X/Y position only.\n* **Paste Size**: Apply Width/Height only.",
-        Keywords = "paste, position, location, size, format painter, dimensions",
+        Description = "Applies a copied top-left X/Y position to one selected shape without changing its size.",
+        DetailedHelpText = "### Paste XY-Coordinates\nSelect exactly one target shape, then paste the Left and Top position copied by Copy XY-Coordinates. Width, Height, rotation, text, and formatting stay unchanged. Current payloads are versioned and openEfficiency-owned; legacy two- and four-value X/Y payloads remain paste-compatible, with four-value Width and Height ignored. Right-click Paste XY-Coordinates clears only a valid current openEfficiency payload, never unrelated numeric clipboard text. Use Copy/Paste Position & Size when you need to transfer dimensions.",
         MinSelection = 1,
         MaxSelection = 1,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class PasteCoordinatesFeature
     {
-        public enum PasteMode { Coordinates, Size, Both }
-
         // Required zero-arg overload for FeatureDiscovery auto-registration.
         public static bool Execute(PowerPointManager manager)
-            => Execute(manager, PasteMode.Coordinates);
-
-        public static bool Execute(PowerPointManager manager, PasteMode mode = PasteMode.Coordinates)
         {
             if (manager == null) return false;
             try
@@ -43,41 +38,22 @@ namespace oPenEfficiency.Features
                 string clipText = System.Windows.Forms.Clipboard.GetText();
                 if (string.IsNullOrEmpty(clipText)) return false;
 
-                // Split only by comma, assuming the string was created by CopyCoordinates
-                var parts = clipText.Split(',');
-                if (parts.Length < 2) return false;
+                if (!CoordinateClipboardPayload.TryParseForPaste(clipText, out float x, out float y)) return false;
 
-                bool success = false;
-
-                if ((mode == PasteMode.Coordinates || mode == PasteMode.Both) && parts.Length >= 2)
-                {
-                    if (float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
-                        float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y))
-                    {
-                        shapes[1].Left = x;
-                        shapes[1].Top = y;
-                        success = true;
-                    }
-                }
-
-                if ((mode == PasteMode.Size || mode == PasteMode.Both) && parts.Length >= 4)
-                {
-                    if (float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float width) &&
-                        float.TryParse(parts[3], NumberStyles.Float, CultureInfo.InvariantCulture, out float height))
-                    {
-                        shapes[1].Width = width;
-                        shapes[1].Height = height;
-                        success = true;
-                    }
-                }
-
-                return success;
+                shapes[1].Left = x;
+                shapes[1].Top = y;
+                return true;
             }
             catch (System.Exception ex)
             {
                 ExceptionLogger.Log(ex, "PasteCoordinatesFeature.Execute");
                 return false;
             }
+        }
+
+        public static bool ClearCopiedGeometry()
+        {
+            return CopyCoordinatesFeature.ClearCopiedGeometry();
         }
     }
 }

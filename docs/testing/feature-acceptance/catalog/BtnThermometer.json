@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnThermometer",
+  "title": "Thermometer (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Charts/ThermometerFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnThermometer-001",
+      "title": "Thermometer applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Charts/ThermometerFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Thermometer (BtnThermometer) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnThermometer-002",
+      "title": "Thermometer fill cycle, clamping and state codec are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ThermometerStatePolicy.cs",
+        "oPenEfficiency/Features/Charts/ThermometerFeature.cs"
+      ],
+      "expected": "The fill cycle advances in 0.25 steps and wraps 1.0 back to 0, percentages clamp into the unit interval, and the persistent state codec keeps the historical 'oPen_Thermometer' tag literal and round-trips percentage (invariant) and color; the lenient reader keeps its documented defaults (0.5, 0x0000FF) for EE4P-compatible shapes.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ThermometerStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnThermometer-003",
+      "title": "Thermometer creates exactly one shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Thermometer at 75 percent on an empty slide adds exactly one shape (measured shapeCountDelta=1), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "thermometer"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

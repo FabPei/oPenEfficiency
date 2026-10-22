@@ -1,0 +1,59 @@
+<Window x:Class="oPenEfficiency.UI.Toolbars.GanttResizeHandlesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Gantt Task Resize Handles"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize"
+        SizeToContent="Manual"
+        FontFamily="Segoe UI Variable Small, Segoe UI"
+        MouseDown="Window_MouseDown">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ResizeThumbStyle" TargetType="Thumb">
+                <Setter Property="Cursor" Value="SizeWE"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Thumb">
+                            <Border Background="{DynamicResource AccentBrush}"
+                                    BorderBrush="{DynamicResource WindowBackgroundBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="3">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="5" ShadowDepth="1" Opacity="0.45"/>
+                                </Border.Effect>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Canvas x:Name="RootCanvas">
+        <Thumb x:Name="LeftHandle"
+               Width="10"
+               Height="20"
+               Canvas.Left="0"
+               Style="{StaticResource ResizeThumbStyle}"
+               ToolTip="Drag to change the task start"
+               DragStarted="Handle_DragStarted"
+               DragDelta="Handle_DragDelta"
+               DragCompleted="Handle_DragCompleted"/>
+        <Thumb x:Name="RightHandle"
+               Width="10"
+               Height="20"
+               Style="{StaticResource ResizeThumbStyle}"
+               ToolTip="Drag to change the task end"
+               DragStarted="Handle_DragStarted"
+               DragDelta="Handle_DragDelta"
+               DragCompleted="Handle_DragCompleted"/>
+    </Canvas>
+</Window>

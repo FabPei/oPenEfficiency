@@ -1,0 +1,53 @@
+# Keep the owner-selected source/destination byte comparison stable on Windows.
+BtnBringForward.svg text eol=lf
+BtnSendBackward.svg text eol=lf
+BtnHideMasterObjects.svg text eol=lf
+BtnConvertTableToShapes.svg text eol=lf
+BtnTableColumnWidth.svg text eol=lf
+BtnTableRowHeight.svg text eol=lf
+BtnTableDimensions.svg text eol=lf
+BtnLearnMargin.svg text eol=lf
+BtnAddSticker.svg text eol=lf
+BtnSlidePaste.svg text eol=lf
+BtnArrangeCircle.svg text eol=lf
+BtnArrangeInShape.svg text eol=lf
+BtnChartOverlay.svg text eol=lf
+BtnSnapToGrid.svg text eol=lf
+BtnAssetManager.svg text eol=lf
+BtnGanttChart.svg text eol=lf
+BtnTableHeatmap.svg text eol=lf
+BtnAlignToTableCell.svg text eol=lf
+BtnDecreaseHorizontalSpacing.svg text eol=lf
+BtnIncreaseHorizontalSpacing.svg text eol=lf
+BtnDecreaseVerticalSpacing.svg text eol=lf
+BtnIncreaseVerticalSpacing.svg text eol=lf
+BtnRemoveHorizontalGaps.svg text eol=lf
+BtnRemoveVerticalGaps.svg text eol=lf
+BtnShapeLock.svg text eol=lf
+BtnTagInspector.svg text eol=lf
+BtnProgressSeries.svg text eol=lf
+BtnIconBrowser.svg text eol=lf
+BtnTemplateManager.svg text eol=lf
+
+# Exact owner-selected 2026-10-19 production exports.
+BtnUpdateExcelCharts.svg -text whitespace=cr-at-eol
+BtnRefreshLinkedTable.svg -text whitespace=cr-at-eol
+BtnInsertExcelValue.svg -text whitespace=cr-at-eol
+BtnExcelLinkManager.svg -text whitespace=cr-at-eol
+BtnFormatNumbers.svg -text whitespace=cr-at-eol
+BtnAnonymize.svg -text whitespace=cr-at-eol
+
+# Exact owner-selected Delete Text 1B export.
+BtnDeleteText.svg -text whitespace=cr-at-eol
+
+# Exact owner-selected family exports, including conditioned diagonal.
+BtnSyncObjects.svg -text whitespace=cr-at-eol
+BtnSpecialChars.svg -text whitespace=cr-at-eol
+BtnDiagonalAlign.svg -text whitespace=cr-at-eol
+BtnConnectedTextLabel.svg -text whitespace=cr-at-eol
+BtnSlideNotes.svg -text whitespace=cr-at-eol
+BtnFlightMode.svg -text whitespace=cr-at-eol
+BtnSlideSize.svg -text whitespace=cr-at-eol
+
+# Exact owner-selected Feature Explorer 1B export.
+BtnExploreFeatures.svg -text whitespace=cr-at-eol

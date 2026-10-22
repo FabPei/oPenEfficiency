@@ -2,20 +2,16 @@ using System.Reflection;
 using System;
 using Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Services.Attributes;
-using oPenEfficiency.Utils;
 using oPenEfficiency.UI;
 
 namespace oPenEfficiency.Services
 {
     /// <summary>
-    /// Wrapper that uses reflection to execute static feature classes.
-    /// Reads metadata from [FeatureMetadata] attribute.
+    /// Runtime view of metadata declared through <see cref="FeatureMetadataAttribute"/>.
+    /// Feature execution is handled exclusively by the command registry.
     /// </summary>
     public class FeatureWrapper
     {
-        private readonly Type _featureType;
-        private readonly MethodInfo _executeMethod;
-
         public string Id { get; }
         public string Name { get; }
         public FeatureDisplayInfo DisplayInfo { get; }
@@ -26,12 +22,9 @@ namespace oPenEfficiency.Services
         public bool RequiresTable { get; }
         public bool RequiresHiddenShapes { get; }
         public bool IsToggle { get; }
-        public string Keywords { get; }
 
         public FeatureWrapper(Type featureType)
         {
-            _featureType = featureType;
-
             // Get the metadata attribute
             var metadata = featureType.GetCustomAttribute<FeatureMetadataAttribute>();
             if (metadata == null)
@@ -42,10 +35,9 @@ namespace oPenEfficiency.Services
 
             Id = metadata.Id;
             Name = metadata.Name;
-            Keywords = metadata.Keywords;
             MinSelection = metadata.MinSelection;
             MaxSelection = metadata.MaxSelection;
-            RequiredType = metadata.RequiredType;
+            RequiredType = ToPpSelectionType(metadata.RequiredType);
             RequiresTable = metadata.RequiresTable;
             RequiresHiddenShapes = metadata.RequiresHiddenShapes;
             IsToggle = metadata.IsToggle;
@@ -59,42 +51,15 @@ namespace oPenEfficiency.Services
                 Description = metadata.Description ?? metadata.Tooltip ?? metadata.Name,
                 DetailedHelpText = metadata.DetailedHelpText,
                 HelpImagePath = metadata.HelpImagePath,
+                SearchAliases = metadata.SearchAliases ?? Array.Empty<string>(),
                 MinSelection = metadata.MinSelection,
                 MaxSelection = metadata.MaxSelection,
-                RequiredType = metadata.RequiredType,
+                RequiredType = ToPpSelectionType(metadata.RequiredType),
                 RequiresTable = metadata.RequiresTable,
                 RequiresHiddenShapes = metadata.RequiresHiddenShapes,
-                IsToggle = metadata.IsToggle,
-                Keywords = metadata.Keywords
+                IsToggle = metadata.IsToggle
             };
 
-            // Find Execute method (must exist)
-            // Try ToggleButton version first if it's a toggle feature
-            if (IsToggle)
-            {
-                _executeMethod = featureType.GetMethod(
-                    "Execute",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    new[] { typeof(PowerPointManager), typeof(System.Windows.Controls.Primitives.ToggleButton) },
-                    null);
-            }
-
-            if (_executeMethod == null)
-            {
-                _executeMethod = featureType.GetMethod(
-                    "Execute",
-                    BindingFlags.Public | BindingFlags.Static,
-                    null,
-                    new[] { typeof(PowerPointManager) },
-                    null);
-            }
-
-            if (_executeMethod == null)
-            {
-                throw new InvalidOperationException(
-                    $"Feature {featureType.Name} must have a public static Execute(PowerPointManager) method");
-            }
         }
 
         /// <summary>
@@ -127,7 +92,7 @@ namespace oPenEfficiency.Services
                             }
                         }
                     }
-                    catch { }
+                    catch { /* A stale shape is ignored while validating the remaining selection. */ }
                 }
 
                 if (!hasHidden)
@@ -170,7 +135,7 @@ namespace oPenEfficiency.Services
                 else
                 {
                     ShapeRange shapes = null;
-                    try { shapes = selection.ShapeRange; } catch { }
+                    try { shapes = selection.ShapeRange; } catch { /* Text-edit selections may not expose a ShapeRange. */ }
                     count = shapes?.Count ?? 0;
 
                     if (RequiresTable && shapes != null)
@@ -209,33 +174,21 @@ namespace oPenEfficiency.Services
         }
 
         /// <summary>
-        /// Executes the feature via reflection.
+        /// Maps the host-neutral <see cref="OfficeSelectionType"/> from feature metadata
+        /// to PowerPoint's native <see cref="PpSelectionType"/> used at runtime.
+        /// This is the PowerPoint host boundary; other hosts (Excel, Word) provide their own mapping.
         /// </summary>
-        /// <param name="manager">PowerPointManager instance</param>
-        /// <param name="toggleBtn">Optional ToggleButton (for toggle features)</param>
-        /// <returns>True if successful, false otherwise</returns>
-        public bool Execute(PowerPointManager manager, System.Windows.Controls.Primitives.ToggleButton toggleBtn = null)
+        private static PpSelectionType ToPpSelectionType(OfficeSelectionType type)
         {
-            try
+            switch (type)
             {
-                var parameters = _executeMethod.GetParameters();
-                object[] args;
-                if (parameters.Length == 2 && parameters[1].ParameterType == typeof(System.Windows.Controls.Primitives.ToggleButton))
-                {
-                    args = new object[] { manager, toggleBtn };
-                }
-                else
-                {
-                    args = new object[] { manager };
-                }
-
-                var result = _executeMethod.Invoke(null, args);
-                return result is bool b && b;
-            }
-            catch (Exception ex)
-            {
-                Utils.ExceptionLogger.Log(ex, $"FeatureWrapper.Execute({Id})");
-                return false;
+                case OfficeSelectionType.None: return PpSelectionType.ppSelectionNone;
+                case OfficeSelectionType.Shapes: return PpSelectionType.ppSelectionShapes;
+                case OfficeSelectionType.Text: return PpSelectionType.ppSelectionText;
+                case OfficeSelectionType.Slides: return PpSelectionType.ppSelectionSlides;
+                // Cells has no PowerPoint equivalent; treat as "no specific requirement".
+                case OfficeSelectionType.Cells: return PpSelectionType.ppSelectionNone;
+                default: return PpSelectionType.ppSelectionShapes;
             }
         }
     }

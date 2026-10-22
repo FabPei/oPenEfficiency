@@ -7,7 +7,7 @@ namespace oPenEfficiency.Utils
 {
     /// <summary>
     /// Global mouse hook for capturing mouse events outside the application window.
-    /// Used for drag operations in Gantt chart and other interactive features.
+    /// Used for drag-and-drop operations and other interactive features.
     /// </summary>
     /// <remarks>
     /// <para><strong>Important:</strong> This global hook intercepts ALL mouse messages on the current thread,
@@ -69,6 +69,21 @@ namespace oPenEfficiency.Utils
         [DllImport("kernel32.dll")]
         private static extern uint GetCurrentThreadId();
 
+        [DllImport("user32.dll")]
+        private static extern short GetKeyState(int nVirtKey);
+
+        private const int VK_LBUTTON = 0x01;
+
+        /// <summary>
+        /// Reports whether the physical left mouse button is currently held, based on this
+        /// thread's input state. Deferred drag work uses this to abort if the button was
+        /// released before the deferred callback ran.
+        /// </summary>
+        internal static bool IsLeftMouseButtonDown()
+        {
+            return (GetKeyState(VK_LBUTTON) & 0x8000) != 0;
+        }
+
         // Delegate for the hook procedure
         private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -81,11 +96,15 @@ namespace oPenEfficiency.Utils
 
         // Event fired when the left mouse button is released
         public event EventHandler LeftButtonUp;
-        public event EventHandler RightButtonUp;
+        public event EventHandler<MouseHookEventArgs> RightButtonUp;
         public event EventHandler<MouseHookEventArgs> LeftButtonDown;
 
-        // Callback for filtering mouse move events
-        public Func<int, int, bool> MouseMoveFilter { get; set; }
+        /// <summary>
+        /// Move filters, invoked for every WM_MOUSEMOVE on the hooked thread. Any handler may
+        /// return true to suppress the message. Multicast so all shared-hook subscribers keep
+        /// receiving moves (PQ-016); handlers must stay COM-free.
+        /// </summary>
+        public event Func<int, int, bool> MouseMoveFilter;
 
         public Win32MouseHook()
         {
@@ -157,17 +176,20 @@ namespace oPenEfficiency.Utils
                 }
                 else if (msg == WM_MOUSEMOVE)
                 {
-                    // Check if there's a filter callback
-                    if (MouseMoveFilter != null)
+                    // Ask every registered filter; any true suppresses the message.
+                    var filters = MouseMoveFilter;
+                    if (filters != null)
                     {
                         try
                         {
                             var hookStruct = (MOUSEHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MOUSEHOOKSTRUCT));
-                            bool suppress = MouseMoveFilter(hookStruct.pt.X, hookStruct.pt.Y);
-                            if (suppress)
+                            foreach (Func<int, int, bool> filter in filters.GetInvocationList())
                             {
-                                // Suppress the message by returning non-zero
-                                return (IntPtr)1;
+                                if (filter(hookStruct.pt.X, hookStruct.pt.Y))
+                                {
+                                    // Suppress the message by returning non-zero
+                                    return (IntPtr)1;
+                                }
                             }
                         }
                         catch (Exception ex)
@@ -178,11 +200,26 @@ namespace oPenEfficiency.Utils
                 }
                 else if (msg == WM_LBUTTONUP)
                 {
-                    LeftButtonUp?.Invoke(this, EventArgs.Empty);
+                    try
+                    {
+                        LeftButtonUp?.Invoke(this, EventArgs.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "Win32MouseHook.WM_LBUTTONUP");
+                    }
                 }
                 else if (msg == WM_RBUTTONUP)
                 {
-                    RightButtonUp?.Invoke(this, EventArgs.Empty);
+                    try
+                    {
+                        var hookStruct = (MOUSEHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MOUSEHOOKSTRUCT));
+                        RightButtonUp?.Invoke(this, new MouseHookEventArgs(hookStruct.pt.X, hookStruct.pt.Y));
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "Win32MouseHook.WM_RBUTTONUP");
+                    }
                 }
             }
 

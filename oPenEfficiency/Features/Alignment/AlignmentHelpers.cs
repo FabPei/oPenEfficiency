@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Office.Interop.PowerPoint;
+using oPenEfficiency.Services;
 using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features
@@ -12,6 +13,7 @@ namespace oPenEfficiency.Features
     {
         private const string GuideH = "Guide_H_";
         private const string GuideV = "Guide_V_";
+        private const string OpenEfficiencyGuide = "oPE_Guide_";
         private const float GuideTolerance    = 0.5f; // snapping window for guide detection
         private const float CollisionTolerance = 1f;  // snapping window for collision detection
 
@@ -53,6 +55,79 @@ namespace oPenEfficiency.Features
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "AlignmentHelpers.AlignShapes");
+                return false;
+            }
+        }
+
+        public static bool AlignShapesToSlide(PowerPointManager manager, string direction)
+        {
+            if (manager == null) return false;
+            try
+            {
+                var app = manager.GetApplication();
+                var shapeRange = manager.GetSelectedShapes();
+                if (app == null || shapeRange == null || shapeRange.Count == 0) return false;
+
+                bool aligned = false;
+                for (int index = 1; index <= shapeRange.Count; index++)
+                    aligned |= AlignShapeToSlide(app, shapeRange[index], direction);
+                return aligned;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "AlignmentHelpers.AlignShapesToSlide");
+                return false;
+            }
+        }
+
+        public static bool SnapSelectionToNearestGuide(PowerPointManager manager, string direction)
+        {
+            if (manager == null) return false;
+            try
+            {
+                var app = manager.GetApplication();
+                var shapeRange = manager.GetSelectedShapes();
+                if (app == null || shapeRange == null || shapeRange.Count == 0) return false;
+
+                bool snapped = false;
+                for (int index = 1; index <= shapeRange.Count; index++)
+                    snapped |= SnapToNearestGuide(app, shapeRange[index], direction);
+                return snapped;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "AlignmentHelpers.SnapSelectionToNearestGuide");
+                return false;
+            }
+        }
+
+        public static bool AlignToSelectedAnchor(PowerPointManager manager, string edge, bool useLastSelected)
+        {
+            if (manager == null) return false;
+            var shapeRange = manager.GetSelectedShapes();
+            if (shapeRange == null || shapeRange.Count < 2) return false;
+
+            try
+            {
+                var anchor = shapeRange[useLastSelected ? shapeRange.Count : 1];
+                for (int index = 1; index <= shapeRange.Count; index++)
+                {
+                    var shape = shapeRange[index];
+                    if (shape.Id == anchor.Id) continue;
+                    switch (edge.ToLowerInvariant())
+                    {
+                        case "left": shape.Left = anchor.Left; break;
+                        case "right": shape.Left = anchor.Left + anchor.Width - shape.Width; break;
+                        case "top": shape.Top = anchor.Top; break;
+                        case "bottom": shape.Top = anchor.Top + anchor.Height - shape.Height; break;
+                        default: return false;
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "AlignmentHelpers.AlignToSelectedAnchor");
                 return false;
             }
         }
@@ -200,7 +275,7 @@ namespace oPenEfficiency.Features
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.SnapToNearestGuide.PresentationGuides"); }
 
                 try
                 {
@@ -213,7 +288,7 @@ namespace oPenEfficiency.Features
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.SnapToNearestGuide.MasterGuides"); }
 
                 try
                 {
@@ -226,123 +301,47 @@ namespace oPenEfficiency.Features
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.SnapToNearestGuide.LayoutGuides"); }
 
                 switch (direction.ToLower())
                 {
                     case "left":
                     {
-                        vGuides.Add(0f); // Fallback to slide left edge
                         float shapeLeft = shape.Left;
-                        float center = shape.Left + shape.Width / 2f;
-                        float best = 0f;
-                        float minDiff = float.MaxValue;
-                        foreach (float gx in vGuides)
-                        {
-                            if (gx > center && gx != 0f) continue;
-                            float diff = Math.Abs(gx - shapeLeft);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gx;
-                            }
-                        }
-                        shape.Left = best;
+                        shape.Left = DirectionalGuideSelector.NearestAtOrBefore(vGuides, shapeLeft, 0f);
                         return true;
                     }
                     case "right":
                     {
-                        vGuides.Add(slideWidth); // Fallback to slide right edge
                         float shapeRight = shape.Left + shape.Width;
-                        float center = shape.Left + shape.Width / 2f;
-                        float best = slideWidth;
-                        float minDiff = float.MaxValue;
-                        foreach (float gx in vGuides)
-                        {
-                            if (gx < center && gx != slideWidth) continue;
-                            float diff = Math.Abs(gx - shapeRight);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gx;
-                            }
-                        }
+                        float best = DirectionalGuideSelector.NearestAtOrAfter(vGuides, shapeRight, slideWidth);
                         shape.Left = best - shape.Width;
                         return true;
                     }
                     case "top":
                     {
-                        hGuides.Add(0f); // Fallback to slide top edge
                         float shapeTop = shape.Top;
-                        float center = shape.Top + shape.Height / 2f;
-                        float best = 0f;
-                        float minDiff = float.MaxValue;
-                        foreach (float gy in hGuides)
-                        {
-                            if (gy > center && gy != 0f) continue;
-                            float diff = Math.Abs(gy - shapeTop);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gy;
-                            }
-                        }
-                        shape.Top = best;
+                        shape.Top = DirectionalGuideSelector.NearestAtOrBefore(hGuides, shapeTop, 0f);
                         return true;
                     }
                     case "bottom":
                     {
-                        hGuides.Add(slideHeight); // Fallback to slide bottom edge
                         float shapeBottom = shape.Top + shape.Height;
-                        float center = shape.Top + shape.Height / 2f;
-                        float best = slideHeight;
-                        float minDiff = float.MaxValue;
-                        foreach (float gy in hGuides)
-                        {
-                            if (gy < center && gy != slideHeight) continue;
-                            float diff = Math.Abs(gy - shapeBottom);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gy;
-                            }
-                        }
+                        float best = DirectionalGuideSelector.NearestAtOrAfter(hGuides, shapeBottom, slideHeight);
                         shape.Top = best - shape.Height;
                         return true;
                     }
                     case "centerv": // Horizontal center of shape to vertical guide
                     {
-                        vGuides.Add(slideWidth / 2f); // Fallback to slide center
                         float shapeCenter = shape.Left + shape.Width / 2f;
-                        float best = slideWidth / 2f;
-                        float minDiff = float.MaxValue;
-                        foreach (float gx in vGuides)
-                        {
-                            float diff = Math.Abs(gx - shapeCenter);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gx;
-                            }
-                        }
+                        float best = DirectionalGuideSelector.NearestByDistance(vGuides, shapeCenter, slideWidth / 2f);
                         shape.Left = best - shape.Width / 2f;
                         return true;
                     }
                     case "centerh": // Vertical center of shape to horizontal guide
                     {
-                        hGuides.Add(slideHeight / 2f); // Fallback to slide middle
                         float shapeMiddle = shape.Top + shape.Height / 2f;
-                        float best = slideHeight / 2f;
-                        float minDiff = float.MaxValue;
-                        foreach (float gy in hGuides)
-                        {
-                            float diff = Math.Abs(gy - shapeMiddle);
-                            if (diff < minDiff)
-                            {
-                                minDiff = diff;
-                                best = gy;
-                            }
-                        }
+                        float best = DirectionalGuideSelector.NearestByDistance(hGuides, shapeMiddle, slideHeight / 2f);
                         shape.Top = best - shape.Height / 2f;
                         return true;
                     }
@@ -387,8 +386,7 @@ namespace oPenEfficiency.Features
                         for (int i = 1; i <= slide.Shapes.Count; i++)
                         {
                             var other = slide.Shapes[i];
-                            if (other.Id == shape.Id) continue;
-                            if (other.Name.StartsWith(GuideH) || other.Name.StartsWith(GuideV)) continue;
+                            if (ShouldIgnoreCollisionShape(other, shape)) continue;
                             float otherBottom = other.Top + other.Height;
                             float otherRight  = other.Left + other.Width;
                             bool vOverlap = (shapeTop < otherBottom + CollisionTolerance) && (shapeBottom > other.Top - CollisionTolerance);
@@ -407,8 +405,7 @@ namespace oPenEfficiency.Features
                         for (int i = 1; i <= slide.Shapes.Count; i++)
                         {
                             var other = slide.Shapes[i];
-                            if (other.Id == shape.Id) continue;
-                            if (other.Name.StartsWith(GuideH) || other.Name.StartsWith(GuideV)) continue;
+                            if (ShouldIgnoreCollisionShape(other, shape)) continue;
                             float otherBottom = other.Top + other.Height;
                             bool vOverlap = (shapeTop < otherBottom + CollisionTolerance) && (shapeBottom > other.Top - CollisionTolerance);
                             if (vOverlap && other.Left >= shapeRight - CollisionTolerance && other.Left < obstacle)
@@ -425,8 +422,7 @@ namespace oPenEfficiency.Features
                         for (int i = 1; i <= slide.Shapes.Count; i++)
                         {
                             var other = slide.Shapes[i];
-                            if (other.Id == shape.Id) continue;
-                            if (other.Name.StartsWith(GuideH) || other.Name.StartsWith(GuideV)) continue;
+                            if (ShouldIgnoreCollisionShape(other, shape)) continue;
                             float otherRight  = other.Left + other.Width;
                             float otherBottom = other.Top + other.Height;
                             bool hOverlap = (shapeLeft < otherRight + CollisionTolerance) && (shapeRight > other.Left - CollisionTolerance);
@@ -445,8 +441,7 @@ namespace oPenEfficiency.Features
                         for (int i = 1; i <= slide.Shapes.Count; i++)
                         {
                             var other = slide.Shapes[i];
-                            if (other.Id == shape.Id) continue;
-                            if (other.Name.StartsWith(GuideH) || other.Name.StartsWith(GuideV)) continue;
+                            if (ShouldIgnoreCollisionShape(other, shape)) continue;
                             float otherRight = other.Left + other.Width;
                             bool hOverlap = (shapeLeft < otherRight + CollisionTolerance) && (shapeRight > other.Left - CollisionTolerance);
                             if (hOverlap && other.Top >= shapeBottom - CollisionTolerance && other.Top < obstacle)
@@ -480,10 +475,37 @@ namespace oPenEfficiency.Features
             var shapeRange = app.ActiveWindow.Selection.ShapeRange;
             if (shapeRange == null || shapeRange.Count == 0) return false;
 
+            try { app.StartNewUndoEntry(); }
+            catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.MoveUntilCollision.StartUndoEntry"); }
+
             if (shapeRange.Count == 1)
                 return SnapToNearestGuide(app, shapeRange[1], direction);
 
             return AlignToFirst(manager, direction);
+        }
+
+        public static bool ExecuteMoveUntilCollision(PowerPointManager manager, string direction)
+        {
+            if (manager == null) return false;
+            var app = manager.GetApplication();
+            var range = manager.GetSelectedShapes();
+            if (range == null || range.Count != 1)
+            {
+                System.Windows.Forms.MessageBox.Show("Select exactly one shape for Move Until Object.", "Move Until Object", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+                return false;
+            }
+            try { app.StartNewUndoEntry(); }
+            catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.MoveSelectionUntilCollision.StartUndoEntry"); }
+            return MoveUntilCollision(app, range[1], direction);
+        }
+
+        private static bool ShouldIgnoreCollisionShape(Shape candidate, Shape movingShape)
+        {
+            if (candidate.Id == movingShape.Id || candidate.Visible == Microsoft.Office.Core.MsoTriState.msoFalse) return true;
+            string name = candidate.Name ?? string.Empty;
+            return name.StartsWith(GuideH, StringComparison.OrdinalIgnoreCase) ||
+                   name.StartsWith(GuideV, StringComparison.OrdinalIgnoreCase) ||
+                   name.StartsWith(OpenEfficiencyGuide, StringComparison.OrdinalIgnoreCase);
         }
 
         // ──────────────────────────────────────────────────────
@@ -497,21 +519,135 @@ namespace oPenEfficiency.Features
             var refShape = manager.GetReferenceShape();
             if (refShape == null) return false;
 
+            var originalStates = new System.Collections.Generic.List<Tuple<Shape, float, float, Microsoft.Office.Core.MsoTriState>>();
             try
             {
+                try { manager.GetApplication()?.StartNewUndoEntry(); }
+                catch (Exception ex) { ReportOptionalAlignmentFailure(ex, "AlignmentHelpers.MatchSize.StartUndoEntry"); }
                 for (int i = 1; i <= shapeRange.Count; i++)
                 {
                     var s = shapeRange[i];
                     if (s.Id == refShape.Id) continue;
+                    originalStates.Add(Tuple.Create(s, s.Width, s.Height, s.LockAspectRatio));
+                    s.LockAspectRatio = Microsoft.Office.Core.MsoTriState.msoFalse;
                     if (matchWidth)  s.Width  = refShape.Width;
                     if (matchHeight) s.Height = refShape.Height;
+                    s.LockAspectRatio = originalStates[originalStates.Count - 1].Item4;
                 }
                 return true;
             }
             catch (Exception ex)
             {
+                foreach (var state in originalStates)
+                {
+                    try
+                    {
+                        state.Item1.LockAspectRatio = Microsoft.Office.Core.MsoTriState.msoFalse;
+                        state.Item1.Width = state.Item2;
+                        state.Item1.Height = state.Item3;
+                        state.Item1.LockAspectRatio = state.Item4;
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        ExceptionLogger.Log(rollbackEx, "AlignmentHelpers.MatchSize.Rollback");
+                    }
+                }
                 ExceptionLogger.Log(ex, "AlignmentHelpers.MatchSize");
                 return false;
+            }
+        }
+
+        private static void ReportOptionalAlignmentFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // Missing native guides or undo support falls back without blocking the alignment operation.
+        }
+
+        private const float StretchChangeTolerance = 0.01f;
+
+        public static bool IsStretchFeature(string featureId)
+        {
+            switch (featureId)
+            {
+                case "BtnStretchLeft":
+                case "BtnStretchRight":
+                case "BtnStretchTop":
+                case "BtnStretchBottom":
+                case "BtnStretchLeftEdge":
+                case "BtnStretchRightEdge":
+                case "BtnStretchTopEdge":
+                case "BtnStretchBottomEdge":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Returns true when at least one non-anchor shape can be changed by the
+        /// requested stretch operation without producing an inverted dimension.
+        /// </summary>
+        public static bool CanStretch(PowerPointManager manager, string featureId)
+        {
+            if (manager == null || !IsStretchFeature(featureId)) return false;
+
+            try
+            {
+                var shapes = manager.GetSelectedShapes();
+                if (shapes == null || shapes.Count < 2) return false;
+
+                var anchor = manager.GetReferenceShape();
+                if (anchor == null) return false;
+
+                for (int i = 1; i <= shapes.Count; i++)
+                {
+                    var shape = shapes[i];
+                    if (shape.Id != anchor.Id && IsStretchTargetEligible(featureId, shape, anchor))
+                        return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "AlignmentHelpers.CanStretch");
+            }
+
+            return false;
+        }
+
+        public static bool IsStretchTargetEligible(string featureId, Shape shape, Shape anchor)
+        {
+            if (shape == null || anchor == null || shape.Id == anchor.Id) return false;
+
+            float shapeRight = shape.Left + shape.Width;
+            float shapeBottom = shape.Top + shape.Height;
+            float anchorRight = anchor.Left + anchor.Width;
+            float anchorBottom = anchor.Top + anchor.Height;
+
+            switch (featureId)
+            {
+                case "BtnStretchLeft":
+                    return shape.Left > anchorRight;
+                case "BtnStretchRight":
+                    return shapeRight < anchor.Left;
+                case "BtnStretchTop":
+                    return shape.Top > anchorBottom;
+                case "BtnStretchBottom":
+                    return shapeBottom < anchor.Top;
+                case "BtnStretchLeftEdge":
+                    return shapeRight > anchor.Left &&
+                           Math.Abs(shape.Left - anchor.Left) > StretchChangeTolerance;
+                case "BtnStretchRightEdge":
+                    return anchorRight > shape.Left &&
+                           Math.Abs(shapeRight - anchorRight) > StretchChangeTolerance;
+                case "BtnStretchTopEdge":
+                    return shapeBottom > anchor.Top &&
+                           Math.Abs(shape.Top - anchor.Top) > StretchChangeTolerance;
+                case "BtnStretchBottomEdge":
+                    return anchorBottom > shape.Top &&
+                           Math.Abs(shapeBottom - anchorBottom) > StretchChangeTolerance;
+                default:
+                    return false;
             }
         }
     }

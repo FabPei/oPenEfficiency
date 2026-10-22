@@ -1,9 +1,11 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Interop;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -15,8 +17,11 @@ namespace oPenEfficiency.UI
         {
             InitializeComponent();
             _manager = manager;
+            var app = _manager?.GetApplication();
+            if (app != null)
+                new WindowInteropHelper(this).Owner = new IntPtr(app.HWND);
             TxtValue.Focus();
-            
+
             CheckMasterButtonState();
         }
 
@@ -25,14 +30,14 @@ namespace oPenEfficiency.UI
             try
             {
                 var shapes = _manager.GetSelectedShapes();
-                if (shapes == null || shapes.Count <= 1)
-                {
-                    BtnMaster.IsEnabled = false;
-                }
+                BtnMaster.IsEnabled = shapes != null &&
+                    shapes.Count > 1 &&
+                    GetMasterShape(shapes)?.HasTextFrame == Office.MsoTriState.msoTrue;
             }
-            catch
+            catch (Exception ex)
             {
                 BtnMaster.IsEnabled = false;
+                ExceptionLogger.Log(ex, "ApplyTextWindow.CheckMasterButtonState");
             }
         }
 
@@ -63,64 +68,133 @@ namespace oPenEfficiency.UI
 
         private void BtnMaster_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                var app = _manager.GetApplication();
-                if (app.ActiveWindow?.Selection?.Type != PpSelectionType.ppSelectionShapes) return;
-
-                var shapes = app.ActiveWindow.Selection.ShapeRange;
-                if (shapes.Count < 1) return;
-
-                // Determine master shape based on settings
-                var config = JsonService.Load<oPenEfficiency.Models.SidebarConfig>("sidebar_config.json");
-                Shape masterShape;
-
-                if (config != null && config.MasterObjectMode == "Last Selected")
-                    masterShape = shapes[shapes.Count];
-                else
-                    masterShape = shapes[1];
-
-                if (masterShape.HasTextFrame == Office.MsoTriState.msoTrue)
-                {
-                    string masterText = masterShape.TextFrame.TextRange.Text;
-                    ApplyToSelection(masterText);
-                    TxtValue.Text = masterText; // Update UI to show what was applied
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error in ApplyText Master: " + ex.Message);
-            }
+            ApplyMasterText(null);
         }
 
-        private void ApplyToSelection(string text)
+        public bool ApplyMasterText(bool? useLastSelected)
         {
             try
             {
                 var app = _manager.GetApplication();
-                if (app.ActiveWindow?.Selection == null) return;
+                if (app.ActiveWindow?.Selection?.Type != PpSelectionType.ppSelectionShapes) return false;
 
-                var selection = app.ActiveWindow.Selection;
+                var shapes = app.ActiveWindow.Selection.ShapeRange;
+                if (shapes.Count < 1) return false;
 
-                if (selection.Type == PpSelectionType.ppSelectionShapes)
+                var masterShape = GetMasterShape(shapes, useLastSelected);
+
+                if (masterShape?.HasTextFrame == Office.MsoTriState.msoTrue)
                 {
-                    foreach (Shape shape in selection.ShapeRange)
-                    {
-                        if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
-                        {
-                            shape.TextFrame.TextRange.Text = text;
-                        }
-                    }
-                }
-                else if (selection.Type == PpSelectionType.ppSelectionText)
-                {
-                    selection.TextRange.Text = text;
+                    string masterText = masterShape.TextFrame.TextRange.Text;
+                    ApplyToSelection(masterText);
+                    TxtValue.Text = masterText; // Update UI to show what was applied
+                    return true;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Error applying text: " + ex.Message);
+                ExceptionLogger.Log(ex, "ApplyTextWindow.ApplyMasterText");
             }
+            return false;
+        }
+
+        private Shape GetMasterShape(ShapeRange shapes, bool? useLastSelected = null)
+        {
+            if (shapes == null || shapes.Count < 1) return null;
+            // The first/last decision routes through the shared production decision point instead of
+            // re-deciding the configured mode locally.
+            bool useLast = useLastSelected ?? _manager.UsesLastSelectedAnchor();
+            return useLast
+                ? shapes[shapes.Count]
+                : shapes[1];
+        }
+
+        private bool ApplyToSelection(string text)
+        {
+            var states = new List<TextState>();
+            try
+            {
+                var app = _manager.GetApplication();
+                if (app.ActiveWindow?.Selection == null) return false;
+
+                var selection = app.ActiveWindow.Selection;
+                if (selection.Type == PpSelectionType.ppSelectionShapes)
+                {
+                    foreach (Shape shape in selection.ShapeRange)
+                    {
+                        CollectTextStates(shape, states);
+                    }
+                }
+                else if (selection.Type == PpSelectionType.ppSelectionText)
+                {
+                    states.Add(new TextState(selection.TextRange));
+                }
+
+                if (states.Count == 0) return false;
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ApplyTextWindow.StartNewUndoEntry"); }
+
+                foreach (var state in states) state.Range.Text = text;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                foreach (var state in states)
+                {
+                    try { state.Range.Text = state.Text; }
+                    catch (Exception rollbackEx) { ExceptionLogger.Log(rollbackEx, "ApplyTextWindow.Rollback"); }
+                }
+                ExceptionLogger.Log(ex, "ApplyTextWindow.ApplyToSelection");
+                return false;
+            }
+        }
+
+        private static void CollectTextStates(Shape shape, List<TextState> states)
+        {
+            if (shape.HasTable == Office.MsoTriState.msoTrue)
+            {
+                bool hasSelectedCells = false;
+                for (int row = 1; row <= shape.Table.Rows.Count && !hasSelectedCells; row++)
+                {
+                    for (int column = 1; column <= shape.Table.Columns.Count; column++)
+                    {
+                        if (shape.Table.Cell(row, column).Selected)
+                        {
+                            hasSelectedCells = true;
+                            break;
+                        }
+                    }
+                }
+
+                for (int row = 1; row <= shape.Table.Rows.Count; row++)
+                {
+                    for (int column = 1; column <= shape.Table.Columns.Count; column++)
+                    {
+                        var cell = shape.Table.Cell(row, column);
+                        if (hasSelectedCells && !cell.Selected) continue;
+
+                        var cellShape = cell.Shape;
+                        if (cellShape.HasTextFrame == Office.MsoTriState.msoTrue)
+                            states.Add(new TextState(cellShape.TextFrame.TextRange));
+                    }
+                }
+                return;
+            }
+
+            if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
+                states.Add(new TextState(shape.TextFrame.TextRange));
+        }
+
+        private sealed class TextState
+        {
+            public TextState(TextRange range)
+            {
+                Range = range;
+                Text = range.Text;
+            }
+
+            public TextRange Range { get; }
+            public string Text { get; }
         }
     }
 }

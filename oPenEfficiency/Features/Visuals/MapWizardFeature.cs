@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using Microsoft.Office.Core;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
@@ -14,60 +13,79 @@ namespace oPenEfficiency.Features.Visuals
 {
     [FeatureMetadata(
         Id = "BtnMapWizard",
-        Name = "Map Wizard",
-        Tooltip = "Map Wizard: Geographic Colorizer",
+        Name = "Map Builder",
+        SearchAliases = new[] { "Map Wizard" },
+        Tooltip = "Insert and color editable PowerPoint maps",
         IconData = "M15,19L9,16.89V5L15,7.11M20.5,3C20.44,3 20.39,3.03 20.34,3.05L15,5L9,3L3.36,4.9C3.15,4.97 3,5.15 3,5.38V20.5A0.5,0.5 0 0,0 3.5,21C3.55,21 3.61,20.97 3.66,20.95L9,19L15,21L20.64,19.1C20.84,19.03 21,18.85 21,18.62V3.5A0.5,0.5 0 0,0 20.5,3Z",
         Color = "#10B981", // Green mapping
-        MinSelection = 1,
-        RequiredType = PowerPoint.PpSelectionType.ppSelectionShapes,
-        Description = "Links geographic vector maps to data to achieve conditional color rendering of regions natively.",
-        Keywords = "map, wizard, geography, colorizer, regions",
-        DetailedHelpText = "### Map Wizard\nManages geographic vector map assets (world map, regions, countries). Allows binding Excel conditional formatting data to fill individual country shapes automatically based on data values.")
+        MinSelection = 0,
+        RequiredType = OfficeSelectionType.None,
+        Description = "Inserts editable world, continent, country, and administrative-region maps, and colors their regions from pasted tabular data.",
+        DetailedHelpText = "### Map Builder\nChoose **World**, **Continent**, or **Country or territory**, then choose the available detail level. Right-click starts at World, Continent, Country, the selected tagged map, or the most recent configuration. Administrative levels are enabled only where bundled data is available, and every inserted region is an editable native PowerPoint shape.\n\nChoose whether remote regions stay in place, move into compact insets, or are excluded. Use **Mercator** or **Natural proportions**, restore a recent selection, and color shapes by pasting region names/IDs and values from Excel.")
     ]
     public static class MapWizardFeature
     {
-        private const string TagsKey = "oPE_MapWizardConfig";
+        public enum StartMode { Default, NewWorld, NewContinent, NewCountry, EditSelected, Recent }
+
+        private const string TagsKey = "OPE_MAP_WIZARD_CONFIG";
 
         public static bool Execute(PowerPointManager manager)
+        {
+            return Execute(manager, StartMode.Default);
+        }
+
+        public static bool Execute(PowerPointManager manager, StartMode startMode)
         {
             try
             {
                 var selection = manager.GetApplication().ActiveWindow.Selection;
-                if (selection.Type != PowerPoint.PpSelectionType.ppSelectionShapes || selection.ShapeRange.Count != 1)
+                PowerPoint.Shape mapGroup = null;
+                if (selection.Type == PowerPoint.PpSelectionType.ppSelectionShapes &&
+                    selection.ShapeRange.Count == 1)
                 {
-                    System.Windows.MessageBox.Show("Please select exactly one grouped Map shape.", "Map Wizard", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
-                    return false;
+                    PowerPoint.Shape candidate = selection.ShapeRange[1];
+                    if (candidate.Type == MsoShapeType.msoGroup ||
+                        !string.IsNullOrWhiteSpace(ShapeMetadataService.GetTag(candidate, MapAssetService.MapIdTag)))
+                    {
+                        mapGroup = candidate;
+                    }
                 }
 
-                PowerPoint.Shape mapGroup = selection.ShapeRange[1];
-
-                if (mapGroup.Type != MsoShapeType.msoGroup)
+                if (startMode == StartMode.EditSelected && mapGroup == null)
                 {
-                    System.Windows.MessageBox.Show("The map must be a Grouped shape where each child shape represents a region.", "Map Wizard", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    System.Windows.Forms.MessageBox.Show("Select one openEfficiency map to edit it.", "Map Builder");
                     return false;
                 }
+                if (startMode == StartMode.NewWorld || startMode == StartMode.NewContinent || startMode == StartMode.NewCountry || startMode == StartMode.Recent)
+                    mapGroup = null;
 
                 // Try to load any existing config
                 MapWizardConfig config = null;
                 try
                 {
-                    string existingJson = mapGroup.Tags[TagsKey];
+                    string existingJson = ShapeMetadataService.GetTag(mapGroup, TagsKey);
                     if (!string.IsNullOrEmpty(existingJson))
                     {
                         config = JsonService.Deserialize<MapWizardConfig>(existingJson);
                     }
                 }
-                catch { }
+                catch { /* Unsaved presentations use the map wizard's default asset directory. */ }
 
-                var window = new MapWizardWindow(mapGroup, config);
+                string initialScope = startMode == StartMode.NewWorld ? "World" :
+                    startMode == StartMode.NewContinent ? "Continent" :
+                    startMode == StartMode.NewCountry ? "Country" : null;
+                var window = new MapWizardWindow(manager, mapGroup, config, initialScope, startMode == StartMode.Recent);
                 if (window.ShowDialog() == true)
                 {
+                    mapGroup = window.MapGroup;
                     config = window.Config;
-                    
+                    if (mapGroup == null)
+                    {
+                        return false;
+                    }
+
                     // Save state back to shape
-                    try {
-                        mapGroup.Tags.Add(TagsKey, JsonService.Serialize(config));
-                    } catch { }
+                    ShapeMetadataService.SetTag(mapGroup, TagsKey, JsonService.Serialize(config));
 
                     // Apply Colors
                     ApplyColors(mapGroup, config);
@@ -78,9 +96,22 @@ namespace oPenEfficiency.Features.Visuals
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex.Message, "MapWizardFeature");
-                return false;
+                ExceptionLogger.Log(ex, "MapWizardFeature.Execute");
+                throw;
             }
+        }
+
+        public static HashSet<string> GetAvailableRegionKeys(PowerPoint.Shape mapGroup)
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (PowerPoint.Shape regionShape in GetRegionRoots(mapGroup))
+            {
+                foreach (string key in GetRegionKeys(regionShape))
+                {
+                    keys.Add(key);
+                }
+            }
+            return keys;
         }
 
         private static void ApplyColors(PowerPoint.Shape mapGroup, MapWizardConfig config)
@@ -103,15 +134,13 @@ namespace oPenEfficiency.Features.Visuals
             string[] paletteHex = { "#4285F4", "#EA4335", "#FBBC05", "#34A853", "#8E24AA", "#FF6D00" };
             int paletteIndex = 0;
 
-            foreach (PowerPoint.Shape regionShape in mapGroup.GroupItems)
+            foreach (PowerPoint.Shape regionShape in GetRegionRoots(mapGroup))
             {
-                string shapeName = regionShape.Name;
-                string altText = regionShape.AlternativeText;
+                HashSet<string> regionKeys = GetRegionKeys(regionShape);
 
-                // Find data row by Name or AltText
-                var row = config.Data.FirstOrDefault(d => 
-                    string.Equals(d.Region, shapeName, StringComparison.OrdinalIgnoreCase) || 
-                    string.Equals(d.Region, altText, StringComparison.OrdinalIgnoreCase));
+                // Stable ISO/admin IDs and aliases are preferred over mutable PowerPoint names.
+                var row = config.Data.FirstOrDefault(d =>
+                    !string.IsNullOrWhiteSpace(d.Region) && regionKeys.Contains(d.Region.Trim()));
 
                 if (row != null)
                 {
@@ -119,13 +148,13 @@ namespace oPenEfficiency.Features.Visuals
                     {
                         double ratio = (row.NumericValue - minVal) / (maxVal - minVal);
                         int targetRgb = InterpolateColor(config.LowColorHex, config.HighColorHex, ratio);
-                        regionShape.Fill.ForeColor.RGB = targetRgb;
+                        ApplyFillRecursively(regionShape, targetRgb);
                     }
                     else // Categorical
                     {
                         if (string.IsNullOrEmpty(row.RawValue))
                         {
-                            regionShape.Fill.ForeColor.RGB = defaultColor;
+                            ApplyFillRecursively(regionShape, defaultColor);
                             continue;
                         }
 
@@ -136,15 +165,84 @@ namespace oPenEfficiency.Features.Visuals
                             paletteIndex++;
                         }
                         
-                        regionShape.Fill.ForeColor.RGB = ColorConstants.FromHex(config.CategoryColors[row.RawValue]);
+                        ApplyFillRecursively(regionShape, ColorConstants.FromHex(config.CategoryColors[row.RawValue]));
                     }
                 }
                 else
                 {
                     // Reset to default if no data found
-                    regionShape.Fill.ForeColor.RGB = defaultColor;
+                    ApplyFillRecursively(regionShape, defaultColor);
                 }
             }
+        }
+
+        private static IEnumerable<PowerPoint.Shape> GetRegionRoots(PowerPoint.Shape mapGroup)
+        {
+            if (mapGroup == null)
+            {
+                yield break;
+            }
+
+            if (mapGroup.Type != MsoShapeType.msoGroup)
+            {
+                yield return mapGroup;
+                yield break;
+            }
+
+            for (int index = 1; index <= mapGroup.GroupItems.Count; index++)
+            {
+                PowerPoint.Shape child = mapGroup.GroupItems[index];
+                // Bundled maps tag each direct child as a logical region. Untagged direct
+                // children are retained for compatibility with user-supplied legacy maps.
+                yield return child;
+            }
+        }
+
+        private static HashSet<string> GetRegionKeys(PowerPoint.Shape regionShape)
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            AddKey(keys, regionShape?.Name);
+            AddKey(keys, regionShape?.AlternativeText);
+            AddKey(keys, ShapeMetadataService.GetTag(regionShape, MapAssetService.RegionIdTag));
+
+            string aliases = ShapeMetadataService.GetTag(regionShape, MapAssetService.RegionAliasesTag);
+            if (!string.IsNullOrWhiteSpace(aliases))
+            {
+                foreach (string alias in aliases.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    AddKey(keys, alias);
+                }
+            }
+            return keys;
+        }
+
+        private static void AddKey(HashSet<string> keys, string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                keys.Add(value.Trim());
+            }
+        }
+
+        private static void ApplyFillRecursively(PowerPoint.Shape shape, int color)
+        {
+            if (shape == null)
+            {
+                return;
+            }
+
+            if (shape.Type == MsoShapeType.msoGroup)
+            {
+                for (int index = 1; index <= shape.GroupItems.Count; index++)
+                {
+                    ApplyFillRecursively(shape.GroupItems[index], color);
+                }
+                return;
+            }
+
+            shape.Fill.Visible = MsoTriState.msoTrue;
+            shape.Fill.Solid();
+            shape.Fill.ForeColor.RGB = color;
         }
 
         private static int InterpolateColor(string hex1, string hex2, double ratio)

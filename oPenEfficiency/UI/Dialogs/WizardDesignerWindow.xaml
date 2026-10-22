@@ -1,58 +1,73 @@
 <Window x:Class="oPenEfficiency.UI.WizardDesignerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Wizard Designer" Width="600" Height="500"
+        Title="Build Presentation from Answers Designer" Width="980" Height="720" MinWidth="780" MinHeight="560"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" WindowStartupLocation="CenterOwner"
-        MouseDown="Window_MouseDown">
-    <Window.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Styles/Controls.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Window.Resources>
+        Topmost="False" WindowStartupLocation="CenterOwner">
+    <Window.Resources><ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="../Styles/Controls.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary></Window.Resources>
     <Border CornerRadius="12" Background="{DynamicResource WindowBackgroundBrush}" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
-        <Border.Effect>
-            <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/>
-        </Border.Effect>
+        <Border.Effect><DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.6" Color="Black"/></Border.Effect>
         <Grid Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
             <Grid>
-                <StackPanel>
-                    <TextBlock Text="WIZARD DESIGNER" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Configure inputs for Document Automation." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                <StackPanel MouseLeftButtonDown="Header_MouseLeftButtonDown">
+                    <TextBlock Text="PRESENTATION ANSWERS DESIGNER" Style="{StaticResource DialogTitleText}"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
             </Grid>
-            <ScrollViewer Grid.Row="1" Margin="0,15">
-                <ItemsControl ItemsSource="{Binding Questions}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+            <ScrollViewer Grid.Row="1" Margin="0,18,0,12" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Questions" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="15" Margin="0,0,0,8"/>
+                    <TextBlock Text="Define questions and one simple inclusion condition per slide. Configuration is stored in this presentation."
+                               Style="{StaticResource ContextMetaText}" Margin="0,0,0,8"/>
+                    <TextBlock Text="Keys are used as {{Key}} placeholders. For single choice, separate options with semicolons." Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,10"/>
+                    <ItemsControl ItemsSource="{Binding Questions}">
+                        <ItemsControl.ItemTemplate><DataTemplate>
+                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox SelectedItem="{Binding Type}" ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=QuestionTypes}" Width="120" Margin="0,0,10,0"/>
-                                    <TextBox Grid.Column="1" Text="{Binding Prompt}" Style="{StaticResource StandardTextBox}" Margin="0,0,10,0"/>
-                                    <Button Grid.Column="2" Content="×" Click="RemoveQuestion_Click" Tag="{Binding}" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Cursor="Hand" FontWeight="Bold"/>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="130"/><ColumnDefinition Width="*"/><ColumnDefinition Width="170"/><ColumnDefinition Width="70"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <ComboBox ItemsSource="{Binding DataContext.QuestionTypes, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding Type}" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Placeholder key"/>
+                                    <TextBox Grid.Column="2" Text="{Binding Prompt, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Question prompt"/>
+                                    <TextBox Grid.Column="3" Text="{Binding OptionsText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Choice options separated by semicolons"/>
+                                    <CheckBox Grid.Column="4" Content="Required" IsChecked="{Binding Required}" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <StackPanel Grid.Column="5" Orientation="Horizontal">
+                                        <Button Content="↑" Click="MoveQuestionUp_Click" Tag="{Binding}" Style="{StaticResource OutlineButton}" Padding="8,3" Margin="4,0,0,0"/>
+                                        <Button Content="↓" Click="MoveQuestionDown_Click" Tag="{Binding}" Style="{StaticResource OutlineButton}" Padding="8,3" Margin="4,0,0,0"/>
+                                        <Button Content="×" Click="RemoveQuestion_Click" Tag="{Binding}" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Padding="8,3" FontWeight="Bold"/>
+                                    </StackPanel>
                                 </Grid>
                             </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        </DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Add Question" Click="AddQuestion_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left" Margin="0,2,0,20"/>
+
+                    <TextBlock Text="Slide inclusion conditions" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" FontSize="15" Margin="0,0,0,8"/>
+                    <TextBlock Text="Enter the current slide number, a Yes/No or single-choice question key, Equals/NotEquals, and the expected answer." Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,10"/>
+                    <ItemsControl ItemsSource="{Binding Conditions}">
+                        <ItemsControl.ItemTemplate><DataTemplate>
+                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="6" Padding="10" Margin="0,0,0,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                    <TextBox Text="{Binding SlideNumber, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Slide number"/>
+                                    <TextBox Grid.Column="1" Text="{Binding QuestionKey, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Question key"/>
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding DataContext.ConditionOperators, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding Operator}" Margin="0,0,8,0"/>
+                                    <TextBox Grid.Column="3" Text="{Binding ExpectedValue, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource StandardTextBox}" Margin="0,0,8,0" ToolTip="Expected value"/>
+                                    <Button Grid.Column="4" Content="×" Click="RemoveCondition_Click" Tag="{Binding}" Background="Transparent" Foreground="#EF4444" BorderThickness="0" Padding="8,3" FontWeight="Bold"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Add Slide Condition" Click="AddCondition_Click" Style="{StaticResource OutlineButton}" HorizontalAlignment="Left"/>
+                </StackPanel>
             </ScrollViewer>
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Add Question" Click="AddQuestion_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
-                <Button Content="Save to Template" Click="Save_Click" Style="{StaticResource PrimaryButton}"/>
-            </StackPanel>
+            <Grid Grid.Row="2">
+                <TextBlock x:Name="StatusText" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="650" HorizontalAlignment="Left"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Click="Close_Click" Style="{StaticResource OutlineButton}" Margin="0,0,10,0"/>
+                    <Button Content="Validate and Save" Click="Save_Click" Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Border>
 </Window>

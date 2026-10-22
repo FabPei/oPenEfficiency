@@ -123,6 +123,8 @@
                           Grid.Column="0"
                           Style="{StaticResource SlimCombo}"
                           SelectionChanged="ComboFont_SelectionChanged"
+                          PreviewKeyDown="ComboFont_PreviewKeyDown"
+                          LostFocus="ComboFont_LostFocus"
                           IsTextSearchEnabled="True"
                           BorderThickness="0">
                     <ComboBox.ItemTemplate>

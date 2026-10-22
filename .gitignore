@@ -379,3 +379,11 @@ Application Files/
 # AI Agent Files
 CLAUDE.md
 .worktrees/
+
+# Local build/signing output
+artifacts/
+release/
+*.pfx
+eng/LocalSigning.props
+# This archive is a source-controlled runtime asset.
+!oPenEfficiency/Resources/IconLibrary/icon-library-assets.zip

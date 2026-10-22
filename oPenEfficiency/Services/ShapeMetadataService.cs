@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Services
 {
@@ -13,7 +14,7 @@ namespace oPenEfficiency.Services
             {
                 shape.Tags.Add(key, value);
             }
-            catch (Exception) { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "ShapeMetadataService.SetTag"); }
         }
 
         public static string GetTag(Shape shape, string key)
@@ -29,7 +30,7 @@ namespace oPenEfficiency.Services
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "ShapeMetadataService.GetTag"); }
             return null;
         }
 
@@ -52,7 +53,7 @@ namespace oPenEfficiency.Services
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "ShapeMetadataService.RemoveTag"); }
         }
 
         public static bool HasOpeTags(Shape shape)
@@ -68,7 +69,7 @@ namespace oPenEfficiency.Services
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "ShapeMetadataService.HasOpeTags"); }
             return false;
         }
 

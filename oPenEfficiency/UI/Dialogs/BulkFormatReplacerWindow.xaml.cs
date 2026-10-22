@@ -15,10 +15,18 @@ namespace oPenEfficiency.UI
         private readonly PowerPointManager _manager;
         private BulkFormatReplacerFeature.FormatProps _currentProps;
 
-        public BulkFormatReplacerWindow(PowerPointManager manager)
+        public BulkFormatReplacerWindow(
+            PowerPointManager manager,
+            BulkFormatReplacerFeature.ReplacementScope? initialScope = null)
         {
             InitializeComponent();
             _manager = manager;
+            if (initialScope.HasValue)
+            {
+                RadioScopeCurrent.IsChecked = initialScope.Value == BulkFormatReplacerFeature.ReplacementScope.CurrentSlide;
+                RadioScopeSelected.IsChecked = initialScope.Value == BulkFormatReplacerFeature.ReplacementScope.SelectedSlides;
+                RadioScopeEntire.IsChecked = initialScope.Value == BulkFormatReplacerFeature.ReplacementScope.EntirePresentation;
+            }
             this.Loaded += Window_Loaded;
             LoadData();
         }
@@ -32,24 +40,24 @@ namespace oPenEfficiency.UI
                 var textFindGeom = IconService.GetIconGeometry("SharedPipetteText", out isFilled);
                 if (textFindGeom != null) PathTextColorFind.Data = textFindGeom;
 
-                var textReplaceGeom = IconService.GetIconGeometry("SharedPipetteText", true, out isFilled); // Hover variant for replace
+                var textReplaceGeom = IconService.GetIconGeometry("SharedPipetteText", out isFilled);
                 if (textReplaceGeom != null) PathTextColorReplace.Data = textReplaceGeom;
 
                 // Fill Pipettes
                 var fillFindGeom = IconService.GetIconGeometry("SharedPipetteFill", out isFilled);
                 if (fillFindGeom != null) PathFillColorFind.Data = fillFindGeom;
 
-                var fillReplaceGeom = IconService.GetIconGeometry("SharedPipetteFill", true, out isFilled); // Hover variant for replace
+                var fillReplaceGeom = IconService.GetIconGeometry("SharedPipetteFill", out isFilled);
                 if (fillReplaceGeom != null) PathFillColorReplace.Data = fillReplaceGeom;
 
                 // Line Pipettes (Reuse Fill for now or use the generic one)
                 var lineFindGeom = IconService.GetIconGeometry("SharedPipetteFill", out isFilled);
                 if (lineFindGeom != null) PathLineColorFind.Data = lineFindGeom;
 
-                var lineReplaceGeom = IconService.GetIconGeometry("SharedPipetteFill", true, out isFilled);
+                var lineReplaceGeom = IconService.GetIconGeometry("SharedPipetteFill", out isFilled);
                 if (lineReplaceGeom != null) PathLineColorReplace.Data = lineReplaceGeom;
             }
-            catch { }
+            catch { /* The dialog can still open when initial selection properties are unavailable. */ }
         }
 
         private void LoadData()
@@ -100,13 +108,36 @@ namespace oPenEfficiency.UI
         {
             try
             {
+                if (CheckFont.IsChecked != true &&
+                    CheckSize.IsChecked != true &&
+                    CheckTextColor.IsChecked != true &&
+                    CheckFillColor.IsChecked != true &&
+                    CheckLineColor.IsChecked != true)
+                {
+                    MessageBox.Show(this, "Select at least one format property to replace.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
                 string fontFind = CheckFont.IsChecked == true ? ComboFontFind.Text : null;
                 string fontReplace = CheckFont.IsChecked == true ? ComboFontReplace.Text : null;
+                if (CheckFont.IsChecked == true &&
+                    (string.IsNullOrWhiteSpace(fontFind) || string.IsNullOrWhiteSpace(fontReplace)))
+                {
+                    MessageBox.Show(this, "Enter both font names.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 float? sizeFind = null;
                 float? sizeReplace = null;
-                if (CheckSize.IsChecked == true && float.TryParse(ComboSizeFind.Text, out float sf) && float.TryParse(ComboSizeReplace.Text, out float sr))
+                if (CheckSize.IsChecked == true)
                 {
+                    if (!float.TryParse(ComboSizeFind.Text, out float sf) ||
+                        !float.TryParse(ComboSizeReplace.Text, out float sr) ||
+                        sf <= 0 || sr <= 0)
+                    {
+                        MessageBox.Show(this, "Enter two positive font sizes.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
                     sizeFind = sf;
                     sizeReplace = sr;
                 }
@@ -120,12 +151,20 @@ namespace oPenEfficiency.UI
                 int? lineColorFind = CheckLineColor.IsChecked == true ? HexToRgb(ComboLineColorFind.Text) : (int?)null;
                 int? lineColorReplace = CheckLineColor.IsChecked == true ? HexToRgb(ComboLineColorReplace.Text) : (int?)null;
 
+                if ((CheckTextColor.IsChecked == true && (!textColorFind.HasValue || !textColorReplace.HasValue)) ||
+                    (CheckFillColor.IsChecked == true && (!fillColorFind.HasValue || !fillColorReplace.HasValue)) ||
+                    (CheckLineColor.IsChecked == true && (!lineColorFind.HasValue || !lineColorReplace.HasValue)))
+                {
+                    MessageBox.Show(this, "Enter colors as six-digit hex values, for example #1A2B3C.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 // Determine Scope
                 var scope = BulkFormatReplacerFeature.ReplacementScope.SelectedSlides;
                 if (RadioScopeCurrent.IsChecked == true) scope = BulkFormatReplacerFeature.ReplacementScope.CurrentSlide;
                 else if (RadioScopeEntire.IsChecked == true) scope = BulkFormatReplacerFeature.ReplacementScope.EntirePresentation;
 
-                BulkFormatReplacerFeature.ReplaceFormats(_manager, 
+                int replacementCount = BulkFormatReplacerFeature.ReplaceFormats(_manager,
                     fontFind, fontReplace, 
                     sizeFind, sizeReplace, 
                     textColorFind, textColorReplace, 
@@ -133,12 +172,23 @@ namespace oPenEfficiency.UI
                     lineColorFind, lineColorReplace,
                     scope);
 
-                MessageBox.Show("Batch replacement completed successfully.");
-                LoadData(); // Refresh list
+                if (replacementCount < 0)
+                {
+                    MessageBox.Show(this, "The replacement failed and completed changes were rolled back. See the openEfficiency error log for details.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                if (replacementCount == 0)
+                {
+                    MessageBox.Show(this, "No matching format properties were found in the selected scope.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                MessageBox.Show(this, $"Replaced {replacementCount} matching format properties.", "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Information);
+                LoadData();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error during replacement: " + ex.Message);
+                MessageBox.Show(this, "Error during replacement: " + ex.Message, "Replace Formatting", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -178,7 +228,7 @@ namespace oPenEfficiency.UI
                         targetCombo.Text = RgbToHex(rgb);
                     }
                 }
-                catch { }
+                catch { /* Overlay cleanup continues when a preview shape is already gone. */ }
                 overlay.Close();
             };
 
@@ -195,26 +245,38 @@ namespace oPenEfficiency.UI
 
             try
             {
-                var selection = _manager.GetApplication().ActiveWindow.Selection;
-                Microsoft.Office.Interop.PowerPoint.ShapeRange shapes = null;
-                
-                if (selection != null && selection.Type == Microsoft.Office.Interop.PowerPoint.PpSelectionType.ppSelectionShapes)
-                {
-                    try { if (selection.HasChildShapeRange) shapes = selection.ChildShapeRange; } catch { }
-                    if (shapes == null) shapes = selection.ShapeRange;
-                }
-
+                var shapes = _manager.GetSelectedShapes();
                 if (shapes == null || shapes.Count == 0)
                 {
                     MessageBox.Show("Please select a shape first.");
                     return;
                 }
 
+                var shape = shapes[1];
                 string value = null;
-                for (int i = 1; i <= shapes.Count; i++)
+
+                switch (propertyType)
                 {
-                    value = GetPropertyValueFromShape(shapes[i], propertyType);
-                    if (value != null) break;
+                    case "Font":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            value = shape.TextFrame.TextRange.Font.Name;
+                        break;
+                    case "Size":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            value = shape.TextFrame.TextRange.Font.Size.ToString();
+                        break;
+                    case "TextColor":
+                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            value = RgbToHex(shape.TextFrame.TextRange.Font.Color.RGB);
+                        break;
+                    case "FillColor":
+                        if (shape.Fill.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            value = RgbToHex(shape.Fill.ForeColor.RGB);
+                        break;
+                    case "LineColor":
+                        if (shape.Line.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
+                            value = RgbToHex(shape.Line.ForeColor.RGB);
+                        break;
                 }
 
                 if (value != null) targetCombo.Text = value;
@@ -224,48 +286,6 @@ namespace oPenEfficiency.UI
             {
                 MessageBox.Show("Could not get property from selection: " + ex.Message);
             }
-        }
-
-        private string GetPropertyValueFromShape(Microsoft.Office.Interop.PowerPoint.Shape shape, string propertyType)
-        {
-            if (shape.Type == Microsoft.Office.Core.MsoShapeType.msoGroup)
-            {
-                foreach (Microsoft.Office.Interop.PowerPoint.Shape child in shape.GroupItems)
-                {
-                    string val = GetPropertyValueFromShape(child, propertyType);
-                    if (val != null) return val;
-                }
-                return null;
-            }
-
-            try
-            {
-                switch (propertyType)
-                {
-                    case "Font":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            return shape.TextFrame.TextRange.Font.Name;
-                        break;
-                    case "Size":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            return shape.TextFrame.TextRange.Font.Size.ToString();
-                        break;
-                    case "TextColor":
-                        if (shape.HasTextFrame == Microsoft.Office.Core.MsoTriState.msoTrue && shape.TextFrame.HasText == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            return RgbToHex(shape.TextFrame.TextRange.Font.Color.RGB);
-                        break;
-                    case "FillColor":
-                        if (shape.Fill.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            return RgbToHex(shape.Fill.ForeColor.RGB);
-                        break;
-                    case "LineColor":
-                        if (shape.Line.Visible == Microsoft.Office.Core.MsoTriState.msoTrue)
-                            return RgbToHex(shape.Line.ForeColor.RGB);
-                        break;
-                }
-            }
-            catch { }
-            return null;
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => this.Close();
@@ -297,7 +317,7 @@ namespace oPenEfficiency.UI
                     return (b << 16) | (g << 8) | r;
                 }
             }
-            catch { }
+            catch { /* A stale shape is treated as no match while locating the replacement target. */ }
             return null;
         }
 

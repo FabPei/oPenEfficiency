@@ -20,10 +20,10 @@
                      Foreground="{DynamicResource TextPrimaryBrush}"
                      VerticalContentAlignment="Center" Padding="2,4"
                      FontSize="12" GotFocus="TxtSearch_GotFocus" LostFocus="TxtSearch_LostFocus"
-                     TextChanged="TxtSearch_TextChanged" />
+                     TextChanged="TxtSearch_TextChanged" KeyDown="TxtSearch_KeyDown" />
             
             <TextBlock x:Name="TxtSearchPlaceholder" Grid.Column="1" 
-                       Text="Search features..." Margin="4,0,0,0"
+                       Text="Command Search..." Margin="4,0,0,0"
                        Foreground="{DynamicResource TextMutedBrush}"
                        IsHitTestVisible="False" VerticalAlignment="Center"
                        Visibility="Visible" FontSize="11" FontStyle="Italic"/>

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSendToBack",
+  "title": "Send to Back (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSendToBack-001",
+      "title": "Send to Back applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Send to Back (BtnSendToBack) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSendToBack-001",
+      "title": "Send to Back decides its target stacking order in the host-neutral plan",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency.Core/Services/ZOrderRankPlanner.cs",
+        "oPenEfficiency.Core.Tests/ZOrderRankPlannerTests.cs"
+      ],
+      "expected": "The send-to-back plan prepends the ranked selection before the unselected shapes: on the working order 1,11,2,12 with selection order 12,11 and first-selected-at-bottom the plan is 12,11,1,2 - the first selected shape (12) ends bottommost and the unselected shapes keep their relative order. The COM move itself is the office-automated leg (QA9-BtnSendToBack-002).",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ZOrderRankPlannerTests.RankedPlanSendsTheSelectionToBackWithTheFirstSelectedAtBottom"
+      }
+    },
+    {
+      "id": "QA9-BtnSendToBack-002",
+      "title": "Send to Back applies its planned stacking change in a real PowerPoint host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Shapes/ZOrderFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointZOrder.ps1"
+      ],
+      "expected": "On the isolated Office host, three probe shapes are created with distinct stacking positions (bottom-to-top in creation order) and the topmost probe is selected alone. Send to Back is invoked through the same production entry point the visible command uses. The selected probe must become the bottommost shape (slot 3 of 3 -> slot 1), the two unselected probes must keep their relative order, all three probes must still exist afterwards, and no new entry may appear in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointZOrder.ps1",
+        "arguments": [
+          "-Commands",
+          "send-to-back"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

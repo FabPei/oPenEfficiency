@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnStickyNoteManager",
+  "title": "Sticky Note Manager (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/StickyNoteManagerFeature.cs",
+    "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnStickyNoteManager-001",
+      "title": "Sticky Note Manager applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/StickyNoteManagerFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Sticky Note Manager (BtnStickyNoteManager) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnStickyNoteManager-002",
+      "title": "Delete Sticky Notes removes the marked notes after confirmation in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed sticky-note workflow on two selected text boxes first marks both via the PrefixName action (measured both shapes carry the sticky tag and the StickyNote_ name prefix, countAfterMark=2), then the Delete action shows its YesNo confirmation (the driver measures dialogSeen=True and dismisses with a synthetic key press) and removes both notes (measured countAfterDelete=0 notesRemoved=True), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "sticky-note-delete"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

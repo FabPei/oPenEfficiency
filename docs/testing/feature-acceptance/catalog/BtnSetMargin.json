@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSetMargin",
+  "title": "Paste Text Margins (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/SetMarginFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSetMargin-001",
+      "title": "Paste Text Margins applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/SetMarginFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Paste Text Margins (BtnSetMargin) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSetMargin-002",
+      "title": "Margin paste plan is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/MarginPastePolicy.cs",
+        "oPenEfficiency/Features/Visuals/SetMarginFeature.cs",
+        "oPenEfficiency.Core.Tests/MarginPastePolicyTests.cs"
+      ],
+      "expected": "The paste plan resolves the context menu's combinations: a non-reset paste requires learned session data and writes the learned values for the selected axes only; reset is always allowed, resolves zeros and honors the axis selection (a horizontal reset never writes the vertical pair); an unselected axis is protected by its write flag, not by preserving values in the plan.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~MarginPastePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnSetMargin-003",
+      "title": "Paste Text Margins applies the staged margins to the real TextFrame in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointVisualBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Paste Text Margins with a staged MarginState (Left=7 Right=9 Top=11 Bottom=13) on one selected text box sets all four TextFrame margins to exactly those values (measured left=7 right=9 top=11 bottom=13 with leftChanged=True), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointVisualBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "set-margins"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

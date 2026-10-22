@@ -12,17 +12,19 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnSyncObjects",
-        Name = "Sync Objects",
-        Tooltip = "Sync objects",
+        Name = "Sync Shapes Across Slides",
+        Tooltip = "Sync shapes across slides",
+        SearchAliases = new[] { "Sync Across Slides", "Shape Synchronizer", "Sync Objects" },
         IconData = "M12,4L14.07,6.07L16.21,3.93L18.34,6.07L20.48,3.93L22.62,6.07L20.48,8.21L22.62,10.34L20.48,12.48L18.34,10.34L16.21,12.48L14.07,10.34L12,12.48V4M4,12V20H12V12H4M4,4V10H10V4H4M14,14V20H20V14H14Z",
         Color = "#F43F5E",
         Description = "Opens dialog to distribute and sync shapes across multiple slides.",
-        DetailedHelpText = "### Sync Objects\nSynchronizes the formatting (fill, border, font, size, or position) of all selected shapes to match the master shape's properties in one operation.",
-        Keywords = "sync, match, update, distribute, identical",
+        DetailedHelpText = "### Sync Shapes Across Slides\nDistributes selected shapes to chosen slides, then synchronizes tagged copies. Right-click can synchronize format, position, content, or all properties directly from the one selected tagged source shape; target-slide distribution remains in the full dialog.",
         MinSelection = 1)]
     public static class SyncObjectsFeature
     {
         public const string SyncIdTag = "oPE_SyncID";
+
+        private static SyncObjectsWindow _window;
 
         /// <summary>
         /// Wrapper for auto-discovery - returns false as Sync Objects requires dialog interaction.
@@ -37,8 +39,47 @@ namespace oPenEfficiency.Features
         public static void ExecuteDialog(PowerPointManager manager)
         {
             if (manager == null) return;
-            var window = new SyncObjectsWindow(manager);
-            window.Show();
+
+            if (_window != null && !_window.IsLoaded)
+                _window = null;
+
+            if (_window != null)
+            {
+                var existingApp = manager.GetApplication();
+                if (existingApp != null) new System.Windows.Interop.WindowInteropHelper(_window).Owner = (IntPtr)existingApp.HWND;
+                if (!_window.IsVisible) _window.Show();
+                if (_window.WindowState == System.Windows.WindowState.Minimized)
+                    _window.WindowState = System.Windows.WindowState.Normal;
+                _window.Activate();
+                _window.Focus();
+                return;
+            }
+
+            try
+            {
+                var window = new SyncObjectsWindow(manager);
+                _window = window;
+                var app = manager.GetApplication();
+                if (app != null) new System.Windows.Interop.WindowInteropHelper(window).Owner = (IntPtr)app.HWND;
+                window.Closed += (sender, args) =>
+                {
+                    if (ReferenceEquals(_window, window)) _window = null;
+                };
+                window.Show();
+                if (!_window.IsLoaded || !_window.IsVisible)
+                    throw new InvalidOperationException(
+                        "Sync Shapes window closed before it became visible.");
+            }
+            catch
+            {
+                try { _window?.Close(); }
+                catch (Exception closeEx)
+                {
+                    Utils.ExceptionLogger.Log(closeEx, "SyncObjectsFeature.ExecuteDialog.FailureCleanup");
+                }
+                _window = null;
+                throw;
+            }
         }
 
         public static bool DistributeShapesToSlides(PowerPointManager manager, List<int> targetSlideIndices)

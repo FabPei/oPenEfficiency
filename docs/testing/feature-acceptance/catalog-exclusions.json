@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "description": "Explicitly excluded or paused acceptance scopes for the visible PowerPoint feature catalog. Every entry must name a reason and a source; an exclusion is a recorded decision, never a silent gap. eng/Test-FeatureAcceptanceCoverage.ps1 fails when a visible Feature ID is neither covered by an acceptance scenario nor excluded here, and when an exclusion is stale, unclassified or unexplained.",
+  "allowedCategories": [
+    "internal-non-visible",
+    "one-note-paused",
+    "technical-exception"
+  ],
+  "exclusions": [],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

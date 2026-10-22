@@ -9,13 +9,13 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnWinnerPicker",
-        Name = "Lottery",
-        Tooltip = "Lottery",
+        Name = "Random Winner Picker",
+        SearchAliases = new[] { "Lottery", "Lottery / Winner Picker" },
+        Tooltip = "Pick random winners",
         IconData = "M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M12,17L14,15H10L12,17M12,7C10.9,7 10,7.9 10,9C10,10.1 10.9,11 12,11C13.1,11 14,10.1 14,9C14,7.9 13.1,7 12,7M7,15H9V13H7V15M15,15H17V13H15V15M7,11H9V9H7V11M15,11H17V9H15V11Z",
         Color = "#F43F5E",
-        Description = "Opens the lottery window for random winner selection.",
-        DetailedHelpText = "### Lottery\nAnimates a random selection from a defined list of names or items, useful for team engagement exercises and random presenter selection.",
-        Keywords = "random, winner, picker, selection, draw, chance",
+        Description = "Opens the random winner picker for animated selection from slide objects.",
+        DetailedHelpText = "### Random Winner Picker\nAnimates a random selection from selected slide objects, useful for team engagement exercises and random presenter selection. Right-click picks one, two, or three winners immediately or clears the generated winner markers.",
         MinSelection = 0)]
     public static class LotteryFeature
     {
@@ -58,6 +58,21 @@ namespace oPenEfficiency.Features
                 if (toggleBtn != null) toggleBtn.IsChecked = true;
                 _lotteryWindow.Activate();
             }
+            return true;
+        }
+
+        public static bool PickWinners(PowerPointManager manager, int count)
+        {
+            ExecuteWithToggle(manager, null);
+            if (_lotteryWindow == null || !_lotteryWindow.IsLoaded) return false;
+            _lotteryWindow.PickWinners(count, true);
+            return true;
+        }
+
+        public static bool ClearWinnerMarkers()
+        {
+            if (_lotteryWindow == null || !_lotteryWindow.IsLoaded) return false;
+            _lotteryWindow.ClearWinnerMarkers();
             return true;
         }
     }

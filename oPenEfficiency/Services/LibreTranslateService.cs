@@ -17,17 +17,64 @@ namespace oPenEfficiency.Services
         public string Error { get; set; }
     }
 
+    [DataContract]
+    public class LibreTranslateRequest
+    {
+        [DataMember(Name = "q")]
+        public string Text { get; set; }
+        [DataMember(Name = "source")]
+        public string Source { get; set; }
+        [DataMember(Name = "target")]
+        public string Target { get; set; }
+        [DataMember(Name = "format")]
+        public string Format { get; set; }
+        [DataMember(Name = "api_key", EmitDefaultValue = false)]
+        public string ApiKey { get; set; }
+    }
+
     public class LibreTranslateService
     {
         private readonly string _baseUrl;
         private readonly string _apiKey;
-        private static readonly HttpClient _httpClient = new HttpClient();
+        private readonly HttpClient _httpClient;
+        private readonly TimeSpan _requestTimeout;
+        private static readonly HttpClient SharedHttpClient = new HttpClient();
 
         public LibreTranslateService(string baseUrl, string apiKey = null)
+            : this(baseUrl, apiKey, SharedHttpClient)
         {
-            _baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? "https://libretranslate.com/" : baseUrl;
-            if (!_baseUrl.EndsWith("/")) _baseUrl += "/";
+        }
+
+        internal LibreTranslateService(string baseUrl, string apiKey, HttpClient httpClient)
+            : this(baseUrl, apiKey, httpClient, BoundedHttpResponseReader.DefaultTimeout)
+        {
+        }
+
+        internal LibreTranslateService(string baseUrl, string apiKey, HttpClient httpClient, TimeSpan requestTimeout)
+        {
+            _baseUrl = NormalizeBaseUrl(baseUrl);
             _apiKey = apiKey;
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _requestTimeout = requestTimeout;
+        }
+
+        internal static string NormalizeBaseUrl(string baseUrl)
+        {
+            string candidate = string.IsNullOrWhiteSpace(baseUrl)
+                ? "https://libretranslate.com/"
+                : baseUrl.Trim();
+            if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
+                throw new ArgumentException("LibreTranslate Base URL must be an absolute HTTPS URL.", nameof(baseUrl));
+
+            bool isHttps = string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+            bool isLoopbackHttp = string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) && uri.IsLoopback;
+            if (!isHttps && !isLoopbackHttp)
+                throw new ArgumentException("LibreTranslate Base URL must use HTTPS. HTTP is allowed only for a loopback server.", nameof(baseUrl));
+            if (!string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+                throw new ArgumentException("LibreTranslate Base URL must not contain credentials, a query, or a fragment.", nameof(baseUrl));
+
+            string normalized = uri.AbsoluteUri;
+            return normalized.EndsWith("/", StringComparison.Ordinal) ? normalized : normalized + "/";
         }
 
         public async Task<string> TranslateAsync(string text, string targetLanguage)
@@ -42,43 +89,47 @@ namespace oPenEfficiency.Services
                 if (target.Contains("-")) target = target.Split('-')[0];
                 target = target.ToLower();
 
-                var requestData = new Dictionary<string, string>
+                var requestData = new LibreTranslateRequest
                 {
-                    { "q", text },
-                    { "source", "auto" },
-                    { "target", target },
-                    { "format", "text" }
+                    Text = text,
+                    Source = "auto",
+                    Target = target,
+                    Format = "text",
+                    ApiKey = string.IsNullOrEmpty(_apiKey) ? null : _apiKey
                 };
-
-                if (!string.IsNullOrEmpty(_apiKey))
-                {
-                    requestData.Add("api_key", _apiKey);
-                }
 
                 string jsonContent = JsonService.Serialize(requestData);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync(endpoint, content);
-                string responseBody = await response.Content.ReadAsStringAsync();
+                BoundedHttpResponse response;
+                using (var request = new HttpRequestMessage(HttpMethod.Post, endpoint))
+                {
+                    request.Content = content;
+                    response = await BoundedHttpResponseReader.SendAsync(_httpClient, request, _requestTimeout);
+                }
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    System.Diagnostics.Debug.WriteLine($"LibreTranslate API Error ({response.StatusCode}): {responseBody}");
+                    oPenEfficiency.Utils.ExceptionLogger.Log(
+                        $"LibreTranslate returned HTTP {(int)response.StatusCode} ({response.StatusCode}). The response body was omitted because it may contain sensitive data.",
+                        "LibreTranslateService.TranslateAsync");
                     return null;
                 }
 
-                var result = JsonService.Deserialize<LibreTranslateResponse>(responseBody);
+                var result = JsonService.Deserialize<LibreTranslateResponse>(response.Body);
                 if (!string.IsNullOrEmpty(result?.Error))
                 {
-                     System.Diagnostics.Debug.WriteLine($"LibreTranslate API Error: {result.Error}");
+                     oPenEfficiency.Utils.ExceptionLogger.Log(
+                         "LibreTranslate returned an application error. The response text was omitted because it may contain sensitive data.",
+                         "LibreTranslateService.TranslateAsync");
                      return null;
                 }
 
-                return result?.TranslatedText;
+                return BoundedHttpResponseReader.ValidateTranslation(result?.TranslatedText);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"LibreTranslate Exception: {ex.Message}");
+                oPenEfficiency.Utils.ExceptionLogger.Log(ex, "LibreTranslateService.TranslateAsync");
             }
 
             return null;

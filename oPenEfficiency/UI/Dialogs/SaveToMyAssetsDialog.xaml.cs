@@ -131,7 +131,7 @@ namespace oPenEfficiency.UI
                 return;
             }
 
-            var inputDialog = new CreateFolderDialog();
+            var inputDialog = new CreateFolderDialog { Owner = this };
             if (inputDialog.ShowDialog() == true)
             {
                 try

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnChangeCase",
+  "title": "Change Case (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnChangeCase-001",
+      "title": "Change Case applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Change Case (BtnChangeCase) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnChangeCase-002",
+      "title": "Change Case applies UPPERCASE directly on the real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "Direct UPPERCASE transforms the probe text to 'PROBE', leaving non-letter characters, formatting and geometry unchanged.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "change-case-upper"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnChangeCase-003",
+      "title": "Change Case applies Sentence case directly on the real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "Direct Sentence case transforms the probe text to 'Probe', leaving non-letter characters, formatting and geometry unchanged.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "change-case-sentence"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnChangeCase-004",
+      "title": "Change Case applies UPPERCASE to the whole text in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextFormat.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Change Case upper-case action on a text box containing the mixed-case sample string rewrites that text fully uppercase (exact string match, measured MIXED CASE SAMPLE), reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextFormat.ps1",
+        "arguments": [
+          "-Mode",
+          "uppercase"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

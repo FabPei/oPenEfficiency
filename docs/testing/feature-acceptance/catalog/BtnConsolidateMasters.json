@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnConsolidateMasters",
+  "title": "Consolidate Slide Masters (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ConsolidateMastersFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnConsolidateMasters-001",
+      "title": "Consolidate Slide Masters applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ConsolidateMastersFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Consolidate Slide Masters (BtnConsolidateMasters) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnConsolidateMasters-002",
+      "title": "Consolidate Slide Masters remaps slides and deletes extra masters in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "Driver stdout DIALOG_BATCH_PASS with newErrorLogEntries=0; the seam verdict PASS|mode=consolidate-masters|designsBefore=2|designsAfter=1|slidesKept=True with dialogSeen=True and dialogClosed=True (both dialogs dismissed before the seam returns); the owned host tears down cleanly.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "consolidate-masters"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

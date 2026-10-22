@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnCleaner",
+  "title": "Presentation Cleaner (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/CleanerFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnCleaner-001",
+      "title": "Presentation Cleaner applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/CleanerFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Presentation Cleaner (BtnCleaner) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnCleaner-002",
+      "title": "Cleaner confirmation policy and warning wording are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/CleanerActionPolicy.cs",
+        "oPenEfficiency/Features/Utilities/CleanerFeature.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs",
+        "oPenEfficiency.Core.Tests/CleanerActionPolicyTests.cs"
+      ],
+      "expected": "Every destructive cleanup action asks Yes/No before running while the read-only superscript detection, the Anonymize flow (which confirms in its own feature) and the slide-to-image conversions are exempt; the warning names the operation per action family (20 distinct wordings), picks the slide scope by the Selected suffix ('the entire presentation' vs 'the selected slide scope') and ends with the shared continue question.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~CleanerActionPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnCleaner-003",
+      "title": "Presentation Cleaner removes speaker notes after confirmation in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Presentation Cleaner RemoveSpeakerNotesAll action on a slide whose notes body holds private speaker notes sample (measured notesBeforeLen=28) shows its YesNo confirmation (the driver measures dialogSeen=True and dismisses with a synthetic key press) and clears the notes (measured cleared=True notesAfterLen=0), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "cleaner-notes"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

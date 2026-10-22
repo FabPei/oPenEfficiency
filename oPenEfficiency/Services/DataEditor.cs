@@ -2,6 +2,7 @@ using Microsoft.Office.Interop.PowerPoint;
 using System;
 using System.Collections.Generic;
 using Excel = Microsoft.Office.Interop.Excel;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Services
 {
@@ -136,33 +137,41 @@ namespace oPenEfficiency.Services
                 // Detach event handlers before cleanup
                 if (_worksheet != null)
                 {
-                    try { _worksheet.Change -= Worksheet_Change; } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => _worksheet.Change -= Worksheet_Change,
+                        "DataEditor.Dispose.UnsubscribeWorksheetChange");
                 }
 
                 // Close Excel application
                 if (_workbook != null)
                 {
-                    try { _workbook.Close(false); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(() => _workbook.Close(false), "DataEditor.Dispose.CloseWorkbook");
                 }
                 if (_excelApp != null)
                 {
-                    try { _excelApp.Quit(); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(() => _excelApp.Quit(), "DataEditor.Dispose.QuitExcel");
                 }
 
                 // Release COM objects
                 if (_worksheet != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(_worksheet); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(_worksheet),
+                        "DataEditor.Dispose.ReleaseWorksheet");
                     _worksheet = null;
                 }
                 if (_workbook != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(_workbook); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(_workbook),
+                        "DataEditor.Dispose.ReleaseWorkbook");
                     _workbook = null;
                 }
                 if (_excelApp != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(_excelApp); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => System.Runtime.InteropServices.Marshal.ReleaseComObject(_excelApp),
+                        "DataEditor.Dispose.ReleaseExcel");
                     _excelApp = null;
                 }
             }

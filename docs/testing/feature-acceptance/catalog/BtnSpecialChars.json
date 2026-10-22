@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSpecialChars",
+  "title": "Insert Special Characters (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSpecialChars-001",
+      "title": "Insert Special Characters applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Insert Special Characters (BtnSpecialChars) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSpecialChars-001",
+      "title": "Every picker category is non-empty and free of duplicate characters",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml.cs",
+        "oPenEfficiency.Core/Models/SpecialCharacterCatalog.cs",
+        "oPenEfficiency.Core.Tests/SpecialCharacterCatalogTests.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Every category of SpecialCharacterCatalog carries a header and at least one character, and no category lists the same character twice - before this batch the arrows set listed one arrow twice.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SpecialCharacterCatalogTests.EveryCategoryIsNonEmptyAndFreeOfDuplicateCharacters"
+      }
+    },
+    {
+      "id": "QA9-BtnSpecialChars-002",
+      "title": "The language route of the picker matches category headers case-insensitively",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml.cs",
+        "oPenEfficiency.Core/Models/SpecialCharacterCatalog.cs",
+        "oPenEfficiency.Core.Tests/SpecialCharacterCatalogTests.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "SpecialCharacterCatalog.FindByHeader resolves a requested language regardless of casing ('german', 'GERMAN', 'czech/slovak') and returns null for a name no category carries.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SpecialCharacterCatalogTests.CategoryLookupIsCaseInsensitiveAndUnknownNamesResolveToNothing"
+      }
+    },
+    {
+      "id": "QA9-BtnSpecialChars-003",
+      "title": "The picker offers the documented character sets",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml.cs",
+        "oPenEfficiency.Core/Models/SpecialCharacterCatalog.cs",
+        "oPenEfficiency.Core.Tests/SpecialCharacterCatalogTests.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "The German set is exactly the documented umlauts and sharp s, the Harvey Balls set is the five-step progression, Spanish, Mathematical and Polish carry their documented characters, and the arrows set lists its arrow exactly once.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SpecialCharacterCatalogTests.DocumentedCharacterSetsArePresent"
+      }
+    },
+    {
+      "id": "QA9-BtnSpecialChars-004",
+      "title": "Emoji and supplementary characters stay whole on their picker buttons",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/Dialogs/SpecialCharactersWindow.xaml.cs",
+        "oPenEfficiency.Core/Models/SpecialCharacterCatalog.cs",
+        "oPenEfficiency.Core.Tests/SpecialCharacterCatalogTests.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "SpecialCharacterCatalog.EnumerateGlyphs yields one glyph per text element - the Status & Indicators category yields its 15 glyphs with the flag emoji intact - and no category hands a lone surrogate to the dialog, which used to split every emoji into two broken buttons.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SpecialCharacterCatalogTests.GlyphEnumerationKeepsSupplementaryCharactersWhole"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

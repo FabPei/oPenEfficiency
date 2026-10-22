@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignText",
+  "title": "Align Text (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignText-001",
+      "title": "Align Text applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Align Text (BtnAlignText) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignText-002",
+      "title": "Align Text anchors the selection's text to the middle",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "The direct middle-anchoring action sets the probe text frame's vertical anchor to middle, leaving text content and geometry unchanged and producing one PowerPoint Undo entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "align-text-middle"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnAlignText-003",
+      "title": "Align Text centers the selection's paragraphs",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "The direct horizontal-alignment action sets the probe text's paragraph alignment to centered, leaving text content and geometry unchanged and producing one PowerPoint Undo entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "align-text-center"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnAlignText-004",
+      "title": "Align Text centers the paragraph via the bounded overload in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextFormat.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Text center action on a left-aligned text box sets ParagraphFormat.Alignment to ppAlignCenter, reports execution, leaves the text content and shape geometry unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextFormat.ps1",
+        "arguments": [
+          "-Mode",
+          "align-center"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,395 +1,215 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
-using oPenEfficiency.Utils;
+using Office = Microsoft.Office.Core;
 using oPenEfficiency.Services.Attributes;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features.Utilities
 {
-    /// <summary>
-    /// Feature: Removes existing guidelines and creates new standard guidelines for slide layout.
-    /// Uses line shapes styled as guidelines (native PowerPoint guidelines are not accessible via interop).
-    ///
-    /// Horizontal Guides (Top to Bottom) - manage vertical space:
-    /// - 8.25 cm Top: Top Margin (~1.25 cm border at top)
-    /// - 5.70 cm Top: Title Baseline (separates title from body, ~2.5 cm strip)
-    /// - 0.00 cm: Vertical Center
-    /// - 8.25 cm Bottom: Bottom Margin (for page numbers, footers)
-    ///
-    /// Vertical Guides (Left to Right) - create boundaries and column layouts
-    /// Multiple layout options available: 3-Column, 4-Column, 5-Column, 1:2 Asymmetrical
-    /// </summary>
     [FeatureMetadata(
         Id = "BtnSlideGuidelines",
-        Name = "Slide Guidelines",
-        Tooltip = "Slide guidelines",
+        Name = "Create Slide Guide Grid",
+        SearchAliases = new[] { "Slide Guidelines" },
+        Tooltip = "Create responsive layout guides",
         IconData = "M3,3H21V21H3V3M7,7V19H19V7H7M9,9H17V11H9V9M9,13H17V15H9V13M9,17H17V19H9V17Z",
         Color = "#F43F5E",
-        Description = "Creates standard slide layout guidelines for consistent positioning.",
-        DetailedHelpText = "### Slide Guidelines\nInjects precision architectural guidelines into the current slide for complex layout alignment.\n\n**Right-Click Options:**\n* **3/4/5 Column Layouts**: Balanced vertical gutters for content distribution.\n* **Rule of Thirds**: 3x3 composition grid for professional image and text placement.\n* **1:2 Ratio**: Asymmetrical grid for sidebar-style slides.",
-        Keywords = "guidelines, layout, grids, align, margins, structure",
+        Description = "Creates responsive tagged guide shapes on the current slide and replaces only guides owned by openEfficiency.",
+        DetailedHelpText = "### Create Slide Guide Grid\nCreates responsive line-shape guides for the current slide size. A normal click applies a two-column layout; right-click offers three, four, five, 1:2, and rule-of-thirds layouts plus explicit removal. Applying a layout replaces only shapes tagged as openEfficiency guidelines, preserving similarly named user shapes. These are slide shapes rather than PowerPoint's native guides.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class SlideGuidelinesFeature
     {
-        // Conversion constant: 1 cm = 28.3464567 points
-        private const double PtsPerCm = 28.3464567;
+        private const double PointsPerCm = 28.3464567;
+        private const string GuidelineTag = "oPE_Guideline";
+        private const string GuidelineSetTag = "oPE_GuidelineSet";
 
-        public enum GuidelineLayout
-        {
-            Default,        // 2-column layout
-            ThreeColumn,    // 3-column layout
-            FourColumn,     // 4-column layout
-            FiveColumn,     // 5-column layout
-            OneTwoColumn,   // 1:2 asymmetrical layout
-            RuleOfThirds    // 3x3 grid for composition
-        }
+        public enum GuidelineLayout { Default, ThreeColumn, FourColumn, FiveColumn, OneTwoColumn, RuleOfThirds }
 
-        /// <summary>
-        /// Wrapper for auto-discovery - creates default 2-column layout guidelines.
-        /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
             return Execute(manager, GuidelineLayout.Default);
         }
 
-        public static bool Execute(PowerPointManager manager, GuidelineLayout layout = GuidelineLayout.Default)
+        public static bool Execute(PowerPointManager manager, GuidelineLayout layout)
         {
-            if (manager == null) return false;
-
+            if (!TryGetCurrentSlide(manager, out var app, out var slide, out var presentation)) return false;
+            var created = new List<Shape>();
+            string setId = Guid.NewGuid().ToString("N");
             try
             {
-                System.Diagnostics.Debug.WriteLine($"SlideGuidelinesFeature.Execute: Starting with layout={layout}");
-
-                var app = manager.GetApplication();
-                if (app == null || app.ActiveWindow == null || app.ActiveWindow.View == null)
-                {
-                    return false;
-                }
-
-                var slide = (Slide)app.ActiveWindow.View.Slide;
-                if (slide == null)
-                {
-                    return false;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"SlideGuidelinesFeature: Processing slide");
-
-                // Step 1: Remove existing guidelines (by name pattern)
-                System.Diagnostics.Debug.WriteLine("SlideGuidelinesFeature: Step 1 - Removing existing guidelines");
-                RemoveExistingGuidelines(slide);
-
-                // Step 2: Create new guidelines based on layout
-                System.Diagnostics.Debug.WriteLine("SlideGuidelinesFeature: Step 2 - Creating new guidelines");
-                CreateGuidelines(slide, layout);
-
-                System.Diagnostics.Debug.WriteLine("SlideGuidelinesFeature: Complete");
+                try { app.StartNewUndoEntry(); }
+                catch (Exception undoEx) { ExceptionPolicy.ReportOptionalComFailure(undoEx, "SlideGuidelinesFeature.Execute.StartUndoEntry"); }
+                CreateGuidelines(slide, presentation, layout, setId, created);
+                RemoveExistingGuidelines(slide, setId);
                 return true;
             }
             catch (Exception ex)
             {
+                for (int i = created.Count - 1; i >= 0; i--)
+                {
+                    try { created[i].Delete(); }
+                    catch (Exception rollbackEx) { ExceptionPolicy.ReportOptionalComFailure(rollbackEx, "SlideGuidelinesFeature.Execute.Rollback"); }
+                }
                 ExceptionLogger.Log(ex, "SlideGuidelinesFeature.Execute");
-                System.Windows.Forms.MessageBox.Show(
-                    $"Error creating guidelines: {ex.Message}",
-                    "Error",
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                System.Windows.MessageBox.Show("The guideline layout could not be created. Existing guidelines were preserved.",
+                    "Create Slide Guide Grid", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 return false;
             }
         }
 
-        /// <summary>
-        /// Removes all existing guidelines by detecting name pattern (Guide_H_ or Guide_V_ prefix).
-        /// Line shapes in PowerPoint don't support Tags, so we use name-based detection.
-        /// </summary>
-        private static void RemoveExistingGuidelines(Slide slide)
+        public static bool RemoveGuidelines(PowerPointManager manager)
         {
+            if (!TryGetCurrentSlide(manager, out var app, out var slide, out _)) return false;
             try
             {
-                int removedCount = 0;
-                int totalShapes = slide.Shapes.Count;
-
-                System.Diagnostics.Debug.WriteLine($"SlideGuidelinesFeature: Checking {totalShapes} shapes for guidelines");
-
-                // Iterate backwards to safely delete while iterating
-                for (int i = slide.Shapes.Count; i >= 1; i--)
-                {
-                    try
-                    {
-                        var shape = slide.Shapes[i];
-                        bool isGuideline = false;
-                        string reason = "";
-
-                        // Check by name pattern (Guide_H_ or Guide_V_ prefix)
-                        if (shape.Name.StartsWith("Guide_H_") || shape.Name.StartsWith("Guide_V_"))
-                        {
-                            isGuideline = true;
-                            reason = $"name pattern ({shape.Name})";
-                        }
-
-                        if (isGuideline)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"  -> Deleting guideline (detected by {reason})");
-                            shape.Delete();
-                            removedCount++;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"  -> Error processing shape: {ex.Message}");
-                    }
-                }
-
-                System.Diagnostics.Debug.WriteLine($"SlideGuidelinesFeature: Removed {removedCount} existing guidelines");
+                try { app.StartNewUndoEntry(); }
+                catch (Exception undoEx) { ExceptionPolicy.ReportOptionalComFailure(undoEx, "SlideGuidelinesFeature.Remove.StartUndoEntry"); }
+                return RemoveExistingGuidelines(slide, null) > 0;
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "SlideGuidelinesFeature.RemoveExistingGuidelines");
+                ExceptionLogger.Log(ex, "SlideGuidelinesFeature.RemoveGuidelines");
+                return false;
             }
         }
 
-        /// <summary>
-        /// Creates new horizontal and vertical guidelines based on the selected layout.
-        /// </summary>
-        private static void CreateGuidelines(Slide slide, GuidelineLayout layout)
+        private static bool TryGetCurrentSlide(PowerPointManager manager, out Application app, out Slide slide, out Presentation presentation)
         {
+            app = null;
+            slide = null;
+            presentation = null;
             try
             {
-                // Standard slide dimensions (16:9 aspect ratio)
-                var presentation = slide.Parent as Presentation;
-                float slideWidthCm = (float)(presentation.PageSetup.SlideWidth / PtsPerCm);
-                float slideHeightCm = (float)(presentation.PageSetup.SlideHeight / PtsPerCm);
-
-                // Center points
-                float centerX = slideWidthCm / 2f;
-                float centerY = slideHeightCm / 2f;
-
-                // Rule of Thirds layout has its own guide set
-                if (layout == GuidelineLayout.RuleOfThirds)
-                {
-                    CreateGuidelines_RuleOfThirds(slide, presentation, slideWidthCm, slideHeightCm);
-                    return;
-                }
-
-                // Horizontal Guides (same for all other layouts)
-                CreateHorizontalGuide(slide, presentation, 8.25f, "Top Margin");       // 8.25 cm from top
-                CreateHorizontalGuide(slide, presentation, 5.70f, "Title Baseline");   // 5.70 cm from top
-                CreateHorizontalGuide(slide, presentation, centerY, "Vertical Center"); // At center
-                CreateHorizontalGuide(slide, presentation, slideHeightCm - 8.25f, "Bottom Margin"); // 8.25 cm from bottom
-
-                // Vertical Guides (varies by layout)
-                switch (layout)
-                {
-                    case GuidelineLayout.ThreeColumn:
-                        CreateGuidelines_ThreeColumn(slide, presentation, slideWidthCm);
-                        break;
-                    case GuidelineLayout.FourColumn:
-                        CreateGuidelines_FourColumn(slide, presentation, slideWidthCm);
-                        break;
-                    case GuidelineLayout.FiveColumn:
-                        CreateGuidelines_FiveColumn(slide, presentation, slideWidthCm);
-                        break;
-                    case GuidelineLayout.OneTwoColumn:
-                        CreateGuidelines_OneTwoColumn(slide, presentation, slideWidthCm);
-                        break;
-                    case GuidelineLayout.Default:
-                    default:
-                        CreateGuidelines_Default(slide, presentation, slideWidthCm);
-                        break;
-                }
+                app = manager?.GetApplication();
+                presentation = app?.ActivePresentation;
+                if (app?.ActiveWindow == null || presentation == null) return false;
+                slide = app.ActiveWindow.View.Slide as Slide;
+                return slide != null;
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "SlideGuidelinesFeature.CreateGuidelines");
-                throw;
+                ExceptionLogger.Log(ex, "SlideGuidelinesFeature.TryGetCurrentSlide");
+                return false;
             }
         }
 
-        /// <summary>
-        /// Default 2-column layout vertical guides.
-        /// </summary>
-        private static void CreateGuidelines_Default(Slide slide, Presentation presentation, float slideWidthCm)
+        private static void CreateGuidelines(Slide slide, Presentation presentation, GuidelineLayout layout, string setId, List<Shape> created)
         {
-            CreateVerticalGuide(slide, presentation, 15.70f, "Left Margin");
-            CreateVerticalGuide(slide, presentation, 0.60f, "Left Gutter");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f, "Horizontal Center");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 0.60f, "Right Gutter");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 15.70f, "Right Margin");
+            float widthCm = (float)(presentation.PageSetup.SlideWidth / PointsPerCm);
+            float heightCm = (float)(presentation.PageSetup.SlideHeight / PointsPerCm);
+            if (layout == GuidelineLayout.RuleOfThirds)
+            {
+                AddVertical(slide, presentation, widthCm / 3f, "Third Left", setId, created);
+                AddVertical(slide, presentation, widthCm * 2f / 3f, "Third Right", setId, created);
+                AddHorizontal(slide, presentation, heightCm / 3f, "Third Top", setId, created);
+                AddHorizontal(slide, presentation, heightCm * 2f / 3f, "Third Bottom", setId, created);
+                return;
+            }
+
+            float outerHorizontalMargin = Math.Min(1.25f, heightCm * 0.1f);
+            float titleBaseline = Math.Min(3.75f, heightCm * 0.25f);
+            AddHorizontal(slide, presentation, outerHorizontalMargin, "Top Margin", setId, created);
+            AddHorizontal(slide, presentation, titleBaseline, "Title Baseline", setId, created);
+            AddHorizontal(slide, presentation, heightCm / 2f, "Vertical Center", setId, created);
+            AddHorizontal(slide, presentation, heightCm - outerHorizontalMargin, "Bottom Margin", setId, created);
+
+            if (layout == GuidelineLayout.OneTwoColumn) AddRatioColumns(slide, presentation, widthCm, setId, created);
+            else AddEqualColumns(slide, presentation, widthCm,
+                layout == GuidelineLayout.ThreeColumn ? 3 : layout == GuidelineLayout.FourColumn ? 4 : layout == GuidelineLayout.FiveColumn ? 5 : 2,
+                setId, created);
         }
 
-        /// <summary>
-        /// 3-Column Layout vertical guides.
-        /// </summary>
-        private static void CreateGuidelines_ThreeColumn(Slide slide, Presentation presentation, float slideWidthCm)
+        private static void AddEqualColumns(Slide slide, Presentation presentation, float widthCm, int columns, string setId, List<Shape> created)
         {
-            CreateVerticalGuide(slide, presentation, 15.70f, "Left Margin");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 6.03f, "Left Gutter 1");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 4.83f, "Left Gutter 2");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 4.83f, "Right Gutter 1");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 6.03f, "Right Gutter 2");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 15.70f, "Right Margin");
+            float margin = Math.Min(0.6f, widthCm * 0.04f);
+            float contentWidth = widthCm - 2f * margin;
+            float gutter = Math.Min(1.2f, contentWidth / (columns * 4f));
+            AddVertical(slide, presentation, margin, "Left Margin", setId, created);
+            for (int i = 1; i < columns; i++)
+            {
+                float boundary = margin + contentWidth * i / columns;
+                AddVertical(slide, presentation, boundary - gutter / 2f, $"Column {i} Right", setId, created);
+                AddVertical(slide, presentation, boundary + gutter / 2f, $"Column {i + 1} Left", setId, created);
+            }
+            AddVertical(slide, presentation, widthCm - margin, "Right Margin", setId, created);
         }
 
-        /// <summary>
-        /// 4-Column Layout vertical guides.
-        /// </summary>
-        private static void CreateGuidelines_FourColumn(Slide slide, Presentation presentation, float slideWidthCm)
+        private static void AddRatioColumns(Slide slide, Presentation presentation, float widthCm, string setId, List<Shape> created)
         {
-            CreateVerticalGuide(slide, presentation, 15.70f, "Left Margin");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 8.75f, "Column 1 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 7.55f, "Column 1 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 0.60f, "Left Gutter");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 0.60f, "Right Gutter");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 7.55f, "Column 2 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 8.75f, "Column 2 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 15.70f, "Right Margin");
+            float margin = Math.Min(0.6f, widthCm * 0.04f);
+            float contentWidth = widthCm - 2f * margin;
+            float gutter = Math.Min(1.2f, contentWidth / 12f);
+            float boundary = margin + contentWidth / 3f;
+            AddVertical(slide, presentation, margin, "Left Margin", setId, created);
+            AddVertical(slide, presentation, boundary - gutter / 2f, "Narrow Column Right", setId, created);
+            AddVertical(slide, presentation, boundary + gutter / 2f, "Wide Column Left", setId, created);
+            AddVertical(slide, presentation, widthCm - margin, "Right Margin", setId, created);
         }
 
-        /// <summary>
-        /// 5-Column Layout vertical guides.
-        /// </summary>
-        private static void CreateGuidelines_FiveColumn(Slide slide, Presentation presentation, float slideWidthCm)
+        private static void AddHorizontal(Slide slide, Presentation presentation, float positionCm, string label, string setId, List<Shape> created)
         {
-            CreateVerticalGuide(slide, presentation, 15.70f, "Left Margin");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 10.38f, "Column 1 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 9.18f, "Column 1 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 3.86f, "Column 2 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f - 2.66f, "Column 2 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 2.66f, "Column 3 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 3.86f, "Column 3 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 9.18f, "Column 4 Right");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 2f + 10.38f, "Column 4 Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 15.70f, "Right Margin");
+            float position = (float)(positionCm * PointsPerCm);
+            var line = slide.Shapes.AddLine(0, position, presentation.PageSetup.SlideWidth, position);
+            created.Add(line);
+            Configure(line, "H", label, setId, 0x0000FF);
         }
 
-        /// <summary>
-        /// 1:2 Asymmetrical Column Layout vertical guides.
-        /// </summary>
-        private static void CreateGuidelines_OneTwoColumn(Slide slide, Presentation presentation, float slideWidthCm)
+        private static void AddVertical(Slide slide, Presentation presentation, float positionCm, string label, string setId, List<Shape> created)
         {
-            CreateVerticalGuide(slide, presentation, 15.70f, "Left Margin");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 3f, "Column 1 Left Boundary");
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 3f + 1.2f, "Column 1 Right / Gutter");
-            CreateVerticalGuide(slide, presentation, slideWidthCm - 15.70f, "Right Margin");
+            float position = (float)(positionCm * PointsPerCm);
+            var line = slide.Shapes.AddLine(position, 0, position, presentation.PageSetup.SlideHeight);
+            created.Add(line);
+            Configure(line, "V", label, setId, 0xFF0000);
         }
 
-        /// <summary>
-        /// Rule of Thirds (3x3 grid) for professional composition.
-        /// </summary>
-        private static void CreateGuidelines_RuleOfThirds(Slide slide, Presentation presentation, float slideWidthCm, float slideHeightCm)
+        private static void Configure(Shape line, string axis, string label, string setId, int color)
         {
-            // Horizontal guides at 1/3 and 2/3 of slide height
-            CreateHorizontalGuide(slide, presentation, slideHeightCm / 3f, "Third Top");
-            CreateHorizontalGuide(slide, presentation, slideHeightCm * 2f / 3f, "Third Bottom");
-
-            // Vertical guides at 1/3 and 2/3 of slide width
-            CreateVerticalGuide(slide, presentation, slideWidthCm / 3f, "Third Left");
-            CreateVerticalGuide(slide, presentation, slideWidthCm * 2f / 3f, "Third Right");
+            line.Name = $"oPE_Guide_{axis}_{label}_{setId.Substring(0, 8)}";
+            line.AlternativeText = GuidelineTag;
+            line.Tags.Add(GuidelineTag, "true");
+            line.Tags.Add(GuidelineSetTag, setId);
+            line.Line.ForeColor.RGB = color;
+            line.Line.Weight = 1f;
+            line.Line.DashStyle = Office.MsoLineDashStyle.msoLineDash;
+            line.ZOrder(Office.MsoZOrderCmd.msoSendToBack);
+            try
+            {
+                ((dynamic)line).Locked = Office.MsoTriState.msoTrue;
+                line.Tags.Add("oPE_Locked", "true");
+            }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "SlideGuidelinesFeature.Configure.Lock"); }
         }
 
-        /// <summary>
-        /// Creates a horizontal guideline at the specified position from top.
-        /// </summary>
-        private static void CreateHorizontalGuide(Slide slide, Presentation presentation, float positionFromTopCm, string name)
+        private static int RemoveExistingGuidelines(Slide slide, string exceptSetId)
+        {
+            int removed = 0;
+            for (int i = slide.Shapes.Count; i >= 1; i--)
+            {
+                var shape = slide.Shapes[i];
+                if (!IsGuideline(shape)) continue;
+                string setId = GetTag(shape, GuidelineSetTag);
+                if (!string.IsNullOrEmpty(exceptSetId) && string.Equals(setId, exceptSetId, StringComparison.OrdinalIgnoreCase)) continue;
+                shape.Delete();
+                removed++;
+            }
+            return removed;
+        }
+
+        private static bool IsGuideline(Shape shape)
         {
             try
             {
-                // Convert cm to points (PowerPoint uses points)
-                float positionPts = (float)(positionFromTopCm * PtsPerCm);
-
-                // Create the line
-                var line = slide.Shapes.AddLine(0, positionPts, (float)presentation.PageSetup.SlideWidth, positionPts);
-
-                // Style the guideline
-                line.Name = $"Guide_H_{name}";
-                line.Line.ForeColor.RGB = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(100, System.Drawing.Color.Red));
-                line.Line.Weight = 1f;
-                line.Line.DashStyle = Microsoft.Office.Core.MsoLineDashStyle.msoLineDash;
-
-                // Lock the shape to prevent accidental manipulation
-                LockGuideline(line);
-
-                // Send to back
-                line.ZOrder(Microsoft.Office.Core.MsoZOrderCmd.msoSendToBack);
-
-                System.Diagnostics.Debug.WriteLine($"  -> Added horizontal guide: {name} at {positionFromTopCm}cm ({positionPts}pts)");
+                return string.Equals(shape.AlternativeText, GuidelineTag, StringComparison.OrdinalIgnoreCase) ||
+                       string.Equals(GetTag(shape, GuidelineTag), "true", StringComparison.OrdinalIgnoreCase);
             }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, $"SlideGuidelinesFeature.CreateHorizontalGuide.{name}");
-            }
+            catch { return false; }
         }
 
-        /// <summary>
-        /// Creates a vertical guideline at the specified position from left.
-        /// </summary>
-        private static void CreateVerticalGuide(Slide slide, Presentation presentation, float positionFromLeftCm, string name)
+        private static string GetTag(Shape shape, string name)
         {
-            try
-            {
-                // Convert cm to points (PowerPoint uses points)
-                float positionPts = (float)(positionFromLeftCm * PtsPerCm);
-
-                // Create the line
-                var line = slide.Shapes.AddLine(positionPts, 0, positionPts, (float)presentation.PageSetup.SlideHeight);
-
-                // Style the guideline
-                line.Name = $"Guide_V_{name}";
-                line.Line.ForeColor.RGB = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(100, System.Drawing.Color.Blue));
-                line.Line.Weight = 1f;
-                line.Line.DashStyle = Microsoft.Office.Core.MsoLineDashStyle.msoLineDash;
-
-                // Lock the shape to prevent accidental manipulation
-                LockGuideline(line);
-
-                // Send to back
-                line.ZOrder(Microsoft.Office.Core.MsoZOrderCmd.msoSendToBack);
-
-                System.Diagnostics.Debug.WriteLine($"  -> Added vertical guide: {name} at {positionFromLeftCm}cm ({positionPts}pts)");
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, $"SlideGuidelinesFeature.CreateVerticalGuide.{name}");
-            }
-        }
-
-        /// <summary>
-        /// Applies locking properties to a guideline shape to prevent accidental manipulation.
-        /// </summary>
-        /// <remarks>
-        /// <para><strong>Tag Prefix Convention:</strong> All custom tags added by oPenEfficiency features
-        /// use the <c>oPE_</c> prefix (e.g., <c>"oPE_Locked"</c>, <c>"oPE_Guideline"</c>, <c>"oPE_Widget"</c>).</para>
-        /// <para><strong>Why oPE_ prefix?</strong> PowerPoint doesn't persist custom properties reliably
-        /// through copy/paste operations. Using a unique prefix avoids conflicts with any user-defined
-        /// tags and allows features to identify shapes created by oPenEfficiency.</para>
-        /// <para><strong>Detection Strategy:</strong> Features detect oPenEfficiency shapes by checking
-        /// <c>AlternativeText</c> (survives copy/paste) and <c>Tags</c> collection (when available).
-        /// Line shapes may not support Tags in some PowerPoint versions, so AlternativeText is the
-        /// primary detection mechanism.</para>
-        /// </remarks>
-        private static void LockGuideline(Shape guideline)
-        {
-            try
-            {
-                // Lock aspect ratio (prevents proportional resizing)
-                guideline.LockAspectRatio = Microsoft.Office.Core.MsoTriState.msoTrue;
-
-                // Mark as guideline in AlternativeText for detection in selection handlers
-                guideline.AlternativeText = "oPE_Guideline";
-
-                // Add tag for detection (line shapes may not support Tags in all PowerPoint versions)
-                try
-                {
-                    guideline.Tags.Add("oPE_Locked", "true");
-                }
-                catch
-                {
-                    // Line shapes may not support Tags in some versions - AlternativeText is still set
-                }
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "SlideGuidelinesFeature.LockGuideline");
-            }
+            try { return shape.Tags[name]; }
+            catch { return null; }
         }
     }
 }

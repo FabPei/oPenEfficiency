@@ -1,0 +1,11 @@
+<Project>
+  <!-- VSTO/ClickOnce caches deployments by the manifest application identity, not by the
+       managed DLL identity. Keep local deployment manifests on the same per-build stamp as
+       the assemblies so Office cannot reconstruct an older payload after a rebuild. Official
+       installer builds opt out in eng/Build.ps1 and retain the committed release CalVer. -->
+  <PropertyGroup Condition="('$(MSBuildProjectName)' == 'oPenEfficiency' Or
+                              '$(MSBuildProjectName)' == 'oPenEfficiency.Excel') And
+                             '$(UseCommittedVstoApplicationVersion)' != 'true'">
+    <ApplicationVersion>$(BuildStamp)</ApplicationVersion>
+  </PropertyGroup>
+</Project>

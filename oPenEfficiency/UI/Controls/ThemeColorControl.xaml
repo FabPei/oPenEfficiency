@@ -10,17 +10,17 @@
             <Grid x:Name="RootContainer" Margin="10">
                 <!-- Multi-Column Layout (Default) -->
                 <StackPanel x:Name="StandardLayout" HorizontalAlignment="Center">
-                    <TextBlock Text="FILL" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="FillHeader" Text="FILL" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
                     <UniformGrid x:Name="GridFill" Columns="10" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="CUSTOM" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,5,0,5"/>
+                    <TextBlock Text="CUSTOM FILL (SESSION)" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,5,0,5"/>
                     <UniformGrid x:Name="GridCustom1" Columns="10" Margin="0,0,0,2"/>
                     <UniformGrid x:Name="GridCustom2" Columns="10" Margin="0,0,0,15"/>
                     
-                    <TextBlock Text="BORDER" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="BorderHeader" Text="BORDER" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
                     <UniformGrid x:Name="GridBorder" Columns="10" Margin="0,0,0,15"/>
                     
-                    <TextBlock Text="TEXT" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBlock x:Name="TextHeader" Text="TEXT" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,0,0,5"/>
                     <UniformGrid x:Name="GridText" Columns="10" Margin="0,0,0,5"/>
                 </StackPanel>
 
@@ -28,7 +28,7 @@
                 <StackPanel x:Name="VerticalLayout" Visibility="Collapsed">
                     <UniformGrid x:Name="GridVertical" Columns="3" HorizontalAlignment="Center" Width="80"/>
                     
-                    <TextBlock Text="CUSTOM" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,15,0,5" HorizontalAlignment="Center"/>
+                    <TextBlock Text="CUSTOM FILL" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="9" FontWeight="Bold" Margin="0,15,0,5" HorizontalAlignment="Center"/>
                     <UniformGrid x:Name="GridCustomVertical" Columns="3" Margin="0,0,0,10" HorizontalAlignment="Center" Width="80"/>
                 </StackPanel>
             </Grid>

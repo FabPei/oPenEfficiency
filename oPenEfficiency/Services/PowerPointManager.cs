@@ -14,6 +14,9 @@ namespace oPenEfficiency
     {
         public PpSelectionType Type { get; set; }
         public int ShapeCount { get; set; }
+        public int TextShapeCount { get; set; }
+        public int TextOrTableShapeCount { get; set; }
+        public bool HasTextRange { get; set; }
         public bool HasTable { get; set; }
         public bool HasHiddenShapesOnSlide { get; set; }
         public Slide CurrentSlide { get; set; }
@@ -41,18 +44,20 @@ namespace oPenEfficiency
         /// </summary>
         public ShapeRange GetSelectedShapes()
         {
-            try
+            if (ExceptionPolicy.TryComProbe(
+                () =>
+                {
+                    var window = _application.ActiveWindow;
+                    var selection = window?.Selection;
+                    if (selection == null || selection.Type != PpSelectionType.ppSelectionShapes) return null;
+                    return selection.ShapeRange;
+                },
+                out ShapeRange shapes))
             {
-                if (_application.ActiveWindow == null) return null;
-                var selection = _application.ActiveWindow.Selection;
-                if (selection == null || selection.Type != PpSelectionType.ppSelectionShapes) return null;
-                return selection.ShapeRange;
+                return shapes;
             }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "PowerPointManager.GetSelectedShapes");
-                return null;
-            }
+
+            return null;
         }
 
         /// <summary>
@@ -62,24 +67,58 @@ namespace oPenEfficiency
         public SelectionMetadata GetCurrentSelectionMetadata()
         {
             var meta = new SelectionMetadata();
+            // Transient COM RCWs are released once their values are copied into meta. These were
+            // previously left to the GC on every selection probe; in a long session that leaks an
+            // Application-window + Selection + ShapeRange RCW per call and keeps the out-of-process
+            // PowerPoint server alive past Quit() (REG-LIFECYCLE-CRASH-001 forced-cleanup evidence).
+            // The releaseWindow/releaseSelection handles are method-scoped copies of the probed
+            // window/selection so a single outer finally can release them on every path while the
+            // probed reads stay inside the guarded try (expected COM failures still classify as
+            // optional below).
+            DocumentWindow releaseWindow = null;
+            Selection releaseSelection = null;
+            ShapeRange shapes = null;
             try
             {
-                if (_application.ActiveWindow == null) return meta;
-                
-                var selection = _application.ActiveWindow.Selection;
+                if (!ExceptionPolicy.TryComProbe(
+                    () => _application.ActiveWindow,
+                    out DocumentWindow window) || window == null)
+                {
+                    return meta;
+                }
+                releaseWindow = window;
+
+                var selection = window.Selection;
+                releaseSelection = selection;
                 meta.Type = selection.Type;
+
+                if (meta.Type == PpSelectionType.ppSelectionText)
+                {
+                    try { meta.HasTextRange = selection.TextRange != null; }
+                    catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "PowerPointManager.SelectionMetadata.TextRange"); }
+                }
 
                 if (meta.Type == PpSelectionType.ppSelectionShapes || meta.Type == PpSelectionType.ppSelectionText)
                 {
-                    var shapes = selection.ShapeRange;
+                    shapes = selection.ShapeRange;
                     meta.ShapeCount = shapes.Count;
-                    
+
                     for (int i = 1; i <= meta.ShapeCount; i++)
                     {
-                        if (shapes[i].Type == Office.MsoShapeType.msoTable)
+                        var shape = shapes[i];
+                        try
                         {
-                            meta.HasTable = true;
-                            break;
+                            bool isTable = shape.Type == Office.MsoShapeType.msoTable;
+                            bool hasText = shape.HasTextFrame == Office.MsoTriState.msoTrue;
+                            if (isTable) meta.HasTable = true;
+                            if (hasText) meta.TextShapeCount++;
+                            if (hasText || isTable) meta.TextOrTableShapeCount++;
+                        }
+                        finally
+                        {
+                            ExceptionPolicy.RunBestEffortComCleanup(
+                                () => { if (shape != null && Marshal.IsComObject(shape)) Marshal.ReleaseComObject(shape); },
+                                "PowerPointManager.GetCurrentSelectionMetadata.ReleaseShape");
                         }
                     }
                 }
@@ -100,49 +139,88 @@ namespace oPenEfficiency
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "PowerPointManager.GetCurrentSelectionMetadata");
+                // Selection state is optional UI state: when the document window disappears while this
+                // probe runs (final-presentation close, shutdown), the expected COM failure must stay
+                // silent like the guarded ActiveWindow probe above; everything else still logs.
+                ExceptionPolicy.ReportOptionalComFailure(ex, "PowerPointManager.GetCurrentSelectionMetadata");
+            }
+            finally
+            {
+                ExceptionPolicy.RunBestEffortComCleanup(
+                    () => { if (shapes != null && Marshal.IsComObject(shapes)) Marshal.ReleaseComObject(shapes); },
+                    "PowerPointManager.GetCurrentSelectionMetadata.ReleaseShapes");
+                ExceptionPolicy.RunBestEffortComCleanup(
+                    () => { if (releaseSelection != null && Marshal.IsComObject(releaseSelection)) Marshal.ReleaseComObject(releaseSelection); },
+                    "PowerPointManager.GetCurrentSelectionMetadata.ReleaseSelection");
+                ExceptionPolicy.RunBestEffortComCleanup(
+                    () => { if (releaseWindow != null && Marshal.IsComObject(releaseWindow)) Marshal.ReleaseComObject(releaseWindow); },
+                    "PowerPointManager.GetCurrentSelectionMetadata.ReleaseWindow");
             }
             return meta;
         }
 
         /// <summary>
-        /// Retrieves the Reference shape for alignment and spacing.
-        /// Priority: First locked shape in selection -> First selected shape.
+        /// Retrieves the first selected shape as the "Reference" shape for alignment and spacing.
         /// </summary>
         public Shape GetReferenceShape()
         {
             var selection = GetSelectedShapes();
             if (selection == null || selection.Count == 0) return null;
-
-            // 1. Check if any shape in the selection is locked (Master shape)
-            for (int i = 1; i <= selection.Count; i++)
+            if (UsesLastSelectedAnchor())
             {
-                if (Features.ShapeLockingFeature.IsShapeLocked(selection[i]))
+                try
                 {
-                    return selection[i];
+                    return selection[selection.Count];
+                }
+                catch (Exception ex)
+                {
+                    // Preserve the historical behavior: a COM failure on the last-element indexer
+                    // degrades to the first shape with a log instead of propagating to callers.
+                    ExceptionLogger.Log(ex, "PowerPointManager.GetReferenceShape");
                 }
             }
-
-            // 2. Fallback to the first selected shape
             return selection[1];
         }
 
         /// <summary>
-        /// Gets the current active slide from the active window.
+        /// Whether the configured anchor object is the last selected shape ("Last Selected") instead of
+        /// the first. This is the single decision point for the reference-shape rule; the automation
+        /// seams derive their anchor expectation from the raw configuration independently and cross-check
+        /// against this method so an inverted rule cannot pass unnoticed.
         /// </summary>
-        public Slide GetCurrentSlide()
+        public bool UsesLastSelectedAnchor()
         {
             try
             {
-                if (_application.ActiveWindow != null && _application.ActiveWindow.View != null)
-                {
-                    return _application.ActiveWindow.View.Slide as Slide;
-                }
+                var config = JsonService.Load<Models.SidebarConfig>("sidebar_config.json");
+                return AnchorModes.IsLastSelected(config?.MasterObjectMode);
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "PowerPointManager.GetCurrentSlide");
+                ExceptionLogger.Log(ex, "PowerPointManager.UsesLastSelectedAnchor");
+                return false;
             }
+        }
+
+        /// <summary>
+        /// Gets the current active slide from the active window. PowerPoint can
+        /// legitimately expose a window before a slide is available, so the
+        /// lookup is an expected COM probe rather than an error boundary.
+        /// </summary>
+        public Slide GetCurrentSlide()
+        {
+            if (ExceptionPolicy.TryComProbe(
+                () =>
+                {
+                    var window = _application.ActiveWindow;
+                    var view = window?.View;
+                    return view?.Slide as Slide;
+                },
+                out Slide slide))
+            {
+                return slide;
+            }
+
             return null;
         }
 
@@ -174,6 +252,22 @@ namespace oPenEfficiency
             {
                 ExceptionLogger.Log(ex, "PowerPointManager.GetSelectedSlidesForOperation");
                 return slides;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current active presentation from the application.
+        /// </summary>
+        public Presentation GetCurrentPresentation()
+        {
+            try
+            {
+                return _application.ActivePresentation;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "PowerPointManager.GetCurrentPresentation");
+                return null;
             }
         }
 

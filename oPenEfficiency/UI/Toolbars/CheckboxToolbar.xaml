@@ -125,7 +125,7 @@
             <!-- Symbol Selector -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
                 <ComboBox x:Name="CmbSymbol" Width="80" FontSize="10" SelectedIndex="0" 
-                          SelectionChanged="CmbSymbol_SelectionChanged" ToolTip="Symbol">
+                          SelectionChanged="CmbSymbol_SelectionChanged" ToolTip="Choose checkbox symbol">
                     <ComboBoxItem Content="✓ Tick" Tag="Tick"/>
                     <ComboBoxItem Content="✕ Cross" Tag="Cross"/>
                     <ComboBoxItem Content="□ Empty" Tag="Empty"/>

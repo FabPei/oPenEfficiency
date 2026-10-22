@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -56,12 +56,21 @@ namespace oPenEfficiency.Services
                 }
             }
 
-            // De-duplicate by path and filter blacklist
-            var blacklist = new HashSet<string>(_config.BlacklistedPaths.Select(p => p.ToLower()));
-            return templates
-                .Where(t => !blacklist.Contains(t.Path.ToLower()))
-                .GroupBy(t => t.Path.ToLower())
-                .Select(g => g.First())
+            // De-duplicate by path and filter the blacklist through the shared production policy
+            // (first-wins, case-insensitive); the first item per path keeps its metadata.
+            var orderedPaths = new List<string>();
+            var byPath = new Dictionary<string, TemplateItem>(StringComparer.OrdinalIgnoreCase);
+            foreach (var candidate in templates)
+            {
+                if (candidate == null || string.IsNullOrWhiteSpace(candidate.Path)) continue;
+                if (byPath.ContainsKey(candidate.Path)) continue;
+                byPath[candidate.Path] = candidate;
+                orderedPaths.Add(candidate.Path);
+            }
+
+            return Core.Services.TemplateLibraryPolicy
+                .MergePaths(null, null, orderedPaths, _config.BlacklistedPaths)
+                .Select(path => byPath[path])
                 .ToList();
         }
 
@@ -96,7 +105,7 @@ namespace oPenEfficiency.Services
 
         public void AddCustomTemplate(string path)
         {
-            if (File.Exists(path))
+            if (File.Exists(path) && IsSupportedTemplatePath(path))
             {
                 if (_config.CustomTemplates == null) _config.CustomTemplates = new List<TemplateItem>();
                 if (!_config.CustomTemplates.Any(t => t.Path.Equals(path, StringComparison.OrdinalIgnoreCase)))
@@ -135,6 +144,8 @@ namespace oPenEfficiency.Services
         {
             try
             {
+                if (manager == null || !File.Exists(path) || !IsSupportedTemplatePath(path))
+                    throw new FileNotFoundException("The selected PowerPoint template is unavailable or unsupported.", path);
                 var app = manager.GetApplication();
                 app.Presentations.Open(path, Untitled: Microsoft.Office.Core.MsoTriState.msoTrue);
             }
@@ -183,7 +194,7 @@ namespace oPenEfficiency.Services
             if (Directory.Exists(path))
             {
                 if (_config.WatchedDirectories == null) _config.WatchedDirectories = new List<string>();
-                if (!_config.WatchedDirectories.Contains(path))
+                if (!_config.WatchedDirectories.Contains(path, StringComparer.OrdinalIgnoreCase))
                 {
                     _config.WatchedDirectories.Add(path);
                     SaveConfig();
@@ -195,9 +206,14 @@ namespace oPenEfficiency.Services
         {
             if (_config.WatchedDirectories != null)
             {
-                _config.WatchedDirectories.Remove(path);
+                _config.WatchedDirectories.RemoveAll(item => string.Equals(item, path, StringComparison.OrdinalIgnoreCase));
                 SaveConfig();
             }
+        }
+
+        private static bool IsSupportedTemplatePath(string path)
+        {
+            return Core.Services.TemplateLibraryPolicy.IsSupportedPath(path);
         }
 
         public TemplateConfig GetConfig() => _config;

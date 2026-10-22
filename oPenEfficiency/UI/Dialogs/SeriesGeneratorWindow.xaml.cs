@@ -23,7 +23,7 @@ namespace oPenEfficiency.UI.Dialogs
         private Shape _boundaryShape;
         private SeriesConfig _existingConfig;
 
-        public SeriesGeneratorWindow(PowerPointManager manager)
+        public SeriesGeneratorWindow(PowerPointManager manager, SeriesConfig initialConfig = null)
         {
             InitializeComponent();
             _manager = manager;
@@ -31,6 +31,18 @@ namespace oPenEfficiency.UI.Dialogs
             PopulateLanguages();
             
             LoadContext();
+            if (_existingConfig == null && initialConfig != null)
+                PopulateFromConfig(initialConfig);
+            UpdatePreview(null, null);
+        }
+
+        public void SetPreset(SeriesConfig config)
+        {
+            if (config == null) return;
+            _existingConfig = null;
+            PopulateFromConfig(config);
+            BtnGenerate.Content = "Generate Series";
+            Title = "Generate Shape Series";
             UpdatePreview(null, null);
         }
 
@@ -65,7 +77,7 @@ namespace oPenEfficiency.UI.Dialogs
                     }
                 }
             }
-            catch { }
+            catch { /* Initial selection probing is optional; validation handles a missing target later. */ }
 
             CmbLanguage.SelectedValue = defaultLang;
         }
@@ -87,15 +99,7 @@ namespace oPenEfficiency.UI.Dialogs
                     // Check for existing tags
                     try
                     {
-                        string configJson = "";
-                        foreach (string tagName in _templateShape.Tags)
-                        {
-                            if (tagName == SeriesGeneratorFeature.TagSeriesConfig)
-                            {
-                                configJson = _templateShape.Tags[tagName];
-                                break;
-                            }
-                        }
+                        string configJson = SeriesGeneratorFeature.GetSeriesConfigTag(_templateShape);
 
                         if (!string.IsNullOrEmpty(configJson))
                         {
@@ -108,7 +112,7 @@ namespace oPenEfficiency.UI.Dialogs
                             }
                         }
                     }
-                    catch { }
+                    catch { /* A stale generated shape is skipped while loading series state. */ }
                 }
             }
         }
@@ -124,7 +128,7 @@ namespace oPenEfficiency.UI.Dialogs
             TxtFormat.TextChanged -= UpdatePreview;
 
             SelectComboBoxItemByTag(CmbSeriesType, config.SeriesType);
-            SelectComboBoxItemByTag(CmbLanguage, config.Language);
+            CmbLanguage.SelectedValue = config.Language;
             TxtStartValue.Text = config.StartValue;
             TxtEndValue.Text = config.EndValue;
             TxtCount.Text = config.Count.ToString();
@@ -175,9 +179,10 @@ namespace oPenEfficiency.UI.Dialogs
             config.StartValue = TxtStartValue?.Text;
             config.EndValue = TxtEndValue?.Text;
             config.FormatString = TxtFormat?.Text;
+            config.Language = (CmbLanguage?.SelectedItem as System.Globalization.CultureInfo)?.Name ?? "en-US";
 
-            if (TxtCount != null) { int.TryParse(TxtCount.Text, out int c); config.Count = c > 0 ? c : 5; }
-            if (TxtStep != null) { int.TryParse(TxtStep.Text, out int s); config.Step = s > 0 ? s : 1; }
+            if (TxtCount != null) { int.TryParse(TxtCount.Text, out int c); config.Count = c > 0 ? c : 0; }
+            if (TxtStep != null) { int.TryParse(TxtStep.Text, out int s); config.Step = s; }
 
             if (config.Direction == "Matrix" && TxtMatrixColumns != null)
             {
@@ -331,10 +336,14 @@ namespace oPenEfficiency.UI.Dialogs
 
             var config = GetCurrentConfig();
             var data = SeriesGeneratorFeature.GenerateSeriesData(config);
+            bool missingSelectedBoundary =
+                config.BoundaryType == "SelectedShape" && _boundaryShape == null;
 
-            if (data == null || data.Count == 0)
+            if (data == null || data.Count == 0 || missingSelectedBoundary)
             {
-                TxtPreview.Text = "[Invalid settings or empty result]";
+                TxtPreview.Text = missingSelectedBoundary
+                    ? "[Select a template shape and a second boundary shape before opening the generator]"
+                    : "[Invalid settings or empty result]";
                 TxtPreview.Foreground = System.Windows.Media.Brushes.OrangeRed;
                 if (BtnGenerate != null) BtnGenerate.IsEnabled = false;
             }
@@ -358,8 +367,18 @@ namespace oPenEfficiency.UI.Dialogs
         private void BtnGenerate_Click(object sender, RoutedEventArgs e)
         {
             var config = GetCurrentConfig();
-            SeriesGeneratorFeature.GenerateShapes(_manager, config, _templateShape, _boundaryShape);
-            this.Close();
+            if (SeriesGeneratorFeature.GenerateShapes(_manager, config, _templateShape, _boundaryShape))
+            {
+                this.Close();
+            }
+            else
+            {
+                MessageBox.Show(
+                    "The series could not be generated. Check the start, end, count, step, and boundary settings.",
+                    "Generate Shape Series",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
         }
     }
 }

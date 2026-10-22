@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency;
@@ -53,18 +54,23 @@ namespace oPenEfficiency.Services
         // Visual feedback
         private Shape _snapGuideHorizontal;
         private Shape _snapGuideVertical;
+        private Shape _snapIntersection;
         private bool _isRedrawing;
 
-        public SnapToGridManager(PowerPointManager powerPointManager)
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        public SnapToGridManager(PowerPointManager powerPointManager, Win32MouseHook sharedMouseHook)
         {
             _powerPointManager = powerPointManager;
             _isEnabled = false;
 
-            // Initialize global mouse hook
-            _mouseHook = new Win32MouseHook();
+            // One shared thread hook per process, owned by ThisAddIn (PQ-016).
+            _mouseHook = sharedMouseHook
+                ?? throw new ArgumentNullException(nameof(sharedMouseHook));
             _mouseHook.LeftButtonDown += OnGlobalMouseDown;
             _mouseHook.LeftButtonUp += OnGlobalMouseUp;
-            _mouseHook.MouseMoveFilter = OnMouseMoveFilter;
+            _mouseHook.MouseMoveFilter += OnMouseMoveFilter;
         }
 
         /// <summary>
@@ -78,7 +84,11 @@ namespace oPenEfficiency.Services
                 if (_isEnabled == value) return;
                 _isEnabled = value;
 
-                if (!_isEnabled)
+                if (_isEnabled)
+                {
+                    CleanupStaleVisualFeedback();
+                }
+                else
                 {
                     CancelDrag();
                     RemoveVisualFeedback();
@@ -111,10 +121,26 @@ namespace oPenEfficiency.Services
 
         private void OnGlobalMouseDown(object sender, Win32MouseHook.MouseHookEventArgs e)
         {
-            if (!_isEnabled) return;
+            // COM-free hook callback (PQ-015): synchronous COM here can pump messages while
+            // WM_LBUTTONDOWN is still in dispatch and silently swallow the click.
+            if (!_isEnabled || !IsPowerPointForeground()) return;
 
             _mouseDownScreenX = e.ScreenX;
             _mouseDownScreenY = e.ScreenY;
+
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                new Action(() => ArmDragFromSelection(e.ScreenX, e.ScreenY)),
+                System.Windows.Threading.DispatcherPriority.Input);
+        }
+
+        private void ArmDragFromSelection(int screenX, int screenY)
+        {
+            if (_disposed || !_isEnabled) return;
+            if (!Win32MouseHook.IsLeftMouseButtonDown())
+            {
+                _dragReady = false;
+                return;
+            }
 
             try
             {
@@ -128,7 +154,7 @@ namespace oPenEfficiency.Services
                 var shape = selection[1];
 
                 // Convert screen coordinates to slide coordinates
-                if (TryScreenToSlidePoint(e.ScreenX, e.ScreenY, out float slideX, out float slideY))
+                if (TryScreenToSlidePoint(screenX, screenY, out float slideX, out float slideY))
                 {
                     // Check if mouse is over the selected shape
                     float shapeLeft = shape.Left;
@@ -153,7 +179,7 @@ namespace oPenEfficiency.Services
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "SnapToGridManager.OnGlobalMouseDown");
+                ExceptionLogger.Log(ex, "SnapToGridManager.ArmDragFromSelection");
             }
         }
 
@@ -177,6 +203,7 @@ namespace oPenEfficiency.Services
             if (!_dragActive)
             {
                 _dragActive = true;
+                _undoEntryPending = true;
             }
 
             // Store pending coordinates
@@ -203,7 +230,20 @@ namespace oPenEfficiency.Services
 
             try
             {
+                // Deferred drag work must never run after the button was released.
                 if (_draggedShape == null) return;
+                if (!Win32MouseHook.IsLeftMouseButtonDown())
+                {
+                    CancelDrag();
+                    return;
+                }
+
+                if (_undoEntryPending)
+                {
+                    _undoEntryPending = false;
+                    try { _powerPointManager.GetApplication()?.StartNewUndoEntry(); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "SnapToGridManager.StartUndo"); }
+                }
 
                 // Convert screen to slide coordinates
                 if (!TryScreenToSlidePoint(_pendingScreenX, _pendingScreenY, out float slideX, out float slideY))
@@ -289,16 +329,16 @@ namespace oPenEfficiency.Services
                 _snapGuideHorizontal.Tags.Add("oPE_SnapGuide", "true");
 
                 // Draw grid intersection point
-                var intersection = slide.Shapes.AddShape(
+                _snapIntersection = slide.Shapes.AddShape(
                     Office.MsoAutoShapeType.msoShapeOval,
                     guideX - 4,
                     guideY - 4,
                     8,
                     8
                 );
-                intersection.Fill.ForeColor.RGB = Color.FromArgb(0, 120, 215).ToArgb() & 0xFFFFFF;
-                intersection.Line.Visible = Office.MsoTriState.msoFalse;
-                intersection.Tags.Add("oPE_SnapGuide", "true");
+                _snapIntersection.Fill.ForeColor.RGB = Color.FromArgb(0, 120, 215).ToArgb() & 0xFFFFFF;
+                _snapIntersection.Line.Visible = Office.MsoTriState.msoFalse;
+                _snapIntersection.Tags.Add("oPE_SnapGuide", "true");
             }
             catch (Exception ex)
             {
@@ -312,14 +352,19 @@ namespace oPenEfficiency.Services
             {
                 if (_snapGuideHorizontal != null)
                 {
-                    try { _snapGuideHorizontal.Delete(); } catch { }
+                    try { _snapGuideHorizontal.Delete(); } catch { /* The transient guide may already have been removed by PowerPoint. */ }
                     _snapGuideHorizontal = null;
                 }
 
                 if (_snapGuideVertical != null)
                 {
-                    try { _snapGuideVertical.Delete(); } catch { }
+                    try { _snapGuideVertical.Delete(); } catch { /* The transient guide may already have been removed by PowerPoint. */ }
                     _snapGuideVertical = null;
+                }
+                if (_snapIntersection != null)
+                {
+                    try { _snapIntersection.Delete(); } catch { /* The transient marker may already have been removed by PowerPoint. */ }
+                    _snapIntersection = null;
                 }
             }
             catch (Exception ex)
@@ -330,12 +375,20 @@ namespace oPenEfficiency.Services
 
         private void OnGlobalMouseUp(object sender, EventArgs e)
         {
-            if (_dragActive)
+            // COM-free hook callback: state reset now, shape cleanup deferred (PQ-015).
+            if (!_dragActive)
             {
-                // Drag completed
-                RemoveVisualFeedback();
+                CancelDrag();
+                return;
             }
-            CancelDrag();
+
+            System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    RemoveVisualFeedback();
+                    CancelDrag();
+                }),
+                System.Windows.Threading.DispatcherPriority.Input);
         }
 
         private void CancelDrag()
@@ -344,6 +397,43 @@ namespace oPenEfficiency.Services
             _dragReady = false;
             _dragActive = false;
             _moveUpdatePending = false;
+            _undoEntryPending = false;
+        }
+
+        private bool _undoEntryPending;
+        private IntPtr? _cachedPowerPointHwnd;
+
+        private bool IsPowerPointForeground()
+        {
+            try
+            {
+                // Cached HWND keeps the per-click path pure Win32 (no COM in the hook).
+                if (!_cachedPowerPointHwnd.HasValue)
+                {
+                    var app = _powerPointManager.GetApplication();
+                    if (app == null) return false;
+                    _cachedPowerPointHwnd = new IntPtr(app.HWND);
+                }
+                return GetForegroundWindow() == _cachedPowerPointHwnd.Value;
+            }
+            catch { return false; }
+        }
+
+        private void CleanupStaleVisualFeedback()
+        {
+            try
+            {
+                var slide = _powerPointManager.GetCurrentSlide();
+                if (slide == null) return;
+                for (int i = slide.Shapes.Count; i >= 1; i--)
+                {
+                    var shape = slide.Shapes[i];
+                    if (string.Equals(shape.Tags["oPE_SnapGuide"], "true", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(shape.Tags["oPE_SnapHighlight"], "true", StringComparison.OrdinalIgnoreCase))
+                        shape.Delete();
+                }
+            }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "SnapToGridManager.CleanupStaleVisualFeedback"); }
         }
 
         /// <summary>
@@ -395,8 +485,7 @@ namespace oPenEfficiency.Services
             {
                 _mouseHook.LeftButtonDown -= OnGlobalMouseDown;
                 _mouseHook.LeftButtonUp -= OnGlobalMouseUp;
-                _mouseHook.MouseMoveFilter = null;
-                _mouseHook.Dispose();
+                _mouseHook.MouseMoveFilter -= OnMouseMoveFilter;
             }
         }
 

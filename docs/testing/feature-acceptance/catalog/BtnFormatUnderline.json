@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFormatUnderline",
+  "title": "Underline (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFormatUnderline-001",
+      "title": "Underline applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Underline (BtnFormatUnderline) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFormatUnderline-002",
+      "title": "BtnFormatUnderline deterministic Office leg (native ExecuteMso Underline toggle on a selected text probe)",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the Underline feature's primary path (TextHelper.ExecuteNativeCommand with the native 'Underline' id - the exact CommandBars.ExecuteMso call the ribbon toggle runs) executes with a 40x20 text probe (text 'probe') selected over the fixture 3x3 table: the probe's text font Underline becomes msoTrue while its text content and geometry stay unchanged and the table remains untouched (3x3, 100/50 cells, 300x150 at 40/40, texts intact); the run writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry, reports execution with the toggled state, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the Underline feature's primary path (TextHelper.ExecuteNativeCommand with the native 'Underline' id - the exact CommandBars.ExecuteMso call the ribbon toggle runs) executes with a 40x20 text probe (text 'probe') selected over the fixture 3x3 table: the probe's text font Underline becomes msoTrue while its text content and geometry stay unchanged and the table remains untouched (3x3, 100/50 cells, 300x150 at 40/40, texts intact); the run writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry, reports execution with the toggled state, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TextFormatFeatures.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "format-underline"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnFormatUnderline-003",
+      "title": "Underline toggles and restores the real Font.Underline state in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextSwap.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Underline on an unformatted text box flips Font.Underline to true on the first invocation and back to false on the second, both invocations report execution, the text content stays unchanged, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextSwap.ps1",
+        "arguments": [
+          "-Mode",
+          "underline-toggle"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

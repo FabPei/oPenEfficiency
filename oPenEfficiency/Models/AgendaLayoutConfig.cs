@@ -10,6 +10,15 @@ namespace oPenEfficiency.Models
         [DataMember(Name = "layoutName")]
         public string LayoutName { get; set; }
 
+        [IgnoreDataMember]
+        public bool IsBuiltIn { get; set; }
+
+        [IgnoreDataMember]
+        public string BuiltInId { get; set; }
+
+        [IgnoreDataMember]
+        public int BuiltInVersion { get; set; }
+
         // Slide level shapes
         [DataMember(Name = "slideShape")]
         public ShapeFormatConfig SlideShape { get; set; }

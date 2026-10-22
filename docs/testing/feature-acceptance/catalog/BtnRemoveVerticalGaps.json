@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnRemoveVerticalGaps",
+  "title": "Remove Vertical Gaps (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/RemoveVerticalGapsFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnRemoveVerticalGaps-001",
+      "title": "Remove Vertical Gaps applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/RemoveVerticalGapsFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+      ],
+      "expected": "Remove Vertical Gaps (BtnRemoveVerticalGaps) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnRemoveVerticalGaps-001",
+      "title": "Remove Vertical Gaps packs vertically and keeps the centred bounding box",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/RemoveVerticalGapsFeature.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency.Core.Tests/GapRemovalAcceptanceTests.cs"
+      ],
+      "expected": "With the top shape anchored the vertical plan moves the shapes to Top 0 / 10 / 30, leaves every Left value untouched and leaves no vertical gap; the centred command packs around the middle of the original bounding box so the centre is unchanged, and both routes are idempotent.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GapRemovalAcceptanceTests.RemoveVerticalGapsPacksVerticallyAndPreservesTheBoundingBoxCenterWhenCentered"
+      }
+    },
+    {
+      "id": "QA9-BtnRemoveVerticalGaps-002",
+      "title": "BtnRemoveVerticalGaps deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Remove vertical gaps packs the selection vertically and preserves the bounding-box center when centered."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Remove vertical gaps packs the selection vertically and preserves the bounding-box center when centered.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/AdjustSpacingFeatureHelper.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingMatch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointSpacingMatch.ps1",
+        "arguments": [
+          "-Commands",
+          "remove-v-gaps"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Core.Tests/GapRemovalAcceptanceTests.cs",
+              "line": 1,
+              "item": "GapRemovalAcceptanceTests.RemoveVerticalGapsPacksVerticallyAndPreservesTheBoundingBoxCenterWhenCentered",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

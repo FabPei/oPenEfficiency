@@ -1,0 +1,3 @@
+# Frozen source contract fixtures
+
+These fixtures preserve independent source-baseline IDs, icon classifications and pending status values for regression checks. They are data snapshots, not fresh visual reviews or release evidence. No fixture is generated from the running implementation during a test. The source acceptance inventory is under docs/testing/feature-acceptance. Private planning prose is replaced by checks against the actual public feature documentation. The default-sidebar fixture contains only public section names and ordered feature IDs; private competitor control maps and deferred parity analyses are not distributed.

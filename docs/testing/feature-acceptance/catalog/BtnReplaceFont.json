@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnReplaceFont",
+  "title": "Replace Formatting (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnReplaceFont-001",
+      "title": "Replace Formatting applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Replace Formatting (BtnReplaceFont) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnReplaceFont-001",
+      "title": "Replace Formatting matches font names case-insensitively and never reports a same-name replacement",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+        "oPenEfficiency.Core/Services/BulkFormatMatchPolicy.cs",
+        "oPenEfficiency.Core.Tests/BulkFormatMatchPolicyTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives BulkFormatMatchPolicy for Replace Formatting: the font criterion matches a run's font name case-insensitively, a blank find or replace value matches nothing, a run with another font stays untouched, and a replacement whose name equals the run's own name is skipped as a no-op instead of becoming a change.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~BulkFormatMatchPolicyTests.FontMatchIsCaseInsensitiveAndSkipsNoOps"
+      }
+    },
+    {
+      "id": "QA9-BtnReplaceFont-002",
+      "title": "Replace Formatting matches font sizes within the documented 0.1 pt tolerance and skips sub-0.01 pt no-ops",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+        "oPenEfficiency.Core/Services/BulkFormatMatchPolicy.cs",
+        "oPenEfficiency.Core.Tests/BulkFormatMatchPolicyTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives BulkFormatMatchPolicy for Replace Formatting: a run within 0.1 pt of the configured find size matches (0.09 pt matches, 0.15 pt does not), a missing find or replace size matches nothing, and a replace size within 0.01 pt of the run's own size is skipped as a no-op.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~BulkFormatMatchPolicyTests.SizeMatchUsesTheDocumentedTolerance"
+      }
+    },
+    {
+      "id": "QA9-BtnReplaceFont-003",
+      "title": "Replace Formatting matches colors only when equal and visible and skips same-color no-ops",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+        "oPenEfficiency.Core/Services/BulkFormatMatchPolicy.cs",
+        "oPenEfficiency.Core.Tests/BulkFormatMatchPolicyTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives BulkFormatMatchPolicy for Replace Formatting: text, fill and line color criteria match only an exactly equal color, an invisible fill or line never matches even with an equal color, a missing find color matches nothing, and a replacement equal to the shape's or run's own color is skipped as a no-op.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~BulkFormatMatchPolicyTests.ColorMatchRequiresEqualityVisibilityAndSkipsNoOps"
+      }
+    },
+    {
+      "id": "QA9-BtnReplaceFont-004",
+      "title": "ReplacementScope targeting rule end-to-end on a real host",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/BulkFormatReplacerFeature.cs",
+        "oPenEfficiency/Services/PowerPointManager.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host a three-slide presentation with one Courier New probe shape per slide is mutated by the production ReplaceFormats path with each scope in turn: CurrentSlide changes only the active slide (returns 1, slide 1 becomes Times New Roman, slides 2-3 stay Courier New); SelectedSlides with a shape selected on slide 2 follows that slide through the documented no-slide-pane-selection fallback (returns 1, only slide 2 changes); EntirePresentation walks the remaining slide (returns 1, all three probes are Times New Roman). The returned count only counts real changes, the run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "bulk-format-scope"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

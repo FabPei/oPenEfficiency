@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSeriesGenerator",
+  "title": "Generate Shape Series (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/SeriesGeneratorFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSeriesGenerator-001",
+      "title": "Generate Shape Series applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SeriesGeneratorFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Generate Shape Series (BtnSeriesGenerator) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSeriesGenerator-002",
+      "title": "Series Generator auto-fit scaling and item placement are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/SeriesLayoutPlanner.cs",
+        "oPenEfficiency/Features/Utilities/SeriesGeneratorFeature.cs"
+      ],
+      "expected": "The required series extent is computed per direction (items plus gaps, matrix columns capped by the item count and rows ceiled, zero extent for an unknown direction); the auto-fit scale shrinks only on the binding axis, never enlarges and guards zero requirements; each item is placed in a horizontal or vertical run by item size plus spacing and a matrix wraps every matrixColumns-th item into the next row, with a columnless matrix and an unknown direction anchoring every item at the start.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~SeriesLayoutPlannerTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

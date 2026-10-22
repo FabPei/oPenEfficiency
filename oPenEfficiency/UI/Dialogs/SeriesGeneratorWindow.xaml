@@ -1,9 +1,9 @@
 <Window x:Class="oPenEfficiency.UI.Dialogs.SeriesGeneratorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Series Generator" Height="680" Width="600"
+        Title="Generate Shape Series" Height="680" Width="600"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" MouseDown="Window_MouseDown"
         FontFamily="Segoe UI Variable Small, Segoe UI">
     <Window.Resources>
         <ResourceDictionary>
@@ -35,8 +35,7 @@
             <!-- Header -->
             <Grid Grid.Row="0" Margin="0,0,0,20">
                 <StackPanel>
-                    <TextBlock Text="SERIES GENERATOR" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Generate sequences of text or numbers." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
+                    <TextBlock Text="SHAPE SERIES" Style="{StaticResource DialogTitleText}"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
             </Grid>

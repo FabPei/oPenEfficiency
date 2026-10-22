@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnStarRating",
+  "title": "Star Rating (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Charts/StarRatingFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnStarRating-001",
+      "title": "Star Rating applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Charts/StarRatingFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Star Rating (BtnStarRating) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnStarRating-002",
+      "title": "Star Rating state codec and per-star fill decision are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/StarRatingStatePolicy.cs",
+        "oPenEfficiency/Features/Charts/StarRatingFeature.cs"
+      ],
+      "expected": "The persistent state codec round-trips every field (count, invariant rating, icon mode, frame flag, color) and rejects foreign or malformed tags; the per-star fill decision resolves full, dim and partial-gradient stars with the historical >= 0.5 solid fallback.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StarRatingStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnStarRating-003",
+      "title": "Star Rating creates exactly one shape in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Star Rating default command on an empty slide adds exactly one shape (measured shapeCountDelta=1), reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "star-rating"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

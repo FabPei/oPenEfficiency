@@ -1,10 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using Microsoft.Office.Core;
-using oPenEfficiency.Models;
 using oPenEfficiency.Services.Attributes;
-using oPenEfficiency.UI.Dialogs;
 using oPenEfficiency.Utils;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 
@@ -13,65 +13,87 @@ namespace oPenEfficiency.Features.Utilities
     [FeatureMetadata(
         Id = "BtnConsolidateMasters",
         Name = "Consolidate Slide Masters",
-        Tooltip = "Consolidate Slide Masters",
+        SearchAliases = new[] { "Consolidate Masters" },
+        Tooltip = "Merge duplicate slide masters and layouts",
         IconData = "M3,4H21V8H3V4 M3,10H21V14H3V10 M3,16H21V20H3V16 M17,2H17.01 M17,8H17.01 M17,14H17.01 M17,20H17.01 M21,2V22H3V2H21Z M12,2A2,2 0 0,1 14,4A2,2 0 0,1 12,6A2,2 0 0,1 10,4A2,2 0 0,1 12,2M12,8A2,2 0 0,1 14,10A2,2 0 0,1 12,12A2,2 0 0,1 10,10A2,2 0 0,1 12,8M12,14A2,2 0 0,1 14,16A2,2 0 0,1 12,18A2,2 0 0,1 10,16A2,2 0 0,1 12,14Z",
         Color = "#F43F5E",
         MinSelection = 0,
-        RequiredType = PowerPoint.PpSelectionType.ppSelectionNone,
-        Description = "A hard cleanup function that forces all slides to use the first slide master. Any other masters are deleted. Re-mapped slides get a warning sticker.",
-        DetailedHelpText = "### Consolidate Slide Masters\nDeletes all redundant Slide Masters accumulated from copy-pasting slides, keeping only the primary master. Orphaned slides are automatically remapped and visually flagged for review.",
-        Keywords = "cleanup, merge, remove, unused, templates, primary")
-    ]
+        RequiredType = OfficeSelectionType.None,
+        Description = "Backs up the presentation, remaps slides to the primary master, flags migrated slides for review, and removes redundant masters.",
+        DetailedHelpText = "### Consolidate Slide Masters\nCreates a timestamped backup copy before changing the open presentation. Slides that use another master are mapped to an equally named layout on the primary master where possible, with Blank or the first layout as a fallback. Migrated slides receive a tagged review marker. If slide mapping fails, completed mappings are rolled back and no masters are deleted. If master deletion fails, the command reports the incomplete result and the backup path.")]
     public static class ConsolidateMastersFeature
     {
+        private const string ReviewMarkerTag = "oPE_MasterConsolidationWarning";
+
         public static bool Execute(PowerPointManager manager)
         {
+            if (manager == null) return false;
+
             try
             {
-                var pres = manager.GetApplication().ActivePresentation;
+                var app = manager.GetApplication();
+                var pres = app.ActivePresentation;
+                if (pres == null) return false;
+
                 if (pres.Designs.Count <= 1)
                 {
                     MessageBox.Show("Presentation already has only one Slide Master.", "Consolidate Masters", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return true;
                 }
 
-                var result = MessageBox.Show("This action will force all slides onto the primary Master and permanently delete all other Slide Masters.\n\nMigrated slides will receive a warning sticker for you to review.\n\nDo you want to proceed?", "Consolidate Slide Masters", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                var result = MessageBox.Show(
+                    $"Remap all slides to the primary master and delete {pres.Designs.Count - 1} other master(s)?\n\n" +
+                    "A timestamped backup copy will be created first. Migrated slides will receive a review marker.",
+                    "Consolidate Slide Masters",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
                 if (result != DialogResult.Yes) return false;
 
-                // 1. Identify primary design (Design 1)
+                string backupPath;
+                try
+                {
+                    backupPath = CreateBackupCopy(pres);
+                }
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "ConsolidateMastersFeature.CreateBackupCopy");
+                    MessageBox.Show(
+                        $"No changes were made because the backup copy could not be created.\n\n{ex.Message}",
+                        "Consolidate Masters",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                    return false;
+                }
+
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ConsolidateMastersFeature.StartNewUndoEntry"); }
+
                 PowerPoint.Design primaryDesign = pres.Designs[1];
-                string primaryDesignName = primaryDesign.Name;
+                var mappings = new List<SlideMapping>();
 
-                int mappedCount = 0;
-
-                // 2. Map all slides to the primary design
                 foreach (PowerPoint.Slide slide in pres.Slides)
                 {
-                    try
+                    PowerPoint.Design sourceDesign = slide.Design;
+                    if (IsSameComObject(sourceDesign, primaryDesign)) continue;
+
+                    PowerPoint.CustomLayout sourceLayout = slide.CustomLayout;
+                    PowerPoint.CustomLayout targetLayout = FindBestLayoutMatch(primaryDesign, sourceLayout);
+                    if (targetLayout == null || !TryMapSlide(slide, primaryDesign, targetLayout, sourceDesign, sourceLayout, mappings))
                     {
-                        PowerPoint.Design slideDesign = slide.Design;
-                        if (slideDesign.Name != primaryDesignName)
-                        {
-                            PowerPoint.CustomLayout oldLayout = slide.CustomLayout;
-                            PowerPoint.CustomLayout newLayout = FindBestLayoutMatch(primaryDesign, oldLayout);
-                            
-                            // Re-map slide
-                            slide.CustomLayout = newLayout;
-                            slide.Design = primaryDesign;
-                            
-                            // Mark for review
-                            AddWarningSticker(slide, pres);
-                            mappedCount++;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ExceptionLogger.Log("Failed to map slide: " + ex.Message, "ConsolidateMastersFeature");
+                        RollBackMappings(mappings);
+                        MessageBox.Show(
+                            $"Master consolidation stopped while mapping slide {slide.SlideIndex}. Completed mappings were rolled back and no masters were deleted.\n\nBackup: {backupPath}",
+                            "Consolidate Masters",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                        return false;
                     }
                 }
 
-                // 3. Delete the now unused Designs (Must iterate backwards)
+                foreach (var mapping in mappings) AddWarningSticker(mapping.Slide, pres);
+
                 int deletedCount = 0;
+                var deletionFailures = new List<string>();
                 for (int i = pres.Designs.Count; i >= 2; i--)
                 {
                     try
@@ -81,17 +103,75 @@ namespace oPenEfficiency.Features.Utilities
                     }
                     catch (Exception ex)
                     {
-                        ExceptionLogger.Log("Failed to delete design: " + ex.Message, "ConsolidateMastersFeature");
+                        deletionFailures.Add($"Master {i}: {ex.Message}");
+                        ExceptionLogger.Log(ex, "ConsolidateMastersFeature.DeleteDesign");
                     }
                 }
 
-                MessageBox.Show($"Successfully consolidated masters.\n\nDeleted Masters: {deletedCount}\nRe-mapped Slides: {mappedCount}\n\nPlease review the marked slides for any visual shifts.", "Consolidate Masters", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (deletionFailures.Count > 0)
+                {
+                    MessageBox.Show(
+                        $"Slide mapping completed, but {deletionFailures.Count} master(s) could not be deleted.\n\n" +
+                        $"Deleted masters: {deletedCount}\nRe-mapped slides: {mappings.Count}\nBackup: {backupPath}",
+                        "Consolidate Masters — Incomplete",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                MessageBox.Show(
+                    $"Consolidated slide masters.\n\nDeleted masters: {deletedCount}\nRe-mapped slides: {mappings.Count}\nBackup: {backupPath}\n\nReview the marked slides for visual shifts.",
+                    "Consolidate Masters",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
                 return true;
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex.Message, "ConsolidateMastersFeature");
+                ExceptionLogger.Log(ex, "ConsolidateMastersFeature.Execute");
+                MessageBox.Show($"Master consolidation failed.\n\n{ex.Message}", "Consolidate Masters", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
+            }
+        }
+
+        private static bool TryMapSlide(
+            PowerPoint.Slide slide,
+            PowerPoint.Design targetDesign,
+            PowerPoint.CustomLayout targetLayout,
+            PowerPoint.Design sourceDesign,
+            PowerPoint.CustomLayout sourceLayout,
+            List<SlideMapping> mappings)
+        {
+            try
+            {
+                slide.Design = targetDesign;
+                slide.CustomLayout = targetLayout;
+                mappings.Add(new SlideMapping(slide, sourceDesign, sourceLayout));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ConsolidateMastersFeature.TryMapSlide");
+                try
+                {
+                    slide.Design = sourceDesign;
+                    slide.CustomLayout = sourceLayout;
+                }
+                catch (Exception rollbackEx) { ExceptionLogger.Log(rollbackEx, "ConsolidateMastersFeature.TryMapSlide.RollbackCurrent"); }
+                return false;
+            }
+        }
+
+        private static void RollBackMappings(List<SlideMapping> mappings)
+        {
+            for (int i = mappings.Count - 1; i >= 0; i--)
+            {
+                try
+                {
+                    mappings[i].Slide.Design = mappings[i].SourceDesign;
+                    mappings[i].Slide.CustomLayout = mappings[i].SourceLayout;
+                }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ConsolidateMastersFeature.RollBackMappings"); }
             }
         }
 
@@ -99,44 +179,73 @@ namespace oPenEfficiency.Features.Utilities
         {
             try
             {
-                string sourceName = sourceLayout.Name;
-
-                // Pass 1: Try to match by exact Name
+                string sourceName = sourceLayout?.Name ?? string.Empty;
                 foreach (PowerPoint.CustomLayout targetLayout in targetDesign.SlideMaster.CustomLayouts)
                 {
-                    if (targetLayout.Name == sourceName)
-                    {
-                        return targetLayout;
-                    }
+                    if (string.Equals(targetLayout.Name, sourceName, StringComparison.OrdinalIgnoreCase)) return targetLayout;
                 }
 
-                // Removed Pass 2 LayoutType matching because CustomLayout doesn't expose Type natively in this interop version.
-
-                // Fallback: Just return the first layout (usually Title or Blank)
-                if (targetDesign.SlideMaster.CustomLayouts.Count > 0)
+                foreach (PowerPoint.CustomLayout targetLayout in targetDesign.SlideMaster.CustomLayouts)
                 {
-                    return targetDesign.SlideMaster.CustomLayouts[1];
+                    if (targetLayout.Name.IndexOf("blank", StringComparison.OrdinalIgnoreCase) >= 0) return targetLayout;
                 }
-            }
-            catch (Exception)
-            {
-                // Ignore matching errors and let it fallback
-            }
 
-            return null; // Should not happen ideally
+                if (targetDesign.SlideMaster.CustomLayouts.Count > 0) return targetDesign.SlideMaster.CustomLayouts[1];
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ConsolidateMastersFeature.FindBestLayoutMatch");
+            }
+            return null;
+        }
+
+        private static string CreateBackupCopy(PowerPoint.Presentation presentation)
+        {
+            string directory = string.IsNullOrWhiteSpace(presentation.Path)
+                ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                : presentation.Path;
+            string extension = Path.GetExtension(presentation.Name);
+            if (string.IsNullOrWhiteSpace(extension)) extension = ".pptx";
+            string baseName = Path.GetFileNameWithoutExtension(presentation.Name);
+            if (string.IsNullOrWhiteSpace(baseName)) baseName = "Presentation";
+
+            string backupPath = Path.Combine(directory, $"{baseName}_before_master_consolidation_{DateTime.Now:yyyyMMdd_HHmmss}{extension}");
+            if (File.Exists(backupPath))
+                backupPath = Path.Combine(directory, $"{baseName}_before_master_consolidation_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}{extension}");
+
+            presentation.SaveCopyAs(backupPath);
+            return backupPath;
+        }
+
+        private static bool IsSameComObject(object first, object second)
+        {
+            IntPtr firstPointer = IntPtr.Zero;
+            IntPtr secondPointer = IntPtr.Zero;
+            try
+            {
+                firstPointer = Marshal.GetIUnknownForObject(first);
+                secondPointer = Marshal.GetIUnknownForObject(second);
+                return firstPointer == secondPointer;
+            }
+            finally
+            {
+                if (firstPointer != IntPtr.Zero) Marshal.Release(firstPointer);
+                if (secondPointer != IntPtr.Zero) Marshal.Release(secondPointer);
+            }
         }
 
         private static void AddWarningSticker(PowerPoint.Slide slide, PowerPoint.Presentation pres)
         {
             try
             {
-                // Create a prominent red warning box at top right
                 float slideWidth = pres.PageSetup.SlideWidth;
-                var shape = slide.Shapes.AddShape(Microsoft.Office.Core.MsoAutoShapeType.msoShapeRectangle, slideWidth - 160, 10, 150, 25);
-                shape.Fill.ForeColor.RGB = 0x0000FF; // Red
-                shape.Line.Visible = Microsoft.Office.Core.MsoTriState.msoFalse;
+                var shape = slide.Shapes.AddShape(MsoAutoShapeType.msoShapeRectangle, slideWidth - 160, 10, 150, 25);
+                shape.Name = "oPE_MasterConsolidationWarning";
+                shape.Tags.Add(ReviewMarkerTag, "True");
+                shape.Fill.ForeColor.RGB = 0x0000FF;
+                shape.Line.Visible = MsoTriState.msoFalse;
                 shape.TextFrame.TextRange.Text = "Master Re-mapped: Check";
-                shape.TextFrame.TextRange.Font.Color.RGB = 0xFFFFFF; // White
+                shape.TextFrame.TextRange.Font.Color.RGB = 0xFFFFFF;
                 shape.TextFrame.TextRange.Font.Size = 10;
                 shape.TextFrame.TextRange.Font.Bold = MsoTriState.msoTrue;
                 shape.TextFrame.MarginLeft = 2;
@@ -146,8 +255,22 @@ namespace oPenEfficiency.Features.Utilities
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log("Failed to add warning sticker: " + ex.Message, "ConsolidateMastersFeature");
+                ExceptionLogger.Log(ex, "ConsolidateMastersFeature.AddWarningSticker");
             }
+        }
+
+        private sealed class SlideMapping
+        {
+            public SlideMapping(PowerPoint.Slide slide, PowerPoint.Design sourceDesign, PowerPoint.CustomLayout sourceLayout)
+            {
+                Slide = slide;
+                SourceDesign = sourceDesign;
+                SourceLayout = sourceLayout;
+            }
+
+            public PowerPoint.Slide Slide { get; }
+            public PowerPoint.Design SourceDesign { get; }
+            public PowerPoint.CustomLayout SourceLayout { get; }
         }
     }
 }

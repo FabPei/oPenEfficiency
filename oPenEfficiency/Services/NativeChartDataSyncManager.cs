@@ -1,4 +1,5 @@
 using System;
+using oPenEfficiency.Utils;
 using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -83,12 +84,12 @@ namespace oPenEfficiency.Services
                     // Clean up previous iteration's COM objects
                     if (catCell != null)
                     {
-                        try { System.Runtime.InteropServices.Marshal.ReleaseComObject(catCell); } catch { }
+                        ExceptionPolicy.RunBestEffortComCleanup(() => System.Runtime.InteropServices.Marshal.ReleaseComObject(catCell), "NativeChartDataSyncManager.Sync.ReleaseCategoryCell");
                         catCell = null;
                     }
                     if (valCell != null)
                     {
-                        try { System.Runtime.InteropServices.Marshal.ReleaseComObject(valCell); } catch { }
+                        ExceptionPolicy.RunBestEffortComCleanup(() => System.Runtime.InteropServices.Marshal.ReleaseComObject(valCell), "NativeChartDataSyncManager.Sync.ReleaseValueCell");
                         valCell = null;
                     }
 
@@ -119,15 +120,15 @@ namespace oPenEfficiency.Services
                 // Always release COM objects
                 if (catCell != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(catCell); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(() => System.Runtime.InteropServices.Marshal.ReleaseComObject(catCell), "NativeChartDataSyncManager.Dispose.ReleaseCategoryCell");
                 }
                 if (valCell != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(valCell); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(() => System.Runtime.InteropServices.Marshal.ReleaseComObject(valCell), "NativeChartDataSyncManager.Dispose.ReleaseValueCell");
                 }
                 if (worksheet != null)
                 {
-                    try { System.Runtime.InteropServices.Marshal.ReleaseComObject(worksheet); } catch { }
+                    ExceptionPolicy.RunBestEffortComCleanup(() => System.Runtime.InteropServices.Marshal.ReleaseComObject(worksheet), "NativeChartDataSyncManager.Dispose.ReleaseWorksheet");
                 }
             }
         }

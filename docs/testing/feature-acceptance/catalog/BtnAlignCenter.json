@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignCenter",
+  "title": "Align Center (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/AlignToFirstCenterHorizontalFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignCenter-001",
+      "title": "Align Center applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstCenterHorizontalFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Align Center (BtnAlignCenter) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignCenter-001",
+      "title": "Align Center snaps the horizontal center to the nearest vertical guide",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstCenterHorizontalFeature.cs",
+        "oPenEfficiency.Core/Services/DirectionalGuideSelector.cs",
+        "oPenEfficiency.Core.Tests/GuideSnapAcceptanceTests.cs"
+      ],
+      "expected": "With vertical guides at 0, 120 and 400 the horizontal center 305 snaps to 400 by nearest absolute distance and may move the shape either way; the slide center 480 is the fallback when no guide is closer; a guide exactly on the center keeps the shape in place and a repeated alignment moves nothing; at equal distance a real guide wins over the slide-center fallback.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GuideSnapAcceptanceTests.AlignCenterSnapsTheHorizontalCenterToTheNearestVerticalGuide"
+      }
+    },
+    {
+      "id": "QA9-BtnAlignCenter-002",
+      "title": "Align Center aligns a real multi-selection to the reference shape horizontal center",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToFirstCenterHorizontalFeature.cs",
+        "oPenEfficiency/Features/Alignment/AlignmentHelpers.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointAlignFirst.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Center runs its primary multi-select route: three probe shapes created at distinct horizontal centers (65/155/245 pt) are selected and aligned, every probe horizontal center equals the reference shape horizontal center afterwards, the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointAlignFirst.ps1",
+        "arguments": [
+          "-Directions",
+          "center"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -121,7 +121,7 @@ namespace oPenEfficiency.UI.Tabs
 
             // Efficient Elements check - check both Shapes subfolder and general Library
             _detectedEfficientShapeFolders.Clear();
-            
+
             string[] eePaths = {
                 System.IO.Path.Combine(localAppData, "Efficient Elements", "Efficient Elements for presentations", "Library", "Shapes"),
                 System.IO.Path.Combine(localAppData, "Efficient Elements", "Efficient Elements for presentations", "Library"),
@@ -211,8 +211,8 @@ namespace oPenEfficiency.UI.Tabs
                         var items = _libraryManager.GetCachedShapeItems(file.FilePath);
                         foreach(var item in items)
                         {
-                            var tpl = new ShapeItemDisplay 
-                            { 
+                            var tpl = new ShapeItemDisplay
+                            {
                                 Title = item.Title,
                                 Category = category,
                                 FilePath = file.FilePath,
@@ -230,7 +230,7 @@ namespace oPenEfficiency.UI.Tabs
                         }
                     }
                 }
-                
+
                 TxtStatus.Text = $"Ready. {loadedCache} shapes loaded from cache. Uncached files must be clicked to generate.";
             }
             catch (Exception ex)
@@ -370,14 +370,14 @@ namespace oPenEfficiency.UI.Tabs
                     EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
                 };
                 anim.Completed += (s, e) => SettingsView.Visibility = Visibility.Collapsed;
-                
+
                 if (SettingsView.RenderTransform is System.Windows.Media.TranslateTransform transform)
                 {
                     transform.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
                 }
-                
+
                 _isSettingsOpen = false;
-                
+
                 // Keep BrowserView visible and interactive
                 if (BrowserView != null) { BrowserView.IsHitTestVisible = true; BrowserView.Opacity = 1.0; }
             }
@@ -386,21 +386,21 @@ namespace oPenEfficiency.UI.Tabs
                 // Slide in
                 DetectThirdPartyTools();
                 SettingsView.Visibility = Visibility.Visible;
-                
+
                 if (!(SettingsView.RenderTransform is System.Windows.Media.TranslateTransform))
                 {
                     SettingsView.RenderTransform = new System.Windows.Media.TranslateTransform(400, 0);
                 }
-                
+
                 var transform = (System.Windows.Media.TranslateTransform)SettingsView.RenderTransform;
                 var anim = new System.Windows.Media.Animation.DoubleAnimation(400, 0, new Duration(TimeSpan.FromMilliseconds(250)))
                 {
                     EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
                 };
                 transform.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
-                
+
                 _isSettingsOpen = true;
-                
+
                 // Dim and disable BrowserView
                 if (BrowserView != null) { BrowserView.IsHitTestVisible = false; BrowserView.Opacity = 0.4; }
             }
@@ -439,7 +439,7 @@ namespace oPenEfficiency.UI.Tabs
         private void GenerateShapesForFile(string filePath)
         {
             if (_isGenerating) return;
-            
+
             _isGenerating = true;
             FilteredShapes.Clear();
             LoadingOverlay.Visibility = Visibility.Visible;
@@ -448,20 +448,20 @@ namespace oPenEfficiency.UI.Tabs
             TxtLoadingDetails.Text = "This may take a moment via PowerPoint COM.";
 
             // Run COM on UI Thread using Dispatcher.BeginInvoke to not freeze everything synchronously,
-            // but COM calls themselves will still block the UI thread unfortunately unless we start a new PPT instance. 
+            // but COM calls themselves will still block the UI thread unfortunately unless we start a new PPT instance.
             // For now, this is inline with our other library managers.
-            Dispatcher.BeginInvoke(new Action(async () =>
+            Dispatcher.InvokeAsync(async () =>
             {
                 try
                 {
                     int count = 0;
                     await _libraryManager.GenerateThumbnailCache(filePath, (item, img) => {
-                        
+
                         var sf = _scannedFiles.FirstOrDefault(f => f.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase));
                         string category = sf != null ? sf.FolderName : "Generated";
 
-                        var tpl = new ShapeItemDisplay 
-                        { 
+                        var tpl = new ShapeItemDisplay
+                        {
                             Title = item.Title,
                             Category = category,
                             FilePath = filePath,
@@ -470,7 +470,7 @@ namespace oPenEfficiency.UI.Tabs
                             UniqueId = item.UniqueId,
                             ThumbnailSource = img
                         };
-                        
+
                         // Remove old versions of this shape if any
                         var old = AllShapes.FirstOrDefault(t => t.FilePath == filePath && t.UniqueId == item.UniqueId);
                         if (old != null) AllShapes.Remove(old);
@@ -479,10 +479,10 @@ namespace oPenEfficiency.UI.Tabs
                         FilteredShapes.Add(tpl);
                         count++;
                     });
-                    
+
                     TxtStatus.Text = $"Added {count} newly generated shapes from {fileName}.";
                 }
-                catch(Exception ex) 
+                catch(Exception ex)
                 {
                     TxtStatus.Text = $"Error generating: {ex.Message}";
                 }
@@ -491,7 +491,7 @@ namespace oPenEfficiency.UI.Tabs
                     _isGenerating = false;
                     LoadingOverlay.Visibility = Visibility.Collapsed;
                 }
-            }));
+            });
         }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e) => ApplyFilters();
@@ -590,7 +590,7 @@ namespace oPenEfficiency.UI.Tabs
                 bool success = _libraryManager.InsertShape(item.FilePath, item.SlideIndex, item.OriginalShapeId);
                 if (success) successCount++;
             }
-            
+
             TxtStatus.Text = $"Inserted {successCount} out of {selectedItems.Count} shape(s).";
         }
 
@@ -598,7 +598,7 @@ namespace oPenEfficiency.UI.Tabs
         {
             TxtStatus.Text = $"Inserting '{item.Title}'...";
             bool success = _libraryManager.InsertShape(item.FilePath, item.SlideIndex, item.OriginalShapeId);
-            
+
             if (success)
                 TxtStatus.Text = $"Inserted '{item.Title}'.";
             else
@@ -659,9 +659,9 @@ namespace oPenEfficiency.UI.Tabs
             {
                 TxtLoadingDetails.Text = $"Forcing cache refresh for {node.Name}...";
                 LoadingOverlay.Visibility = Visibility.Visible;
-                
+
                 await _libraryManager.GenerateThumbnailCache(node.FilePath);
-                
+
                 RefreshLibraryAsync();
                 LoadingOverlay.Visibility = Visibility.Collapsed;
                 MessageBox.Show("Cache refreshed successfully.", "Complete", MessageBoxButton.OK, MessageBoxImage.Information);

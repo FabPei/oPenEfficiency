@@ -162,8 +162,19 @@ namespace oPenEfficiency.UI.Tabs
                         node.Children.Add(new FolderTreeNode { Name = Path.GetFileNameWithoutExtension(file), FullPath = Path.GetFullPath(file), FilePath = Path.GetFullPath(file), IsFile = true, IsCached = true });
                     }
                 }
-            } catch { }
+            } catch { /* Invalid persisted favorite metadata is skipped while building the tree. */ }
             return node;
+        }
+
+        private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private static bool MatchesQuery(string title, string query)
+        {
+            return string.IsNullOrEmpty(query) ||
+                   (!string.IsNullOrEmpty(title) && title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private void ApplyFilters()
@@ -172,9 +183,11 @@ namespace oPenEfficiency.UI.Tabs
             FavoriteShapes.Clear();
             FavoriteImages.Clear();
 
-            foreach (var s in _allSlides) if (string.IsNullOrEmpty(_selectedFolderPath) || s.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) { FavoriteSlides.Add(s); if (s.ThumbnailSource == null) LoadSlideThumbnail(s); }
-            foreach (var s in _allShapes) if (string.IsNullOrEmpty(_selectedFolderPath) || s.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) { FavoriteShapes.Add(s); if (s.ThumbnailSource == null) LoadShapeThumbnail(s); }
-            foreach (var i in _allImages) if (string.IsNullOrEmpty(_selectedFolderPath) || i.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) { FavoriteImages.Add(i); if (i.ThumbnailSource == null) LoadImageThumbnail(i); }
+            string query = TxtSearch?.Text?.Trim() ?? "";
+
+            foreach (var s in _allSlides) if ((string.IsNullOrEmpty(_selectedFolderPath) || s.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) && MatchesQuery(s.Title, query)) { FavoriteSlides.Add(s); if (s.ThumbnailSource == null) LoadSlideThumbnail(s); }
+            foreach (var s in _allShapes) if ((string.IsNullOrEmpty(_selectedFolderPath) || s.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) && MatchesQuery(s.Title, query)) { FavoriteShapes.Add(s); if (s.ThumbnailSource == null) LoadShapeThumbnail(s); }
+            foreach (var i in _allImages) if ((string.IsNullOrEmpty(_selectedFolderPath) || i.FilePath.StartsWith(_selectedFolderPath, StringComparison.OrdinalIgnoreCase)) && MatchesQuery(i.Title, query)) { FavoriteImages.Add(i); if (i.ThumbnailSource == null) LoadImageThumbnail(i); }
 
             TitleSlides.Visibility = FavoriteSlides.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             TitleShapes.Visibility = FavoriteShapes.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -201,10 +214,15 @@ namespace oPenEfficiency.UI.Tabs
             {
                 try
                 {
-                    string newPath = Path.Combine(selectedNode.FullPath, dialog.FolderName);
-                    if (!Directory.Exists(newPath)) { Directory.CreateDirectory(newPath); RefreshFavoritesAsync(); }
+                    _assetService.CreateSubFolder(selectedNode.FullPath, dialog.FolderName);
+                    RefreshFavoritesAsync();
                 }
-                catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+                catch (Exception ex)
+                {
+                    oPenEfficiency.Utils.ExceptionLogger.Log(ex, "FavoritesTab.CreateSubFolder");
+                    MessageBox.Show("The folder could not be created: " + ex.Message, "Create Folder",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         }
 
@@ -270,10 +288,41 @@ namespace oPenEfficiency.UI.Tabs
         {
             try
             {
+                if (!_assetService.IsPathInAssetLibrary(sourcePath) || !_assetService.IsPathInAssetLibrary(targetFolder))
+                {
+                    MessageBox.Show("The move was blocked because its source or target is outside the Asset Library.", "Move Asset", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 string destPath = Path.Combine(targetFolder, Path.GetFileName(sourcePath));
                 if (sourcePath.Equals(destPath, StringComparison.OrdinalIgnoreCase)) return;
-                if (File.Exists(destPath) || Directory.Exists(destPath)) { if (MessageBox.Show("Overwrite?", "Conflict", MessageBoxButton.YesNo) == MessageBoxResult.Yes) { if (File.Exists(destPath)) File.Delete(destPath); else Directory.Delete(destPath, true); } else return; }
-                if (File.Exists(sourcePath)) File.Move(sourcePath, destPath);
+                if (Directory.Exists(sourcePath) && targetFolder.StartsWith(sourcePath.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show("A folder cannot be moved into one of its own subfolders.", "Move Asset", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (File.Exists(destPath) || Directory.Exists(destPath))
+                {
+                    var overwrite = MessageBox.Show(
+                        $"Permanently replace the existing asset at:\n{destPath}?",
+                        "Replace Existing Asset",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (overwrite != MessageBoxResult.Yes) return;
+                    if (File.Exists(destPath))
+                    {
+                        File.Delete(destPath);
+                        if (File.Exists(destPath + ".meta.json")) File.Delete(destPath + ".meta.json");
+                    }
+                    else Directory.Delete(destPath, true);
+                }
+
+                if (File.Exists(sourcePath))
+                {
+                    File.Move(sourcePath, destPath);
+                    if (File.Exists(sourcePath + ".meta.json")) File.Move(sourcePath + ".meta.json", destPath + ".meta.json");
+                }
                 else if (Directory.Exists(sourcePath)) Directory.Move(sourcePath, destPath);
                 RefreshFavoritesAsync();
             }

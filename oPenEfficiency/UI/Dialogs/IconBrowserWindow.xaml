@@ -1,0 +1,386 @@
+<Window x:Class="oPenEfficiency.UI.Dialogs.IconBrowserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:oPenEfficiency.UI.Dialogs"
+        Title="Icon Library" Height="760" Width="1180"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStartupLocation="CenterOwner" MouseDown="Window_MouseDown"
+        PreviewKeyDown="Window_PreviewKeyDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+            <Style x:Key="FilterLabelStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Margin" Value="0,0,0,4"/>
+            </Style>
+
+            <Style x:Key="IconCardStyle" TargetType="ListBoxItem">
+                <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="5"/>
+                <Setter Property="Margin" Value="3"/>
+                <Setter Property="Width" Value="74"/>
+                <Setter Property="Height" Value="70"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="ToolTip" Value="{Binding Name}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border x:Name="CardBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="10"
+                                    Padding="{TemplateBinding Padding}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Button Grid.Row="0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Tag="{Binding}"
+                                            Click="FavoriteButton_Click"
+                                            Width="18"
+                                            Height="18"
+                                            Margin="0,-1,-1,0"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Cursor="Hand">
+                                        <TextBlock Text="{Binding FavoriteGlyph}"
+                                                   FontSize="13"
+                                                   Foreground="{Binding FavoriteBrush}"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"/>
+                                    </Button>
+
+                                    <Viewbox Grid.Row="1" Stretch="Uniform" Margin="3,0,3,3">
+                                        <Path Data="{Binding Geometry}"
+                                              Fill="{Binding FillBrush}"
+                                              Stroke="{Binding StrokeBrush}"
+                                              StrokeThickness="{Binding StrokeThickness}"
+                                              Stretch="Uniform"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"/>
+                                    </Viewbox>
+                                    <TextBlock Grid.Row="1"
+                                               Text="{Binding LoadingGlyph}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               FontSize="13"
+                                               FontWeight="Bold"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                    <Setter TargetName="CardBorder" Property="BorderThickness" Value="2"/>
+                                    <Setter TargetName="CardBorder" Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="40" ShadowDepth="15" Opacity="0.6" Color="Black"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" CornerRadius="12,12,0,0">
+                <Grid Margin="20,12,20,10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="ICON LIBRARY" Style="{StaticResource DialogTitleText}" FontSize="18"/>
+                        </StackPanel>
+                        <Button Style="{StaticResource WindowCloseButton}" Click="BtnClose_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-8,-8,0"/>
+                    </Grid>
+
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2.2*"/>
+                            <ColumnDefinition Width="1.1*"/>
+                            <ColumnDefinition Width="1.1*"/>
+                            <ColumnDefinition Width="1.1*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Margin="0,0,14,0">
+                            <TextBlock Text="SEARCH" Style="{StaticResource FilterLabelStyle}"/>
+                            <TextBox x:Name="SearchBox"
+                                     Height="32"
+                                     Padding="10,5"
+                                     TextChanged="Filter_Changed"
+                                     Background="{DynamicResource WindowBackgroundBrush}"
+                                     Foreground="{DynamicResource TextPrimaryBrush}"
+                                     BorderBrush="{DynamicResource BorderBrush}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                            <TextBlock Text="COLLECTION" Style="{StaticResource FilterLabelStyle}"/>
+                            <ComboBox x:Name="CollectionFilter"
+                                      Height="32"
+                                      SelectionChanged="Filter_Changed"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="0,0,14,0">
+                            <TextBlock Text="THEME" Style="{StaticResource FilterLabelStyle}"/>
+                            <ComboBox x:Name="ThemeFilter"
+                                      Height="32"
+                                      SelectionChanged="Filter_Changed"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3" Margin="0,0,14,0">
+                            <TextBlock Text="STYLE" Style="{StaticResource FilterLabelStyle}"/>
+                            <ComboBox x:Name="StyleFilter"
+                                      Height="32"
+                                      SelectionChanged="Filter_Changed"/>
+                        </StackPanel>
+
+                        <CheckBox x:Name="FavoritesOnlyCheckBox"
+                                  Grid.Column="4"
+                                  Margin="0,21,0,0"
+                                  VerticalAlignment="Center"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  Content="Favorites Only"
+                                  Checked="Filter_Changed"
+                                  Unchecked="Filter_Changed"/>
+
+                        <Button Grid.Column="5"
+                                Content="Reset"
+                                Width="80"
+                                Height="32"
+                                Margin="12,21,0,0"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="ResetFiltersButton_Click"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="BrowserColumn" Width="*"/>
+                    <ColumnDefinition x:Name="DetailsColumn" Width="360"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <DockPanel Margin="16,10,16,0">
+                        <Button x:Name="ToggleDetailsButton"
+                                DockPanel.Dock="Right"
+                                Content="Show Details"
+                                Width="32"
+                                Height="28"
+                                Padding="0"
+                                ToolTip="Show details (Ctrl+D)"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="ToggleDetailsButton_Click"/>
+                        <TextBlock x:Name="StatusLabel"
+                                 DockPanel.Dock="Right"
+                                 Foreground="{StaticResource AccentBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"/>
+                    </DockPanel>
+
+                    <Grid Grid.Row="1" Margin="10,8,6,10">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ListBox x:Name="IconList"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     SelectionMode="Extended"
+                                     ItemContainerStyle="{StaticResource IconCardStyle}"
+                                     SelectionChanged="IconList_SelectionChanged"
+                                     MouseDoubleClick="IconList_MouseDoubleClick"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                            </ListBox>
+                        </ScrollViewer>
+                        <Border x:Name="EmptyStatePanel"
+                                Visibility="Collapsed"
+                                Background="#AA101418"
+                                CornerRadius="16"
+                                Margin="12">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="320">
+                                <TextBlock Text="No icons match your current filters"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           FontSize="20"
+                                           FontWeight="Bold"
+                                           TextAlignment="Center"/>
+                                <TextBlock Text="Try a broader search, switch style, or clear the favorites filter."
+                                           Margin="0,10,0,0"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="13"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"/>
+                                <Button Content="Clear Filters"
+                                        Width="120"
+                                        Height="34"
+                                        Margin="0,18,0,0"
+                                        HorizontalAlignment="Center"
+                                        Style="{StaticResource AccentButton}"
+                                        Click="ResetFiltersButton_Click"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Grid.Row="2"
+                                x:Name="LoadMorePanel"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,10"
+                                Visibility="Collapsed">
+                        <TextBlock x:Name="VisibleCountLabel"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,12,0"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"/>
+                        <Button x:Name="LoadMoreButton"
+                                Content="Load More"
+                                Width="110"
+                                Height="30"
+                                Style="{StaticResource SecondaryButton}"
+                                Click="LoadMoreButton_Click"/>
+                    </StackPanel>
+                </Grid>
+
+                <Border x:Name="DetailsPanel"
+                        Grid.Column="1"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,0,0,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="26">
+                            <TextBlock Text="DETAILS" Style="{StaticResource FilterLabelStyle}" Margin="0,0,0,10"/>
+
+                            <Border Background="{DynamicResource WindowBackgroundBrush}"
+                                    CornerRadius="14"
+                                    BorderBrush="{DynamicResource BorderLightBrush}"
+                                    BorderThickness="1"
+                                    Height="220"
+                                    Margin="0,0,0,20">
+                                <Grid>
+                                    <Viewbox Stretch="Uniform" Margin="34">
+                                        <Path x:Name="SelectedIconPath"
+                                              Stretch="Uniform"
+                                              StrokeLineJoin="Round"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"/>
+                                    </Viewbox>
+                                </Grid>
+                            </Border>
+
+                            <TextBlock x:Name="SelectedNameText"
+                                       FontSize="24"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       TextWrapping="Wrap"/>
+
+                            <TextBlock x:Name="SelectedMetaText"
+                                       Margin="0,8,0,0"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap"/>
+
+                            <TextBlock Text="Color" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,26,0,10"/>
+
+                            <Grid Margin="0,0,0,18">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="ColorHexTextBox"
+                                         Height="36"
+                                         Padding="10,6"
+                                         VerticalContentAlignment="Center"
+                                         FontFamily="Consolas"
+                                         TextChanged="ColorHexTextBox_TextChanged"/>
+                                <Border x:Name="ColorPreviewBorder"
+                                        Grid.Column="1"
+                                        Width="44"
+                                        Height="36"
+                                        Margin="10,0,0,0"
+                                        CornerRadius="6"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"/>
+                            </Grid>
+
+                            <WrapPanel Margin="0,0,0,12">
+                                <Button Content="Pick Color" Width="110" Height="32" Margin="0,0,8,8" Click="PickColorButton_Click" Style="{StaticResource SecondaryButton}"/>
+                                <WrapPanel x:Name="ThemeColorSwatchPanel"/>
+                            </WrapPanel>
+
+                            <TextBlock Text="Insert As" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,8,0,10"/>
+
+                            <ComboBox x:Name="InsertModeComboBox"
+                                      Height="36"
+                                      Margin="0,0,0,18"/>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,18">
+                                <Button x:Name="InsertButton" Content="Insert Selected" Width="170" Height="40" Style="{StaticResource AccentButton}" Click="InsertButton_Click"/>
+                                <Button Content="Close" Width="90" Height="40" Margin="10,0,0,0" Style="{StaticResource SecondaryButton}" Click="BtnClose_Click"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Tags" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,6,0,10"/>
+                            <TextBlock x:Name="SelectedTagsText"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       TextWrapping="Wrap"
+                                       LineHeight="20"/>
+
+                            <TextBlock x:Name="SelectedPathText"
+                                       Margin="0,18,0,0"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       TextWrapping="Wrap"
+                                       FontSize="11"/>
+
+                            <TextBlock x:Name="InsertFeedbackText"
+                                       Margin="0,12,0,0"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       FontSize="12"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

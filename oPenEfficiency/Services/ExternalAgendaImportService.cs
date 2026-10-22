@@ -13,7 +13,20 @@ namespace oPenEfficiency.Services
     /// </summary>
     public class ExternalAgendaImportService
     {
-        private const string LayoutsConfigFile = @"AgendaLayouts\agenda_layouts.json";
+        private const long MaximumXmlCharacters = 5 * 1024 * 1024;
+        private const float DefaultImportedItemWidth = 360f;
+        private const float DefaultImportedItemHeight = 28f;
+        private readonly IAgendaLayoutStore _layoutStore;
+
+        public ExternalAgendaImportService()
+            : this(new JsonAgendaLayoutStore())
+        {
+        }
+
+        public ExternalAgendaImportService(IAgendaLayoutStore layoutStore)
+        {
+            _layoutStore = layoutStore ?? throw new ArgumentNullException(nameof(layoutStore));
+        }
 
         /// <summary>
         /// Imports an AgendaCreator.xml file and saves the configuration to oPenEfficiency's format.
@@ -32,24 +45,18 @@ namespace oPenEfficiency.Services
                     return importedLayouts;
                 }
 
-                var doc = new XmlDocument();
-                doc.Load(xmlFilePath);
-
-                // Get the app data path for saving layouts
-                string appDataPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "oPenEfficiency",
-                    "AgendaLayouts"
-                );
-
-                if (!Directory.Exists(appDataPath))
+                var doc = new XmlDocument { XmlResolver = null };
+                var readerSettings = new XmlReaderSettings
                 {
-                    Directory.CreateDirectory(appDataPath);
-                }
+                    DtdProcessing = DtdProcessing.Prohibit,
+                    XmlResolver = null,
+                    MaxCharactersInDocument = MaximumXmlCharacters
+                };
+                using (var reader = XmlReader.Create(xmlFilePath, readerSettings))
+                    doc.Load(reader);
 
                 // Load existing layouts
-                string jsonPath = Path.Combine(appDataPath, LayoutsConfigFile);
-                var existingLayouts = JsonService.Load<List<AgendaLayoutConfig>>(jsonPath) ?? new List<AgendaLayoutConfig>();
+                var existingLayouts = _layoutStore.Load() ?? new List<AgendaLayoutConfig>();
 
                 // Parse layouts from XML
                 var layoutNodes = doc.SelectNodes("//layouts/layout");
@@ -67,7 +74,10 @@ namespace oPenEfficiency.Services
                         if (layout != null)
                         {
                             // Check for duplicate and skip
-                            if (existingLayouts.Any(l => l.LayoutName == layout.LayoutName))
+                            if (existingLayouts.Any(l => string.Equals(
+                                l.LayoutName,
+                                layout.LayoutName,
+                                StringComparison.OrdinalIgnoreCase)))
                             {
                                 System.Diagnostics.Debug.WriteLine($"Skipping duplicate layout: {layout.LayoutName}");
                                 continue;
@@ -83,8 +93,15 @@ namespace oPenEfficiency.Services
                     }
                 }
 
-                // Save all layouts
-                JsonService.Save(existingLayouts, LayoutsConfigFile);
+                if (importedLayouts.Count == 0) return importedLayouts;
+
+                // Save all layouts atomically and report success only after persistence succeeded.
+                if (!_layoutStore.TrySave(existingLayouts))
+                {
+                    System.Diagnostics.Debug.WriteLine("ExternalAgendaImportService: Imported layouts could not be saved");
+                    importedLayouts.Clear();
+                    return importedLayouts;
+                }
 
                 System.Diagnostics.Debug.WriteLine($"ExternalAgendaImportService: Imported {importedLayouts.Count} layouts successfully");
             }
@@ -99,7 +116,7 @@ namespace oPenEfficiency.Services
         /// <summary>
         /// Imports from multiple XML files in a folder.
         /// </summary>
-        /// <param name="folderPath">Path to folder containing AgendaWizard.xml files</param>
+        /// <param name="folderPath">Path containing AgendaCreator.xml or legacy AgendaWizard.xml files</param>
         /// <returns>Total number of layouts imported</returns>
         public List<string> ImportFromFolder(string folderPath)
         {
@@ -113,7 +130,7 @@ namespace oPenEfficiency.Services
                     return allImported;
                 }
 
-                var xmlFiles = Directory.GetFiles(folderPath, "AgendaWizard.xml", SearchOption.AllDirectories);
+                var xmlFiles = FindSupportedXmlFiles(folderPath);
                 foreach (var xmlFile in xmlFiles)
                 {
                     var imported = ImportFromXml(xmlFile);
@@ -165,8 +182,7 @@ namespace oPenEfficiency.Services
                             {
                                 try
                                 {
-                                    // Check if this subdirectory is likely to contain the file
-                                    var foundFiles = Directory.GetFiles(subDir, "AgendaWizard.xml", SearchOption.AllDirectories);
+                                    var foundFiles = FindSupportedXmlFiles(subDir);
                                     files.AddRange(foundFiles);
                                 }
                                 catch (UnauthorizedAccessException) { /* Skip protected subfolders */ }
@@ -183,7 +199,15 @@ namespace oPenEfficiency.Services
                 System.Diagnostics.Debug.WriteLine($"ExternalAgendaImportService: Find failed: {ex.Message}");
             }
 
-            return files;
+            return files.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private static IEnumerable<string> FindSupportedXmlFiles(string root)
+        {
+            return Directory
+                .EnumerateFiles(root, "AgendaCreator.xml", SearchOption.AllDirectories)
+                .Concat(Directory.EnumerateFiles(root, "AgendaWizard.xml", SearchOption.AllDirectories))
+                .Where(AgendaWorkflowPolicy.IsSupportedExternalLayoutFile);
         }
 
         #region Private Parsing Methods
@@ -231,8 +255,8 @@ namespace oPenEfficiency.Services
             float leftMargin = 0, topMargin = 0;
             if (positionNode != null)
             {
-                leftMargin = GetFloatAttribute(positionNode, "left", 0);
-                topMargin = GetFloatAttribute(positionNode, "top", 0);
+                leftMargin = Math.Max(0, GetFloatAttribute(positionNode, "left", 0));
+                topMargin = Math.Max(0, GetFloatAttribute(positionNode, "top", 0));
             }
 
             // Parse settings
@@ -247,40 +271,43 @@ namespace oPenEfficiency.Services
             var casesNode = layoutNode.SelectSingleNode("cases");
             var caseNodes = casesNode?.SelectNodes("case");
 
-            // Extract format from first selected case for each level
-            if (caseNodes != null && caseNodes.Count > 0)
+            var level1Selected = caseNodes == null ? null : FindSelectedCase(caseNodes, 1);
+            var level2Selected = caseNodes == null ? null : FindSelectedCase(caseNodes, 2);
+
+            // Parse title shape format (from standard) - map to HeadlineShape for backwards compatibility
+            config.HeadlineShape = new ShapeFormatConfig
             {
-                // Find selected cases for level 1 and level 2
-                var level1Selected = FindSelectedCase(caseNodes, 1);
-                var level2Selected = FindSelectedCase(caseNodes, 2);
+                Left = leftMargin,
+                Top = Math.Max(0, topMargin - 36f),
+                Width = DefaultImportedItemWidth,
+                Height = 30f,
+                FontName = standardFont?.Name ?? "Segoe UI",
+                FontSize = standardFont?.Size ?? 16,
+                FontColorRgb = standardFont?.Color ?? 0x000000,
+                FontBold = standardFont?.Bold ?? false,
+                FontItalic = standardFont?.Italic ?? false,
+                MarginLeft = 0,
+                MarginRight = 0,
+                MarginTop = 0,
+                MarginBottom = 0,
+                TextAlignment = GetParagraphAlignment(standardParagraph)
+            };
 
-                // Parse title shape format (from standard) - map to HeadlineShape for backwards compatibility
-                config.HeadlineShape = new ShapeFormatConfig
-                {
-                    FontName = standardFont?.Name ?? "Segoe UI",
-                    FontSize = standardFont?.Size ?? 16,
-                    FontColorRgb = standardFont?.Color ?? 0x000000,
-                    FontBold = standardFont?.Bold ?? false,
-                    FontItalic = standardFont?.Italic ?? false,
-                    MarginLeft = 0,
-                    MarginRight = 0,
-                    MarginTop = 0,
-                    MarginBottom = 0,
-                    TextAlignment = GetParagraphAlignment(standardParagraph)
-                };
+            config.ItemTextShape = ParseItemFormat(
+                level1Selected,
+                standardFont,
+                standardParagraph,
+                leftMargin,
+                topMargin,
+                false);
 
-                // Parse item shape format from level 1 selected case - map to ItemTextShape
-                config.ItemTextShape = ParseItemFormat(level1Selected, standardFont, standardParagraph, leftMargin);
-
-                // Parse subitem shape format from level 2 selected case - map to SubItemTextShape
-                config.SubItemTextShape = ParseItemFormat(level2Selected, standardFont, standardParagraph, leftMargin);
-
-                // If no level 2 format found, use level 1 with slight indentation
-                if (config.SubItemTextShape == null)
-                {
-                    config.SubItemTextShape = config.ItemTextShape;
-                }
-            }
+            config.SubItemTextShape = ParseItemFormat(
+                level2Selected,
+                standardFont,
+                standardParagraph,
+                leftMargin,
+                topMargin,
+                true);
 
             // Default alignments
             config.ListAlignment = "Top";
@@ -291,11 +318,23 @@ namespace oPenEfficiency.Services
             return config;
         }
 
-        private ShapeFormatConfig ParseItemFormat(XmlNode caseNode, FontInfo standardFont, XmlNode standardParagraph, float leftMargin)
+        private ShapeFormatConfig ParseItemFormat(
+            XmlNode caseNode,
+            FontInfo standardFont,
+            XmlNode standardParagraph,
+            float leftMargin,
+            float topMargin,
+            bool isSubItem)
         {
-            if (caseNode == null) return null;
-
-            var format = new ShapeFormatConfig();
+            // External files describe formatting but do not necessarily contain PowerPoint
+            // shape bounds. Use a conservative, usable fallback anchored at their position.
+            var format = new ShapeFormatConfig
+            {
+                Left = leftMargin + (isSubItem ? 20f : 0f),
+                Top = topMargin,
+                Width = DefaultImportedItemWidth - (isSubItem ? 20f : 0f),
+                Height = DefaultImportedItemHeight
+            };
 
             // Start with standard font settings
             format.FontName = standardFont?.Name ?? "Segoe UI";
@@ -305,7 +344,7 @@ namespace oPenEfficiency.Services
             format.FontItalic = standardFont?.Italic ?? false;
 
             // Parse elements within the case
-            var elements = caseNode.SelectNodes("element");
+            var elements = caseNode?.SelectNodes("element");
             if (elements != null)
             {
                 foreach (XmlNode elemNode in elements)

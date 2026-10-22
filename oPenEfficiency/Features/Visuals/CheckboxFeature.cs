@@ -13,18 +13,15 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnCheckbox",
         Name = "Checkbox",
-        Tooltip = "Checkbox",
+        Tooltip = "Insert a vector checkbox",
         IconData = "M19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V5H19V19M10,17L5,12L6.41,10.59L10,14.17L17.59,6.58L19,8L10,17Z",
         Color = "#F43F5E",
-        Description = "Inserts a vector-based checkmark or cross inside a box. Default is Tick state.",
-        DetailedHelpText = "### Checkbox\nInserts a styled checkbox shape (checked or unchecked) onto the slide. Clicking the button toggles the visual state between checked and unchecked.",
-        Keywords = "checkbox, tick, cross, toggle, checkmark",
+        Description = "Inserts or updates a framed or unframed Tick, Cross, or Empty checkbox. Default is a framed Tick.",
+        DetailedHelpText = "### Checkbox\nInserts a framed Tick checkbox at the center of the slide, or updates one selected tagged checkbox. Right-click to insert or apply Tick, Cross, and Empty presets with or without a frame. Existing tagged checkbox shapes retain their position and size.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class CheckboxFeature
     {
-        private const string CheckboxTag = "oPE_Checkbox";
-
         public enum CheckboxState
         {
             Tick,
@@ -54,7 +51,7 @@ namespace oPenEfficiency.Features
                 {
                     var selected = selection[1];
                     bool isEE4P = ShapeMetadataService.GetTag(selected, "EE4P_SMART_ELEMENT") == "Check";
-                    if ((selected.AlternativeText != null && selected.AlternativeText.StartsWith(CheckboxTag)) || isEE4P)
+                    if (oPenEfficiency.Core.Services.CheckboxStatePolicy.IsCheckboxTag(selected.AlternativeText) || isEE4P)
                     {
                         UpdateCheckbox(selected, state, hasFrame, fontSize, colorRgb);
                         return true;
@@ -65,9 +62,10 @@ namespace oPenEfficiency.Features
                 var slide = app.ActiveWindow.View.Slide as Slide;
                 if (slide == null) return false;
 
-                float size = 50f; 
-                float left = (app.ActivePresentation.PageSetup.SlideWidth / 2) - (size / 2);
-                float top = (app.ActivePresentation.PageSetup.SlideHeight / 2) - (size / 2);
+                float size = oPenEfficiency.Core.Services.CheckboxStatePolicy.DefaultInsertSize;
+                oPenEfficiency.Core.Services.CheckboxStatePolicy.CenterOnSlide(
+                    app.ActivePresentation.PageSetup.SlideWidth, app.ActivePresentation.PageSetup.SlideHeight, size,
+                    out float left, out float top);
 
                 // Use a Textbox for symbol
                 var shape = slide.Shapes.AddTextbox(Office.MsoTextOrientation.msoTextOrientationHorizontal, left, top, size, size);
@@ -83,7 +81,7 @@ namespace oPenEfficiency.Features
                 UpdateCheckbox(shape, state, hasFrame, fontSize, colorRgb);
                 
                 // Tag it
-                shape.AlternativeText = $"{CheckboxTag}|{(int)state}|{hasFrame}|{fontSize}|{colorRgb}";
+                shape.AlternativeText = oPenEfficiency.Core.Services.CheckboxStatePolicy.FormatTag((int)state, hasFrame, fontSize, colorRgb);
                 shape.Name = "Checkbox_" + Guid.NewGuid().ToString().Substring(0, 8);
 
                 return true;
@@ -98,23 +96,9 @@ namespace oPenEfficiency.Features
         private static void UpdateCheckbox(Shape shape, CheckboxState state, bool hasFrame, float fontSize, int colorRgb)
         {
             // Update Text
-            string symbol = "";
-            string fontName = "Wingdings"; // Common for symbols
+            string symbol = oPenEfficiency.Core.Services.CheckboxStatePolicy.GetSymbol((int)state);
 
-            switch (state)
-            {
-                case CheckboxState.Tick:
-                    symbol = "ü"; // Wingdings tick
-                    break;
-                case CheckboxState.Cross:
-                    symbol = "û"; // Wingdings cross
-                    break;
-                case CheckboxState.Empty:
-                    symbol = " ";
-                    break;
-            }
-
-            shape.TextFrame.TextRange.Font.Name = fontName;
+            shape.TextFrame.TextRange.Font.Name = oPenEfficiency.Core.Services.CheckboxStatePolicy.SymbolFontName;
             shape.TextFrame.TextRange.Text = symbol;
             
             // Update Font Size
@@ -139,7 +123,7 @@ namespace oPenEfficiency.Features
             }
 
             // Update Tag
-            shape.AlternativeText = $"{CheckboxTag}|{(int)state}|{hasFrame}|{fontSize}|{colorRgb}";
+            shape.AlternativeText = oPenEfficiency.Core.Services.CheckboxStatePolicy.FormatTag((int)state, hasFrame, fontSize, colorRgb);
         }
     }
 }

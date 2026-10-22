@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnUpdateExcelCharts",
+  "title": "Refresh Linked Excel Charts (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnUpdateExcelCharts-001",
+      "title": "Refresh Linked Excel Charts applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Refresh Linked Excel Charts (BtnUpdateExcelCharts) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnUpdateExcelCharts-001",
+      "title": "Update Excel Charts refreshes linked charts only (context-menu and shortcut paths)",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/UpdateExcelChartsFeature.cs",
+        "oPenEfficiency/Services/ExcelChartUpdateService.cs"
+      ],
+      "expected": "The interactive update behaves as documented on a real PowerPoint host: only Excel-linked charts (linked OLE objects with a source path) are refreshed from their workbook; embedded charts are deliberately left alone; the result dialog counts the refreshed charts; the all-slides variant prompts before more than ten charts; and the zero-linked-charts case reports that instead of claiming success.",
+      "ownerSteps": [
+        "In a deck, insert a linked Excel chart (copy a chart in Excel, then Paste Special -> Paste Link in PowerPoint) plus one embedded chart.",
+        "Change the source values in the workbook and save it.",
+        "Run the feature on the current slide (and once with the right-click 'update all slides' variant).",
+        "Verify the linked chart reflects the new values, the embedded chart is untouched, the dialog counts only the linked chart, and the all-slides confirmation appears when more than ten linked charts exist."
+      ],
+      "technicalReason": "Deterministic automation is not feasible for this feature: creating a PowerPoint-linked chart headlessly failed twice (the seam built an Excel workbook chart and used Shapes.PasteSpecial with Link=msoTrue; both runs returned COMException 'Clipboard is empty or contains data which may not be pasted here' even with Excel made visible - the linked-OLE clipboard flavor does not survive the headless round trip), and the feature's Execute always shows a modal MessageBox on every outcome. The deterministic detection and refresh mechanics were extracted into the modal-free ExcelChartUpdateService, which the feature now delegates to, so this owner check only has to confirm the visible behavior."
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

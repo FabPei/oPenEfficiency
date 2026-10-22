@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
@@ -8,6 +9,7 @@ namespace oPenEfficiency.Services
 {
     public class StyleError
     {
+        public string RuleId { get; set; }
         public string ErrorType { get; set; } // "Font", "Font Size", "Fill Color", "Line Color", "Text Color", "Distorted Image", "Overlapping Text", "Protection Area"
         public string Value { get; set; }
         public int ColorValue { get; set; }
@@ -16,6 +18,68 @@ namespace oPenEfficiency.Services
         public string SuggestedCorrectionValue { get; set; }
         public int TextStart { get; set; } = -1;
         public int TextLength { get; set; } = 0;
+    }
+
+    public static class StyleCheckRuleIgnore
+    {
+        private const string LegacyStyleTag = "oPE_IgnoreStyleCheck";
+        private const string LegacyConsistencyTag = "oPE_IgnoreConsistencyCheck";
+
+        public static bool IsIgnored(Shape shape, string category, string ruleId)
+        {
+            if (shape == null) return false;
+            return HasTag(shape.Tags, GetLegacyTag(category)) ||
+                   HasTag(shape.Tags, GetRuleTag(category, ruleId));
+        }
+
+        public static bool IsIgnored(Slide slide, string category, string ruleId)
+        {
+            if (slide == null) return false;
+            return HasTag(slide.Tags, GetLegacyTag(category)) ||
+                   HasTag(slide.Tags, GetRuleTag(category, ruleId));
+        }
+
+        public static void Ignore(Shape shape, string category, string ruleId)
+        {
+            if (shape == null) return;
+            shape.Tags.Add(GetRuleTag(category, ruleId), "True");
+        }
+
+        public static void Ignore(Slide slide, string category, string ruleId)
+        {
+            if (slide == null) return;
+            slide.Tags.Add(GetRuleTag(category, ruleId), "True");
+        }
+
+        private static string GetLegacyTag(string category)
+        {
+            return string.Equals(category, "Consistency", StringComparison.OrdinalIgnoreCase)
+                ? LegacyConsistencyTag
+                : LegacyStyleTag;
+        }
+
+        private static string GetRuleTag(string category, string ruleId)
+        {
+            string prefix = string.Equals(category, "Consistency", StringComparison.OrdinalIgnoreCase)
+                ? "oPE_SC_C_"
+                : "oPE_SC_S_";
+            string safeRule = new string((ruleId ?? "Unknown")
+                .Where(char.IsLetterOrDigit)
+                .ToArray());
+            return prefix + safeRule;
+        }
+
+        private static bool HasTag(Tags tags, string name)
+        {
+            try
+            {
+                return string.Equals(tags[name], "True", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     public class StyleScanner
@@ -111,22 +175,20 @@ namespace oPenEfficiency.Services
                     for (int j = i + 1; j < textShapes.Count; j++)
                     {
                         try {
-                            // Check ignore tags
-                            bool ignoreI = false;
-                            bool ignoreJ = false;
-                            try { ignoreI = textShapes[i].Tags["oPE_IgnoreStyleCheck"] == "True"; } catch { }
-                            try { ignoreJ = textShapes[j].Tags["oPE_IgnoreStyleCheck"] == "True"; } catch { }
-
-                            if (!ignoreI && !ignoreJ && IsOverlapping(textShapes[i], textShapes[j]))
+                            if (!StyleCheckRuleIgnore.IsIgnored(textShapes[i], "Style", "OverlappingText") &&
+                                !StyleCheckRuleIgnore.IsIgnored(textShapes[j], "Style", "OverlappingText") &&
+                                IsOverlapping(textShapes[i], textShapes[j]))
                             {
                                 errors.Add(new StyleError {
+                                    RuleId = "OverlappingText",
                                     ErrorType = "Overlapping Text",
                                     Value = $"Shapes overlap",
                                     SlideNumber = slide.SlideNumber,
                                     ShapeName = textShapes[i].Name
                                 });
                             }
-                        } catch { }
+                        }
+                        catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.Scan.OverlappingText"); }
                     }
                 }
             }
@@ -158,11 +220,13 @@ namespace oPenEfficiency.Services
 
                 foreach (var lang in langs)
                 {
-                    try { fonts.Add(fontScheme.MajorFont.Item(lang).Name); } catch { }
-                    try { fonts.Add(fontScheme.MinorFont.Item(lang).Name); } catch { }
+                    try { fonts.Add(fontScheme.MajorFont.Item(lang).Name); }
+                    catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.GetThemeFonts.MajorFont"); }
+                    try { fonts.Add(fontScheme.MinorFont.Item(lang).Name); }
+                    catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.GetThemeFonts.MinorFont"); }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.GetThemeFonts"); }
             return fonts;
         }
 
@@ -170,10 +234,7 @@ namespace oPenEfficiency.Services
         {
             try
             {
-                // Phase 5: The "Ignore" System
-                try {
-                    if (shape.Tags["oPE_IgnoreStyleCheck"] == "True") return;
-                } catch { }
+                if (StyleCheckRuleIgnore.IsIgnored(shape, "Style", "All")) return;
 
                 if (shape.Type == Office.MsoShapeType.msoGroup)
                 {
@@ -181,10 +242,10 @@ namespace oPenEfficiency.Services
                     return;
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.Group"); }
 
             // Phase 3: Layout Protection Area Check
-            if (protectionArea != null)
+            if (protectionArea != null && !StyleCheckRuleIgnore.IsIgnored(shape, "Style", "ProtectionArea"))
             {
                 try
                 {
@@ -196,17 +257,18 @@ namespace oPenEfficiency.Services
                         // Check if it's not a placeholder (placeholders can be in protection area depending on rules, but let's flag if it is an overlapping shape)
                         if (shape.Type != Office.MsoShapeType.msoPlaceholder)
                         {
-                            errors.Add(new StyleError { ErrorType = "Protection Area", Value = "Violates protection zone", SlideNumber = slideNum, ShapeName = shape.Name });
+                            errors.Add(new StyleError { RuleId = "ProtectionArea", ErrorType = "Protection Area", Value = "Violates protection zone", SlideNumber = slideNum, ShapeName = shape.Name });
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.ProtectionArea"); }
             }
 
             // Phase 3: Distorted Images
             try
             {
-                if (shape.Type == Office.MsoShapeType.msoPicture)
+                if (shape.Type == Office.MsoShapeType.msoPicture &&
+                    !StyleCheckRuleIgnore.IsIgnored(shape, "Style", "DistortedImage"))
                 {
                     float currentWidth = shape.Width;
                     float currentHeight = shape.Height;
@@ -227,12 +289,12 @@ namespace oPenEfficiency.Services
                         
                         if (Math.Abs(originalRatio - currentRatio) > 0.05f) // 5% variance
                         {
-                            errors.Add(new StyleError { ErrorType = "Distorted Image", Value = "Aspect ratio skewed", SlideNumber = slideNum, ShapeName = shape.Name });
+                            errors.Add(new StyleError { RuleId = "DistortedImage", ErrorType = "Distorted Image", Value = "Aspect ratio skewed", SlideNumber = slideNum, ShapeName = shape.Name });
                         }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.DistortedImage"); }
 
             // Table
             try
@@ -246,80 +308,86 @@ namespace oPenEfficiency.Services
                             var cell = shape.Table.Cell(r, c);
                             try
                             {
-                                if (cell.Shape.Fill.Visible == Office.MsoTriState.msoTrue && 
+                                if (!StyleCheckRuleIgnore.IsIgnored(shape, "Style", "FillColor") &&
+                                    cell.Shape.Fill.Visible == Office.MsoTriState.msoTrue &&
                                     cell.Shape.Fill.ForeColor.ObjectThemeColor == Office.MsoThemeColorIndex.msoNotThemeColor)
                                 {
-                                    AddColorError(errors, "Fill Color", cell.Shape.Fill.ForeColor.RGB, slideNum, shape.Name, correctColors);
+                                    AddColorError(errors, "FillColor", "Fill Color", cell.Shape.Fill.ForeColor.RGB, slideNum, shape.Name, correctColors, allowCorrection: false);
                                 }
                             }
-                            catch { }
+                            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.TableFill"); }
 
                             try
                             {
                                 if (cell.Shape.HasTextFrame == Office.MsoTriState.msoTrue && cell.Shape.TextFrame.HasText == Office.MsoTriState.msoTrue)
                                 {
-                                    ScanTextRange(cell.Shape.TextFrame.TextRange, slideNum, shape.Name, themeFonts, correctFonts, correctColors, correctFontSizes, targetLineSpacing, targetSpaceBefore, targetSpaceAfter, errors);
+                                    ScanTextRange(cell.Shape.TextFrame.TextRange, shape, slideNum, shape.Name, themeFonts, correctFonts, correctColors, correctFontSizes, targetLineSpacing, targetSpaceBefore, targetSpaceAfter, errors);
                                 }
                             }
-                            catch { }
+                            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.TableText"); }
                         }
                     }
                     return;
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.Table"); }
 
             // Fill Color
             try
             {
-                if (shape.Fill.Visible == Office.MsoTriState.msoTrue && shape.Type != Office.MsoShapeType.msoLine)
+                if (!StyleCheckRuleIgnore.IsIgnored(shape, "Style", "FillColor") &&
+                    shape.Fill.Visible == Office.MsoTriState.msoTrue && shape.Type != Office.MsoShapeType.msoLine)
                 {
                     if (shape.Fill.Type == Office.MsoFillType.msoFillSolid && 
                         shape.Fill.ForeColor.ObjectThemeColor == Office.MsoThemeColorIndex.msoNotThemeColor)
                     {
-                        AddColorError(errors, "Fill Color", shape.Fill.ForeColor.RGB, slideNum, shape.Name, correctColors);
+                        AddColorError(errors, "FillColor", "Fill Color", shape.Fill.ForeColor.RGB, slideNum, shape.Name, correctColors);
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.FillColor"); }
 
             // Line Color
             try
             {
-                if (shape.Line.Visible == Office.MsoTriState.msoTrue && shape.Line.Weight > 0)
+                if (!StyleCheckRuleIgnore.IsIgnored(shape, "Style", "LineColor") &&
+                    shape.Line.Visible == Office.MsoTriState.msoTrue && shape.Line.Weight > 0)
                 {
                     if (shape.Line.ForeColor.ObjectThemeColor == Office.MsoThemeColorIndex.msoNotThemeColor)
                     {
-                        AddColorError(errors, "Line Color", shape.Line.ForeColor.RGB, slideNum, shape.Name, correctColors);
+                        AddColorError(errors, "LineColor", "Line Color", shape.Line.ForeColor.RGB, slideNum, shape.Name, correctColors);
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.LineColor"); }
 
             // Text (Fonts)
             try
             {
                 if (shape.HasTextFrame == Office.MsoTriState.msoTrue && shape.TextFrame.HasText == Office.MsoTriState.msoTrue)
                 {
-                    ScanTextRange(shape.TextFrame.TextRange, slideNum, shape.Name, themeFonts, correctFonts, correctColors, correctFontSizes, targetLineSpacing, targetSpaceBefore, targetSpaceAfter, errors);
+                    ScanTextOverflow(shape, slideNum, errors);
+                    ScanTextRange(shape.TextFrame.TextRange, shape, slideNum, shape.Name, themeFonts, correctFonts, correctColors, correctFontSizes, targetLineSpacing, targetSpaceBefore, targetSpaceAfter, errors);
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanShape.Text"); }
         }
 
-        private static void ScanTextRange(TextRange textRange, int slideNum, string shapeName, HashSet<string> themeFonts, HashSet<string> correctFonts, HashSet<string> correctColors, HashSet<float> correctFontSizes, float? targetLineSpacing, float? targetSpaceBefore, float? targetSpaceAfter, List<StyleError> errors)
+        private static void ScanTextRange(TextRange textRange, Shape ignoreOwner, int slideNum, string shapeName, HashSet<string> themeFonts, HashSet<string> correctFonts, HashSet<string> correctColors, HashSet<float> correctFontSizes, float? targetLineSpacing, float? targetSpaceBefore, float? targetSpaceAfter, List<StyleError> errors)
         {
             try
             {
                 try
             {
                 int paraCount = 0;
-                try { paraCount = textRange.Paragraphs().Count; } catch { }
+                try { paraCount = textRange.Paragraphs().Count; }
+                catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.ParagraphCount"); }
 
                 for (int i = 1; i <= paraCount; i++)
                 {
                     TextRange para = null;
-                    try { para = textRange.Paragraphs(i); } catch { }
+                    try { para = textRange.Paragraphs(i); }
+                    catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.Paragraph"); }
 
                     if (para == null) continue;
 
@@ -327,31 +395,36 @@ namespace oPenEfficiency.Services
                     int pStart = para.Start;
                     int pLength = para.Length;
 
-                    if (targetLineSpacing.HasValue && Math.Abs(pf.SpaceWithin - targetLineSpacing.Value) > 0.1f)
+                    if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "ParagraphSpacing") &&
+                        targetLineSpacing.HasValue && Math.Abs(pf.SpaceWithin - targetLineSpacing.Value) > 0.1f)
                     {
-                        errors.Add(new StyleError { ErrorType = "Paragraph Spacing", Value = $"Line Spacing: {pf.SpaceWithin}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
+                        errors.Add(new StyleError { RuleId = "ParagraphSpacing", ErrorType = "Paragraph Spacing", Value = $"Line Spacing: {pf.SpaceWithin}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
                     }
-                    if (targetSpaceBefore.HasValue && Math.Abs(pf.SpaceBefore - targetSpaceBefore.Value) > 0.1f)
+                    if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "ParagraphSpacing") &&
+                        targetSpaceBefore.HasValue && Math.Abs(pf.SpaceBefore - targetSpaceBefore.Value) > 0.1f)
                     {
-                        errors.Add(new StyleError { ErrorType = "Paragraph Spacing", Value = $"Space Before: {pf.SpaceBefore}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
+                        errors.Add(new StyleError { RuleId = "ParagraphSpacing", ErrorType = "Paragraph Spacing", Value = $"Space Before: {pf.SpaceBefore}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
                     }
-                    if (targetSpaceAfter.HasValue && Math.Abs(pf.SpaceAfter - targetSpaceAfter.Value) > 0.1f)
+                    if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "ParagraphSpacing") &&
+                        targetSpaceAfter.HasValue && Math.Abs(pf.SpaceAfter - targetSpaceAfter.Value) > 0.1f)
                     {
-                        errors.Add(new StyleError { ErrorType = "Paragraph Spacing", Value = $"Space After: {pf.SpaceAfter}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
+                        errors.Add(new StyleError { RuleId = "ParagraphSpacing", ErrorType = "Paragraph Spacing", Value = $"Space After: {pf.SpaceAfter}", SlideNumber = slideNum, ShapeName = shapeName, TextStart = pStart, TextLength = pLength });
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.Paragraphs"); }
             
             int runCount = 0;
-                try { runCount = textRange.Runs().Count; } catch { }
+                try { runCount = textRange.Runs().Count; }
+                catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.RunCount"); }
 
                 int iterations = Math.Max(1, runCount);
 
                 for (int i = 1; i <= iterations; i++)
                 {
                     TextRange run = null;
-                    try { run = runCount == 0 ? textRange : textRange.Runs(i); } catch { }
+                    try { run = runCount == 0 ? textRange : textRange.Runs(i); }
+                    catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.Run"); }
 
                     if (run == null) continue;
 
@@ -359,10 +432,12 @@ namespace oPenEfficiency.Services
                     int tLength = run.Length;
 
                     var fontName = run.Font.Name;
-                    if (!string.IsNullOrEmpty(fontName) && !fontName.StartsWith("+") && !themeFonts.Contains(fontName) && !correctFonts.Contains(fontName))
+                    if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "Font") &&
+                        !string.IsNullOrEmpty(fontName) && !fontName.StartsWith("+") && !themeFonts.Contains(fontName) && !correctFonts.Contains(fontName))
                     {
                         errors.Add(new StyleError
                         {
+                            RuleId = "Font",
                             ErrorType = "Font",
                             Value = fontName,
                             SlideNumber = slideNum,
@@ -373,10 +448,12 @@ namespace oPenEfficiency.Services
                     }
 
                     // Font Size Validation
-                    if (correctFontSizes.Count > 0 && !correctFontSizes.Contains(run.Font.Size))
+                    if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "FontSize") &&
+                        correctFontSizes.Count > 0 && !correctFontSizes.Contains(run.Font.Size))
                     {
                         errors.Add(new StyleError
                         {
+                            RuleId = "FontSize",
                             ErrorType = "Font Size",
                             Value = run.Font.Size.ToString(),
                             SlideNumber = slideNum,
@@ -388,31 +465,70 @@ namespace oPenEfficiency.Services
 
                     try
                     {
-                        if (run.Font.Color.ObjectThemeColor == Office.MsoThemeColorIndex.msoNotThemeColor)
+                        if (!StyleCheckRuleIgnore.IsIgnored(ignoreOwner, "Style", "TextColor") &&
+                            run.Font.Color.ObjectThemeColor == Office.MsoThemeColorIndex.msoNotThemeColor)
                         {
-                            AddColorError(errors, "Text Color", run.Font.Color.RGB, slideNum, shapeName, correctColors, tStart, tLength);
+                            AddColorError(errors, "TextColor", "Text Color", run.Font.Color.RGB, slideNum, shapeName, correctColors, tStart, tLength);
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange.TextColor"); }
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextRange"); }
         }
 
-        private static void AddColorError(List<StyleError> errors, string type, int rgb, int slideNum, string shapeName, HashSet<string> correctColors, int start = -1, int length = 0)
+        private static void ScanTextOverflow(Shape shape, int slideNum, List<StyleError> errors)
+        {
+            if (StyleCheckRuleIgnore.IsIgnored(shape, "Style", "TextOverflow")) return;
+
+            try
+            {
+                if (shape.TextFrame.AutoSize == PpAutoSize.ppAutoSizeShapeToFitText) return;
+
+                float availableHeight = shape.Height -
+                    shape.TextFrame.MarginTop -
+                    shape.TextFrame.MarginBottom;
+                float requiredHeight = shape.TextFrame.TextRange.BoundHeight;
+
+                if (availableHeight > 0 && requiredHeight > availableHeight + 1f)
+                {
+                    errors.Add(new StyleError
+                    {
+                        RuleId = "TextOverflow",
+                        ErrorType = "Text Overflow",
+                        Value = "Text exceeds the available shape height",
+                        SlideNumber = slideNum,
+                        ShapeName = shape.Name
+                    });
+                }
+            }
+            catch (Exception ex) { ReportOptionalScanFailure(ex, "StyleScanner.ScanTextOverflow"); }
+        }
+
+        private static void ReportOptionalScanFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+            {
+                ExceptionLogger.Log(exception, context);
+            }
+            // A single inaccessible COM property must not prevent scanning the remaining shapes.
+        }
+
+        private static void AddColorError(List<StyleError> errors, string ruleId, string type, int rgb, int slideNum, string shapeName, HashSet<string> correctColors, int start = -1, int length = 0, bool allowCorrection = true)
         {
             string hex = $"#{((rgb & 0xFF)):X2}{((rgb & 0xFF00) >> 8):X2}{((rgb & 0xFF0000) >> 16):X2}";
             
             if (correctColors != null && correctColors.Contains(hex)) return;
             
             string suggestedCorrection = null;
-            if (correctColors != null && correctColors.Count > 0)
+            if (allowCorrection && correctColors != null && correctColors.Count > 0)
             {
                 suggestedCorrection = ColorMath.FindClosestColor(rgb, correctColors);
             }
 
             errors.Add(new StyleError
             {
+                RuleId = ruleId,
                 ErrorType = type,
                 Value = hex,
                 ColorValue = rgb,

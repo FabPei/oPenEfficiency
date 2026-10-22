@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAlignToTableCell",
+  "title": "Align to Cell (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/AlignToTableCellFeature.cs",
+    "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAlignToTableCell-001",
+      "title": "Align to Cell applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToTableCellFeature.cs",
+        "oPenEfficiency.Core/Services/SidebarLayoutMigration.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs"
+      ],
+      "expected": "Align to Cell (BtnAlignToTableCell) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAlignToTableCell-002",
+      "title": "BtnAlignToTableCell deterministic Office leg (align probe to cell bottom-right)",
+      "requirements": [
+        {
+          "id": "FR-P0-TABLE",
+          "text": "In an isolated real PowerPoint host, the layout context-menu alignment entry BOTTOM_RIGHT on a fixture 3x3 table (40/40, 100x50 cells) with a 40x20 probe rectangle selected - its center inside cell (2,2) - moves the probe to Left 200 / Top 120 (the cell's bottom-right corner minus the probe size), keeps the probe's dimensions, leaves the table fully untouched (3x3, 100/50 cells, 300x150 at 40/40, texts intact), reports execution, writes no new error-log entry, and tears down cleanly."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "expected": "In an isolated real PowerPoint host, the layout context-menu alignment entry BOTTOM_RIGHT on a fixture 3x3 table (40/40, 100x50 cells) with a 40x20 probe rectangle selected - its center inside cell (2,2) - moves the probe to Left 200 / Top 120 (the cell's bottom-right corner minus the probe size), keeps the probe's dimensions, leaves the table fully untouched (3x3, 100/50 cells, 300x150 at 40/40, texts intact), reports execution, writes no new error-log entry, and tears down cleanly.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/AlignToTableCellFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "align-to-cell"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host office evidence run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

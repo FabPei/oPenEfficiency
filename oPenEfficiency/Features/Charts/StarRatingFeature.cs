@@ -13,17 +13,16 @@ namespace oPenEfficiency.Features
     [FeatureMetadata(
         Id = "BtnStarRating",
         Name = "Star Rating",
-        Tooltip = "Star rating",
+        Tooltip = "Insert a 1-5 star rating",
         IconData = "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.46,13.97L5.82,21L12,17.27Z",
         Color = "#F43F5E",
         Description = "Inserts a sequence of stars representing a rating from 1 to 5. Default is 5 stars, 3 rating.",
-        DetailedHelpText = "### Star Rating\nInserts a customizable star rating indicator (1 to 5 stars, with half-star support) as a native PowerPoint vector group.",
-        Keywords = "rating stars, 5 stars, review indicator, evaluation visual",
+        DetailedHelpText = "### Star Rating\nInserts a customizable star rating indicator (1 to 5 stars, with half-star support filled from left to right) as a native PowerPoint vector group. Right-click for direct 1-of-5 through 5-of-5 presets; a selected rating is updated in place.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class StarRatingFeature
     {
-        public const string StarRatingTag = "oPE_StarRating";
+        public const string StarRatingTag = oPenEfficiency.Core.Services.StarRatingStatePolicy.StarRatingTag;
         private static readonly int SR_Dim = 0xD0D0D0; // Light grey for empty stars
 
         /// <summary>
@@ -88,7 +87,7 @@ namespace oPenEfficiency.Features
                                     existingGroup = parent;
                                 }
                             }
-                            catch { }
+                            catch { /* Optional parent-group detection falls back to the selected star. */ }
                         }
                     }
                 }
@@ -170,13 +169,11 @@ namespace oPenEfficiency.Features
                 int existingCount = items.Count;
 
                 string oldTag = group.AlternativeText ?? "";
-                var oldParts = oldTag.Split('|');
                 int oldIconMode = 0;
                 bool oldHasFrame = false;
-                if (oldParts.Length >= 6)
+                if (oPenEfficiency.Core.Services.StarRatingStatePolicy.TryParseTag(oldTag, out _, out _, out oldIconMode, out oldHasFrame, out _))
                 {
-                    int.TryParse(oldParts[3], out oldIconMode);
-                    oldHasFrame = oldParts[4] == "1";
+                    // parsed through the production codec
                 }
 
                 if (existingCount != starCount || oldIconMode != iconMode || oldHasFrame != hasFrame)
@@ -242,27 +239,26 @@ namespace oPenEfficiency.Features
 
         private static void ApplyStarFill(Shape star, int index, double rating, int fillColorBgr)
         {
-            double starStart = index;      
-            double starEnd = index + 1;
+            oPenEfficiency.Core.Services.StarRatingStatePolicy.ResolveFill(index, rating, out var fillKind, out double fraction);
 
-            if (rating >= starEnd)
+            if (fillKind == oPenEfficiency.Core.Services.StarRatingStatePolicy.FillKind.Full)
             {
                 star.Fill.Solid();
                 star.Fill.ForeColor.RGB = fillColorBgr;
             }
-            else if (rating <= starStart)
+            else if (fillKind == oPenEfficiency.Core.Services.StarRatingStatePolicy.FillKind.Dim)
             {
                 star.Fill.Solid();
                 star.Fill.ForeColor.RGB = SR_Dim;
             }
             else
             {
-                double fraction = rating - starStart;
                 float stopPercent = (float)(fraction * 100);
 
                 try
                 {
-                    star.Fill.TwoColorGradient(Office.MsoGradientStyle.msoGradientHorizontal, 1);
+                    // PowerPoint's "vertical" gradient style moves colors horizontally.
+                    star.Fill.TwoColorGradient(Office.MsoGradientStyle.msoGradientVertical, 1);
                     star.Fill.GradientStops[1].Color.RGB = fillColorBgr;
                     star.Fill.GradientStops[1].Position = 0f;
                     star.Fill.GradientStops.Insert(fillColorBgr, stopPercent / 100f, 1f, 2);
@@ -273,15 +269,14 @@ namespace oPenEfficiency.Features
                 catch
                 {
                     star.Fill.Solid();
-                    star.Fill.ForeColor.RGB = (fraction >= 0.5) ? fillColorBgr : SR_Dim;
+                    star.Fill.ForeColor.RGB = oPenEfficiency.Core.Services.StarRatingStatePolicy.UseSolidFallback(fraction) ? fillColorBgr : SR_Dim;
                 }
             }
         }
 
         private static string FormatStarRatingTag(int count, double rating, int iconMode, bool hasFrame, int colorBgr)
         {
-            string ratingStr = rating.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
-            return $"{StarRatingTag}|{count}|{ratingStr}|{iconMode}|{(hasFrame ? 1 : 0)}|{colorBgr}";
+            return oPenEfficiency.Core.Services.StarRatingStatePolicy.FormatTag(count, rating, iconMode, hasFrame, colorBgr);
         }
     }
 }

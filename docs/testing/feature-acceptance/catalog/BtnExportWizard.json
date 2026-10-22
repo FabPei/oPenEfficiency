@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnExportWizard",
+  "title": "Export Presentation (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnExportWizard-001",
+      "title": "Export Presentation applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Export Presentation (BtnExportWizard) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnExportWizard-002",
+      "title": "Export filename sanitization and overwrite-path comparison pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ExportWizardPolicy.cs",
+        "oPenEfficiency/UI/Wizards/ExportWizard.xaml.cs"
+      ],
+      "expected": "The production rules pin: filename components REPLACE whitespace and invalid characters with underscores (a:b*c -> a_b_c, tabs/spaces to underscores, null becomes an empty component - deliberately different from the Asset Library's remove-and-'unnamed' contract), and the overwrite-confirmation path comparison is a case-insensitive full-path check where blank inputs are never equal and relative segments are normalized. ExportWizard delegates both rules.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ExportWizardPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

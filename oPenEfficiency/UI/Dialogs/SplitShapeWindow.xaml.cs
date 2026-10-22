@@ -7,6 +7,7 @@ using Microsoft.Office.Interop.PowerPoint;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Features;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -46,7 +47,7 @@ namespace oPenEfficiency.UI
                     _originalShape = selection[1];
                 }
             }
-            catch { }
+            catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.CaptureOriginalShape"); }
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -84,7 +85,8 @@ namespace oPenEfficiency.UI
             _isClosing = true;
             if (_originalShape != null && _createdShapes.Count > 0)
             {
-                try { _originalShape.Delete(); } catch { }
+                try { _originalShape.Delete(); }
+                catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.CloseCleanup.DeleteOriginal"); }
             }
         }
 
@@ -128,13 +130,15 @@ namespace oPenEfficiency.UI
                 {
                     foreach (var s in _createdShapes)
                     {
-                        try { s.Delete(); } catch { }
+                        try { s.Delete(); }
+                        catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.Split.DeletePreviewShape"); }
                     }
                     _createdShapes.Clear();
                 }
                 
                 // Hide original
-                try { _originalShape.Visible = Office.MsoTriState.msoFalse; } catch { }
+                try { _originalShape.Visible = Office.MsoTriState.msoFalse; }
+                catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.Split.HideOriginal"); }
 
                 var result = SplitShapeToGridFeature.Execute(_manager, _originalShape, rows, cols, (float)spacing, hLines, vLines);
                 
@@ -157,12 +161,13 @@ namespace oPenEfficiency.UI
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.Split.SelectResult"); }
                 }
                 else
                 {
                     // Restore original if failed
-                    try { _originalShape.Visible = Office.MsoTriState.msoTrue; } catch { }
+                    try { _originalShape.Visible = Office.MsoTriState.msoTrue; }
+                    catch (Exception ex) { ReportOptionalSplitFailure(ex, "SplitShapeWindow.Split.RestoreOriginal"); }
                     MessageBox.Show("Failed to split shape.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
@@ -170,6 +175,13 @@ namespace oPenEfficiency.UI
             {
                 MessageBox.Show("Please enter valid numbers.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
+        }
+
+        private static void ReportOptionalSplitFailure(Exception exception, string context)
+        {
+            if (!ExceptionPolicy.IsExpectedComFailure(exception))
+                ExceptionLogger.Log(exception, context);
+            // Preview cleanup and selection are best-effort; the split result remains recoverable.
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using oPenEfficiency.Utils;
 using System.Collections.Generic;
 using System.Windows;
 using Microsoft.Office.Interop.PowerPoint;
@@ -100,7 +101,7 @@ namespace oPenEfficiency.UI
 
                 if (eligibleCandidates.Count == 0)
                 {
-                    MessageBox.Show("No eligible candidates remaining! Please expand your selection or uncheck 'Exclude previous winners'.", "Lottery", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("No eligible candidates remaining! Please expand your selection or uncheck 'Exclude previous winners'.", "Random Winner Picker", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -128,6 +129,19 @@ namespace oPenEfficiency.UI
             }
         }
 
+        public void PickWinners(int count, bool excludePrevious)
+        {
+            TxtWinnerCount.Text = Math.Max(1, count).ToString();
+            ChkExcludePrevious.IsChecked = excludePrevious;
+            BtnPickWinners_Click(this, new RoutedEventArgs());
+        }
+
+        public void ClearWinnerMarkers()
+        {
+            RemoveArrows();
+            _previousWinnersIds.Clear();
+        }
+
         private void UpdateSelectionState()
         {
             try
@@ -142,7 +156,7 @@ namespace oPenEfficiency.UI
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "LotteryWindow.UpdateSelectionState"); }
         }
 
         private void DrawArrows(List<Shape> winners)
@@ -171,7 +185,7 @@ namespace oPenEfficiency.UI
                     _drawnArrowIds.Add(arrow.Id.ToString());
                 }
             }
-            catch { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "LotteryWindow.DrawArrows"); }
         }
 
         private void RemoveArrows()
@@ -196,11 +210,11 @@ namespace oPenEfficiency.UI
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "LotteryWindow.RemoveArrows.Shape"); }
                 }
                 _drawnArrowIds.Clear();
             }
-            catch { }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "LotteryWindow.RemoveArrows"); }
         }
     }
 }

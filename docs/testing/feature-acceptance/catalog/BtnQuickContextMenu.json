@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnQuickContextMenu",
+  "title": "Quick Context Menu (SettingsAndHelp)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/QuickContextMenuFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/Services/QuickContextMenuService.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnQuickContextMenu-001",
+      "title": "Quick Context Menu applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/QuickContextMenuFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/Services/QuickContextMenuService.cs"
+      ],
+      "expected": "Quick Context Menu (BtnQuickContextMenu) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnQuickContextMenu-001",
+      "title": "Popup entry rule (order, unknown/duplicate filtering, cap) pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/SidebarConfig.cs",
+        "oPenEfficiency/Services/QuickContextMenuService.cs"
+      ],
+      "expected": "The popup's entry rule: configured ids keep their order; unknown ids are dropped against the ordinal known-id set (a differently cased id counts as unknown); only the first duplicate survives; null or whitespace ids are skipped without eating into the cap; a null known-id set disables the unknown filter (historical behavior); the list caps at MaximumItems=12 keeping the first configured items; the six default ids are distinct, within the cap and survive normalization unchanged.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~QuickContextMenuSettingsTests"
+      }
+    },
+    {
+      "id": "QA9-BtnQuickContextMenu-002",
+      "title": "Default popup ids still resolve as user-visible commands (popup crash guard)",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/SidebarConfig.cs",
+        "oPenEfficiency/Services/QuickContextMenuService.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "expected": "Every Quick Context Menu default id (BtnAlignLeft, BtnAlignTop, BtnMatchWidth, BtnMatchHeight, BtnCopyXY, BtnPasteXY) still exists in the current catalog as a user-visible, non-obsolete command - a rename, hide or obsoletion of any of them would otherwise throw KeyNotFoundException when the popup builds its catalog dictionary.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~QuickContextMenuDefaultsResolveInCatalog"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

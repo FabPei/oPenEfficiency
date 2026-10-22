@@ -2,9 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:oPenEfficiency.UI"
-        Title="Arrange Pro" Width="220" SizeToContent="Height"
+        Title="Arrange Shapes Geometrically" Width="260" SizeToContent="Height" MaxHeight="720"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" WindowStartupLocation="Manual"
+        Topmost="False" ShowInTaskbar="False" WindowStartupLocation="Manual"
+        FontFamily="Segoe UI Variable Small, Segoe UI"
         MouseDown="Window_MouseDown">
         <Window.Resources>
         <ResourceDictionary>
@@ -69,13 +70,14 @@
         </Border.Effect>
         <StackPanel>
             <Grid Margin="0,0,0,12">
-                <TextBlock Text="ARRANGE PRO" Style="{StaticResource DialogTitleText}" VerticalAlignment="Center" />
+                <TextBlock Text="Arrange Shapes Geometrically" Style="{StaticResource DialogTitleText}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,28,4" />
                 <Button Style="{StaticResource WindowCloseButton}" Click="Close_Click" />
             </Grid>
 
             <TextBlock Text="Shape Type" Style="{StaticResource LabelStyle}" Margin="0,0,0,2"/>
             <ComboBox x:Name="ShapeTypeCombo" SelectedIndex="0" ItemContainerStyle="{StaticResource ComboBoxItemStyle}" SelectionChanged="Combo_SelectionChanged" Height="32">
                 <ComboBoxItem Content="Circle"/>
+                <ComboBoxItem Content="Arc"/>
                 <ComboBoxItem Content="Triangle"/>
                 <ComboBoxItem Content="Square"/>
                 <ComboBoxItem Content="Pentagon"/>
@@ -101,16 +103,40 @@
                 <Slider x:Name="AngleSlider" Minimum="0" Maximum="360" Value="0" VerticalAlignment="Center" ValueChanged="OnSettingChanged"/>
             </DockPanel>
 
+            <StackPanel x:Name="ArcSpanPanel" IsEnabled="False" Opacity="0.45">
+                <TextBlock Text="Arc Span (Degrees)" Style="{StaticResource LabelStyle}"/>
+                <DockPanel>
+                    <TextBox x:Name="ArcSpanBox" Text="{Binding Value, ElementName=ArcSpanSlider, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0}}" Width="40" DockPanel.Dock="Right" Margin="8,0,0,0" Style="{StaticResource NumericInput}" Height="24"/>
+                    <Slider x:Name="ArcSpanSlider" Minimum="30" Maximum="360" Value="270" VerticalAlignment="Center" ValueChanged="OnSettingChanged"/>
+                </DockPanel>
+            </StackPanel>
+
             <TextBlock Text="Center Point" Style="{StaticResource LabelStyle}"/>
-            <StackPanel Orientation="Horizontal">
+            <WrapPanel>
                 <RadioButton x:Name="CenterSelection" Content="Selection" IsChecked="True" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Margin="0,0,15,0" Checked="Radio_Checked"/>
                 <RadioButton x:Name="CenterSlide" Content="Slide" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Checked="Radio_Checked"/>
-            </StackPanel>
+                <RadioButton x:Name="CenterFirstShape" Content="First Shape" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Margin="0,4,15,0" Checked="Radio_Checked"/>
+                <RadioButton x:Name="CenterLastShape" Content="Last Shape" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Margin="0,4,0,0" Checked="Radio_Checked"/>
+            </WrapPanel>
+
+            <TextBlock Text="Object Order" Style="{StaticResource LabelStyle}"/>
+            <ComboBox x:Name="OrderCombo" SelectedIndex="0" ItemContainerStyle="{StaticResource ComboBoxItemStyle}" SelectionChanged="OrderCombo_SelectionChanged" Height="32">
+                <ComboBoxItem Content="Selection Order"/>
+                <ComboBoxItem Content="Left to Right"/>
+                <ComboBoxItem Content="Top to Bottom"/>
+            </ComboBox>
+
+            <TextBlock Text="Direction" Style="{StaticResource LabelStyle}"/>
+            <ComboBox x:Name="DirectionCombo" SelectedIndex="0" ItemContainerStyle="{StaticResource ComboBoxItemStyle}" SelectionChanged="OrderCombo_SelectionChanged" Height="32">
+                <ComboBoxItem Content="Clockwise"/>
+                <ComboBoxItem Content="Counter-clockwise"/>
+            </ComboBox>
 
             <StackPanel Orientation="Horizontal" Margin="0,15,0,0">
                 <CheckBox x:Name="RotateToCenterCheck" Content="Rotate to Center" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Margin="0,0,15,0" IsChecked="False" Checked="Check_Changed" Unchecked="Check_Changed"/>
                 <CheckBox x:Name="FillShapeCheck" Content="Fill Shape" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" IsChecked="True" Checked="Check_Changed" Unchecked="Check_Changed"/>
             </StackPanel>
+            <CheckBox x:Name="AvoidOverlapCheck" Content="Avoid Overlap" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="11" Margin="0,8,0,0" IsChecked="True" Checked="Check_Changed" Unchecked="Check_Changed"/>
         </StackPanel>
     </Border>
 </Window>

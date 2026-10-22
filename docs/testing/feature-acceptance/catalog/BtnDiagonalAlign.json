@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnDiagonalAlign",
+  "title": "Align Diagonally (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnDiagonalAlign-001",
+      "title": "Align Diagonally applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TextFormatting.cs"
+      ],
+      "expected": "Align Diagonally (BtnDiagonalAlign) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnDiagonalAlign-002",
+      "title": "Diagonal projection, ordering and anchor placement are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/DiagonalPlacementPolicy.cs",
+        "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+        "oPenEfficiency/UI/Toolbars/DiagonalAlignToolbar.xaml.cs",
+        "oPenEfficiency.Core.Tests/DiagonalPlacementPolicyTests.cs"
+      ],
+      "expected": "Align Diagonally orders the selection by the projection of every shape's original center onto the direction vector of the chosen angle (stable, so equal projections keep selection order), spaces the line evenly over the projected span with the historical degenerate fallback (average extent along the direction when the span-derived spacing collapses below 0.01 pt), keeps the chosen anchor (first projected shape, last projected shape or the selection center with the middle of the ordered line in place) exactly where it was, and returns every shape's new top-left in selection order; the toolbar path applies the user-set spacing through the same projection and anchor arithmetic.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~DiagonalPlacementPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnDiagonalAlign-003",
+      "title": "Align Diagonally at 45 degrees with the first shape anchored in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+        "eng/Smoke-PowerPointDiagonalAlign.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Diagonally at 45 degrees (first-shape anchor) leaves every shape center on the line through the original first center at the requested angle (perpendicular distance <= 0.5 pt), the consecutive centers are equally spaced (gap delta <= 0.5 pt), the originally extreme-projection center is preserved unchanged, the shape count is unchanged, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDiagonalAlign.ps1",
+        "arguments": [
+          "-Mode",
+          "first"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnDiagonalAlign-004",
+      "title": "Align Diagonally at 30 degrees with the selection center anchored in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+        "eng/Smoke-PowerPointDiagonalAlign.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Diagonally at 30 degrees (center anchor) leaves every shape center on the line through the original centroid at the requested angle (perpendicular distance <= 0.5 pt), the consecutive centers are equally spaced (gap delta <= 0.5 pt), the centroid of all centers is preserved within 0.5 pt, the shape count is unchanged, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDiagonalAlign.ps1",
+        "arguments": [
+          "-Mode",
+          "center"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnDiagonalAlign-005",
+      "title": "Align horizontally at 0 degrees with the last shape anchored in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Alignment/DiagonalAlignFeature.cs",
+        "eng/Smoke-PowerPointDiagonalAlign.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Align Diagonally at 0 degrees (last-shape anchor, the horizontal special case) leaves every shape center on the horizontal line through the original last center (perpendicular distance <= 0.5 pt), the consecutive centers are equally spaced (gap delta <= 0.5 pt), the originally extreme-projection center is preserved unchanged, the shape count is unchanged, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDiagonalAlign.ps1",
+        "arguments": [
+          "-Mode",
+          "last"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

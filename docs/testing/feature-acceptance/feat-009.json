@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "featureId": "FEAT-009",
+  "title": "Agenda Manager / Creator",
+  "sourcePaths": [
+    "oPenEfficiency/Services/Agenda*",
+    "oPenEfficiency/UI/Wizards/AgendaWizard*",
+    "oPenEfficiency/UI/Dialogs/SaveAgendaLayoutWindow*",
+    "oPenEfficiency.Command.Tests/StandardAgendaSampleTests.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "AG-SAMPLE-001",
+      "title": "Built-in Standard Agenda contract",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*AgendaLayoutStore.cs",
+        "*AgendaLayoutConfig.cs",
+        "*StandardAgendaSampleTests.cs"
+      ],
+      "expected": "The built-in Standard Agenda remains available on a clean profile, stays inside a 16:9 slide, and is not persisted/duplicated as user data.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~StandardAgendaSampleTests"
+      }
+    },
+    {
+      "id": "AG-TIME-001",
+      "title": "Rendered time slots are start to end",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*AgendaPlanningService.cs",
+        "*AgendaGenerationService.cs",
+        "*AgendaWizard*"
+      ],
+      "expected": "A 15-minute item starting at 09:00 renders exactly 09:00 - 09:15 and consecutive rows remain monotonic.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~StandardAgendaSampleTests"
+      }
+    },
+    {
+      "id": "AG-DEFAULT-META-001",
+      "title": "Standard Agenda has no unexplained page-number column",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*AgendaLayoutStore.cs",
+        "*AgendaGenerationService.cs"
+      ],
+      "expected": "The default Standard Agenda does not render unlabeled page-number metadata; custom layouts can still opt into page references.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Command.Tests/oPenEfficiency.Command.Tests.csproj",
+        "filter": "FullyQualifiedName~StandardAgendaSampleTests"
+      }
+    },
+    {
+      "id": "AG-UPDATE-001",
+      "title": "Agenda update preserves content ownership",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*AgendaGenerationService.cs",
+        "*AgendaWizard*"
+      ],
+      "expected": "Rename/reorder/add/update keeps normal content slides, avoids duplication/loss, and remains editable after save/reopen.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "agenda-update-roundtrip"
+        ]
+      }
+    },
+    {
+      "id": "AG-VISUAL-001",
+      "title": "Standard Agenda visual sanity",
+      "tier": "visual-review",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Agenda*"
+      ],
+      "expected": "The generated sample reads as a normal business agenda: no stray right-edge numbers, correct time direction, clear hierarchy and restrained current-item emphasis.",
+      "ownerSteps": [
+        "Generate the built-in Standard Agenda in a 16:9 deck with at least three main items and two sub-items.",
+        "Inspect the right metadata area, time ranges, hierarchy and current-item highlight.",
+        "Save, reopen and confirm the same visual structure."
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

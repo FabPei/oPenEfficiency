@@ -4,17 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using System.IO;
+using System.Runtime.InteropServices;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using Microsoft.Office.Tools;
 using oPenEfficiency.Features;
 using oPenEfficiency.Utils;
 using oPenEfficiency.UI;
+using oPenEfficiency.Services;
 
 namespace oPenEfficiency
 {
-    public partial class ThisAddIn
+    public partial class ThisAddIn : oPenEfficiency.UI.Panels.ISidebarHost
     {
+        private static bool _wpfDispatcherHandlerRegistered;
+
+        PowerPoint.Application oPenEfficiency.UI.Panels.ISidebarHost.Application => this.Application;
+
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         public static extern bool GetCursorPos(out POINT lpPoint);
 
@@ -25,41 +31,71 @@ namespace oPenEfficiency
             public int Y;
         }
 
-        // Dictionary to track task panes per window (hWnd -> TaskPane)
-        private Dictionary<int, CustomTaskPane> _windowTaskPanes = new Dictionary<int, CustomTaskPane>();
+        private oPenEfficiency.Services.SidebarPaneCoordinator _sidebarPanes;
         private CustomTaskPane _assetManagerTaskPane;
         private CustomTaskPane _themeColorTaskPane;
         private oPenEfficiency.UI.ThermometerAdorner _thermometerAdorner;
         private PowerPoint.Shape _trackedShape;
         private oPenEfficiency.Services.SnapToObjectsManager _snapManager;
         private oPenEfficiency.Services.SnapToGridManager _snapGridManager;
+        private oPenEfficiency.Services.GanttInteractionCoordinator _ganttInteractionCoordinator;
+        private oPenEfficiency.Utils.Win32MouseHook _sharedMouseHook;
+        private oPenEfficiency.Services.QuickContextMenuService _quickContextMenu;
+        private oPenEfficiency.Services.ExternalAddInPerformanceModeService _performanceMode;
+        private oPenEfficiency.UI.Toolbars.GanttResizeHandlesWindow _ganttResizeHandles;
 
-        private System.Windows.Forms.Timer _selectionDebounceTimer;
-        private PowerPoint.Selection _pendingSelection;
-        private System.Windows.Forms.Timer _textEditPollingTimer;
+        private oPenEfficiency.Services.SelectionUpdateCoordinator _selectionUpdates;
+        private System.Windows.Threading.DispatcherTimer _textEditPollingTimer;
+        private System.Windows.Threading.DispatcherTimer _startupDeferredTimer;
 
         private float _dpiX = 96f;
         private float _dpiY = 96f;
+        private bool _uiServicesInitialized;
+        private oPenEfficiency.UI.Lifecycle.ModelessUiCoordinator _modelessUi;
+
+        internal bool IsPerformanceModeEnabled => _performanceMode?.IsEnabled == true;
+
+        internal bool SetPerformanceModeEnabled(bool enabled)
+        {
+            if (_performanceMode == null)
+                _performanceMode = oPenEfficiency.Services.ExternalAddInPerformanceModeService.For(this.Application);
+            return _performanceMode.SetEnabled(enabled);
+        }
+
+        internal void ConfigurePerformanceMode()
+        {
+            if (_performanceMode == null)
+                _performanceMode = oPenEfficiency.Services.ExternalAddInPerformanceModeService.For(this.Application);
+            var window = new oPenEfficiency.UI.Dialogs.ExternalAddInPerformanceModeWindow(_performanceMode);
+            new System.Windows.Interop.WindowInteropHelper(window).Owner = (IntPtr)this.Application.HWND;
+            window.ShowDialog();
+        }
+
+        void oPenEfficiency.UI.Panels.ISidebarHost.ConfigurePerformanceMode() => ConfigurePerformanceMode();
 
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
-            // Register global exception handlers for unhandled crashes
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            
+            // Build marker: names the assembly file this PowerPoint session actually loaded
+            // (diagnostic only, never throws; see %TEMP%\oPenEfficiency\startup_YYYYMMDD.log).
+            StartupBuildLog.Record(typeof(ThisAddIn).Assembly, "oPenEfficiency");
+
             using (System.Drawing.Graphics g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
             {
                 _dpiX = g.DpiX;
                 _dpiY = g.DpiY;
             }
 
-            _selectionDebounceTimer = new System.Windows.Forms.Timer();
-            _selectionDebounceTimer.Interval = 75;
-            _selectionDebounceTimer.Tick += SelectionDebounceTimer_Tick;
+            _modelessUi = new oPenEfficiency.UI.Lifecycle.ModelessUiCoordinator();
+            _sidebarPanes = new oPenEfficiency.Services.SidebarPaneCoordinator(
+                pane => this.CustomTaskPanes.Remove(pane));
+            _selectionUpdates = new oPenEfficiency.Services.SelectionUpdateCoordinator(
+                75,
+                ProcessCurrentSelectionChange);
 
-            _textEditPollingTimer = new System.Windows.Forms.Timer();
-            _textEditPollingTimer.Interval = 200;
-            _textEditPollingTimer.Tick += TextEditPollingTimer_Tick;
+            _textEditPollingTimer = NewIdleDispatcherTimer(200, TextEditPollingTimer_Tick);
+
+            _startupDeferredTimer = NewIdleDispatcherTimer(1200, StartupDeferredTimer_Tick);
 
             string logPath = Path.Combine(Path.GetTempPath(), $"oPenEfficiency_startup_{DateTime.Now:yyyyMMdd_HHmmss}.log");
             try
@@ -77,6 +113,7 @@ namespace oPenEfficiency
                     var config = oPenEfficiency.JsonService.Load<oPenEfficiency.Models.SidebarConfig>("sidebar_config.json");
                     string theme = config?.AppTheme ?? "Dark";
                     oPenEfficiency.Services.ThemeManager.ApplyTheme(theme);
+                    oPenEfficiency.Services.ThemeManager.ApplyFontFamily(config?.AppFontFamily);
                     File.AppendAllText(logPath, $"Theme {theme} applied\n");
                 }
                 catch (Exception ex)
@@ -88,20 +125,9 @@ namespace oPenEfficiency
                 this.Application.WindowSelectionChange += Application_WindowSelectionChange;
                 this.Application.PresentationClose += Application_PresentationClose;
                 this.Application.WindowActivate += Application_WindowActivate;
-
-                // Create sidebar for the first window
-                CreateSidebarForActiveWindow();
-
-                ShortcutManager.StartHook();
-                File.AppendAllText(logPath, "Shortcut hook started\n");
-
-                File.AppendAllText(logPath, "Event handlers and managers initialized\n");
-
-                _snapManager = new oPenEfficiency.Services.SnapToObjectsManager(new PowerPointManager(this.Application));
-                File.AppendAllText(logPath, "SnapToObjectsManager initialized\n");
-
-                _snapGridManager = new oPenEfficiency.Services.SnapToGridManager(new PowerPointManager(this.Application));
-                File.AppendAllText(logPath, "SnapToGridManager initialized\n");
+                this.Application.WindowBeforeRightClick += Application_WindowBeforeRightClick;
+                _startupDeferredTimer.Start();
+                File.AppendAllText(logPath, "Deferred UI initialization scheduled\n");
 
                 File.AppendAllText(logPath, "Startup completed successfully.\n");
             }
@@ -110,8 +136,8 @@ namespace oPenEfficiency
                 File.AppendAllText(logPath, $"FATAL ERROR during startup: {ex}\n");
                 File.AppendAllText(logPath, $"Stack trace: {ex.StackTrace}\n");
                 System.Windows.Forms.MessageBox.Show(
-                    "Error starting oPenEfficiency Add-in. Check " + logPath + " for details.",
-                    "oPenEfficiency Error",
+                    "Error starting the openEfficiency add-in. Check " + logPath + " for details.",
+                    "openEfficiency Error",
                     System.Windows.Forms.MessageBoxButtons.OK,
                     System.Windows.Forms.MessageBoxIcon.Error);
             }
@@ -125,11 +151,13 @@ namespace oPenEfficiency
         /// </summary>
         private static void EnsureWpfApplication()
         {
+            var app = System.Windows.Application.Current;
+
             // Check if WPF Application already exists
-            if (System.Windows.Application.Current == null)
+            if (app == null)
             {
                 // Create a new WPF Application instance for this PowerPoint instance
-                var app = new System.Windows.Application();
+                app = new System.Windows.Application();
                 app.ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
 
                 // Load base resources
@@ -146,26 +174,77 @@ namespace oPenEfficiency
                     System.Diagnostics.Debug.WriteLine($"Error loading global resources: {ex.Message}");
                 }
             }
-        }
 
-        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            if (e.ExceptionObject is Exception ex)
+            if (!_wpfDispatcherHandlerRegistered)
             {
-                ExceptionLogger.Log(ex, "Global.UnhandledException", showErrorUI: true);
+                app.DispatcherUnhandledException += WpfApplication_DispatcherUnhandledException;
+                _wpfDispatcherHandlerRegistered = true;
             }
         }
 
-        private void Wpf_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        // Set at the start of ThisAddIn_Shutdown. Static because the WPF dispatcher handler
+        // below is static; one add-in instance per host process, so one flag is correct.
+        private static volatile bool _shuttingDown;
+
+        private static void WpfApplication_DispatcherUnhandledException(
+            object sender,
+            System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            ExceptionLogger.Log(e.Exception, "WPF.DispatcherCrash", showErrorUI: true);
-            e.Handled = true; // Prevent the app from crashing entirely if possible
+            e.Handled = true;
+            // Shutdown-time ThreadAbortException is PowerPoint tearing the add-in down while
+            // deferred UI initialization is still running (QA-P0 batch C finding): it is not a
+            // feature failure and never user-facing, so it must reach neither the error log
+            // nor the message box.
+            if (_shuttingDown && e.Exception is System.Threading.ThreadAbortException) return;
+            ExceptionLogger.Log(e.Exception, "ThisAddIn.WpfDispatcherUnhandledException");
+            try
+            {
+                System.Windows.MessageBox.Show(
+                    Services.Commands.CommandRegistry.UserVisibleFailureMessage,
+                    "openEfficiency",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThisAddIn.WpfDispatcherUnhandledException.ShowError");
+            }
         }
-        
+
+        /// <summary>
+        /// QA-P0 diagnostic switch. When the isolated lifecycle harness sets
+        /// OPE_QA_SKIP_WINDOW_ACTIVATE_SIDEBAR=1, the synchronous pane creation inside the
+        /// WindowActivate callback is skipped so the harness can measure whether that path
+        /// causes the native PowerPoint exit. It is not a product setting: without the
+        /// variable the production behavior is unchanged.
+        /// </summary>
+        private static readonly bool SkipSidebarOnWindowActivate = string.Equals(
+            Environment.GetEnvironmentVariable("OPE_QA_SKIP_WINDOW_ACTIVATE_SIDEBAR"),
+            "1",
+            StringComparison.Ordinal);
+
         private void Application_WindowActivate(PowerPoint.Presentation Pres, PowerPoint.DocumentWindow Wn)
         {
             try
             {
+                CloseGanttResizeHandles();
+
+                if (!_uiServicesInitialized)
+                {
+                    return;
+                }
+
+                PruneClosedSidebarPanes();
+                if (SkipSidebarOnWindowActivate)
+                {
+                    return;
+                }
+
+                // QA-P0 note: a deferred variant of this call (BeginInvoke at ApplicationIdle
+                // and at Normal priority) was measured in batches 16 and 17. It did not reduce
+                // the native crash rate against the synchronous call (0/10 and 3/10 against
+                // 4/10 and 6/10 fully green) and it starved the pane creation, so the
+                // synchronous call is kept until there is evidence for a deferral.
                 CreateSidebarForActiveWindow();
             }
             catch (Exception ex)
@@ -174,23 +253,51 @@ namespace oPenEfficiency
             }
         }
 
+        /// <summary>
+        /// Creates a timer that fires from the WPF dispatcher at idle priority. A WinForms
+        /// WM_TIMER callback is delivered by the Win32 message pump, which also runs inside
+        /// PowerPoint's native and externally driven COM calls; the callback then re-enters
+        /// Office's automation layer while that call is still on the stack and faulted
+        /// PowerPoint natively (ppcore.dll, 0xc0000005).
+        /// </summary>
+        private static System.Windows.Threading.DispatcherTimer NewIdleDispatcherTimer(
+            int intervalMilliseconds,
+            EventHandler tickHandler)
+        {
+            var timer = new System.Windows.Threading.DispatcherTimer(
+                System.Windows.Threading.DispatcherPriority.ApplicationIdle)
+            {
+                Interval = TimeSpan.FromMilliseconds(intervalMilliseconds)
+            };
+            timer.Tick += tickHandler;
+            return timer;
+        }
+
+        private void StartupDeferredTimer_Tick(object sender, EventArgs e)
+        {
+            _startupDeferredTimer?.Stop();
+            // Cancel the deferred init when shutdown has already begun so the abort cannot
+            // land inside EnsureUiServicesInitialized at all (QA-P0 batch C finding).
+            if (_shuttingDown) return;
+            EnsureUiServicesInitialized();
+        }
+
         private void Application_WindowSelectionChange(PowerPoint.Selection Sel)
         {
-            _pendingSelection = Sel;
-            _selectionDebounceTimer?.Stop();
-            _selectionDebounceTimer?.Start();
+            // Never retain PowerPoint's event Selection RCW. During native chart creation the
+            // object can be transient and invalid by the time the debounce timer fires.
+            _selectionUpdates?.Schedule();
         }
 
         private int GetActiveWindowHWnd()
         {
-            try
+            if (ExceptionPolicy.TryComProbe(
+                () => this.Application.ActiveWindow?.HWND ?? 0,
+                out int windowHandle))
             {
-                if (this.Application.ActiveWindow != null)
-                {
-                    return this.Application.ActiveWindow.HWND;
-                }
+                return windowHandle;
             }
-            catch { }
+
             return 0;
         }
 
@@ -199,7 +306,7 @@ namespace oPenEfficiency
             int hWnd = GetActiveWindowHWnd();
             if (hWnd == 0) return null;
 
-            if (_windowTaskPanes.TryGetValue(hWnd, out var taskPane))
+            if (_sidebarPanes != null && _sidebarPanes.TryGet(hWnd, out var taskPane))
             {
                 return taskPane;
             }
@@ -211,86 +318,123 @@ namespace oPenEfficiency
             int hWnd = GetActiveWindowHWnd();
             if (hWnd == 0) return;
 
-            // 1. Cleanup dead entries from our tracking dictionary
-            var deadHwnds = _windowTaskPanes.Where(kvp => {
-                try { return kvp.Value == null || kvp.Value.Window == null; }
-                catch { return true; }
-            }).Select(kvp => kvp.Key).ToList();
-            
-            foreach (var dead in deadHwnds) _windowTaskPanes.Remove(dead);
-
-            // 2. Check if we already track a pane for THIS specific window handle
-            if (_windowTaskPanes.TryGetValue(hWnd, out var existingPane))
+            // Check if we already have a task pane for this window
+            if (_sidebarPanes != null && _sidebarPanes.TryGet(hWnd, out var existingPane))
             {
-                try
-                {
-                    // Ensure it's still healthy
-                    if (existingPane.Window != null) return;
-                }
-                catch { _windowTaskPanes.Remove(hWnd); }
+                return;
             }
 
-            // 3. Defensive check: Check the GLOBAL collection for ANY pane attached to this window
-            // This prevents duplicates if PowerPoint reused a window but changed the HWND or if events desynced
-            foreach (CustomTaskPane pane in this.CustomTaskPanes)
-            {
-                try
-                {
-                    if (pane.Title == "oPen Efficiency" && pane.Window != null)
-                    {
-                        // Match by Window equality (Interop objects)
-                        if (pane.Window.Equals(this.Application.ActiveWindow))
-                        {
-                            _windowTaskPanes[hWnd] = pane;
-                            return;
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            // 4. Create new task pane only if definitely not found
+            // Create new task pane for this window
             var ppManager = new PowerPointManager(this.Application);
             var host = new SidebarTaskPaneHost();
-            var newTaskPane = CustomTaskPanes.Add(host, "oPen Efficiency");
-            newTaskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
-            newTaskPane.Width = 300;
-            newTaskPane.Visible = true;
+            var taskPane = CustomTaskPanes.Add(host, "openEfficiency Sidebar");
+            taskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
+            taskPane.Width = 300;
+            taskPane.Visible = true;
 
-            _windowTaskPanes[hWnd] = newTaskPane;
+            _sidebarPanes.Add(hWnd, taskPane);
 
             if (host.Sidebar != null)
+            {
                 host.Sidebar.SetManager(ppManager);
+                host.Sidebar.SetHost(this);
+            }
         }
+
+        private void EnsureUiServicesInitialized()
+        {
+            if (_uiServicesInitialized)
+            {
+                return;
+            }
+
+            try
+            {
+                CreateSidebarForActiveWindow();
+                ShortcutManager.StartHook(IsEligibleShortcutWindow);
+
+                // One shared WH_MOUSE thread hook for all mouse-driven services (PQ-016);
+                // created here and disposed last during shutdown.
+                if (_sharedMouseHook == null)
+                {
+                    _sharedMouseHook = new oPenEfficiency.Utils.Win32MouseHook();
+                }
+
+                if (_quickContextMenu == null)
+                {
+                    _quickContextMenu = new oPenEfficiency.Services.QuickContextMenuService(this.Application);
+                    _sharedMouseHook.LeftButtonDown += SharedMouseHook_CloseQuickContextMenu;
+                }
+
+                if (_snapManager == null)
+                {
+                    _snapManager = new oPenEfficiency.Services.SnapToObjectsManager(
+                        new PowerPointManager(this.Application), _sharedMouseHook);
+                }
+
+                if (_snapGridManager == null)
+                {
+                    _snapGridManager = new oPenEfficiency.Services.SnapToGridManager(
+                        new PowerPointManager(this.Application), _sharedMouseHook);
+                }
+
+                if (_ganttInteractionCoordinator == null)
+                {
+                    _ganttInteractionCoordinator = new oPenEfficiency.Services.GanttInteractionCoordinator(
+                        new PowerPointManager(this.Application),
+                        HandleGanttLeftMouseDown,
+                        GlobalMouseHook_RightButtonUp,
+                        _sharedMouseHook);
+                }
+
+                _uiServicesInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                // A ThreadAbortException that arrives while the host is shutting down is
+                // teardown, not a feature failure: the abort rethrows after the catch anyway,
+                // so suppressing the log entry loses nothing (QA-P0 batch C finding).
+                if (!(_shuttingDown && ex is System.Threading.ThreadAbortException))
+                {
+                    ExceptionLogger.Log(ex, "ThisAddIn.EnsureUiServicesInitialized");
+                }
+            }
+        }
+
+        private bool IsEligibleShortcutWindow()
+        {
+            if (!_uiServicesInitialized || this.Application == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                return this.Application.ActivePresentation != null &&
+                       this.Application.ActiveWindow != null &&
+                       this.Application.ActiveWindow.HWND != 0 &&
+                       GetForegroundWindow() ==
+                           (IntPtr)this.Application.ActiveWindow.HWND;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThisAddIn.IsEligibleShortcutWindow");
+                return false;
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
 
         private void Application_PresentationClose(PowerPoint.Presentation Pres)
         {
             try
             {
-                // Prevent deleting the active window's task pane if a background presentation is closing
-                PowerPoint.Presentation activePres = null;
-                try { activePres = this.Application.ActivePresentation; } catch { }
-
-                if (activePres != null)
-                {
-                    try
-                    {
-                        // If the presentation closing is not the currently active one, ignore.
-                        if (Pres.Name != activePres.Name) return;
-                    }
-                    catch { }
-                }
-
-                int hWnd = GetActiveWindowHWnd();
-                if (hWnd != 0 && _windowTaskPanes.TryGetValue(hWnd, out var taskPane))
-                {
-                    try
-                    {
-                        this.CustomTaskPanes.Remove(taskPane);
-                    }
-                    catch { }
-                    _windowTaskPanes.Remove(hWnd);
-                }
+                HashSet<int> closingWindowHandles = GetPresentationWindowHandles(Pres);
+                if (closingWindowHandles.Contains(GetActiveWindowHWnd())) CloseGanttResizeHandles();
+                foreach (int windowHandle in closingWindowHandles)
+                    _sidebarPanes?.Remove(windowHandle);
+                PruneClosedSidebarPanes();
             }
             catch (Exception ex)
             {
@@ -298,12 +442,105 @@ namespace oPenEfficiency
             }
         }
 
-        private void SelectionDebounceTimer_Tick(object sender, EventArgs e)
+        private HashSet<int> GetPresentationWindowHandles(PowerPoint.Presentation presentation)
         {
-            _selectionDebounceTimer?.Stop();
-            if (_pendingSelection != null)
+            var handles = new HashSet<int>();
+            PowerPoint.DocumentWindows windows = null;
+            try
             {
-                ProcessSelectionChange(_pendingSelection);
+                windows = presentation?.Windows;
+                if (windows == null) return handles;
+                for (int index = 1; index <= windows.Count; index++)
+                {
+                    PowerPoint.DocumentWindow window = null;
+                    try
+                    {
+                        window = windows[index];
+                        if (window.HWND != 0) handles.Add(window.HWND);
+                    }
+                    catch (COMException)
+                    {
+                        // A closing document window can disappear during enumeration.
+                    }
+                    catch (InvalidComObjectException)
+                    {
+                        // A closing document window can disappear during enumeration.
+                    }
+                    finally
+                    {
+                        if (window != null)
+                            ExceptionPolicy.RunBestEffortComCleanup(
+                                () => Marshal.ReleaseComObject(window),
+                                "ThisAddIn.GetPresentationWindowHandles.ReleaseWindow");
+                    }
+                }
+            }
+            catch (COMException)
+            {
+                // Presentation.Windows may already be disconnected when the close event arrives.
+            }
+            catch (InvalidComObjectException)
+            {
+                // Presentation.Windows may already be disconnected when the close event arrives.
+            }
+            finally
+            {
+                if (windows != null)
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(windows),
+                        "ThisAddIn.GetPresentationWindowHandles.ReleaseWindows");
+            }
+            return handles;
+        }
+
+        private void PruneClosedSidebarPanes()
+        {
+            if (_sidebarPanes == null || this.Application == null) return;
+            var liveHandles = new HashSet<int>();
+            PowerPoint.DocumentWindows windows = null;
+            try
+            {
+                windows = this.Application.Windows;
+                for (int index = 1; index <= windows.Count; index++)
+                {
+                    PowerPoint.DocumentWindow window = null;
+                    try
+                    {
+                        window = windows[index];
+                        if (window.HWND != 0) liveHandles.Add(window.HWND);
+                    }
+                    catch (COMException)
+                    {
+                        // PowerPoint can remove a window while activation events are dispatched.
+                    }
+                    catch (InvalidComObjectException)
+                    {
+                        // PowerPoint can remove a window while activation events are dispatched.
+                    }
+                    finally
+                    {
+                        if (window != null)
+                            ExceptionPolicy.RunBestEffortComCleanup(
+                                () => Marshal.ReleaseComObject(window),
+                                "ThisAddIn.PruneClosedSidebarPanes.ReleaseWindow");
+                    }
+                }
+                _sidebarPanes.Prune(liveHandles);
+            }
+            catch (COMException)
+            {
+                // Keep existing panes when the live-window probe is temporarily unavailable.
+            }
+            catch (InvalidComObjectException)
+            {
+                // Keep existing panes when the live-window probe is temporarily unavailable.
+            }
+            finally
+            {
+                if (windows != null)
+                    ExceptionPolicy.RunBestEffortComCleanup(
+                        () => Marshal.ReleaseComObject(windows),
+                        "ThisAddIn.PruneClosedSidebarPanes.ReleaseWindows");
             }
         }
 
@@ -324,11 +561,17 @@ namespace oPenEfficiency
                     return;
                 }
 
-                // When text is selected, the ShapeRange contains the parent shape
-                // This is more reliable than trying to get the parent from TextRange
-                if (sel.ShapeRange != null && sel.ShapeRange.Count > 0)
+                // Protect against COMException when accessing ShapeRange during text selection
+                PowerPoint.ShapeRange shapeRange = null;
+                try { shapeRange = sel.ShapeRange; }
+                catch (COMException)
                 {
-                    var parentShape = sel.ShapeRange[1];
+                    // Text selections do not always expose ShapeRange.
+                }
+
+                if (shapeRange != null && shapeRange.Count > 0)
+                {
+                    var parentShape = shapeRange[1];
                     var taskPane = GetSidebarForActiveWindow();
                     var sidebar = (taskPane?.Control as SidebarTaskPaneHost)?.Sidebar;
                     if (sidebar != null)
@@ -343,10 +586,99 @@ namespace oPenEfficiency
             }
         }
 
+        private void ProcessCurrentSelectionChange()
+        {
+            PowerPoint.DocumentWindow activeWindow = null;
+            PowerPoint.Selection selection = null;
+            try
+            {
+                activeWindow = this.Application?.ActiveWindow;
+                selection = activeWindow?.Selection;
+                if (selection != null)
+                {
+                    ProcessSelectionChange(selection);
+                }
+            }
+            catch (COMException ex)
+            {
+                // PowerPoint can still be finalizing a native object (notably a chart) when the
+                // deferred refresh runs. The next selection event retries with a fresh RCW.
+                ExceptionLogger.Log(ex, "ThisAddIn.ProcessCurrentSelectionChange.TransientSelection");
+            }
+            catch (InvalidComObjectException ex)
+            {
+                ExceptionLogger.Log(ex, "ThisAddIn.ProcessCurrentSelectionChange.InvalidSelection");
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "ThisAddIn.ProcessCurrentSelectionChange");
+            }
+        }
+
         private void ProcessSelectionChange(PowerPoint.Selection Sel)
         {
             try
             {
+                // Auto-close GanttToolbar if selection changes away from Gantt
+                if (_ganttToolbar != null)
+                {
+                    bool stillOnGantt = false;
+                    try
+                    {
+                        if (Sel.Type == PowerPoint.PpSelectionType.ppSelectionShapes && Sel.ShapeRange.Count == 1)
+                        {
+                            stillOnGantt = PowerPointShapeManager.IsGanttShape(Sel.ShapeRange[1]);
+                        }
+                    }
+                    catch (COMException)
+                    {
+                        // Selection can become stale while PowerPoint dispatches the event.
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.GanttToolbarProbe");
+                    }
+
+                    if (!stillOnGantt)
+                    {
+                        try { _ganttToolbar.Close(); }
+                        catch (InvalidOperationException)
+                        {
+                            // The modeless toolbar is already closing or closed.
+                        }
+                        catch (Exception ex)
+                        {
+                            ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.CloseGanttToolbar");
+                        }
+                        _ganttToolbar = null;
+                    }
+                }
+
+                if (_ganttResizeHandles != null)
+                {
+                    bool stillOnGantt = false;
+                    try
+                    {
+                        if (Sel.Type == PowerPoint.PpSelectionType.ppSelectionShapes && Sel.ShapeRange.Count == 1)
+                        {
+                            stillOnGantt = PowerPointShapeManager.IsGanttShape(Sel.ShapeRange[1]);
+                        }
+                    }
+                    catch (COMException)
+                    {
+                        // Selection can become stale while PowerPoint dispatches the event.
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.GanttResizeProbe");
+                    }
+
+                    if (!stillOnGantt)
+                    {
+                        CloseGanttResizeHandles();
+                    }
+                }
+
                 // Forward to sidebar for ShapeSizePanel live update
                 var taskPane = GetSidebarForActiveWindow();
                 var sidebar = (taskPane?.Control as SidebarTaskPaneHost)?.Sidebar;
@@ -364,6 +696,24 @@ namespace oPenEfficiency
                 if (Sel.Type == PowerPoint.PpSelectionType.ppSelectionText)
                 {
                     _textEditPollingTimer?.Start();
+
+                    try
+                    {
+                        if (Sel.ShapeRange != null && Sel.ShapeRange.Count == 1)
+                        {
+                            var textShape = Sel.ShapeRange[1];
+                            var inlineLinkAtSelection = oPenEfficiency.Features.Utilities.InsertExcelValueFeature.GetInlineAtSelection(Sel);
+                            if (inlineLinkAtSelection != null &&
+                                !string.IsNullOrEmpty(GetTagValue(textShape, oPenEfficiency.Features.Utilities.InsertExcelValueFeature.InlineTag)))
+                            {
+                                ShowInlineExcelValueToolbar(textShape);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.TextInlineToolbar");
+                    }
                 }
                 else
                 {
@@ -373,402 +723,66 @@ namespace oPenEfficiency
                 if (Sel.Type == PowerPoint.PpSelectionType.ppSelectionShapes && Sel.ShapeRange.Count == 1)
                 {
                     var shape = Sel.ShapeRange[1];
-                    try 
+                    try
                     {
-                        if (Sel.HasChildShapeRange)
+                        if (Sel.HasChildShapeRange && Sel.ChildShapeRange.Count == 1)
                         {
-                            if (Sel.ChildShapeRange.Count == 1)
-                            {
-                                shape = Sel.ChildShapeRange[1];
-                            }
+                            shape = Sel.ChildShapeRange[1];
                         }
                     }
-                    catch (Exception ex)
+                    catch (COMException)
                     {
-                        ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.HasChildShapeRange");
+                        // ChildShapeRange is optional and can disappear during selection changes.
                     }
 
                     PowerPoint.Shape targetShape = shape;
                     string altText = targetShape.AlternativeText ?? "";
-                    
-                    try 
-                    {
-                        if (!altText.StartsWith(ThermometerFeature.ThermometerTag) && targetShape.Child == Microsoft.Office.Core.MsoTriState.msoTrue && targetShape.ParentGroup != null)
-                        {
-                            targetShape = targetShape.ParentGroup;
-                            altText = targetShape.AlternativeText ?? "";
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange.ParentGroup");
-                    }
+                    string trafficLightState = TrafficLightFeature.GetPersistedState(targetShape);
 
                     if (altText.StartsWith("oPE_HarveyBall")) ShowHarveyBallMenu();
-                    else if (altText.StartsWith("oPE_Checkbox")) ShowCheckboxMenu(altText);
-                    else if (altText.StartsWith(TrafficLightFeature.TrafficLightTag)) ShowTrafficLightMenu(altText);
+                    else if (oPenEfficiency.Core.Services.CheckboxStatePolicy.IsCheckboxTag(altText)) ShowCheckboxMenu(altText);
+                    else if (!string.IsNullOrEmpty(trafficLightState)) ShowTrafficLightMenu(trafficLightState);
                     else if (altText.StartsWith(StarRatingFeature.StarRatingTag)) ShowStarRatingToolbar(altText);
                     else if (altText.StartsWith(ThermometerFeature.ThermometerTag)) ShowThermometerToolbar(altText);
-                    else if (altText.StartsWith(ProgressSeriesFeature.SeriesTag)) 
-                {
-                    System.Diagnostics.Debug.WriteLine("ProgressSeries detected - showing toolbar");
-                    ShowProgressSeriesToolbar(targetShape);
-                }
+                    else if (altText.StartsWith(ProgressSeriesFeature.SeriesTag)) ShowProgressSeriesToolbar(targetShape);
                     else if (altText.StartsWith(NumerationFeature.NumerationTag)) ShowNumerationToolbar(targetShape);
-                }
-            }
-            catch (Exception)
-            {
-                // Silent in production, but let's show for debugging
-                // System.Windows.Forms.MessageBox.Show("Selection Error: " + ex.ToString());
-            }
-        }
+                    else if (altText.StartsWith(oPenEfficiency.Features.Utilities.TableLinkFeature.Tag)) ShowTableLinkToolbar(targetShape);
+                    else if (altText.StartsWith(oPenEfficiency.Features.Utilities.InsertExcelValueFeature.Tag)) ShowExcelValueToolbar(targetShape);
 
-        private string GetTagValue(PowerPoint.Shape shape, string tagName)
-        {
-            try
-            {
-                if (shape.Tags.Count == 0) return "";
-                for (int i = 1; i <= shape.Tags.Count; i++)
-                {
-                    if (shape.Tags.Name(i).Equals(tagName, StringComparison.OrdinalIgnoreCase))
+                    // Independent of AlternativeText: text boxes can hold inline linked Excel values.
+                    if (!string.IsNullOrEmpty(GetTagValue(targetShape, oPenEfficiency.Features.Utilities.InsertExcelValueFeature.InlineTag)))
                     {
-                        return shape.Tags.Value(i);
+                        ShowInlineExcelValueToolbar(targetShape);
                     }
                 }
             }
             catch (Exception ex)
             {
-                ExceptionLogger.Log(ex, "ThisAddIn.GetTagValue");
+                ExceptionLogger.Log(ex, "ThisAddIn.ProcessSelectionChange");
             }
-            return "";
-        }
-
-        private oPenEfficiency.UI.RatingToolbar _ratingToolbar;
-
-        private void ShowStarRatingToolbar(string altText)
-        {
-            try
-            {
-                // Close existing toolbar if open
-                if (_ratingToolbar != null)
-                {
-                    try { _ratingToolbar.Close(); } catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.ShowStarRatingToolbar.CloseOld"); }
-                    _ratingToolbar = null;
-                }
-
-                var manager = new PowerPointManager(this.Application);
-                _ratingToolbar = new oPenEfficiency.UI.RatingToolbar(manager, altText);
-                _ratingToolbar.Closed += (s, args) => { _ratingToolbar = null; };
-
-                // Use simple mouse positioning like traffic light menu
-                var mousePos = System.Windows.Forms.Cursor.Position;
-                _ratingToolbar.Left = mousePos.X + 10;
-                _ratingToolbar.Top = mousePos.Y + 10;
-
-                _ratingToolbar.Show();
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "ThisAddIn.ShowStarRatingToolbar");
-            }
-        }
-
-        private oPenEfficiency.UI.ProgressSeriesToolbar _progressSeriesToolbar;
-        private DateTime _progressSeriesOpenedTime;
-
-        private void ShowProgressSeriesToolbar(PowerPoint.Shape shape)
-        {
-            try
-            {
-                if (_progressSeriesToolbar != null)
-                {
-                    // If already open, just update the target without closing
-                    _progressSeriesToolbar.UpdateTarget(shape);
-                    return;
-                }
-
-                var manager = new PowerPointManager(this.Application);
-                _progressSeriesToolbar = new oPenEfficiency.UI.ProgressSeriesToolbar(manager, shape);
-                _progressSeriesToolbar.Closed += (s, args) => { _progressSeriesToolbar = null; };
-                _progressSeriesOpenedTime = DateTime.Now;
-
-                // Position like other features: use shape position
-                var window = Application.ActiveWindow;
-                if (window != null)
-                {
-                    int pixelX = window.PointsToScreenPixelsX(shape.Left + shape.Width);
-                    int pixelY = window.PointsToScreenPixelsY(shape.Top);
-
-                    _progressSeriesToolbar.Left = (pixelX * 96.0 / _dpiX) + 10;
-                    _progressSeriesToolbar.Top = (pixelY * 96.0 / _dpiY);
-                }
-                else
-                {
-                    // Fallback to mouse position if no window
-                    var mousePos = System.Windows.Forms.Cursor.Position;
-                    _progressSeriesToolbar.Left = mousePos.X + 10;
-                    _progressSeriesToolbar.Top = mousePos.Y + 10;
-                }
-
-                System.Diagnostics.Debug.WriteLine("Showing ProgressSeriesToolbar");
-                _progressSeriesToolbar.Show();
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "ThisAddIn.ShowProgressSeriesToolbar");
-                System.Diagnostics.Debug.WriteLine($"ShowProgressSeriesToolbar error: {ex.Message}");
-                System.Windows.MessageBox.Show($"Error showing Progress Series toolbar: {ex.Message}");
-            }
-        }
-
-        private oPenEfficiency.UI.NumerationToolbar _numerationToolbar;
-
-        private void ShowNumerationToolbar(PowerPoint.Shape shape)
-        {
-            try
-            {
-                if (_numerationToolbar != null)
-                {
-                    try { _numerationToolbar.Close(); } catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.ShowNumerationToolbar.CloseOld"); }
-                    _numerationToolbar = null;
-                }
-
-                var manager = new PowerPointManager(this.Application);
-                _numerationToolbar = new oPenEfficiency.UI.NumerationToolbar(manager, shape);
-
-                var mousePos = System.Windows.Forms.Cursor.Position;
-                _numerationToolbar.Left = (mousePos.X * 96.0 / _dpiX) - 210; // Center 420px width
-                _numerationToolbar.Top = (mousePos.Y * 96.0 / _dpiY) + 20;
-
-                _numerationToolbar.Show();
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "ThisAddIn.ShowNumerationToolbar");
-            }
-        }
-
-        private void ShowThermometerToolbar(string altText)
-        {
-            try
-            {
-                var manager = new PowerPointManager(this.Application);
-                var toolbar = new oPenEfficiency.UI.FloatingToolbar();
-                
-                // Parse state
-                float percentage = 0.5f;
-                int colorRgb = 0x0000FF; // Default
-                
-                var parts = altText.Split('|');
-                if (parts.Length >= 2) float.TryParse(parts[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out percentage);
-                if (parts.Length >= 3) int.TryParse(parts[2], out colorRgb);
-
-                toolbar.AddLabel("🌡️");
-                
-                // 1. Percentage Slider
-                toolbar.AddSlider(0, 100, (int)(percentage * 100), (s, e) => 
-                {
-                    var track = s as System.Windows.Forms.TrackBar;
-                    if (track != null)
-                    {
-                        float p = track.Value / 100f;
-                        ThermometerFeature.Execute(manager, p, colorRgb);
-                    }
-                });
-
-                toolbar.AddSeparator();
-
-                // 2. Color Dropdown
-                toolbar.AddDropDownButton("Color", null, (dropDown) => 
-                {
-                    int[] colors = new[] { 0x0000FF, 0x00FF00, 0xFF0000, 0x008CFF, 0x00FFFF };
-                    string[] names = new[] { "Red", "Green", "Blue", "Orange", "Cyan" };
-                    
-                    for (int i = 0; i < colors.Length; i++)
-                    {
-                        int c = colors[i];
-                        var item = dropDown.DropDownItems.Add(names[i]);
-                        item.Click += (s, e) => 
-                        {
-                            ThermometerFeature.Execute(manager, percentage, c);
-                            toolbar.Close();
-                        };
-                    }
-                    
-                    dropDown.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator());
-                    var custom = dropDown.DropDownItems.Add("Custom...");
-                    custom.Click += (s, e) => 
-                    {
-                        var dialog = new System.Windows.Forms.ColorDialog();
-                        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                        {
-                            var color = dialog.Color;
-                            int rgb = color.R | (color.G << 8) | (color.B << 16);
-                            ThermometerFeature.Execute(manager, percentage, rgb);
-                            toolbar.Close();
-                        }
-                    };
-                });
-
-                var mousePos = System.Windows.Forms.Cursor.Position;
-                toolbar.Location = new System.Drawing.Point(mousePos.X + 10, mousePos.Y + 10);
-                toolbar.Show();
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show("Toolbar Error: " + ex.Message);
-            }
-        }
-
-        private void UpdateAdornerPosition()
-        {
-            if (_thermometerAdorner == null || _trackedShape == null) return;
-            try
-            {
-                var activeWin = this.Application.ActiveWindow;
-                // Get screen coordinates of the shape
-                float shapeLeft = _trackedShape.Left;
-                float shapeTop = _trackedShape.Top;
-                float shapeWidth = _trackedShape.Width;
-
-                int screenX = activeWin.PointsToScreenPixelsX(shapeLeft + (shapeWidth / 2));
-                int screenY = activeWin.PointsToScreenPixelsY(shapeTop);
-
-                double adornerWidth = _thermometerAdorner.Width > 0 ? _thermometerAdorner.Width : 300;
-                double adornerHeight = _thermometerAdorner.Height > 0 ? _thermometerAdorner.Height : 48;
-
-                _thermometerAdorner.Left = screenX - (adornerWidth / 2);
-                _thermometerAdorner.Top = screenY - adornerHeight - 20;
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "ThisAddIn.UpdateAdornerPosition");
-                CloseThermometerAdorner();
-            }
-        }
-
-        private void CloseThermometerAdorner()
-        {
-            if (_thermometerAdorner != null)
-            {
-                try { _thermometerAdorner.Close(); } catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.CloseThermometerAdorner"); }
-                _thermometerAdorner = null;
-            }
-            _trackedShape = null;
-
-        }
-
-        private void ShowTrafficLightMenu(string altText)
-        {
-            try
-            {
-                var manager = new PowerPointManager(this.Application);
-                var trafficMenu = new oPenEfficiency.UI.TrafficLightMenu(manager, altText);
-                
-                var mousePos = System.Windows.Forms.Cursor.Position;
-                // Add some DPI scaling roughly
-                trafficMenu.Left = (mousePos.X * 96.0 / _dpiX) + 10;
-                trafficMenu.Top = (mousePos.Y * 96.0 / _dpiY) + 10;
-                
-                trafficMenu.Show();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("TrafficLight menu error: " + ex.Message);
-            }
-        }
-
-        private oPenEfficiency.UI.CheckboxToolbar _checkboxToolbar;
-
-        private void ShowCheckboxMenu(string altText)
-        {
-            try
-            {
-                if (_checkboxToolbar != null)
-                {
-                    try { _checkboxToolbar.Close(); } catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.ShowCheckboxMenu.CloseOld"); }
-                    _checkboxToolbar = null;
-                }
-
-                var manager = new PowerPointManager(this.Application);
-                _checkboxToolbar = new oPenEfficiency.UI.CheckboxToolbar(manager, altText);
-                _checkboxToolbar.Closed += (s, args) => { _checkboxToolbar = null; };
-
-                _checkboxToolbar.Show();
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "ThisAddIn.ShowCheckboxMenu");
-            }
-        }
-
-        private void ShowHarveyBallMenu()
-        {
-            var menu = new System.Windows.Forms.ContextMenuStrip();
-            var levels = new[] 
-            { 
-                new { Name = "0%", Value = 0f },
-                new { Name = "10%", Value = 0.1f },
-                new { Name = "25%", Value = 0.25f },
-                new { Name = "50%", Value = 0.5f },
-                new { Name = "75%", Value = 0.75f },
-                new { Name = "100%", Value = 1f }
-            };
-
-            foreach (var level in levels)
-            {
-                var item = menu.Items.Add(level.Name);
-                float val = level.Value;
-                item.Click += (s, args) => 
-                {
-                    var manager = new PowerPointManager(this.Application);
-                    oPenEfficiency.Features.HarveyBallFeature.Execute(manager, val);
-                };
-            }
-            
-            menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            var cycleItem = menu.Items.Add("Cycle (+25%)");
-            cycleItem.Click += (s, args) => 
-            {
-                // Re-use logic from MainSidebar if possible, or duplicate for now
-                var manager = new PowerPointManager(this.Application);
-                CycleHarveyBall(manager);
-            };
-
-            var mousePos = System.Windows.Forms.Cursor.Position;
-            menu.Show(mousePos);
-        }
-
-        private void CycleHarveyBall(PowerPointManager manager)
-        {
-             var selection = manager.GetSelectedShapes();
-             float nextPercentage = 0.25f; 
-
-             if (selection != null && selection.Count == 1)
-             {
-                 var selected = selection[1];
-                 string alt = selected.AlternativeText;
-                 if (alt.StartsWith("oPE_HarveyBall"))
-                 {
-                     var parts = alt.Split('|');
-                     if (parts.Length == 2 && float.TryParse(parts[1], out float current))
-                     {
-                         nextPercentage = current + 0.25f;
-                         if (nextPercentage > 1.01f) nextPercentage = 0f;
-                     }
-                 }
-             }
-             oPenEfficiency.Features.HarveyBallFeature.Execute(manager, nextPercentage);
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
         {
+            // From here on, shutdown-time ThreadAbortException noise is expected teardown
+            // behavior and must not be reported as a feature failure (see the logger guards).
+            _shuttingDown = true;
+            CloseGanttResizeHandles();
+
+            if (_modelessUi != null)
+            {
+                try { _modelessUi.Dispose(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.ModelessUi"); }
+                _modelessUi = null;
+            }
+
             // Unregister event handlers first
             try
             {
                 this.Application.WindowSelectionChange -= Application_WindowSelectionChange;
                 this.Application.PresentationClose -= Application_PresentationClose;
+                this.Application.WindowActivate -= Application_WindowActivate;
+                this.Application.WindowBeforeRightClick -= Application_WindowBeforeRightClick;
             }
             catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.UnregisterEvents"); }
 
@@ -790,31 +804,79 @@ namespace oPenEfficiency
                 _snapGridManager = null;
             }
 
-            // Stop and dispose selection debounce timer
-            if (_selectionDebounceTimer != null)
+            if (_ganttInteractionCoordinator != null)
+            {
+                try { _ganttInteractionCoordinator.Dispose(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.GanttInteractionCoordinator"); }
+                _ganttInteractionCoordinator = null;
+            }
+
+            if (_performanceMode != null)
+            {
+                try { _performanceMode.Dispose(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.PerformanceMode"); }
+                _performanceMode = null;
+            }
+
+            if (_quickContextMenu != null)
             {
                 try
                 {
-                    _selectionDebounceTimer.Stop();
-                    _selectionDebounceTimer.Dispose();
+                    if (_sharedMouseHook != null)
+                        _sharedMouseHook.LeftButtonDown -= SharedMouseHook_CloseQuickContextMenu;
+                    _quickContextMenu.Dispose();
                 }
-                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.DebounceTimer"); }
-                _selectionDebounceTimer = null;
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.QuickContextMenu"); }
+                _quickContextMenu = null;
+            }
+
+            // The shared mouse hook outlives its subscribers and is disposed last (PQ-016).
+            if (_sharedMouseHook != null)
+            {
+                try { _sharedMouseHook.Dispose(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.SharedMouseHook"); }
+                _sharedMouseHook = null;
+            }
+
+            if (_selectionUpdates != null)
+            {
+                try { _selectionUpdates.Dispose(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.SelectionUpdates"); }
+                _selectionUpdates = null;
+            }
+
+            if (_textEditPollingTimer != null)
+            {
+                try
+                {
+                    // DispatcherTimer detaches with Stop() and an unsubscribed Tick handler;
+                    // it is not IDisposable.
+                    _textEditPollingTimer.Stop();
+                    _textEditPollingTimer.Tick -= TextEditPollingTimer_Tick;
+                }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.TextEditPollingTimer"); }
+                _textEditPollingTimer = null;
+            }
+
+            if (_startupDeferredTimer != null)
+            {
+                try
+                {
+                    // DispatcherTimer detaches with Stop() and an unsubscribed Tick handler;
+                    // it is not IDisposable. Every timer is unsubscribed symmetrically with
+                    // its subscription (QA-P0 timer-teardown rule).
+                    _startupDeferredTimer.Stop();
+                    _startupDeferredTimer.Tick -= StartupDeferredTimer_Tick;
+                }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.Shutdown.StartupDeferredTimer"); }
+                _startupDeferredTimer = null;
             }
 
             // Remove all window-specific task panes
             try
             {
-                var panesToRemove = new List<CustomTaskPane>(_windowTaskPanes.Values);
-                foreach (var pane in panesToRemove)
-                {
-                    try
-                    {
-                        this.CustomTaskPanes.Remove(pane);
-                    }
-                    catch { }
-                }
-                _windowTaskPanes.Clear();
+                _sidebarPanes?.Dispose();
+                _sidebarPanes = null;
 
                 if (_assetManagerTaskPane != null)
                 {
@@ -853,6 +915,7 @@ namespace oPenEfficiency
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "ThisAddIn.ToggleThemeColorPane");
                 System.Windows.Forms.MessageBox.Show("Error docking palette: " + ex.Message);
             }
         }
@@ -860,23 +923,74 @@ namespace oPenEfficiency
         /// <summary>
         /// Gets the SnapToObjectsManager instance for snap-to-objects functionality.
         /// </summary>
-        public oPenEfficiency.Services.SnapToObjectsManager SnapManager => _snapManager;
+        public oPenEfficiency.Services.SnapToObjectsManager SnapManager
+        {
+            get
+            {
+                EnsureUiServicesInitialized();
+                return _snapManager;
+            }
+        }
 
         /// <summary>
         /// Gets the SnapToGridManager instance for snap-to-grid functionality.
         /// </summary>
-        public oPenEfficiency.Services.SnapToGridManager SnapGridManager => _snapGridManager;
+        public oPenEfficiency.Services.SnapToGridManager SnapGridManager
+        {
+            get
+            {
+                EnsureUiServicesInitialized();
+                return _snapGridManager;
+            }
+        }
 
-        public void OpenFeatureExplorer()
+        public void OpenFeatureExplorer(string initialCategory = null, bool focusSearch = false)
         {
             try
             {
-                var wnd = new oPenEfficiency.UI.Dialogs.FeatureExplorerWindow();
+                EnsureUiServicesInitialized();
+                var wnd = new oPenEfficiency.UI.Dialogs.FeatureExplorerWindow(initialCategory, focusSearch);
+                new System.Windows.Interop.WindowInteropHelper(wnd).Owner = (IntPtr)Application.HWND;
                 wnd.ShowDialog();
             }
             catch (Exception ex)
             {
                 Utils.ExceptionLogger.Log(ex, "OpenFeatureExplorer");
+                throw;
+            }
+        }
+
+        public void OpenIconBrowser(
+            oPenEfficiency.UI.Dialogs.IconBrowserStartView startView =
+                oPenEfficiency.UI.Dialogs.IconBrowserStartView.Default)
+        {
+            try
+            {
+                EnsureUiServicesInitialized();
+                var wnd = new oPenEfficiency.UI.Dialogs.IconBrowserWindow(
+                    new PowerPointManager(this.Application),
+                    startView);
+                wnd.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Utils.ExceptionLogger.Log(ex, "OpenIconBrowser");
+                throw;
+            }
+        }
+
+        public void OpenIllustrationLibrary(PowerPointManager manager = null)
+        {
+            try
+            {
+                EnsureUiServicesInitialized();
+                var wnd = new oPenEfficiency.UI.Dialogs.IllustrationLibraryWindow(manager ?? new PowerPointManager(this.Application));
+                wnd.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                Utils.ExceptionLogger.Log(ex, "OpenIllustrationLibrary");
+                throw;
             }
         }
 
@@ -884,11 +998,12 @@ namespace oPenEfficiency
         {
             try
             {
+                EnsureUiServicesInitialized();
                 int hWnd = GetActiveWindowHWnd();
                 if (hWnd == 0) return;
 
                 CustomTaskPane taskPane = null;
-                _windowTaskPanes.TryGetValue(hWnd, out taskPane);
+                _sidebarPanes?.TryGet(hWnd, out taskPane);
 
                 if (taskPane == null)
                 {
@@ -915,9 +1030,21 @@ namespace oPenEfficiency
             catch (Exception ex)
             {
                 ExceptionLogger.Log(ex, "ThisAddIn.ToggleSidebar");
-                System.Windows.Forms.MessageBox.Show($"Error toggling sidebar: {ex.Message}", "oPenEfficiency Error",
+                System.Windows.Forms.MessageBox.Show($"Error toggling Sidebar: {ex.Message}", "openEfficiency Error",
                     System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Warning);
             }
+        }
+
+        public bool IsAssetManagerVisible => _assetManagerTaskPane?.Visible == true;
+
+        public void OpenAssetManager(string section = null, bool saveCurrentSelection = false)
+        {
+            if (_assetManagerTaskPane == null || !_assetManagerTaskPane.Visible)
+                ToggleAssetManager();
+
+            var host = _assetManagerTaskPane?.Control as AssetManagerHost;
+            if (!string.IsNullOrWhiteSpace(section)) host?.SelectSection(section);
+            if (saveCurrentSelection) host?.SaveCurrentSelection();
         }
 
         public void ToggleAssetManager()
@@ -927,7 +1054,7 @@ namespace oPenEfficiency
                 if (_assetManagerTaskPane != null)
                 {
                     _assetManagerTaskPane.Visible = !_assetManagerTaskPane.Visible;
-                    
+
                     if (_assetManagerTaskPane.Visible)
                     {
                         var selection = this.Application.ActiveWindow?.Selection;
@@ -939,11 +1066,22 @@ namespace oPenEfficiency
                 }
                 else
                 {
-                    var host = new oPenEfficiency.UI.AssetManagerHost();
+                    var host = new oPenEfficiency.UI.AssetManagerHost(
+                        new PowerPointManager(this.Application));
                     _assetManagerTaskPane = CustomTaskPanes.Add(host, "Asset Library");
-                    _assetManagerTaskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionFloating;
-                    _assetManagerTaskPane.Width = 1000;
-                    _assetManagerTaskPane.Height = 1000;
+                    // Compact docked default (docs/product/ui-space-audit-asset-library-2026-10-11.md AM-P-04):
+                    // the former 1000x1000 floating pane outgrows common work areas and occludes the slide.
+                    _assetManagerTaskPane.DockPosition = Office.MsoCTPDockPosition.msoCTPDockPositionRight;
+                    _assetManagerTaskPane.Width = 480;
+                    _assetManagerTaskPane.VisibleChanged += (s, e) =>
+                    {
+                        try
+                        {
+                            var sidebar = (GetSidebarForActiveWindow()?.Control as SidebarTaskPaneHost)?.Sidebar;
+                            sidebar?.RefreshButtonStates();
+                        }
+                        catch (Exception ex) { ExceptionLogger.Log(ex, "ThisAddIn.AssetManager.VisibleChanged"); }
+                    };
                     _assetManagerTaskPane.Visible = true;
 
                     // Initial selection check for new pane
@@ -956,7 +1094,8 @@ namespace oPenEfficiency
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show("Error toggling Asset Manager: " + ex.Message);
+                ExceptionLogger.Log(ex, "ThisAddIn.ToggleAssetManager");
+                throw;
             }
         }
 
@@ -977,7 +1116,7 @@ namespace oPenEfficiency
             this.Startup += new System.EventHandler(ThisAddIn_Startup);
             this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
         }
-        
+
         #endregion
     }
 }

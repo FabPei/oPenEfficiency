@@ -14,7 +14,7 @@
       <path id="path-1" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,8.10488l0,1"/>
       <path id="path-2" stroke=" rgba(0, 0, 0, 0.9)" stroke-width=" 2px" d="m21.02125,4.09619l0,1"/>
     </g>
-    <g transform="matrix(1, 0, 0, 1, 0, -0.952902)">
+    <g transform="matrix(1, 0, 0, 1, 0, -0.952902)" data-oe-role="accent" data-oe-accent-role="ActionBlue">
       <path d="M 6.551 18.402 L 6.551 13.602" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 0.933px; transform-origin: 6.551px 16.002px 0px;"/>
       <path d="M 8.291 16.662 L 6.551 18.402 L 4.811 16.662" style="stroke: rgba(0, 0, 0, 0.9); stroke-width: 0.933px;"/>
     </g>

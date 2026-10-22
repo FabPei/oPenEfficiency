@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnConnectedTextLabel",
+  "title": "Insert Linked Text Label (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ConnectedTextLabelFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnConnectedTextLabel-001",
+      "title": "Insert Linked Text Label applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ConnectedTextLabelFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Insert Linked Text Label (BtnConnectedTextLabel) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnConnectedTextLabel-002",
+      "title": "Connected-text payload contract is pinned by new production Core tests",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/OneNote/ConnectedTextPayload.cs",
+        "oPenEfficiency/Features/Utilities/ConnectedTextLabelFeature.cs",
+        "oPenEfficiency.Core.Tests/ConnectedTextPayloadTests.cs"
+      ],
+      "expected": "The OneNote HTML marker contract builds '<span data-ope-source=\"{id}\">' with HTML-encoded text and line breaks as '<br />', tolerating null text; SourceMarker is the exact legacy substring; ReadLastModified parses the roundtrip-kind lastModifiedTime attribute and fails closed to DateTime.MinValue when absent or unparsable; the ConnectedTextTargetRecord DataContract keeps the legacy SourceId/Host/DocumentPath/TargetId JSON property names and round-trips.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ConnectedTextPayloadTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

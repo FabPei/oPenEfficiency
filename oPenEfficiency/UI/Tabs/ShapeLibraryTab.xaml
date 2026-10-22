@@ -12,7 +12,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Themes/Dark.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/oPenEfficiency;component/UI/Styles/Controls.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <local:BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -156,7 +156,7 @@
                              BorderThickness="0" Background="Transparent">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <WrapPanel IsItemsHost="True" ItemWidth="140" ItemHeight="140" Orientation="Horizontal"/>
+                                <WrapPanel IsItemsHost="True" ItemWidth="138" ItemHeight="138" Orientation="Horizontal"/>
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
@@ -172,7 +172,7 @@
                                     <Border x:Name="HoverOverlay" Grid.Row="0" Background="#44000000" Opacity="0">
                                         <Button Content="Insert" Click="BtnInsertShape_Click" Tag="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="8,4" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
                                     </Border>
-                                    <TextBlock Grid.Row="1" Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Title}" ToolTip="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 </Grid>
                                 <DataTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
@@ -192,46 +192,45 @@
                 </Grid>
             </Grid>
 
-            <Grid x:Name="SettingsView" Visibility="Collapsed" HorizontalAlignment="Right" Width="400" Background="{DynamicResource SurfaceBrush}">
+            <Grid x:Name="SettingsView" Visibility="Collapsed" HorizontalAlignment="Right" Width="360" Background="{DynamicResource SurfaceBrush}">
                 <Grid.Effect>
                     <DropShadowEffect BlurRadius="20" ShadowDepth="-2" Opacity="0.3" Direction="180"/>
                 </Grid.Effect>
                 <Grid.RenderTransform>
-                    <TranslateTransform X="400"/>
+                    <TranslateTransform X="360"/>
                 </Grid.RenderTransform>
                 <ScrollViewer x:Name="SettingsScrollViewer" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="20" MaxWidth="500" HorizontalAlignment="Left">
-                        <TextBlock Text="Shape Library Settings" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,20"/>
-                        <TextBlock Text="General Options" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <TextBlock Text="Shape Library Sources" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <ListBox x:Name="LstFolders" Height="120" Background="{DynamicResource SurfaceBrush}" Margin="0,0,0,10"/>
+                    <StackPanel Margin="12" HorizontalAlignment="Left">
+                        <TextBlock Text="Shape Library Settings" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,12"/>
+                        <TextBlock Text="Shape Library Sources" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                        <ListBox x:Name="LstFolders" Height="84" Background="{DynamicResource SurfaceBrush}" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                             <Button Content="Add Folder..." Click="BtnAddFolder_Click" Padding="10,5" Margin="0,0,10,0"/>
                             <Button Content="Remove" Click="BtnRemoveFolder_Click" Padding="10,5"/>
                         </StackPanel>
 
-                        <TextBlock Text="Shared Folders" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <ListBox x:Name="LstSharedFolders" Height="100" Background="{DynamicResource SurfaceBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Shared Folders" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                        <ListBox x:Name="LstSharedFolders" Height="72" Background="{DynamicResource SurfaceBrush}" Margin="0,0,0,10"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
                             <Button Content="Add Shared Folder..." Click="BtnAddSharedFolder_Click" Padding="10,5" Margin="0,0,10,0"/>
                             <Button Content="Remove" Click="BtnRemoveSharedFolder_Click" Padding="10,5"/>
                         </StackPanel>
 
-                        <TextBlock Text="Local Integrations" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <TextBlock Text="Local Integrations" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6"/>
                         <StackPanel Margin="0,0,0,10">
-                            <TextBlock x:Name="TxtEmpowerStatus" Text="empower: Checking..." FontSize="12" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="TxtEmpowerStatus" Text="empower: Checking..." FontSize="11" Margin="0,0,0,5"/>
                             <Button x:Name="BtnAddEmpower" Content="Add empower Library" Click="BtnAddEmpower_Click" Padding="10,5" HorizontalAlignment="Left"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,0,10">
-                            <TextBlock x:Name="TxtThinkCellStatus" Text="think-cell: Checking..." FontSize="12" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="TxtThinkCellStatus" Text="think-cell: Checking..." FontSize="11" Margin="0,0,0,5"/>
                             <Button x:Name="BtnAddThinkCell" Content="Add think-cell Library" Click="BtnAddThinkCell_Click" Padding="10,5" HorizontalAlignment="Left"/>
                         </StackPanel>
                         <StackPanel Margin="0,0,0,20">
-                            <TextBlock x:Name="TxtEfficientStatus" Text="Efficient Elements: Checking..." FontSize="12" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="TxtEfficientStatus" Text="Efficient Elements: Checking..." FontSize="11" Margin="0,0,0,5"/>
                             <Button x:Name="BtnAddEfficient" Content="Add Efficient Elements" Click="BtnAddEfficient_Click" Padding="10,5" HorizontalAlignment="Left"/>
                         </StackPanel>
 
-                        <Button x:Name="BtnGenerateCache" Content="Generate All Thumbnails" Click="BtnGenerateCache_Click" Padding="15,8" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
+                        <Button x:Name="BtnGenerateCache" Content="Generate All Thumbnails" Click="BtnGenerateCache_Click" Padding="10,5" Background="{DynamicResource AccentBrush}" Foreground="White" BorderThickness="0"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

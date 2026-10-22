@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFormatShapeDialog",
+  "title": "Open Format Shape Pane (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/FormatShapeDialogFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFormatShapeDialog-001",
+      "title": "Open Format Shape Pane applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/FormatShapeDialogFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Open Format Shape Pane (BtnFormatShapeDialog) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFormatShapeDialog-002",
+      "title": "Effect-removal context actions clear exactly their effects (and RemoveAll clears all five)",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/FormatShapeDialogFeature.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTableOps.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host the deterministic effect-removal context-menu actions run on a fixture with a shadow+glow+soft-edge shape, a reflection+threeD shape and a plain control: an individual action removes only its own effect (glow and soft edges survive RemoveShadow), RemoveAllEffects clears all five effects - the shadow is cleared last so the theme-shadow re-apply that glow/soft-edge removal can trigger does not survive (REG-FORMATSHAPE-ALLFX-001) - RemoveReflection leaves threeD intact and vice versa, the plain control stays untouched, the run reports execution and writes no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTableOps.ps1",
+        "arguments": [
+          "-Commands",
+          "remove-effects"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

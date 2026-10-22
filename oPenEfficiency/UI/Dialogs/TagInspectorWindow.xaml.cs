@@ -6,19 +6,30 @@ using System.Windows.Input;
 using oPenEfficiency.Services;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using System.Linq;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI.Dialogs
 {
     public partial class TagInspectorWindow : Window
     {
+        public enum InspectorScope { CurrentSlide, SelectedShapes, Presentation }
         private readonly PowerPointManager _manager;
 
-        public TagInspectorWindow(PowerPointManager manager)
+        public TagInspectorWindow(PowerPointManager manager, InspectorScope scope = InspectorScope.CurrentSlide)
         {
             InitializeComponent();
             _manager = manager;
-            this.Topmost = true;
+            SetScope(scope);
             RefreshTags();
+        }
+
+        public void SetScope(InspectorScope scope)
+        {
+            RadioSlide.IsChecked = scope == InspectorScope.CurrentSlide;
+            RadioShapes.IsChecked = scope == InspectorScope.SelectedShapes;
+            RadioPresentation.IsChecked = scope == InspectorScope.Presentation;
+            if (IsLoaded) RefreshTags();
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
@@ -53,10 +64,12 @@ namespace oPenEfficiency.UI.Dialogs
                 if (el == null) return;
 
                 string newValue = el.Text;
-                
+
                 try
                 {
                     var app = _manager.GetApplication();
+                    try { app.StartNewUndoEntry(); }
+                    catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "TagInspectorWindow.AddTag.StartUndoEntry"); }
                     if (RadioPresentation.IsChecked == true)
                     {
                         app.ActivePresentation.Tags.Add(tagItem.Name, newValue);
@@ -80,6 +93,7 @@ namespace oPenEfficiency.UI.Dialogs
                 }
                 catch (Exception ex)
                 {
+                    ExceptionLogger.Log(ex, "TagInspectorWindow.UpdateTag");
                     MessageBox.Show("Error updating tag: " + ex.Message);
                 }
             }
@@ -90,123 +104,71 @@ namespace oPenEfficiency.UI.Dialogs
             try
             {
                 var app = _manager.GetApplication();
-                
-                var slides = new List<PowerPoint.Slide>();
-                PowerPoint.SlideRange slideRange = null;
-                try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
-                
-                if (slideRange != null && slideRange.Count > 0)
-                {
-                    for (int s = 1; s <= slideRange.Count; s++)
-                        slides.Add(slideRange[s]);
-                }
-                else
-                {
-                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                    if (slide != null) slides.Add(slide);
-                }
+                var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                if (slide == null) return;
 
-                if (slides.Count == 0) return;
+                if (MessageBox.Show("Copy the text of all sticky notes on this slide to new slide tags? The sticky-note shapes are retained.",
+                    "Copy Sticky Notes to Tags", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
 
-                int totalCount = 0;
-                foreach (var slide in slides)
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "TagInspectorWindow.Refresh.StartUndoEntry"); }
+
+                int count = 0;
+                int nextIndex = 1;
+                var existingNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 1; i <= slide.Tags.Count; i++) existingNames.Add(slide.Tags.Name(i));
+                for (int i = 1; i <= slide.Shapes.Count; i++)
                 {
-                    int count = 0;
-                    for (int i = 1; i <= slide.Shapes.Count; i++)
+                    var shape = slide.Shapes[i];
+                    if (oPenEfficiency.Features.StickyNoteFeature.IsStickyNote(shape))
                     {
-                        var shape = slide.Shapes[i];
-                        if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
+                        string text = "";
+                        try { text = shape.TextFrame.TextRange.Text; }
+                        catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "TagInspectorWindow.Refresh.ShapeText"); }
+
+                        if (!string.IsNullOrEmpty(text))
                         {
-                            string text = "";
-                            try { text = shape.TextFrame.TextRange.Text; } catch { }
-                            
-                            if (!string.IsNullOrEmpty(text))
-                            {
-                                count++;
-                                slide.Tags.Add($"OE_STICKY_NOTE_{count}", text);
-                            }
+                            string tagName;
+                            do { tagName = $"oPE_StickyNoteText_{nextIndex++}"; } while (existingNames.Contains(tagName));
+                            slide.Tags.Add(tagName, text);
+                            existingNames.Add(tagName);
+                            count++;
                         }
                     }
-                    totalCount += count;
                 }
 
-                if (totalCount > 0)
+                if (count > 0)
                 {
                     RefreshTags();
-                    MessageBox.Show($"Converted {totalCount} sticky note(s) to slide tags.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Copied {count} sticky note(s) to new slide tags. The source shapes were retained.", "Copy Complete", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    MessageBox.Show("No sticky notes found on selected slide(s).", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("No sticky notes found on this slide.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TagInspectorWindow.CopyStickyNotesToTags");
                 MessageBox.Show("Error converting sticky notes: " + ex.Message);
             }
         }
 
         private void BtnTagToSticky_Click(object sender, RoutedEventArgs e)
         {
-            var selectedItems = TagGrid.SelectedItems;
-            if (selectedItems == null || selectedItems.Count == 0) return;
+            var selected = TagGrid.SelectedItem as TagItem;
+            if (selected == null) return;
 
             try
             {
-                var app = _manager.GetApplication();
-                int successCount = 0;
-                var tagsToDelete = new List<TagItem>();
-
-                foreach (var item in selectedItems)
+                if (oPenEfficiency.Features.StickyNoteFeature.Execute(_manager, selected.Value))
                 {
-                    var tagItem = item as TagItem;
-                    if (tagItem == null) continue;
-
-                    PowerPoint.Slide targetSlide = null;
-                    if (tagItem.SlideId > 0)
-                    {
-                        try { targetSlide = app.ActivePresentation.Slides.FindBySlideID(tagItem.SlideId); } catch { }
-                    }
-
-                    if (oPenEfficiency.Features.StickyNoteFeature.Execute(_manager, tagItem.Value, targetSlide))
-                    {
-                        successCount++;
-                        tagsToDelete.Add(tagItem);
-                    }
-                }
-
-                if (successCount > 0)
-                {
-                    var result = MessageBox.Show($"Successfully created {successCount} sticky note(s).\n\nDelete the original tags?", "Cleanup", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        foreach (var tagItem in tagsToDelete)
-                        {
-                            if (tagItem.SlideId > 0)
-                            {
-                                try {
-                                    var slide = app.ActivePresentation.Slides.FindBySlideID(tagItem.SlideId);
-                                    slide.Tags.Delete(tagItem.Name);
-                                } catch { }
-                            }
-                            else if (RadioSlide.IsChecked == true)
-                            {
-                                try {
-                                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                                    slide?.Tags.Delete(tagItem.Name);
-                                } catch { }
-                            }
-                            else if (RadioPresentation.IsChecked == true)
-                            {
-                                try { app.ActivePresentation.Tags.Delete(tagItem.Name); } catch { }
-                            }
-                        }
-                        RefreshTags();
-                    }
+                    // Optionally delete the tag after conversion? User didn't ask, so keep it.
                 }
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TagInspectorWindow.TagToStickyNote");
                 MessageBox.Show("Error creating sticky note: " + ex.Message);
             }
         }
@@ -231,30 +193,12 @@ namespace oPenEfficiency.UI.Dialogs
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    PowerPoint.SlideRange slideRange = null;
-                    try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
-
-                    if (slideRange != null && slideRange.Count > 0)
+                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                    if (slide != null)
                     {
-                        for (int s = 1; s <= slideRange.Count; s++)
+                        for (int i = 1; i <= slide.Tags.Count; i++)
                         {
-                            var slide = slideRange[s];
-                            string sourceStr = slideRange.Count > 1 ? $"Slide {slide.SlideIndex}" : "";
-                            for (int i = 1; i <= slide.Tags.Count; i++)
-                            {
-                                tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i), Source = sourceStr, SlideId = slide.SlideID });
-                            }
-                        }
-                    }
-                    else
-                    {
-                        var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                        if (slide != null)
-                        {
-                            for (int i = 1; i <= slide.Tags.Count; i++)
-                            {
-                                tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i), Source = "", SlideId = slide.SlideID });
-                            }
+                            tags.Add(new TagItem { Name = slide.Tags.Name(i), Value = slide.Tags.Value(i) });
                         }
                     }
                 }
@@ -263,12 +207,23 @@ namespace oPenEfficiency.UI.Dialogs
                     var sel = app.ActiveWindow.Selection;
                     if (sel.Type == PowerPoint.PpSelectionType.ppSelectionShapes && sel.ShapeRange.Count > 0)
                     {
-                        // Use the first selected shape for inspection
-                        var shape = sel.ShapeRange[1];
-                        for (int i = 1; i <= shape.Tags.Count; i++)
+                        var values = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                        for (int shapeIndex = 1; shapeIndex <= sel.ShapeRange.Count; shapeIndex++)
                         {
-                            tags.Add(new TagItem { Name = shape.Tags.Name(i), Value = shape.Tags.Value(i) });
+                            var shape = sel.ShapeRange[shapeIndex];
+                            var shapeTags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            for (int i = 1; i <= shape.Tags.Count; i++) shapeTags[shape.Tags.Name(i)] = shape.Tags.Value(i);
+                            foreach (var name in values.Keys.ToList())
+                                values[name].Add(shapeTags.TryGetValue(name, out string value) ? value : null);
+                            foreach (var pair in shapeTags)
+                                if (!values.ContainsKey(pair.Key))
+                                    values[pair.Key] = Enumerable.Repeat<string>(null, shapeIndex - 1).Concat(new[] { pair.Value }).ToList();
                         }
+                        tags.AddRange(values.OrderBy(pair => pair.Key).Select(pair => new TagItem
+                        {
+                            Name = pair.Key,
+                            Value = pair.Value.Distinct(StringComparer.Ordinal).Count() == 1 && pair.Value[0] != null ? pair.Value[0] : "<mixed>"
+                        }));
                     }
                 }
 
@@ -276,6 +231,7 @@ namespace oPenEfficiency.UI.Dialogs
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TagInspectorWindow.RefreshTags");
                 MessageBox.Show("Error reading tags: " + ex.Message);
             }
         }
@@ -294,25 +250,16 @@ namespace oPenEfficiency.UI.Dialogs
             try
             {
                 var app = _manager.GetApplication();
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "TagInspectorWindow.DeleteTag.StartUndoEntry"); }
                 if (RadioPresentation.IsChecked == true)
                 {
                     app.ActivePresentation.Tags.Add(name, val);
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    PowerPoint.SlideRange slideRange = null;
-                    try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
-                    
-                    if (slideRange != null && slideRange.Count > 0)
-                    {
-                        for (int s = 1; s <= slideRange.Count; s++)
-                            slideRange[s].Tags.Add(name, val);
-                    }
-                    else
-                    {
-                        var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                        slide?.Tags.Add(name, val);
-                    }
+                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                    slide?.Tags.Add(name, val);
                 }
                 else if (RadioShapes.IsChecked == true)
                 {
@@ -332,6 +279,7 @@ namespace oPenEfficiency.UI.Dialogs
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TagInspectorWindow.AddTag");
                 MessageBox.Show("Error adding tag: " + ex.Message);
             }
         }
@@ -341,39 +289,25 @@ namespace oPenEfficiency.UI.Dialogs
             var selected = TagGrid.SelectedItem as TagItem;
             if (selected == null) return;
 
-            if (MessageBox.Show($"Are you sure you want to delete tag '{selected.Name}'?", "Confirm Delete", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+            string scope = RadioShapes.IsChecked == true ? " from every selected shape" : string.Empty;
+            string warning = selected.Name.StartsWith("oPE_", StringComparison.OrdinalIgnoreCase)
+                ? " This is an openEfficiency system tag; deleting it can disable related feature behavior." : string.Empty;
+            if (MessageBox.Show($"Delete tag '{selected.Name}'{scope}?{warning}", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
                 return;
 
             try
             {
                 var app = _manager.GetApplication();
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "TagInspectorWindow.EditTag.StartUndoEntry"); }
                 if (RadioPresentation.IsChecked == true)
                 {
                     app.ActivePresentation.Tags.Delete(selected.Name);
                 }
                 else if (RadioSlide.IsChecked == true)
                 {
-                    if (selected.SlideId > 0)
-                    {
-                        var slide = app.ActivePresentation.Slides.FindBySlideID(selected.SlideId);
-                        slide?.Tags.Delete(selected.Name);
-                    }
-                    else
-                    {
-                        PowerPoint.SlideRange slideRange = null;
-                        try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
-
-                        if (slideRange != null && slideRange.Count > 0)
-                        {
-                            for (int s = 1; s <= slideRange.Count; s++)
-                                slideRange[s].Tags.Delete(selected.Name);
-                        }
-                        else
-                        {
-                            var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                            slide?.Tags.Delete(selected.Name);
-                        }
-                    }
+                    var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
+                    slide?.Tags.Delete(selected.Name);
                 }
                 else if (RadioShapes.IsChecked == true)
                 {
@@ -382,7 +316,8 @@ namespace oPenEfficiency.UI.Dialogs
                     {
                         for (int i = 1; i <= sel.ShapeRange.Count; i++)
                         {
-                            try { sel.ShapeRange[i].Tags.Delete(selected.Name); } catch { }
+                            try { sel.ShapeRange[i].Tags.Delete(selected.Name); }
+                            catch (Exception ex) { ExceptionLogger.Log(ex, "TagInspectorWindow.DeleteShapeTag"); }
                         }
                     }
                 }
@@ -391,6 +326,7 @@ namespace oPenEfficiency.UI.Dialogs
             }
             catch (Exception ex)
             {
+                ExceptionLogger.Log(ex, "TagInspectorWindow.DeleteTag");
                 MessageBox.Show("Error deleting tag: " + ex.Message);
             }
         }
@@ -399,8 +335,6 @@ namespace oPenEfficiency.UI.Dialogs
         {
             public string Name { get; set; }
             public string Value { get; set; }
-            public string Source { get; set; }
-            public int SlideId { get; set; }
         }
     }
 }

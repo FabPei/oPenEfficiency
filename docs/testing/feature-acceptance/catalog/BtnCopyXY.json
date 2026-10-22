@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnCopyXY",
+  "title": "Copy XY-Coordinates (ArrangeAndOrganize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/CopyCoordinatesFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnCopyXY-001",
+      "title": "Copy XY-Coordinates applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/CopyCoordinatesFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Copy XY-Coordinates (BtnCopyXY) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnCopyXY-002",
+      "title": "Copy XY-Coordinates payload contract is pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/CoordinateClipboardPayload.cs",
+        "oPenEfficiency/Features/Utilities/CopyCoordinatesFeature.cs",
+        "oPenEfficiency.Core.Tests/CoordinateClipboardPayloadTests.cs"
+      ],
+      "expected": "Copy XY-Coordinates writes its position through the production clipboard codec: the serialized payload is the branded, versioned, invariant-culture 'openEfficiency:XY:v1:' form with finite-value checks, and the ownership test that ClearCopiedGeometry uses accepts only a valid current openEfficiency payload (never unrelated numeric clipboard text) while the paste parse also still accepts the retained legacy two- and four-value forms.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~CoordinateClipboardPayloadTests"
+      }
+    },
+    {
+      "id": "QA9-BtnCopyXY-003",
+      "title": "Copy XY-Coordinates writes the exact payload to the clipboard in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Copy XY-Coordinates on one selected rectangle at (150,120) returns true and the clipboard payload parses back to exactly x=150 y=120, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "copy-xy"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

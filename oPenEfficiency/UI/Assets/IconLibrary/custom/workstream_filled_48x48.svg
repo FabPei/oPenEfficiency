@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- Lane 1 -->
+  <circle cx="9" cy="14" r="2.4" fill="#000000"/>
+  <rect x="13" y="12.7" width="17.6" height="2.6" rx="1.3" fill="#000000"/>
+  <path d="M29.5 9.2L34.3 14L29.5 18.8V9.2Z" fill="#000000"/>
+  <rect x="18" y="11.2" width="7.4" height="5.6" rx="1.2" fill="#000000"/>
+
+  <!-- Lane 2 -->
+  <circle cx="9" cy="24" r="2.4" fill="#000000"/>
+  <rect x="13" y="22.7" width="22.6" height="2.6" rx="1.3" fill="#000000"/>
+  <path d="M34.5 19.2L39.3 24L34.5 28.8V19.2Z" fill="#000000"/>
+  <rect x="22" y="21.2" width="8.4" height="5.6" rx="1.2" fill="#000000"/>
+
+  <!-- Lane 3 -->
+  <circle cx="9" cy="34" r="2.4" fill="#000000"/>
+  <rect x="13" y="32.7" width="13.6" height="2.6" rx="1.3" fill="#000000"/>
+  <path d="M25.5 29.2L30.3 34L25.5 38.8V29.2Z" fill="#000000"/>
+  <rect x="16" y="31.2" width="6.9" height="5.6" rx="1.2" fill="#000000"/>
+</svg>

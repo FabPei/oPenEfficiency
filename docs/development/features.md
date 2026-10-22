@@ -1,0 +1,3 @@
+# Feature development
+
+The resolved feature catalog is the required source for every future user-facing command surface: sidebar, ribbon, command search and Feature Explorer. Use attributed metadata with stable IDs, English names/descriptions and practical help; manual registration remains intentional for widgets, dialogs and parameterized commands. Register executable IDs in the command registry and preserve source selection/Undo contracts. Update docs/Features.md and the canonical feature catalog whenever the visible command set changes. Run the five public test projects through eng/Build.ps1.

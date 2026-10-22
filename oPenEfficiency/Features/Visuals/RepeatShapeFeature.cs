@@ -9,13 +9,13 @@ namespace oPenEfficiency.Features
         Id = "BtnRepeatShape",
         Name = "Repeat Shape",
         Tooltip = "Repeat shape",
-        IconData = "M17,17H7V14L3,18L7,22V19H19V13H17M7,7H17V10L21,6L17,2V5H5V11H7V7Z",
+        IconData = "M1,4H8V11H1Z M3,6V9H6V6Z M8.5,4H15.5V11H8.5Z M10.5,6V9H13.5V6Z M16,4H23V11H16Z M18,6V9H21V6Z M2,17H18.6L16.3,14.7L17.7,13.3L22.4,18L17.7,22.7L16.3,21.3L18.6,19H2Z",
         Color = "#F43F5E",
         Description = "Clones the selected shape multiple times to create long sequences or grids. Default direction is Right.",
         DetailedHelpText = "### Repeat Shape\nDuplicates the selected shape a configurable number of times with automatic offset spacing, instantly generating a row or column of identical shapes.",
-        Keywords = "repeat, clone, sequence, grid, array, duplicate",
         MinSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        MaxSelection = 2,
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class RepeatShapeFeature
     {
         public enum RepeatDirection { Right, Left, Up, Down }
@@ -43,48 +43,25 @@ namespace oPenEfficiency.Features
                     manager.GetApplication().StartNewUndoEntry();
                 } catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"RepeatShapeFeature.StartNewUndoEntry error: {ex.Message}"); }
 
-                float right1 = shape1.Left + shape1.Width;
-                float bottom1 = shape1.Top + shape1.Height;
-                float right2 = shape2.Left + shape2.Width;
-                float bottom2 = shape2.Top + shape2.Height;
-
-                float gapX = 0;
-                if (System.Math.Max(shape1.Left, shape2.Left) > System.Math.Min(right1, right2))
-                    gapX = System.Math.Max(shape1.Left, shape2.Left) - System.Math.Min(right1, right2);
-                else
-                    gapX = System.Math.Abs(shape1.Left - shape2.Left);
-
-                float gapY = 0;
-                if (System.Math.Max(shape1.Top, shape2.Top) > System.Math.Min(bottom1, bottom2))
-                    gapY = System.Math.Max(shape1.Top, shape2.Top) - System.Math.Min(bottom1, bottom2);
-                else
-                    gapY = System.Math.Abs(shape1.Top - shape2.Top);
+                float gapX = oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.InferGapX(shape1.Left, shape1.Width, shape2.Left, shape2.Width);
+                float gapY = oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.InferGapY(shape1.Top, shape1.Height, shape2.Top, shape2.Height);
 
                 // Duplicate shape2 precisely
                 shape2.Select(Office.MsoTriState.msoTrue);
                 var newShapeRange = shape2.Duplicate();
                 var newShape = newShapeRange[1];
 
-                if (direction == RepeatDirection.Right)
-                {
-                    newShape.Left = shape2.Left + shape2.Width + gapX;
-                    newShape.Top = shape2.Top;
-                }
-                else if (direction == RepeatDirection.Left)
-                {
-                    newShape.Left = shape2.Left - newShape.Width - gapX;
-                    newShape.Top = shape2.Top;
-                }
-                else if (direction == RepeatDirection.Down)
-                {
-                    newShape.Top = shape2.Top + shape2.Height + gapY;
-                    newShape.Left = shape2.Left;
-                }
-                else if (direction == RepeatDirection.Up)
-                {
-                    newShape.Top = shape2.Top - newShape.Height - gapY;
-                    newShape.Left = shape2.Left;
-                }
+                var placementDirection = direction == RepeatDirection.Right ? oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.RepeatPlacementDirection.Right
+                    : direction == RepeatDirection.Left ? oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.RepeatPlacementDirection.Left
+                    : direction == RepeatDirection.Down ? oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.RepeatPlacementDirection.Down
+                    : oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.RepeatPlacementDirection.Up;
+                oPenEfficiency.Core.Services.RepeatShapeGeometryPlanner.NextPlacement(
+                    placementDirection,
+                    shape2.Left, shape2.Top, shape2.Width, shape2.Height,
+                    newShape.Width, newShape.Height, gapX, gapY,
+                    out float newLeft, out float newTop);
+                newShape.Left = newLeft;
+                newShape.Top = newTop;
 
                 shape2.Select(Office.MsoTriState.msoTrue);
                 newShape.Select(Office.MsoTriState.msoFalse);

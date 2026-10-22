@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnExcelLinkManager",
+  "title": "Excel Link Manager (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/ExcelLinkManagerFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnExcelLinkManager-001",
+      "title": "Excel Link Manager applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/ExcelLinkManagerFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Excel Link Manager (BtnExcelLinkManager) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnExcelLinkManager-001",
+      "title": "Link status resolution and last-refresh rendering pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ExcelLinkStatusPolicy.cs",
+        "oPenEfficiency/UI/Dialogs/ExcelLinkManagerWindow.xaml.cs"
+      ],
+      "expected": "The production display rules pin: a link is 'Linked' only when the shape carries a source path at all AND that file exists (a gone file reports 'Missing', a shape without a source path can never be Linked), and the last-refresh tag renders through the current culture's short date/time ('g') with blank or unparseable tags showing an em dash. ExcelLinkManagerWindow delegates all three rules.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ExcelLinkStatusPolicyTests"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

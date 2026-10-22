@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSearchBar",
+  "title": "Command Search (SettingsAndHelp)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSearchBar-001",
+      "title": "Command Search applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+      ],
+      "expected": "Command Search (BtnSearchBar) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSearchBar-001",
+      "title": "Search Enter priority ladder, tie-break and obsolete filtering pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/FeatureCatalogSearch.cs",
+        "oPenEfficiency.Core/Services/SidebarUiLogic.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.xaml.cs"
+      ],
+      "expected": "Enter runs the first sidebar search match, so the production ordering is the contract: for the query 'Anchor' the result order walks the complete scoring ladder - exact name/id (0), exact alias (1), name prefix (2), alias prefix (3), id prefix (4), name contains (5, ties broken by name ordinal-ignore-case), alias contains (6), id contains (7), description contains (8), help text contains (9) - case-insensitive throughout, obsolete records never enter the result, and an empty or whitespace query returns nothing so Enter cannot launch a command.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~SearchBarEnterPriorityContract"
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

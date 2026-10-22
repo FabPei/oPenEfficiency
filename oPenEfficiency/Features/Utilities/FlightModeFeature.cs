@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using Microsoft.Office.Interop.PowerPoint;
@@ -9,26 +9,24 @@ using oPenEfficiency.Services.Attributes;
 namespace oPenEfficiency.Features.Utilities
 {
     /// <summary>
-    /// Feature: Flight Mode - Temporarily obscure sensitive content (logos, branding)
+    /// Feature: Master Covers & Overlays - Temporarily obscure sensitive content (logos, branding)
     /// when presenting in public spaces.
     /// </summary>
     [FeatureMetadata(
         Id = "BtnFlightMode",
-        Name = "Flight Mode",
-        Tooltip = "Flight Mode (Privacy)",
+        Name = "Master Covers & Overlays",
+        SearchAliases = new[] { "Flight Mode", "Disable Flight Mode", "Toggle Flight Mode" },
+        Tooltip = "Toggle removable image covers and overlays on slide masters",
         IconData = "M21,16V4H13L11,2H3V16H11L13,18H21M19,14H13.8L12.8,12H5V4H9.2L10.2,6H19V14M17,18V20H7V18H17Z",
         Color = "#F43F5E",
-        Description = "Toggles flight mode to obscure sensitive content when presenting in public.",
-        DetailedHelpText = "### Flight Mode\nToggles privacy overlays to hide sensitive company branding or logos when presenting in public spaces.\n\n**Right-Click Options:**\n* **Cover Logos Only:** Identifies picture shapes in the slide master and covers them with white rectangles.\n* **Light Overlay:** Adds a 5% semi-transparent white overlay over the entire slide.\n* **Heavy Overlay:** Adds a 15% semi-transparent white overlay over the entire slide.\n* **Disable:** Removes all privacy overlays.",
-        Keywords = "privacy, obscure, hide, sensitive, public, overlay",
+        Description = "Temporarily covers master-slide images or adds a light or heavy white overlay across every slide master.",
+        DetailedHelpText = "### Master Covers & Overlays\nTemporarily adds tagged, removable shapes to every slide master. Toggle defaults to Cover Logos, which places white rectangles over master pictures. The context menu also offers Light Overlay (95% of the slide remains visible), Heavy Overlay (85% remains visible), and Disable Master Covers & Overlays. Switching modes first removes the previous Master Covers & Overlays shapes; disabling restores the original masters.",
         MinSelection = 0,
         IsToggle = true,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class FlightModeFeature
     {
-        private const string FlightModeTag = "oPE_FlightMode";
-        private const string ImageCoverTag = "ImageCover";
-        private const string OverlayTag = "Overlay";
+        private const string FlightModeTag = oPenEfficiency.Core.Services.FlightModeStatePolicy.FlightModeTag;
 
         public enum FlightModeType
         {
@@ -40,36 +38,33 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Toggles flight mode (defaults to cover logos).
+        /// Wrapper for auto-discovery - toggles flight mode (cover logos).
+        /// Note: This feature requires toggle state management, handled by the command adapter.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Toggle(manager);
+            // Toggle feature - requires ToggleButton parameter for state sync
+            // Handled by the explicit toggle registration in MainSidebar.Commands.cs.
+            return false;
         }
 
         /// <summary>
-        /// Gets the current Flight Mode state of the presentation.
+        /// Gets the current Master Covers & Overlays state of the presentation.
         /// </summary>
         public static FlightModeType GetMode(PowerPointManager manager)
         {
             try
             {
                 var pres = manager.GetApplication().ActivePresentation;
-                var master = pres.SlideMaster;
-
-                // Check for overlay shapes in the master
-                for (int i = 1; i <= master.Shapes.Count; i++)
+                foreach (Master master in GetSlideMasters(pres))
                 {
-                    Shape shape = master.Shapes[i];
-                    string tagValue = GetTagValue(shape, FlightModeTag);
-                    if (tagValue == ImageCoverTag)
-                        return FlightModeType.CoverLogos;
-                    if (tagValue == OverlayTag)
+                    for (int i = 1; i <= master.Shapes.Count; i++)
                     {
-                        // Check transparency to determine light vs heavy
-                        if (shape.Fill.Transparency < 0.1f)
-                            return FlightModeType.HeavyOverlay;
-                        return FlightModeType.LightOverlay;
+                        Shape shape = master.Shapes[i];
+                        string tagValue = GetTagValue(shape, FlightModeTag);
+                        if (tagValue == oPenEfficiency.Core.Services.FlightModeStatePolicy.ImageCoverTag) return FlightModeType.CoverLogos;
+                        if (tagValue == oPenEfficiency.Core.Services.FlightModeStatePolicy.OverlayTag)
+                            return oPenEfficiency.Core.Services.FlightModeStatePolicy.IsLightOverlay(shape.Fill.Transparency) ? FlightModeType.LightOverlay : FlightModeType.HeavyOverlay;
                     }
                 }
 
@@ -83,7 +78,7 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Toggles Flight Mode (defaults to Cover Logos Only).
+        /// Toggles Master Covers & Overlays (defaults to Cover Logos Only).
         /// </summary>
         public static bool Toggle(PowerPointManager manager)
         {
@@ -108,7 +103,7 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Enables Flight Mode - Cover Logos Only method.
+        /// Enables Master Covers & Overlays - Cover Logos Only method.
         /// Covers all image shapes in master slides with white rectangles.
         /// </summary>
         public static bool EnableCoverLogos(PowerPointManager manager)
@@ -118,46 +113,49 @@ namespace oPenEfficiency.Features.Utilities
                 var pres = manager.GetApplication().ActivePresentation;
                 int coversAdded = 0;
 
+                TryStartUndoEntry(manager, "FlightModeFeature.EnableCoverLogos.StartNewUndoEntry");
+
                 // First, disable any other flight modes
                 DisableOverlays(pres);
 
-                var master = pres.SlideMaster;
-                // Find all picture/image shapes in the master
-                var imagesToCover = new List<Shape>();
-                FindImageShapes(master.Shapes, imagesToCover);
-
-                foreach (Shape image in imagesToCover)
+                foreach (Master master in GetSlideMasters(pres))
                 {
-                    try
+                    var imagesToCover = new List<Shape>();
+                    FindImageShapes(master.Shapes, imagesToCover);
+
+                    foreach (Shape image in imagesToCover)
                     {
-                        // Create a white cover rectangle over the image
-                        var cover = master.Shapes.AddShape(
-                            Office.MsoAutoShapeType.msoShapeRectangle,
-                            image.Left,
-                            image.Top,
-                            image.Width,
-                            image.Height);
-
-                        // Style the cover
-                        cover.Name = $"FlightMode_Cover_{image.Name}";
-                        cover.Fill.ForeColor.RGB = ColorTranslator.ToOle(Color.White);
-                        cover.Fill.Transparency = 0; // Fully opaque
-                        cover.Line.Visible = Office.MsoTriState.msoFalse;
-
-                        // Send to back so it doesn't cover content placeholders
-                        cover.ZOrder(Office.MsoZOrderCmd.msoSendToBack);
-
-                        // Tag for identification
-                        SetTagValue(cover, FlightModeTag, ImageCoverTag);
-
-                        coversAdded++;
-                    }
-                    catch (Exception ex)
-                    {
-                        ExceptionLogger.Log(ex, "FlightModeFeature.EnableCoverLogos.AddCover");
+                        try
+                        {
+                            var cover = master.Shapes.AddShape(
+                                Office.MsoAutoShapeType.msoShapeRectangle,
+                                image.Left,
+                                image.Top,
+                                image.Width,
+                                image.Height);
+                            cover.Name = $"FlightMode_Cover_{image.Name}";
+                            cover.Fill.ForeColor.RGB = ColorTranslator.ToOle(Color.White);
+                            cover.Fill.Transparency = 0;
+                            cover.Line.Visible = Office.MsoTriState.msoFalse;
+                            cover.ZOrder(Office.MsoZOrderCmd.msoBringToFront);
+                            SetTagValue(cover, FlightModeTag, oPenEfficiency.Core.Services.FlightModeStatePolicy.ImageCoverTag);
+                            coversAdded++;
+                        }
+                        catch (Exception ex)
+                        {
+                            ExceptionLogger.Log(ex, "FlightModeFeature.EnableCoverLogos.AddCover");
+                        }
                     }
                 }
 
+                if (coversAdded == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "No picture shapes were found on the presentation's slide masters.",
+                        "Master Covers & Overlays",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Information);
+                }
                 return coversAdded > 0;
             }
             catch (Exception ex)
@@ -168,56 +166,46 @@ namespace oPenEfficiency.Features.Utilities
         }
 
         /// <summary>
-        /// Enables Flight Mode - Light Overlay method (5% white overlay).
+        /// Enables Master Covers & Overlays - Light Overlay method (5% white tint, 95% transparency).
         /// </summary>
         public static bool EnableLightOverlay(PowerPointManager manager)
         {
-            return EnableOverlay(manager, 0.05f); // 5% transparency = 95% visible
+            return EnableOverlay(manager, oPenEfficiency.Core.Services.FlightModeStatePolicy.LightOverlayTransparency);
         }
 
         /// <summary>
-        /// Enables Flight Mode - Heavy Overlay method (15% white overlay).
+        /// Enables Master Covers & Overlays - Heavy Overlay method (15% white tint, 85% transparency).
         /// </summary>
         public static bool EnableHeavyOverlay(PowerPointManager manager)
         {
-            return EnableOverlay(manager, 0.15f); // 15% transparency = 85% visible
+            return EnableOverlay(manager, oPenEfficiency.Core.Services.FlightModeStatePolicy.HeavyOverlayTransparency);
         }
 
         /// <summary>
-        /// Enables Flight Mode - Hide Master Background.
-        /// Iterates all slides and sets FollowMasterBackground to false.
+        /// Enables Master Covers & Overlays - Hide Master Background (native method).
+        /// Currently not used - overlay methods are preferred.
         /// </summary>
         public static bool EnableHideBackground(PowerPointManager manager)
         {
-            try
-            {
-                var pres = manager.GetApplication().ActivePresentation;
-                
-                // Disable other modes first
-                Disable(pres);
-
-                foreach (Slide slide in pres.Slides)
-                {
-                    try { slide.FollowMasterBackground = Office.MsoTriState.msoFalse; } catch { }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ExceptionLogger.Log(ex, "FlightModeFeature.EnableHideBackground");
-                return false;
-            }
+            // Placeholder - PowerPoint doesn't have a simple ShowBackground property
+            // Use overlay methods instead
+            System.Windows.Forms.MessageBox.Show(
+                "Hide Master Background is not available. Please use Cover Logos or Overlay methods.",
+                "Master Covers & Overlays",
+                System.Windows.Forms.MessageBoxButtons.OK,
+                System.Windows.Forms.MessageBoxIcon.Information);
+            return false;
         }
 
         /// <summary>
-        /// Disables all Flight Mode methods.
+        /// Disables all Master Covers & Overlays methods.
         /// </summary>
         public static bool Disable(PowerPointManager manager)
         {
             try
             {
                 var pres = manager.GetApplication().ActivePresentation;
+                TryStartUndoEntry(manager, "FlightModeFeature.Disable.StartNewUndoEntry");
                 Disable(pres);
                 return true;
             }
@@ -235,40 +223,34 @@ namespace oPenEfficiency.Features.Utilities
             try
             {
                 var pres = manager.GetApplication().ActivePresentation;
+                TryStartUndoEntry(manager, "FlightModeFeature.EnableOverlay.StartNewUndoEntry");
 
                 // Disable other modes first
                 Disable(pres);
 
                 int overlaysAdded = 0;
-                var master = pres.SlideMaster;
-
-                try
+                foreach (Master master in GetSlideMasters(pres))
                 {
-                    // Create full-slide overlay
-                    var overlay = master.Shapes.AddShape(
-                        Office.MsoAutoShapeType.msoShapeRectangle,
-                        0,
-                        0,
-                        pres.PageSetup.SlideWidth,
-                        pres.PageSetup.SlideHeight);
-
-                    // Style the overlay
-                    overlay.Name = "FlightMode_Overlay";
-                    overlay.Fill.ForeColor.RGB = ColorTranslator.ToOle(Color.White);
-                    overlay.Fill.Transparency = transparency;
-                    overlay.Line.Visible = Office.MsoTriState.msoFalse;
-
-                    // Send to back
-                    overlay.ZOrder(Office.MsoZOrderCmd.msoSendToBack);
-
-                    // Tag for identification
-                    SetTagValue(overlay, FlightModeTag, OverlayTag);
-
-                    overlaysAdded++;
-                }
-                catch (Exception ex)
-                {
-                    ExceptionLogger.Log(ex, "FlightModeFeature.EnableOverlay.AddOverlay");
+                    try
+                    {
+                        var overlay = master.Shapes.AddShape(
+                            Office.MsoAutoShapeType.msoShapeRectangle,
+                            0,
+                            0,
+                            pres.PageSetup.SlideWidth,
+                            pres.PageSetup.SlideHeight);
+                        overlay.Name = "FlightMode_Overlay";
+                        overlay.Fill.ForeColor.RGB = ColorTranslator.ToOle(Color.White);
+                        overlay.Fill.Transparency = transparency;
+                        overlay.Line.Visible = Office.MsoTriState.msoFalse;
+                        overlay.ZOrder(Office.MsoZOrderCmd.msoBringToFront);
+                        SetTagValue(overlay, FlightModeTag, oPenEfficiency.Core.Services.FlightModeStatePolicy.OverlayTag);
+                        overlaysAdded++;
+                    }
+                    catch (Exception ex)
+                    {
+                        ExceptionLogger.Log(ex, "FlightModeFeature.EnableOverlay.AddOverlay");
+                    }
                 }
 
                 return overlaysAdded > 0;
@@ -283,35 +265,23 @@ namespace oPenEfficiency.Features.Utilities
         private static void Disable(Presentation pres)
         {
             DisableOverlays(pres);
-            
-            // Re-enable background graphics
-            foreach (Slide slide in pres.Slides)
-            {
-                try { slide.FollowMasterBackground = Office.MsoTriState.msoTrue; } catch { }
-            }
         }
 
         private static void DisableOverlays(Presentation pres)
         {
             try
             {
-                var master = pres.SlideMaster;
-                // Remove overlay shapes (reverse iteration for safe deletion)
-                for (int i = master.Shapes.Count; i >= 1; i--)
+                foreach (Master master in GetSlideMasters(pres))
                 {
-                    try
+                    for (int i = master.Shapes.Count; i >= 1; i--)
                     {
-                        var shape = master.Shapes[i];
-                        string tagValue = GetTagValue(shape, FlightModeTag);
-
-                        if (tagValue == ImageCoverTag || tagValue == OverlayTag)
+                        try
                         {
-                            shape.Delete();
+                            var shape = master.Shapes[i];
+                            string tagValue = GetTagValue(shape, FlightModeTag);
+                            if (tagValue == oPenEfficiency.Core.Services.FlightModeStatePolicy.ImageCoverTag || tagValue == oPenEfficiency.Core.Services.FlightModeStatePolicy.OverlayTag) shape.Delete();
                         }
-                    }
-                    catch
-                    {
-                        // Skip shapes that can't be accessed
+                        catch (Exception ex) { ExceptionLogger.Log(ex, "FlightModeFeature.DisableOverlays.Shape"); }
                     }
                 }
             }
@@ -325,25 +295,33 @@ namespace oPenEfficiency.Features.Utilities
         {
             try
             {
-                var pres = shapes.Parent as Presentation;
-                // If parent isn't presentation (e.g. Layout/Master), get it via application
-                if (pres == null)
-                {
-                    try 
-                    { 
-                        var app = shapes.Application as Microsoft.Office.Interop.PowerPoint.Application;
-                        if (app != null) pres = app.ActivePresentation; 
-                    } 
-                    catch { }
-                }
-
-                float slideWidth = pres?.PageSetup.SlideWidth ?? 0;
-                float slideHeight = pres?.PageSetup.SlideHeight ?? 0;
-
                 for (int i = 1; i <= shapes.Count; i++)
                 {
                     Shape shape = shapes[i];
-                    ProcessShape(shape, results, slideWidth, slideHeight);
+                    if (shape.Type == Office.MsoShapeType.msoPicture ||
+                        shape.Type == Office.MsoShapeType.msoLinkedPicture)
+                    {
+                        results.Add(shape);
+                    }
+                    else if (shape.Type == Office.MsoShapeType.msoGroup)
+                    {
+                        // Recurse into groups - GroupItems returns GroupShapes which can be iterated
+                        try
+                        {
+                            foreach (Shape groupShape in shape.GroupItems)
+                            {
+                                if (groupShape.Type == Office.MsoShapeType.msoPicture ||
+                                    groupShape.Type == Office.MsoShapeType.msoLinkedPicture)
+                                {
+                                    results.Add(groupShape);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // Skip groups that can't be accessed
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -352,33 +330,24 @@ namespace oPenEfficiency.Features.Utilities
             }
         }
 
-        private static void ProcessShape(Shape shape, List<Shape> results, float slideWidth, float slideHeight)
+        private static IEnumerable<Master> GetSlideMasters(Presentation presentation)
         {
-            try
-            {
-                if (shape.Type == Office.MsoShapeType.msoPicture ||
-                    shape.Type == Office.MsoShapeType.msoLinkedPicture)
-                {
-                    // Ignore full-slide background images (anything > 95% of slide dimensions)
-                    bool isFullWidth = slideWidth > 0 && shape.Width >= (slideWidth * 0.95f);
-                    bool isFullHeight = slideHeight > 0 && shape.Height >= (slideHeight * 0.95f);
-
-                    if (!isFullWidth && !isFullHeight)
-                    {
-                        results.Add(shape);
-                    }
-                }
-                else if (shape.Type == Office.MsoShapeType.msoGroup)
-                {
-                    foreach (Shape groupShape in shape.GroupItems)
-                    {
-                        ProcessShape(groupShape, results, slideWidth, slideHeight);
-                    }
-                }
-            }
-            catch { }
+            for (int i = 1; i <= presentation.Designs.Count; i++)
+                yield return presentation.Designs[i].SlideMaster;
         }
 
+        private static void TryStartUndoEntry(PowerPointManager manager, string context)
+        {
+            try { manager.GetApplication().StartNewUndoEntry(); }
+            catch (Exception ex) { ExceptionLogger.Log(ex, context); }
+        }
+
+        // Measured 2026-10-10 on the real host (QA-S9 batch 52 office leg): PowerPoint
+        // STORES shape tag names UPPERCASE (Tags.Add("oPE_FlightMode") reads back as
+        // "OPE_FLIGHTMODE" through the same C# interop), so a case-sensitive name
+        // comparison never matches its own written tag - GetMode stayed None after a
+        // successful Enable and Disable could not find its own overlay to remove.
+        // Both tag comparisons therefore match OrdinalIgnoreCase.
         private static string GetTagValue(Shape shape, string tagName)
         {
             try
@@ -387,14 +356,15 @@ namespace oPenEfficiency.Features.Utilities
                 {
                     for (int i = 1; i <= shape.Tags.Count; i++)
                     {
-                        if (shape.Tags.Name(i) == tagName)
+                        if (string.Equals(shape.Tags.Name(i), tagName,
+                            StringComparison.OrdinalIgnoreCase))
                         {
                             return shape.Tags.Value(i);
                         }
                     }
                 }
             }
-            catch { }
+            catch { /* Missing or stale tags mean no persisted flight-mode state is available. */ }
             return null;
         }
 
@@ -407,7 +377,8 @@ namespace oPenEfficiency.Features.Utilities
                 {
                     for (int i = shape.Tags.Count; i >= 1; i--)
                     {
-                        if (shape.Tags.Name(i) == tagName)
+                        if (string.Equals(shape.Tags.Name(i), tagName,
+                            StringComparison.OrdinalIgnoreCase))
                         {
                             shape.Tags.Delete(tagName);
                             break;

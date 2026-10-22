@@ -1,6 +1,7 @@
 ﻿using Microsoft.Office.Interop.PowerPoint;
 using oPenEfficiency.Services.Attributes;
 using oPenEfficiency.Utils;
+using SwapAnchor = oPenEfficiency.Core.Services.AnchorSwapPlacementPolicy.SwapAnchor;
 
 namespace oPenEfficiency.Features
 {
@@ -14,38 +15,22 @@ namespace oPenEfficiency.Features
         IconData = "M17,17L13,21V18H4V16H13V13L17,17M7,7L11,3V6H20V8H11V11L7,7Z",
         Color = "#F59E0B",
         Description = "Exchanges the X/Y coordinates of two selected shapes. Ideal for reorganization.",
-        DetailedHelpText = "### Swap Positions\nSwaps the positions of two or more selected shapes. If more than two are selected, they rotate positions sequentially.\n\n**Right-Click Options:**\n* Set the **Rotation Anchor** (e.g., Top Left, Center, Bottom Right) to determine which point of the shape stays consistent during the swap. The chosen anchor is saved as the new default behavior for the main button.",
-        Keywords = "exchange positions, swap locations, switch x y, rotate places",
+        DetailedHelpText = "### Swap Positions\n\nSelect exactly two shapes to exchange their positions. The standard action swaps their centers. Right-click to instead exchange matching top, side, corner, or bottom anchor points. Shape size, rotation, and formatting remain unchanged.",
         MinSelection = 2,
         MaxSelection = 2,
-        RequiredType = PpSelectionType.ppSelectionShapes)]
+        RequiredType = OfficeSelectionType.Shapes)]
     public static class SwapPositionsFeature
     {
-        public enum SwapAnchor
-        {
-            Center,
-            TopLeft,
-            Top,
-            TopRight,
-            Right,
-            BottomRight,
-            Bottom,
-            BottomLeft,
-            Left
-        }
-
-        public static SwapAnchor DefaultAnchor { get; set; } = SwapAnchor.Center;
-
         /// <summary>
-        /// Wrapper for auto-discovery - uses default anchor.
+        /// Wrapper for auto-discovery - uses Center anchor (default behavior).
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            return Execute(manager, DefaultAnchor);
+            return Execute(manager, SwapAnchor.Center);
         }
 
         /// <summary>
-        /// Full method with parameters for manual switch usage.
+        /// Full method with parameters for explicit command variants.
         /// </summary>
         public static bool Execute(PowerPointManager manager, SwapAnchor anchor = SwapAnchor.Center)
         {
@@ -56,22 +41,29 @@ namespace oPenEfficiency.Features
             {
                 var s1 = shapeRange[1];
                 var s2 = shapeRange[2];
+                float originalLeft1 = s1.Left, originalTop1 = s1.Top;
+                float originalLeft2 = s2.Left, originalTop2 = s2.Top;
 
-                float x1, y1, x2, y2;
-                GetAnchorPoint(s1, anchor, out x1, out y1);
-                GetAnchorPoint(s2, anchor, out x2, out y2);
+                oPenEfficiency.Core.Services.AnchorSwapPlacementPolicy.SwapPlacement(
+                    anchor,
+                    s1.Left, s1.Top, s1.Width, s1.Height,
+                    s2.Left, s2.Top, s2.Width, s2.Height,
+                    out float newLeft1, out float newTop1, out float newLeft2, out float newTop2);
 
-                // Calculate offsets from anchor to Top/Left
-                float dx1 = s1.Left - x1;
-                float dy1 = s1.Top - y1;
-                float dx2 = s2.Left - x2;
-                float dy2 = s2.Top - y2;
-
-                // Swap
-                s1.Left = x2 + dx1;
-                s1.Top = y2 + dy1;
-                s2.Left = x1 + dx2;
-                s2.Top = y1 + dy2;
+                try { manager.GetApplication()?.StartNewUndoEntry(); } catch { /* Swap remains valid when undo grouping is unavailable. */ }
+                try
+                {
+                    s1.Left = newLeft1;
+                    s1.Top = newTop1;
+                    s2.Left = newLeft2;
+                    s2.Top = newTop2;
+                }
+                catch
+                {
+                    try { s1.Left = originalLeft1; s1.Top = originalTop1; } catch { /* Preserve the primary swap error if the first proxy is stale. */ }
+                    try { s2.Left = originalLeft2; s2.Top = originalTop2; } catch { /* Preserve the primary swap error if the second proxy is stale. */ }
+                    throw;
+                }
 
                 return true;
             }
@@ -79,32 +71,6 @@ namespace oPenEfficiency.Features
             {
                 ExceptionLogger.Log(ex, "SwapPositionsFeature.Execute");
                 return false;
-            }
-        }
-
-        private static void GetAnchorPoint(Shape s, SwapAnchor anchor, out float x, out float y)
-        {
-            switch (anchor)
-            {
-                case SwapAnchor.TopLeft:
-                    x = s.Left; y = s.Top; break;
-                case SwapAnchor.Top:
-                    x = s.Left + s.Width / 2f; y = s.Top; break;
-                case SwapAnchor.TopRight:
-                    x = s.Left + s.Width; y = s.Top; break;
-                case SwapAnchor.Right:
-                    x = s.Left + s.Width; y = s.Top + s.Height / 2f; break;
-                case SwapAnchor.BottomRight:
-                    x = s.Left + s.Width; y = s.Top + s.Height; break;
-                case SwapAnchor.Bottom:
-                    x = s.Left + s.Width / 2f; y = s.Top + s.Height; break;
-                case SwapAnchor.BottomLeft:
-                    x = s.Left; y = s.Top + s.Height; break;
-                case SwapAnchor.Left:
-                    x = s.Left; y = s.Top + s.Height / 2f; break;
-                case SwapAnchor.Center:
-                default:
-                    x = s.Left + s.Width / 2f; y = s.Top + s.Height / 2f; break;
             }
         }
 

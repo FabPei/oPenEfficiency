@@ -205,7 +205,7 @@ namespace oPenEfficiency.UI
                     ThermometerFeature.UpdateThermometer(selection[1], _percentage / 100f, _colorBgr);
                 }
             }
-            catch { }
+            catch { /* A stale target shape skips this visual refresh and retries on the next selection event. */ }
         }
 
         private void Window_Deactivated(object sender, EventArgs e)

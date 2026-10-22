@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTranslate",
+  "title": "Translate Text (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTranslate-001",
+      "title": "Translate Text applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Translate Text (BtnTranslate) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTranslate-001",
+      "title": "Translate the selection via the native pane or the configured API",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/TranslationFeatures.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "The interactive translate behaves as documented on a real PowerPoint host: with text selected, the feature either opens PowerPoint's native Translator pane or - when a translation API is configured in the sidebar settings - replaces the selection's text with the translated text, keeping formatting and producing one Undo entry; without a configured API and without the native pane it reports clearly instead of silently doing nothing.",
+      "ownerSteps": [
+        "Select a text range in a shape (no API key configured).",
+        "Run Translate the selection; verify the native Translator pane opens (or a clear message appears when unavailable).",
+        "Configure a translation API key in the sidebar settings, select another text range, run Translate again.",
+        "Verify the selection's text is replaced by the translated text with formatting intact, one Undo entry reverts it, and no new %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log entry appears."
+      ],
+      "technicalReason": "Deterministic automation is not feasible for this feature: one leg opens PowerPoint's native Translator pane (an interactive, account/network-backed UI that cannot be driven headlessly) and the other leg calls an external translation service with credentials from the sidebar configuration (non-deterministic network I/O plus secrets that must never live in a test fixture). The seam can drive neither without credentials or modal UI; this owner check stays human until a reviewed seam technique exists (for example a pinned request/response mapping if the API client is ever extracted)."
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

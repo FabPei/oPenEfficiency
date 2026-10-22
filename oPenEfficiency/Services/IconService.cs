@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Windows.Media;
+using oPenEfficiency.UI;
 using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Services
@@ -17,28 +18,30 @@ namespace oPenEfficiency.Services
             _assemblyDir = Path.GetDirectoryName(Uri.UnescapeDataString(uri.Path));
         }
 
-        public static Geometry GetIconGeometry(string id, out bool isFilled)
+        /// <summary>
+        /// Role-aware icon geometry loader. Returns a <see cref="ParsedIconGeometry"/> with
+        /// separate base and accent layers parsed from <c>data-oe-role</c> SVG attributes.
+        /// Returns null if the icon cannot be found or parsed.
+        /// </summary>
+        public static ParsedIconGeometry GetIconGeometryWithRoles(string id)
         {
-            return GetIconGeometry(id, false, out isFilled);
+            string svgFilePath = ResolveIconPath(id);
+            if (svgFilePath == null) return null;
+
+            var parsed = SvgParser.ParseSvgWithRoles(svgFilePath);
+            return parsed;
         }
 
-        public static Geometry GetIconGeometry(string id, bool hover, out bool isFilled)
+        /// <summary>
+        /// Legacy single-layer icon geometry loader. Used as fallback when the role-aware parser
+        /// returns no result, or for consumers that don't need two-layer rendering.
+        /// </summary>
+        public static Geometry GetIconGeometryLegacy(string id, out bool isFilled)
         {
             isFilled = true; // Default for legacy path data
 
-            string fileName = id + (hover ? "_hover" : "");
-            
-            // 1. Try to find SVG file
-            string svgFilePath = Path.Combine(_assemblyDir, "UI", "Assets", "Icons", fileName + ".svg");
-
-            // Development path fallback
-            if (!File.Exists(svgFilePath))
-            {
-                string devPath = Path.GetFullPath(Path.Combine(_assemblyDir, "..", "..", "UI", "Assets", "Icons", fileName + ".svg"));
-                if (File.Exists(devPath)) svgFilePath = devPath;
-            }
-
-            if (File.Exists(svgFilePath))
+            string svgFilePath = ResolveIconPath(id);
+            if (svgFilePath != null)
             {
                 var svgGeom = SvgParser.ParseLucideSvg(svgFilePath, out isFilled);
                 if (svgGeom != null && svgGeom.Children.Count > 0)
@@ -47,10 +50,7 @@ namespace oPenEfficiency.Services
                 }
             }
 
-            // If we're looking for a hover icon and didn't find one, return null (no fallback to default icon here)
-            if (hover) return null;
-
-            // 2. Fallback to FeatureLibrary path data (only for non-hover)
+            // Fallback to FeatureLibrary path data
             var info = UI.FeatureLibrary.GetFeatureInfo(id);
             if (!string.IsNullOrEmpty(info.IconData))
             {
@@ -66,6 +66,29 @@ namespace oPenEfficiency.Services
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Backward-compatible overload for consumers still using the legacy API.
+        /// </summary>
+        public static Geometry GetIconGeometry(string id, out bool isFilled)
+        {
+            return GetIconGeometryLegacy(id, out isFilled);
+        }
+
+        private static string ResolveIconPath(string id)
+        {
+            // 1. Try to find SVG file (no hover variants)
+            string svgFilePath = Path.Combine(_assemblyDir, "UI", "Assets", "Icons", id + ".svg");
+
+            // Development path fallback
+            if (!File.Exists(svgFilePath))
+            {
+                string devPath = Path.GetFullPath(Path.Combine(_assemblyDir, "..", "..", "UI", "Assets", "Icons", id + ".svg"));
+                if (File.Exists(devPath)) svgFilePath = devPath;
+            }
+
+            return File.Exists(svgFilePath) ? svgFilePath : null;
         }
     }
 }

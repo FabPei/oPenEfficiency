@@ -14,7 +14,10 @@ using oPenEfficiency.Features.Text;
 using oPenEfficiency.Features.Utilities;
 using oPenEfficiency.Models;
 using oPenEfficiency.Services;
+using oPenEfficiency.Services.Attributes;
+using oPenEfficiency.Services.Commands;
 using oPenEfficiency.UI.Dialogs;
+using oPenEfficiency.Utils;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
@@ -24,12 +27,27 @@ namespace oPenEfficiency
 {
     public partial class MainSidebar : UserControl, INotifyPropertyChanged
     {
+        private static MainSidebar _activeInstance;
         private PowerPointManager _powerPointManager;
+        private UI.Panels.ISidebarHost _host;
         private UI.ShapeSizePanel _sizePanel;
         private UI.FontPanel _fontPanel;
         private UI.SearchBarControl _searchBar;
-        private UI.SpecialCharactersWindow _specialCharsWindow;
-        private PowerPoint.Selection _currentSelection;
+        private UI.Panels.SidebarNavigationService _navigation;
+        private UI.Panels.SidebarContextMenuProvider _contextMenus;
+        private UI.Panels.SidebarNavigationService Navigation =>
+            _navigation ?? (_navigation = new UI.Panels.SidebarNavigationService(
+                this,
+                GetManager,
+                () => RebuildUI()));
+        private UI.Panels.SidebarContextMenuProvider ContextMenus =>
+            _contextMenus ?? (_contextMenus = new UI.Panels.SidebarContextMenuProvider(
+                TryAttachRemainingFeatureContextMenu,
+                AttachCatalogContextMenu));
+        private SidebarSelectionSnapshot _selectionSnapshot;
+        private bool _themeSubscribed;
+        private string _currentIconColorMode = IconColorModes.PowerPoint;
+        private string _activeSearchTerm = string.Empty;
 
         private SidebarConfig _config = new SidebarConfig();
         public SidebarConfig Config
@@ -48,41 +66,208 @@ namespace oPenEfficiency
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
 
-                private System.Collections.Generic.Dictionary<string, Window> _floatingWindows = new System.Collections.Generic.Dictionary<string, Window>();
+        private System.Collections.Generic.Dictionary<string, Window> _floatingWindows = new System.Collections.Generic.Dictionary<string, Window>();
 
         private void ToggleFloatingWindow<T>(string key, Func<T> createAction, System.Windows.Controls.Primitives.ToggleButton toggleBtn) where T : Window
         {
+            _floatingWindows.TryGetValue(key, out var existing);
+            if (existing != null && !existing.IsLoaded)
+            {
+                _floatingWindows.Remove(key);
+                existing = null;
+            }
+
             if (toggleBtn != null && toggleBtn.IsChecked == false)
             {
-                if (_floatingWindows.ContainsKey(key))
-                {
-                    _floatingWindows[key].Close();
-                    _floatingWindows.Remove(key);
-                }
+                existing?.Close();
+                _floatingWindows.Remove(key);
                 return;
             }
 
-            if (!_floatingWindows.ContainsKey(key) || !_floatingWindows[key].IsLoaded)
+            if (existing != null)
             {
-                var window = createAction();
-                _floatingWindows[key] = window;
-                if (toggleBtn != null)
-                {
-                    toggleBtn.IsChecked = true;
-                    window.Closed += (s, e) => { 
-                        toggleBtn.IsChecked = false; 
-                        if (_floatingWindows.ContainsKey(key)) _floatingWindows.Remove(key);
-                    };
-                }
-                window.Show();
-            }
-            else
-            {
+                SetPowerPointOwner(existing, GetManager());
+                if (!existing.IsVisible) existing.Show();
+                if (existing.WindowState == WindowState.Minimized)
+                    existing.WindowState = WindowState.Normal;
+                existing.Activate();
+                existing.Focus();
                 if (toggleBtn != null) toggleBtn.IsChecked = true;
-                _floatingWindows[key].Activate();
+                return;
+            }
+
+            var window = createAction();
+            if (window == null) throw new InvalidOperationException("Window factory returned null.");
+            SetPowerPointOwner(window, GetManager());
+            window.Closed += (s, e) =>
+            {
+                if (toggleBtn != null) toggleBtn.IsChecked = false;
+                if (_floatingWindows.TryGetValue(key, out var tracked) && ReferenceEquals(tracked, window))
+                    _floatingWindows.Remove(key);
+            };
+            try
+            {
+                window.Show();
+                if (!window.IsLoaded || !window.IsVisible)
+                    throw new InvalidOperationException(
+                        $"Window for '{key}' closed before it became visible.");
+                _floatingWindows[key] = window;
+                if (toggleBtn != null) toggleBtn.IsChecked = true;
+            }
+            catch
+            {
+                try { window.Close(); }
+                catch (Exception closeEx)
+                {
+                    ExceptionLogger.Log(closeEx, "MainSidebar.ToggleFloatingWindow.FailureCleanup");
+                }
+                _floatingWindows.Remove(key);
+                if (toggleBtn != null) toggleBtn.IsChecked = false;
+                throw;
             }
         }
 
+        internal bool ExerciseFloatingWindowLifecycleForAutomation()
+        {
+            const string key = "OfficeIntegrationFloatingProbe";
+            int initialWindowCount = _floatingWindows.Count;
+            Window probe = null;
+            try
+            {
+                ToggleFloatingWindow(
+                    key,
+                    () => probe = new Window
+                    {
+                        Width = 1,
+                        Height = 1,
+                        Left = -32000,
+                        Top = -32000,
+                        Opacity = 0,
+                        ShowActivated = false,
+                        ShowInTaskbar = false,
+                        WindowStyle = WindowStyle.None
+                    },
+                    null);
+                probe.Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
+                bool opened = probe.IsLoaded && _floatingWindows.Count == initialWindowCount + 1;
+                probe.Close();
+                probe.Dispatcher.Invoke(() => { }, DispatcherPriority.Background);
+                return opened && !probe.IsLoaded && _floatingWindows.Count == initialWindowCount;
+            }
+            finally
+            {
+                if (probe?.IsLoaded == true) probe.Close();
+                _floatingWindows.Remove(key);
+            }
+        }
+
+
+        private void ShowOrCenterGanttWindow(
+            PowerPointManager manager,
+            ToggleButton toggleBtn,
+            UI.Panels.GanttStartAction startAction = UI.Panels.GanttStartAction.Open)
+        {
+            const string key = "BtnGanttChart";
+
+            _floatingWindows.TryGetValue(key, out var existingWindow);
+            if (existingWindow != null && !existingWindow.IsLoaded)
+            {
+                _floatingWindows.Remove(key);
+                existingWindow = null;
+            }
+
+            if (toggleBtn != null && toggleBtn.IsChecked == false)
+            {
+                existingWindow?.Close();
+                _floatingWindows.Remove(key);
+                return;
+            }
+
+            if (existingWindow != null)
+            {
+                (existingWindow as UI.Dialogs.GanttChartWindow)?.ApplyStartAction(startAction);
+                if (toggleBtn != null) toggleBtn.IsChecked = true;
+                SetPowerPointOwner(existingWindow, manager);
+                if (!existingWindow.IsVisible) existingWindow.Show();
+                if (existingWindow.WindowState == WindowState.Minimized)
+                    existingWindow.WindowState = WindowState.Normal;
+                CenterWindowOverSlide(existingWindow, manager);
+                existingWindow.Activate();
+                existingWindow.Focus();
+                return;
+            }
+
+            var window = new UI.Dialogs.GanttChartWindow(manager, startAction);
+            SetPowerPointOwner(window, manager);
+            window.Closed += (s, e) =>
+            {
+                if (toggleBtn != null) toggleBtn.IsChecked = false;
+                if (_floatingWindows.TryGetValue(key, out var tracked) && ReferenceEquals(tracked, window))
+                    _floatingWindows.Remove(key);
+            };
+            try
+            {
+                window.Show();
+                if (!window.IsLoaded || !window.IsVisible)
+                    throw new InvalidOperationException(
+                        "Gantt window closed before it became visible.");
+                _floatingWindows[key] = window;
+                if (toggleBtn != null) toggleBtn.IsChecked = true;
+                CenterWindowOverSlide(window, manager);
+            }
+            catch
+            {
+                try { window.Close(); }
+                catch (Exception closeEx)
+                {
+                    ExceptionLogger.Log(closeEx, "MainSidebar.ShowOrCenterGanttWindow.FailureCleanup");
+                }
+                _floatingWindows.Remove(key);
+                if (toggleBtn != null) toggleBtn.IsChecked = false;
+                throw;
+            }
+        }
+
+        private static void SetPowerPointOwner(Window window, PowerPointManager manager)
+        {
+            var app = manager?.GetApplication();
+            if (window != null && app != null)
+                new System.Windows.Interop.WindowInteropHelper(window).Owner = (IntPtr)app.HWND;
+        }
+
+        private void CenterWindowOverSlide(Window window, PowerPointManager manager)
+        {
+            try
+            {
+                var app = manager.GetApplication();
+                if (app?.ActiveWindow == null) return;
+
+                float slideWidth = app.ActivePresentation.PageSetup.SlideWidth;
+                float slideHeight = app.ActivePresentation.PageSetup.SlideHeight;
+
+                int centerXPx = app.ActiveWindow.PointsToScreenPixelsX(slideWidth / 2);
+                int centerYPx = app.ActiveWindow.PointsToScreenPixelsY(slideHeight / 2);
+
+                float dpiScaleX, dpiScaleY;
+                using (var g = System.Drawing.Graphics.FromHwnd(IntPtr.Zero))
+                {
+                    dpiScaleX = g.DpiX / 96f;
+                    dpiScaleY = g.DpiY / 96f;
+                }
+
+                double wpfW = window.ActualWidth > 0 ? window.ActualWidth : window.Width;
+                double wpfH = window.ActualHeight > 0 ? window.ActualHeight : window.Height;
+                double wpfX = (centerXPx / dpiScaleX) - (wpfW / 2);
+                double wpfY = (centerYPx / dpiScaleY) - (wpfH / 2);
+
+                wpfX = Math.Max(0, Math.Min(wpfX, SystemParameters.PrimaryScreenWidth - wpfW));
+                wpfY = Math.Max(0, Math.Min(wpfY, SystemParameters.PrimaryScreenHeight - wpfH));
+
+                window.Left = wpfX;
+                window.Top = wpfY;
+            }
+            catch (Exception ex) { ExceptionPolicy.ReportOptionalComFailure(ex, "MainSidebar.PositionFloatingWindow"); }
+        }
 
         public MainSidebar()
         {
@@ -91,12 +276,29 @@ namespace oPenEfficiency
 
             _resizeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
             _resizeTimer.Tick += ResizeTimer_Tick;
-            
-            // Initial Rebuild from Config
-            this.Loaded += (s, e) => RebuildUI();
 
-            // Listen for theme changes to refresh local resources
-            oPenEfficiency.Services.ThemeManager.ThemeChanged += (s, themeName) => RefreshThemeResources();
+            // Initial Rebuild from Config
+            this.Loaded += MainSidebar_Loaded;
+            this.Unloaded += MainSidebar_Unloaded;
+            this.MouseEnter += (s, e) => RefreshButtonStates();
+
+        }
+
+        private void MainSidebar_Loaded(object sender, RoutedEventArgs e)
+        {
+            _activeInstance = this;
+            if (!_themeSubscribed)
+            {
+                oPenEfficiency.Services.ThemeManager.ThemeChanged += ThemeManager_ThemeChanged;
+                _themeSubscribed = true;
+            }
+            RebuildUI();
+        }
+
+        private void ThemeManager_ThemeChanged(object sender, string themeName)
+        {
+            RefreshThemeResources();
+            RebuildUI(_activeSearchTerm);
         }
 
         private void RefreshThemeResources()
@@ -115,13 +317,13 @@ namespace oPenEfficiency
                         Source = new Uri("/oPenEfficiency;component/UI/Styles/Controls.xaml", UriKind.RelativeOrAbsolute)
                     });
                 }
-                
+
                 // Also trigger a rebuild if necessary, or just invalidate
                 this.InvalidateVisual();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error refreshing sidebar theme: {ex.Message}");
+                ExceptionLogger.Log(ex, "MainSidebar.RefreshThemeResources");
             }
         }
 
@@ -289,11 +491,17 @@ namespace oPenEfficiency
         /// <summary>Called by ThisAddIn whenever PowerPoint selection changes.</summary>
         public void OnSelectionChange(PowerPoint.Selection sel)
         {
-            _currentSelection = sel;
             _sizePanel?.OnSelectionChange(sel);
             _fontPanel?.OnSelectionChange(sel);
             UpdateButtonStates();
         }
+
+        public void RefreshButtonStates()
+        {
+            UpdateButtonStates();
+        }
+
+        internal int SelectionShapeCountForAutomation => _selectionSnapshot?.ShapeCount ?? -1;
 
         /// <summary>Called by ThisAddIn to update size panel while editing text inside a shape.</summary>
         public void UpdateSizePanel(PowerPoint.Shape shape)
@@ -304,17 +512,67 @@ namespace oPenEfficiency
         // Current button background brush, set by RebuildUI and used by CreateFeatureButton
         private Brush _currentBtnBgBrush = Brushes.Transparent;
 
+        private static List<SidebarFeature> GetSearchMatches(string searchTerm)
+        {
+            return SidebarSearchService.Search(UI.FeatureLibrary.Catalog, searchTerm)
+                .Select(feature => new SidebarFeature
+                {
+                    Id = feature.Id,
+                    Name = feature.Name
+                })
+                .ToList();
+        }
+
+        private void ExecuteFirstSearchMatch(string searchTerm)
+        {
+            var feature = GetSearchMatches(searchTerm).FirstOrDefault();
+            if (feature == null) return;
+
+            var target = FindElementByName(DynamicContentPanel, feature.Id);
+            ExecuteFeature(feature.Id, target, CommandInvocationSource.Search);
+        }
+
+        private static FrameworkElement FindElementByName(DependencyObject parent, string name)
+        {
+            if (parent == null) return null;
+            if (parent is FrameworkElement element && string.Equals(element.Name, name, StringComparison.Ordinal))
+                return element;
+
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childCount; i++)
+            {
+                var match = FindElementByName(VisualTreeHelper.GetChild(parent, i), name);
+                if (match != null) return match;
+            }
+
+            return null;
+        }
+
         public void RebuildUI(string searchTerm = "")
         {
             if (DynamicContentPanel == null) return;
+
+            searchTerm = searchTerm ?? string.Empty;
+            _activeSearchTerm = searchTerm;
 
             DynamicContentPanel.Children.Clear();
 
             // Update the current layout mode
             _isCurrentlyHorizontal = this.ActualWidth > (this.ActualHeight * 1.5);
 
-            SidebarConfig config;
             bool isSearchMode = !string.IsNullOrWhiteSpace(searchTerm);
+            SidebarConfig config = JsonService.Load<SidebarConfig>("sidebar_config.json");
+            bool hasSavedLayout = config != null;
+            config = SidebarPresetFactory.ResolveInitialLayout(
+                config,
+                UI.FeatureLibrary.Catalog);
+            if (hasSavedLayout)
+                FilterObsoleteFeatures(config);
+
+            bool appearanceModeChanged = SidebarBackgroundModes.Normalize(config);
+            appearanceModeChanged |= SidebarSectionFontColorModes.Normalize(config);
+            if (appearanceModeChanged && hasSavedLayout)
+                JsonService.Save(config, "sidebar_config.json");
 
             if (isSearchMode)
             {
@@ -327,58 +585,38 @@ namespace oPenEfficiency
                     DynamicContentPanel.Children.Add(searchBar);
                 }
 
-                config = new SidebarConfig();
                 var searchSection = new SidebarSection { Name = "Search Results", Color = "#10B981" };
-                
-                string query = searchTerm.ToLower();
-                var matches = UI.FeatureLibrary.AllFeatures
-                    .Where(f => f.Name.ToLower().Contains(query) || 
-                                f.Id.ToLower().Contains(query) ||
-                                (f.Keywords != null && f.Keywords.ToLower().Contains(query)))
-                    .Where(f => f.Id != "BtnSearchBar") // Don't match the search bar itself
-                    .ToList();
+
+                var matches = GetSearchMatches(searchTerm);
 
                 foreach (var m in matches) searchSection.Features.Add(m);
-                config.Sections.Add(searchSection);
-            }
-            else
-            {
-                config = JsonService.Load<SidebarConfig>("sidebar_config.json");
-                if (config == null || config.Sections == null || config.Sections.Count == 0)
-                    config = UI.FeatureLibrary.GetEmergencyDefault();
-                else
-                    FilterObsoleteFeatures(config);
+                config.Sections = new List<SidebarSection> { searchSection };
             }
 
-            // Apply persisted background colour only if it's not the default "theme-tracking" value
+            // Apply either the live theme token or the user's explicit custom colour.
             try
             {
-                if (!string.IsNullOrWhiteSpace(config.BackgroundColor) && config.BackgroundColor != "Transparent" && config.BackgroundColor != "#252525")
+                if (!SidebarBackgroundModes.UsesTheme(config))
                 {
                     this.Background = (SolidColorBrush)new BrushConverter().ConvertFrom(config.BackgroundColor);
                 }
                 else
                 {
-                    // Fall back to the DynamicResource defined in XAML
-                    this.SetResourceReference(Control.BackgroundProperty, "WindowBackgroundBrush");
+                    this.SetResourceReference(Control.BackgroundProperty, "SidebarBackgroundBrush");
                 }
             }
-            catch { this.SetResourceReference(Control.BackgroundProperty, "WindowBackgroundBrush"); }
-
-            // Resolve section header font colour with safe fallback
-            SolidColorBrush sectionFontBrush;
-            try
+            catch (Exception ex)
             {
-                var fc = string.IsNullOrWhiteSpace(config.SectionFontColor) ? "#888888" : config.SectionFontColor;
-                sectionFontBrush = (SolidColorBrush)new BrushConverter().ConvertFrom(fc);
+                ExceptionLogger.Log(ex, "MainSidebar.ApplyBackground");
+                this.SetResourceReference(Control.BackgroundProperty, "SidebarBackgroundBrush");
             }
-            catch { sectionFontBrush = new SolidColorBrush(Color.FromRgb(0x88, 0x88, 0x88)); }
 
             // Resolve section header font size
             double sectionFontSize = config.SectionFontSize > 0 ? config.SectionFontSize : 9;
 
             // Resolve icon size (button size)
             double iconSize = config.IconSize > 0 ? config.IconSize : 16;
+            _currentIconColorMode = IconColorModes.Normalize(config.IconColorMode);
 
             // Resolve button background brush
             try
@@ -478,13 +716,13 @@ namespace oPenEfficiency
                     // Use Auto width so section only takes needed space
                     var sectionBorder = new Border
                     {
-                        BorderBrush = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
-                        BorderThickness = new Thickness(0, 0, 1, 0), // Right border only
-                        Margin = new Thickness(4, 4, 0, 4),
-                        Padding = new Thickness(8, 0, 8, 0), // Left and right padding for buttons
+                        BorderThickness = new Thickness(0, 0, 0.5, 0), // Right border only
+                        Margin = (Thickness)FindResource("Space4"),
+                        Padding = (Thickness)FindResource("Space8"),
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Top
                     };
+                    sectionBorder.SetResourceReference(Border.BorderBrushProperty, "SidebarDividerBrush");
 
                     var sectionStack = new StackPanel
                     {
@@ -497,12 +735,12 @@ namespace oPenEfficiency
                     var header = new TextBlock
                     {
                         Text = section.Name.ToUpper(),
-                        Style = (Style)FindResource("SectionHeader"),
-                        Foreground = sectionFontBrush,
+                        Style = (Style)FindResource("SidebarSectionHeader"),
                         FontSize = sectionFontSize,
                         HorizontalAlignment = HorizontalAlignment.Center,
                         Margin = new Thickness(0, 0, 0, 4)
                     };
+                    ApplySectionHeaderForeground(header, config);
                     sectionStack.Children.Add(header);
 
                     // Button matrix grid for this section
@@ -533,12 +771,12 @@ namespace oPenEfficiency
                         var featureInfo = UI.FeatureLibrary.GetFeatureInfo(feature.Id);
                         if (featureInfo.IsToggle)
                         {
-                            var toggleBtn = CreateToggleButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
+                            var toggleBtn = CreateToggleButton(feature.Id, section.Color, iconSize);
                             btn = toggleBtn;
                         }
                         else
                         {
-                            btn = CreateFeatureButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
+                            btn = CreateFeatureButton(feature.Id, section.Color, iconSize);
                         }
 
                         if (btn != null)
@@ -571,16 +809,19 @@ namespace oPenEfficiency
                     sectionsWrapPanel.Children.Add(sectionBorder);
                 }
 
-                // Add Settings section as the last item in the WrapPanel (right side)
+                // Keep Settings and Feature Explorer reachable for legacy customized
+                // layouts that predate their persistent catalog section.
+                bool needsSettings = !ContainsFeature(config, "BtnSettings");
+                bool needsFeatureExplorer = !ContainsFeature(config, "BtnExploreFeatures");
                 var settingsBorder = new Border
                 {
-                    BorderBrush = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
-                    BorderThickness = new Thickness(0, 0, 1, 0), // Right border only
-                    Margin = new Thickness(4, 4, 0, 4),
-                    Padding = new Thickness(8, 0, 8, 0), // Left and right padding for buttons
+                    BorderThickness = new Thickness(0, 0, 0.5, 0), // Right border only
+                    Margin = (Thickness)FindResource("Space4"),
+                    Padding = (Thickness)FindResource("Space8"),
                     HorizontalAlignment = HorizontalAlignment.Left,
                     VerticalAlignment = VerticalAlignment.Top
                 };
+                settingsBorder.SetResourceReference(Border.BorderBrushProperty, "SidebarDividerBrush");
 
                 var settingsStack = new StackPanel
                 {
@@ -591,23 +832,35 @@ namespace oPenEfficiency
 
                 var settingsHeader = new TextBlock
                 {
-                    Text = "SETTINGS",
-                    Style = (Style)FindResource("SectionHeader"),
-                    Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom("#9CA3AF"),
-                    FontSize = 9,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 0, 0, 4)
+                    Text = "SETTINGS & HELP",
+                    Style = (Style)FindResource("SidebarSectionHeader"),
+                    HorizontalAlignment = HorizontalAlignment.Center
                 };
+                ApplySectionHeaderForeground(settingsHeader, config);
                 settingsStack.Children.Add(settingsHeader);
 
-                var settingsBtn = CreateFeatureButton("BtnSettings", null, iconSize);
+                var settingsBtn = needsSettings
+                    ? CreateFeatureButton("BtnSettings", null, iconSize)
+                    : null;
                 if (settingsBtn != null)
                 {
                     settingsBtn.Width = iconSize + 10;
                     settingsBtn.Height = iconSize + 10;
-                    settingsBtn.Margin = new Thickness(1);
+                    settingsBtn.Margin = (Thickness)FindResource("Space2");
                     settingsBtn.HorizontalAlignment = HorizontalAlignment.Center;
                     settingsStack.Children.Add(settingsBtn);
+                }
+
+                var exploreBtn = needsFeatureExplorer
+                    ? CreateFeatureButton("BtnExploreFeatures", null, iconSize)
+                    : null;
+                if (exploreBtn != null)
+                {
+                    exploreBtn.Width = iconSize + 10;
+                    exploreBtn.Height = iconSize + 10;
+                    exploreBtn.Margin = (Thickness)FindResource("Space2");
+                    exploreBtn.HorizontalAlignment = HorizontalAlignment.Center;
+                    settingsStack.Children.Add(exploreBtn);
                 }
 
                 // Set explicit height on settings border to fill available height
@@ -618,7 +871,8 @@ namespace oPenEfficiency
                 }
 
                 settingsBorder.Child = settingsStack;
-                sectionsWrapPanel.Children.Add(settingsBorder);
+                if (needsSettings || needsFeatureExplorer)
+                    sectionsWrapPanel.Children.Add(settingsBorder);
 
                 // Set explicit height on WrapPanel to prevent parent StackPanel from stretching it
                 if (this.ActualHeight > 0)
@@ -639,10 +893,10 @@ namespace oPenEfficiency
                 var header = new TextBlock
                 {
                     Text       = section.Name.ToUpper(),
-                    Style      = (Style)FindResource("SectionHeader"),
-                    Foreground = sectionFontBrush,
+                    Style      = (Style)FindResource("SidebarSectionHeader"),
                     FontSize   = sectionFontSize
                 };
+                ApplySectionHeaderForeground(header, config);
                 DynamicContentPanel.Children.Add(header);
 
                 // Separate widget features (full-width) from ordinary button features
@@ -689,12 +943,12 @@ namespace oPenEfficiency
                         var featureInfo = UI.FeatureLibrary.GetFeatureInfo(feature.Id);
                         if (featureInfo.IsToggle)
                         {
-                            var toggleBtn = CreateToggleButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
+                            var toggleBtn = CreateToggleButton(feature.Id, section.Color, iconSize);
                             btn = toggleBtn;
                         }
                         else
                         {
-                            btn = CreateFeatureButton(feature.Id, isSearchMode ? null : section.Color, iconSize);
+                            btn = CreateFeatureButton(feature.Id, section.Color, iconSize);
                         }
 
                         if (btn != null)
@@ -711,14 +965,17 @@ namespace oPenEfficiency
                 }
 
                 // Separator
-                DynamicContentPanel.Children.Add(new Rectangle
+                var separator = new Rectangle
                 {
-                    Height = 1,
-                    Fill = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
-                    Margin = new Thickness(0, 1, 0, 2)
-                });
+                    Height = 0.5,
+                    Margin = (Thickness)FindResource("Space2")
+                };
+                separator.SetResourceReference(Shape.FillProperty, "SidebarDividerBrush");
+                DynamicContentPanel.Children.Add(separator);
             }
-            AddSettingsButton();
+            AddSettingsButton(
+                includeSettings: !ContainsFeature(config, "BtnSettings"),
+                includeFeatureExplorer: !ContainsFeature(config, "BtnExploreFeatures"));
             UpdateButtonStates();
         }
 
@@ -732,17 +989,25 @@ namespace oPenEfficiency
                 case "BtnSizePanel":
                     // Create on demand if SetManager hasn't been called yet
                     if (_sizePanel == null && _powerPointManager != null)
+                    {
                         _sizePanel = new UI.ShapeSizePanel(_powerPointManager);
+                        AttachWidgetContextMenu(_sizePanel, "BtnSizePanel");
+                    }
                     return _sizePanel;
                 case "BtnFontPanel":
                     if (_fontPanel == null && _powerPointManager != null)
+                    {
                         _fontPanel = new UI.FontPanel(_powerPointManager);
+                        AttachWidgetContextMenu(_fontPanel, "BtnFontPanel");
+                    }
                     return _fontPanel;
                 case "BtnSearchBar":
                     if (_searchBar == null)
                     {
                         _searchBar = new UI.SearchBarControl();
                         _searchBar.SearchChanged += (s, term) => RebuildUI(term);
+                        _searchBar.SearchSubmitted += (s, term) => ExecuteFirstSearchMatch(term);
+                        AttachWidgetContextMenu(_searchBar, "BtnSearchBar");
                     }
                     return _searchBar;
                 default:
@@ -755,6 +1020,10 @@ namespace oPenEfficiency
         /// </summary>
         private void UpdateButtonStates()
         {
+            // Capture all shared COM-derived selection facts exactly once per refresh.
+            _selectionSnapshot = CreateSelectionSnapshot(
+                _powerPointManager?.GetCurrentSelectionMetadata());
+
             // Update all buttons recursively in all children
             foreach (var child in DynamicContentPanel.Children)
             {
@@ -812,34 +1081,64 @@ namespace oPenEfficiency
         private void UpdateButtonState(Button btn)
         {
             var info = UI.FeatureLibrary.GetFeatureInfo(btn.Name);
-            bool isEnabled = IsFeatureEnabled(info, _currentSelection);
+            bool isEnabled = IsFeatureEnabled(info);
+            if (isEnabled && IsTextTargetFeature(btn.Name))
+                isEnabled = HasUsableTextTarget(btn.Name);
+            if (isEnabled && AlignmentHelpers.IsStretchFeature(btn.Name))
+                isEnabled = AlignmentHelpers.CanStretch(GetManager(), btn.Name);
             btn.IsEnabled = isEnabled;
+        }
+
+        private static bool IsTextTargetFeature(string id)
+        {
+            return id == "BtnSplitByParagraphs" ||
+                id == "BtnApplyTextTool" ||
+                id == "BtnParagraphDialog" ||
+                id == "BtnSpecialChars";
+        }
+
+        private bool HasUsableTextTarget(string id)
+        {
+            return SidebarStateEvaluator.HasUsableTextTarget(id, _selectionSnapshot);
         }
 
         private void UpdateButtonState(ToggleButton btn)
         {
             var info = UI.FeatureLibrary.GetFeatureInfo(btn.Name);
-            bool isEnabled = IsFeatureEnabled(info, _currentSelection);
+            bool isEnabled = IsFeatureEnabled(info);
             btn.IsEnabled = isEnabled;
+
+            if (btn.Name == "BtnSnapToObjects")
+            {
+                btn.IsChecked = SnapToObjectsFeature.IsEnabled;
+                return;
+            }
+            if (btn.Name == "BtnSnapToGrid")
+            {
+                btn.IsChecked = SnapToGridFeature.IsEnabled;
+                return;
+            }
 
             if (btn.Name == "BtnShapeLock" || btn.Name == "BtnLockDimensions")
             {
-                if (!isEnabled || _currentSelection == null || _currentSelection.Type != PowerPoint.PpSelectionType.ppSelectionShapes)
-                {
-                    btn.IsChecked = false;
-                    return;
-                }
-
+                PowerPoint.Selection currentSelection = null;
                 try
                 {
+                    currentSelection = _powerPointManager?.GetApplication()?.ActiveWindow?.Selection;
+                    if (!isEnabled || currentSelection == null || currentSelection.Type != PowerPoint.PpSelectionType.ppSelectionShapes)
+                    {
+                        btn.IsChecked = false;
+                        return;
+                    }
+
                     int lockedCount = 0;
-                    int totalCount = _currentSelection.ShapeRange.Count;
+                    int totalCount = currentSelection.ShapeRange.Count;
 
                     for (int i = 1; i <= totalCount; i++)
                     {
-                        bool isLocked = btn.Name == "BtnShapeLock" 
-                            ? ShapeLockingFeature.IsShapeLocked(_currentSelection.ShapeRange[i])
-                            : DimensionLockFeature.IsDimensionLocked(_currentSelection.ShapeRange[i]);
+                        bool isLocked = btn.Name == "BtnShapeLock"
+                            ? ShapeLockingFeature.IsShapeLocked(currentSelection.ShapeRange[i])
+                            : DimensionLockFeature.IsDimensionLocked(currentSelection.ShapeRange[i]);
 
                         if (isLocked) lockedCount++;
                     }
@@ -847,17 +1146,25 @@ namespace oPenEfficiency
                     // For toggle button we can set IsThreeState to true to support null
                     btn.IsThreeState = true;
 
-                    if (lockedCount == totalCount)
-                        btn.IsChecked = true;
-                    else if (lockedCount == 0)
-                        btn.IsChecked = false;
-                    else
-                        btn.IsChecked = null; // Mixed state
+                    btn.IsChecked = SidebarStateEvaluator.ResolveAggregateToggleState(
+                        isEnabled,
+                        totalCount,
+                        lockedCount);
                 }
                 catch
                 {
                     btn.IsChecked = false;
                 }
+            }
+            else if (btn.Name == "BtnAssetManager")
+            {
+                btn.IsChecked = _host?.IsAssetManagerVisible == true;
+            }
+            else if (btn.Name == "BtnFlightMode")
+            {
+                var manager = GetManager();
+                btn.IsChecked = manager != null &&
+                    FlightModeFeature.GetMode(manager) != FlightModeFeature.FlightModeType.None;
             }
         }
 
@@ -865,125 +1172,172 @@ namespace oPenEfficiency
         /// Determines if a feature should be enabled based on the current selection.
         /// Checks selection type, shape count, table presence, and hidden shapes requirements.
         /// </summary>
-        private bool IsFeatureEnabled(UI.FeatureDisplayInfo info, PowerPoint.Selection selection)
+        private bool IsFeatureEnabled(UI.FeatureDisplayInfo info)
         {
-            // Check hidden shapes requirement first (for Show Hidden feature)
-            // This check is independent of selection - it checks the entire slide
-            if (info.RequiresHiddenShapes)
+            var rule = new SidebarFeatureStateRule
             {
-                bool hasHiddenShapes = false;
-                try
-                {
-                    var app = Globals.ThisAddIn.Application;
-                    if (app != null && app.ActiveWindow != null && app.ActiveWindow.View != null)
-                    {
-                        var slide = app.ActiveWindow.View.Slide as PowerPoint.Slide;
-                        if (slide != null)
-                        {
-                            for (int i = 1; i <= slide.Shapes.Count; i++)
-                            {
-                                try
-                                {
-                                    if (slide.Shapes[i].Visible == Microsoft.Office.Core.MsoTriState.msoFalse)
-                                    {
-                                        hasHiddenShapes = true;
-                                        break;
-                                    }
-                                }
-                                catch { }
-                            }
-                        }
-                    }
-                }
-                catch { }
-                if (!hasHiddenShapes) return false;
-            }
-
-            // No selection captured yet? Allow features that don't need one.
-            if (selection == null)
-            {
-                return info.MinSelection == 0 && !info.RequiresTable && !info.RequiresHiddenShapes;
-            }
-
-            // Check selection type requirement (only if explicitly set to ppSelectionShapes)
-            if (info.RequiredType == PowerPoint.PpSelectionType.ppSelectionShapes)
-            {
-                if (selection.Type != PowerPoint.PpSelectionType.ppSelectionShapes && 
-                    selection.Type != PowerPoint.PpSelectionType.ppSelectionText)
-                    return false;
-            }
-
-            // Check table requirement
-            if (info.RequiresTable)
-            {
-                bool hasTable = false;
-                try
-                {
-                    if (selection.ShapeRange != null)
-                    {
-                        for (int i = 1; i <= selection.ShapeRange.Count; i++)
-                        {
-                            if (selection.ShapeRange[i].Type == Microsoft.Office.Core.MsoShapeType.msoTable)
-                            {
-                                hasTable = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                catch { }
-                if (!hasTable) return false;
-            }
-
-            // Check shape count requirements (for shape and text selections)
-            if (selection.Type == PowerPoint.PpSelectionType.ppSelectionShapes || 
-                selection.Type == PowerPoint.PpSelectionType.ppSelectionText)
-            {
-                int count = 0;
-                try 
-                { 
-                    if (selection.ShapeRange != null)
-                        count = selection.ShapeRange.Count; 
-                } 
-                catch { }
-                
-                // When in text edit mode, there is always effectively 1 shape context
-                if (selection.Type == PowerPoint.PpSelectionType.ppSelectionText && count == 0)
-                {
-                    count = 1;
-                }
-
-                if (info.MinSelection > 0 && count < info.MinSelection)
-                    return false;
-                if (info.MaxSelection > 0 && count > info.MaxSelection)
-                    return false;
-            }
-
-            return true;
+                MinSelection = info.MinSelection,
+                MaxSelection = info.MaxSelection,
+                RequiredType = ToOfficeSelectionType(info.RequiredType),
+                RequiresTable = info.RequiresTable,
+                RequiresHiddenShapes = info.RequiresHiddenShapes
+            };
+            return SidebarStateEvaluator.IsEnabled(rule, _selectionSnapshot);
         }
 
-        private void AddSettingsButton()
+        private void MainSidebar_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (ReferenceEquals(_activeInstance, this)) _activeInstance = null;
+            if (_themeSubscribed)
+            {
+                oPenEfficiency.Services.ThemeManager.ThemeChanged -= ThemeManager_ThemeChanged;
+                _themeSubscribed = false;
+            }
+            foreach (var window in _floatingWindows.Values.ToList())
+            {
+                try { window.Close(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "MainSidebar.Unloaded.CloseWindow"); }
+            }
+            _floatingWindows.Clear();
+            _navigation?.Dispose();
+            _navigation = null;
+        }
+
+        internal void SetHost(UI.Panels.ISidebarHost host)
+        {
+            _host = host;
+        }
+
+        private static SidebarSelectionSnapshot CreateSelectionSnapshot(SelectionMetadata metadata)
+        {
+            if (metadata == null) return null;
+            return new SidebarSelectionSnapshot
+            {
+                Type = ToOfficeSelectionType(metadata.Type),
+                ShapeCount = metadata.ShapeCount,
+                TextShapeCount = metadata.TextShapeCount,
+                TextOrTableShapeCount = metadata.TextOrTableShapeCount,
+                HasTextRange = metadata.HasTextRange,
+                HasTable = metadata.HasTable,
+                HasHiddenShapes = metadata.HasHiddenShapesOnSlide
+            };
+        }
+
+        internal static bool IsContextCommandAvailable(FeatureCatalogRecord feature)
+        {
+            var sidebar = _activeInstance;
+            if (sidebar == null || feature == null) return false;
+            return SidebarStateEvaluator.IsEnabled(
+                new SidebarFeatureStateRule
+                {
+                    MinSelection = feature.MinSelection,
+                    MaxSelection = feature.MaxSelection,
+                    RequiredType = feature.RequiredType,
+                    RequiresTable = feature.RequiresTable,
+                    RequiresHiddenShapes = feature.RequiresHiddenShapes
+                },
+                sidebar._selectionSnapshot);
+        }
+
+        /// <summary>
+        /// Seam observability: lets the automation seam verify (and if needed create) the
+        /// sidebar instance before dispatching a window command, without touching UI state.
+        /// </summary>
+        internal static bool HasActiveInstance => _activeInstance != null;
+
+        internal static CommandDispatchResult ExecuteContextCommand(string id)
+        {
+            var sidebar = _activeInstance;
+            if (sidebar == null) return CommandDispatchResult.Failed("The openEfficiency Sidebar is not available.");
+            var ui = new SidebarCommandUiAdapter(sidebar, null);
+            var manager = sidebar.GetManager();
+            if (manager == null) return CommandDispatchResult.Failed("PowerPoint is not available.");
+            var result = Registry.Value.ExecuteDefault(
+                id,
+                new CommandContext(manager, CommandInvocationSource.ContextMenu, ui));
+            CompleteRegisteredCommand(result, ui);
+            return result;
+        }
+
+        private static Services.Attributes.OfficeSelectionType ToOfficeSelectionType(
+            PowerPoint.PpSelectionType type)
+        {
+            switch (type)
+            {
+                case PowerPoint.PpSelectionType.ppSelectionShapes:
+                    return Services.Attributes.OfficeSelectionType.Shapes;
+                case PowerPoint.PpSelectionType.ppSelectionText:
+                    return Services.Attributes.OfficeSelectionType.Text;
+                case PowerPoint.PpSelectionType.ppSelectionSlides:
+                    return Services.Attributes.OfficeSelectionType.Slides;
+                default:
+                    return Services.Attributes.OfficeSelectionType.None;
+            }
+        }
+
+        private static bool ContainsFeature(SidebarConfig config, string id)
+        {
+            return config?.Sections != null &&
+                config.Sections.Any(section =>
+                    section?.Features != null &&
+                    section.Features.Any(feature =>
+                        feature != null &&
+                        string.Equals(feature.Id, id, StringComparison.Ordinal)));
+        }
+
+        private static void ApplySectionHeaderForeground(TextBlock header, SidebarConfig config)
+        {
+            if (header == null) return;
+
+            if (SidebarSectionFontColorModes.UsesTheme(config))
+            {
+                header.SetResourceReference(TextBlock.ForegroundProperty, "SidebarSectionHeaderBrush");
+                return;
+            }
+
+            try
+            {
+                header.Foreground = (SolidColorBrush)new BrushConverter().ConvertFrom(config.SectionFontColor);
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "MainSidebar.ApplySectionHeaderForeground");
+                header.SetResourceReference(TextBlock.ForegroundProperty, "SidebarSectionHeaderBrush");
+            }
+        }
+
+        private void AddSettingsButton(bool includeSettings, bool includeFeatureExplorer)
+        {
+            if (!includeSettings && !includeFeatureExplorer) return;
+
             // Vertical layout only - horizontal layout adds Settings inline in RebuildUI
-            var header = new TextBlock { Text = "SETTINGS", Style = (Style)FindResource("SectionHeader") };
+            var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
+            SidebarSectionFontColorModes.Normalize(config);
+            var header = new TextBlock { Text = "SETTINGS & HELP", Style = (Style)FindResource("SidebarSectionHeader") };
+            ApplySectionHeaderForeground(header, config);
             DynamicContentPanel.Children.Add(header);
 
             // Load icon size from config
-            var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
             double iconSize = config?.IconSize > 0 ? config.IconSize : 16;
 
-            var stack = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 8) };
-            
-            var btn = CreateFeatureButton("BtnSettings", null, iconSize);
-            btn.Width = iconSize + 10;
-            btn.Height = iconSize + 10;
-            btn.Margin = new Thickness(0, 0, 4, 0);
-            stack.Children.Add(btn);
+            var stack = new StackPanel { Orientation = Orientation.Horizontal, Margin = (Thickness)FindResource("Space8") };
 
-            var exploreBtn = CreateFeatureButton("BtnExploreFeatures", null, iconSize);
-            exploreBtn.Width = iconSize + 10;
-            exploreBtn.Height = iconSize + 10;
-            stack.Children.Add(exploreBtn);
+            if (includeSettings)
+            {
+                var btn = CreateFeatureButton("BtnSettings", null, iconSize);
+                btn.Width = iconSize + 10;
+                btn.Height = iconSize + 10;
+                btn.Margin = (Thickness)FindResource("Space4");
+                stack.Children.Add(btn);
+            }
+
+            if (includeFeatureExplorer)
+            {
+                var exploreBtn = CreateFeatureButton("BtnExploreFeatures", null, iconSize);
+                exploreBtn.Width = iconSize + 10;
+                exploreBtn.Height = iconSize + 10;
+                stack.Children.Add(exploreBtn);
+            }
 
             DynamicContentPanel.Children.Add(stack);
         }
@@ -991,45 +1345,9 @@ namespace oPenEfficiency
         private void FilterObsoleteFeatures(SidebarConfig config)
         {
             if (config?.Sections == null) return;
-            
-            // Features to completely remove
-            var obsoleteIds = new System.Collections.Generic.HashSet<string> { 
-                "BtnSwapHorizontal", "BtnSwapVertical"
-            };
-            
-            bool changed = false;
 
-            foreach (var section in config.Sections)
-            {
-                if (section.Features == null) continue;
-                
-                for (int i = 0; i < section.Features.Count; i++)
-                {
-                    var f = section.Features[i];
-                    if (f != null)
-                    {
-                        // Map legacy IDs to new IDs
-                        if (f.Id == "BtnAlignToTable")
-                        {
-                            f.Id = "BtnAlignToTableCell";
-                            f.Name = "Align to Table Cell";
-                            changed = true;
-                        }
-                        
-                        // Update names for existing IDs to reflect new functionality
-                        if (f.Id == "BtnReplaceFont" && f.Name != "Bulk Format Replacer")
-                        {
-                            f.Name = "Bulk Format Replacer";
-                            changed = true;
-                        }
-                    }
-                }
-                
-                int removedCount = section.Features.RemoveAll(f => f == null || obsoleteIds.Contains(f.Id));
-                if (removedCount > 0) changed = true;
-            }
-
-            if (changed)
+            var migration = SidebarLayoutMigration.Migrate(config, UI.FeatureLibrary.AllFeatures);
+            if (migration.Changed)
             {
                 JsonService.Save(config, "sidebar_config.json");
             }
@@ -1038,486 +1356,177 @@ namespace oPenEfficiency
         private Button CreateFeatureButton(string id, string overrideColor = null, double iconSize = 22)
         {
             var info = UI.FeatureLibrary.GetFeatureInfo(id);
-            var btn = new Button
-            {
-                Name = id,
-                Style = (Style)FindResource("GridIconButton")
-            };
-
-            // Enhanced Tooltip with description after delay
-            var tooltipPanel = new StackPanel { MaxWidth = 250, Margin = new Thickness(2) };
-            tooltipPanel.Children.Add(new TextBlock
-            {
-                Text = info.Tooltip,
-                FontWeight = FontWeights.Bold,
-                FontSize = 12,
-                Foreground = (Brush)FindResource("TextPrimaryBrush"),
-                Margin = new Thickness(0, 0, 0, 4)
-            });
-
-            if (!string.IsNullOrEmpty(info.Description))
-            {
-                var descBlock = new TextBlock
-                {
-                    Text = info.Description,
-                    TextWrapping = TextWrapping.Wrap,
-                    FontSize = 11,
-                    Foreground = (Brush)FindResource("TextSecondaryBrush"),
-                    LineHeight = 14,
-                    Visibility = Visibility.Collapsed
-                };
-
-                // Add a small spacer/separator that toggles with description
-                var separator = new Border
-                {
-                    Height = 1,
-                    Background = (Brush)FindResource("BorderBrush"),
-                    Margin = new Thickness(0, 2, 0, 4),
-                    Visibility = Visibility.Collapsed
-                };
-
-                tooltipPanel.Children.Add(separator);
-                tooltipPanel.Children.Add(descBlock);
-
-                // Show description and separator after a longer delay
-                var timer = new System.Windows.Threading.DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(0.5);
-                timer.Tick += (s, e) =>
-                {
-                    descBlock.Visibility = Visibility.Visible;
-                    separator.Visibility = Visibility.Visible;
-                    timer.Stop();
-                };
-
-                btn.MouseEnter += (s, e) => timer.Start();
-                btn.MouseLeave += (s, e) =>
-                {
-                    timer.Stop();
-                    descBlock.Visibility = Visibility.Collapsed;
-                    separator.Visibility = Visibility.Collapsed;
-                };
-            }
-
-            btn.ToolTip = tooltipPanel;
-            
-            var containerGrid = new Grid
-            {
-                Width = iconSize + 4,
-                Height = iconSize + 4,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            try
-            {
-                var hexColor = !string.IsNullOrEmpty(overrideColor) ? overrideColor : info.Color;
-                var brush = (Brush)new BrushConverter().ConvertFrom(hexColor);
-
-                // 1. Get Base Icon
-                bool isFilled;
-                var baseGeom = IconService.GetIconGeometry(id, out isFilled);
-                
-                // 2. Try to get Hover Icon
-                bool isHoverFilled;
-                var hoverGeom = IconService.GetIconGeometry(id, true, out isHoverFilled);
-
-                if (baseGeom != null)
-                {
-                    var baseViewbox = CreateIconViewbox(baseGeom, brush, isFilled, iconSize);
-                    containerGrid.Children.Add(baseViewbox);
-
-                    if (hoverGeom != null)
-                    {
-                        var hoverViewbox = CreateIconViewbox(hoverGeom, brush, isHoverFilled, iconSize);
-                        hoverViewbox.Visibility = Visibility.Hidden;
-                        containerGrid.Children.Add(hoverViewbox);
-
-                        // Swap icons on hover using a simple event-based approach
-                        btn.MouseEnter += (s, e) =>
-                        {
-                            baseViewbox.Visibility = Visibility.Hidden;
-                            hoverViewbox.Visibility = Visibility.Visible;
-                        };
-                        btn.MouseLeave += (s, e) =>
-                        {
-                            baseViewbox.Visibility = Visibility.Visible;
-                            hoverViewbox.Visibility = Visibility.Hidden;
-                        };
-                    }
-                }
-                else
-                {
-                    // Fallback for missing icon
-                    containerGrid.Children.Add(new TextBlock { Text = "?", Foreground = brush, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
-                }
-            }
-            catch
-            {
-                containerGrid.Children.Add(new TextBlock { Text = "!" });
-            }
-
-            btn.Background = _currentBtnBgBrush;
-            btn.Content = containerGrid;
-
-            btn.Click += (s, e) => ExecuteFeature(id, btn);
-            AttachStandardContextMenu(btn);
-
-            return btn;
+            if (!string.IsNullOrEmpty(overrideColor)) info.Color = overrideColor;
+            return UI.Panels.SidebarControlFactory.CreateButton(
+                id,
+                info,
+                _currentBtnBgBrush,
+                iconSize,
+                _currentIconColorMode,
+                FindResource,
+                button => ExecuteFeature(id, button, CommandInvocationSource.Sidebar),
+                AttachStandardContextMenu);
         }
 
-        private Viewbox CreateIconViewbox(Geometry geometry, Brush brush, bool isFilled, double iconSize)
-        {
-            var path = new Path
-            {
-                Data = geometry,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Stretch = Stretch.Uniform
-            };
 
-            if (isFilled)
-            {
-                path.Fill = brush;
-            }
-            else
-            {
-                path.Stroke = brush;
-                path.StrokeThickness = 2;
-                path.StrokeLineJoin = PenLineJoin.Round;
-                path.StrokeStartLineCap = PenLineCap.Round;
-                path.StrokeEndLineCap = PenLineCap.Round;
-                path.Fill = Brushes.Transparent;
-            }
-
-            return new Viewbox
-            {
-                Child = path,
-                MaxHeight = iconSize + 4,
-                MaxWidth = iconSize + 4,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Stretch = Stretch.Uniform
-            };
-        }
 
         private ToggleButton CreateToggleButton(string id, string overrideColor = null, double iconSize = 22)
         {
             var info = UI.FeatureLibrary.GetFeatureInfo(id);
-            var toggleBtn = new ToggleButton
-            {
-                Name = id,
-                Style = (Style)FindResource("GridIconButtonToggleButton")
-            };
-
-            // Enhanced Tooltip with description after delay
-            var tooltipPanel = new StackPanel { MaxWidth = 250, Margin = new Thickness(2) };
-            tooltipPanel.Children.Add(new TextBlock
-            {
-                Text = info.Tooltip,
-                FontWeight = FontWeights.Bold,
-                FontSize = 12,
-                Foreground = (Brush)FindResource("TextPrimaryBrush"),
-                Margin = new Thickness(0, 0, 0, 4)
-            });
-
-            if (!string.IsNullOrEmpty(info.Description))
-            {
-                var descBlock = new TextBlock
+            if (!string.IsNullOrEmpty(overrideColor)) info.Color = overrideColor;
+            return UI.Panels.SidebarControlFactory.CreateToggleButton(
+                id,
+                info,
+                _currentBtnBgBrush,
+                iconSize,
+                _currentIconColorMode,
+                FindResource,
+                button =>
                 {
-                    Text = info.Description,
-                    TextWrapping = TextWrapping.Wrap,
-                    FontSize = 11,
-                    Foreground = (Brush)FindResource("TextSecondaryBrush"),
-                    LineHeight = 14,
-                    Visibility = Visibility.Collapsed
-                };
-
-                var separator = new Border
-                {
-                    Height = 1,
-                    Background = (Brush)FindResource("BorderBrush"),
-                    Margin = new Thickness(0, 2, 0, 4),
-                    Visibility = Visibility.Collapsed
-                };
-
-                tooltipPanel.Children.Add(separator);
-                tooltipPanel.Children.Add(descBlock);
-
-                var timer = new System.Windows.Threading.DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(0.5);
-                timer.Tick += (s, e) =>
-                {
-                    descBlock.Visibility = Visibility.Visible;
-                    separator.Visibility = Visibility.Visible;
-                    timer.Stop();
-                };
-
-                toggleBtn.MouseEnter += (s, e) => timer.Start();
-                toggleBtn.MouseLeave += (s, e) =>
-                {
-                    timer.Stop();
-                    descBlock.Visibility = Visibility.Collapsed;
-                    separator.Visibility = Visibility.Collapsed;
-                };
-            }
-
-            toggleBtn.ToolTip = tooltipPanel;
-
-            var containerGrid = new Grid
-            {
-                Width = iconSize + 4,
-                Height = iconSize + 4,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
-            try
-            {
-                var hexColor = !string.IsNullOrEmpty(overrideColor) ? overrideColor : info.Color;
-                var brush = (Brush)new BrushConverter().ConvertFrom(hexColor);
-
-                // 1. Get Base Icon
-                bool isFilled;
-                var baseGeom = IconService.GetIconGeometry(id, out isFilled);
-                
-                // 2. Try to get Hover Icon
-                bool isHoverFilled;
-                var hoverGeom = IconService.GetIconGeometry(id, true, out isHoverFilled);
-
-                if (baseGeom != null)
-                {
-                    var baseViewbox = CreateIconViewbox(baseGeom, brush, isFilled, iconSize);
-                    containerGrid.Children.Add(baseViewbox);
-
-                    if (hoverGeom != null)
-                    {
-                        var hoverViewbox = CreateIconViewbox(hoverGeom, brush, isHoverFilled, iconSize);
-                        hoverViewbox.Visibility = Visibility.Hidden;
-                        containerGrid.Children.Add(hoverViewbox);
-
-                        // Swap icons on hover using a simple event-based approach
-                        toggleBtn.MouseEnter += (s, e) =>
-                        {
-                            baseViewbox.Visibility = Visibility.Hidden;
-                            hoverViewbox.Visibility = Visibility.Visible;
-                        };
-                        toggleBtn.MouseLeave += (s, e) =>
-                        {
-                            baseViewbox.Visibility = Visibility.Visible;
-                            hoverViewbox.Visibility = Visibility.Hidden;
-                        };
-                    }
-                }
-                else
-                {
-                    containerGrid.Children.Add(new TextBlock { Text = "?", Foreground = brush, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center });
-                }
-            }
-            catch
-            {
-                containerGrid.Children.Add(new TextBlock { Text = "!" });
-            }
-
-            toggleBtn.Background = _currentBtnBgBrush;
-            toggleBtn.Content = containerGrid;
-
-            // Sync toggle state with SnapManager on click
-            if (id == "BtnSnapToObjects" || id == "BtnSnapToGrid")
-            {
-                toggleBtn.Checked += (s, e) =>
-                {
-                    if (Globals.ThisAddIn.SnapManager != null && !Globals.ThisAddIn.SnapManager.IsEnabled)
-                    {
-                        Globals.ThisAddIn.SnapManager.Toggle();
-                    }
-                };
-                toggleBtn.Unchecked += (s, e) =>
-                {
-                    if (Globals.ThisAddIn.SnapManager != null && Globals.ThisAddIn.SnapManager.IsEnabled)
-                    {
-                        Globals.ThisAddIn.SnapManager.Toggle();
-                    }
-                };
-            }
-            else
-            {
-                toggleBtn.Click += (s, e) => 
-                {
-                    ExecuteFeature(id, toggleBtn);
+                    ExecuteFeature(id, button, CommandInvocationSource.Sidebar);
                     UpdateButtonStates();
-                };
-            }
-            AttachStandardContextMenu(toggleBtn);
-
-            return toggleBtn;
+                },
+                AttachStandardContextMenu);
         }
 
-        private void ExecuteFeature(string id, FrameworkElement targetBtn = null)
+        private void AttachStandardContextMenu(ButtonBase button)
         {
+            ContextMenus.Attach(button);
+        }
+
+        private void ExecuteFeature(
+            string id,
+            FrameworkElement targetBtn = null,
+            CommandInvocationSource source = CommandInvocationSource.Internal)
+        {
+            var ui = new SidebarCommandUiAdapter(this, targetBtn);
             var manager = GetManager();
             if (manager == null)
             {
-                System.Diagnostics.Debug.WriteLine($"ExecuteFeature: Manager is null for feature {id}");
+                ExceptionLogger.Log(
+                    new InvalidOperationException(
+                        $"PowerPoint manager is unavailable for '{id}' from {source}."),
+                    "MainSidebar.ExecuteFeature");
+                var failure = CommandDispatchResult.Failed(
+                    "openEfficiency could not access PowerPoint for this command. Please try again. Details were written to the local diagnostics log.");
+                CompleteRegisteredCommand(failure, ui);
                 return;
             }
 
-            // Try auto-discovered features first (for features with [FeatureMetadata] attribute)
-            var feature = FeatureDiscovery.GetFeature(id);
-            if (feature != null)
+            var context = new CommandContext(manager, source, ui);
+            var registryResult = Registry.Value.ExecuteDefault(
+                id,
+                context,
+                GetToggleIntent(source, targetBtn));
+            if (registryResult == null ||
+                registryResult.Status == CommandDispatchStatus.NotRegistered)
             {
-                var toggleBtn = targetBtn as System.Windows.Controls.Primitives.ToggleButton;
-                bool handled = feature.Execute(manager, toggleBtn);
-                if (handled) return;
+                var exception = new InvalidOperationException(
+                    $"Unknown command ID '{id}' from {source}.");
+                ExceptionLogger.Log(exception, "MainSidebar.ExecuteFeature.UnknownCommand");
+                ui.ShowError($"The command '{id}' is not registered.");
+                return;
             }
 
-            // Fallback to manual switch for non-migrated features or features requiring UI context
-            switch (id)
-            {
-                case "BtnAlignLeft": AlignToFirstLeftFeature.Execute(manager); break;
-                case "BtnAlignCenter": AlignShapesFeature.Execute(manager, "center"); break;
-                case "BtnAlignRight": AlignToFirstRightFeature.Execute(manager); break;
-                case "BtnAlignTop": AlignToFirstTopFeature.Execute(manager); break;
-                case "BtnAlignBottom": AlignToFirstBottomFeature.Execute(manager); break;
-                case "BtnAlignCenterVertical": AlignToFirstCenterVerticalFeature.Execute(manager); break;
-                case "BtnMatchSize": MatchSizeFeature.Execute(manager); break;
-                case "BtnMatchWidth": MatchWidthToFirstFeature.Execute(manager); break;
-                case "BtnMatchHeight": MatchHeightToFirstFeature.Execute(manager); break;
-                case "BtnGlassHide": GlassHideFeature.Execute(manager); break;
-                case "BtnMultiSwap": MultiSwapFeature.Execute(manager); break;
-                case "BtnSwapPositions": SwapPositionsFeature.Execute(manager); break;
-                case "BtnStretchLeft": StretchToFirstLeftFeature.Execute(manager); break;
-                case "BtnStretchRight": StretchToFirstRightFeature.Execute(manager); break;
-                case "BtnStretchTop": StretchToFirstTopFeature.Execute(manager); break;
-                case "BtnStretchBottom": StretchToFirstBottomFeature.Execute(manager); break;
-                case "BtnSplitShape": ToggleFloatingWindow("BtnSplitShape", () => new UI.SplitShapeWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnSnapShape": ToggleFloatingWindow("BtnSnapShape", () => new UI.ObjectConnectorWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnStretchLeftEdge": StretchToFirstLeftEdgeFeature.Execute(manager); break;
-                case "BtnStretchRightEdge": StretchToFirstRightEdgeFeature.Execute(manager); break;
-                case "BtnStretchTopEdge": StretchToFirstTopEdgeFeature.Execute(manager); break;
-                case "BtnStretchBottomEdge": StretchToFirstBottomEdgeFeature.Execute(manager); break;
-                case "BtnBringToFront": BringToFrontFeature.Execute(manager); break;
-                case "BtnSendToBack": SendToBackFeature.Execute(manager); break;
-                case "BtnBringForward": BringForwardFeature.Execute(manager); break;
-                case "BtnSendBackward": SendBackwardFeature.Execute(manager); break;
-                case "BtnPickColor": PickColorFeature.Execute(manager); break;
-                case "BtnPickFillColor": PickFillColorFeature.Execute(manager); break;
-                case "BtnPickLineColor": PickLineColorFeature.Execute(manager); break;
-                case "BtnPickTextColor": PickTextColorFeature.Execute(manager); break;
-                case "BtnDockLeft": DockToFirstLeftFeature.Execute(manager); break;
-                case "BtnDockRight": DockToFirstRightFeature.Execute(manager); break;
-                case "BtnDockTop": DockToFirstTopFeature.Execute(manager); break;
-                case "BtnDockBottom": DockToFirstBottomFeature.Execute(manager); break;
-                case "BtnRectifyRotation": RectifyRotationFeature.Execute(manager); break;
-                case "BtnArrangeCircle": ArrangeInShapeFeature.Execute(manager, "circle"); break;
-                case "BtnArrangePro": ToggleFloatingWindow("BtnArrangePro", () => new UI.ArrangeProWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnShapeLock": ShapeLockingFeature.SetSelectionShapeLock(manager, null); break;
-                case "BtnLockDimensions": DimensionLockFeature.SetSelectionDimensionLock(manager, null); break;
-                case "BtnShapeToggleAll": ShapeLockingFeature.SetGlobalShapeLock(manager, null); break;
-                case "BtnShapeLockAll": ShapeLockingFeature.SetGlobalShapeLock(manager, true); break;
-                case "BtnShapeUnlockAll": ShapeLockingFeature.SetGlobalShapeLock(manager, false); break;
-                case "BtnAgendaWizard": AgendaWizardFeature.Execute(manager); break;
-                case "BtnSaveAgendaLayout": SaveAgendaLayoutFeature.Execute(manager); break;
-                case "BtnSeriesGenerator": oPenEfficiency.Features.Utilities.SeriesGeneratorFeature.Execute(manager); break;
-                case "BtnDiagonalAlign": oPenEfficiency.Features.Alignment.DiagonalAlignFeature.Execute(manager); break;
-                case "BtnStickyNote": StickyNoteFeature.Execute(manager); break;
-                case "BtnSlideNotes": 
-                    var toggleSlideNotes = targetBtn as System.Windows.Controls.Primitives.ToggleButton;
-                    oPenEfficiency.Features.Utilities.SlideNotesFeature.Execute(manager, toggleSlideNotes);
-                    break;
-                case "BtnManageStickyNotes": StickyNoteManagerFeature.Execute(manager, StickyNoteManagerFeature.ActionType.MoveOff, StickyNoteManagerFeature.Scope.ThisSlide); break;
-                case "BtnExportWizard": ToggleFloatingWindow("BtnExportWizard", () => new UI.ExportWizard(), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnQRCode": ToggleFloatingWindow("BtnQRCode", () => new UI.QRCodeWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
+            CompleteRegisteredCommand(registryResult, ui);
+        }
 
-                case "BtnThemeColor": ThemeColorPickerFeature.Execute(manager); break;
-                
-                case "BtnAddSticker": AddStickerFeature.Execute(manager); break;
-                case "BtnMagicResizer": ToggleFloatingWindow("BtnMagicResizer", () => new UI.MagicResizerWindow(), targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnSpecialChars": 
-                    OpenSpecialCharactersWindow(null);
-                    break;
-                case "BtnThermometer": ThermometerFeature.Execute(manager); break;
-                case "BtnSelectSameType": SelectSameTypeFeature.Execute(manager); break;
-                case "BtnSnapToObjects":
-                    var toggleBtn = targetBtn as System.Windows.Controls.Primitives.ToggleButton;
-                    SnapToObjectsFeature.Execute(manager, toggleBtn);
-                    break;
-                case "BtnSnapToGrid":
-                    var gridToggleBtn = targetBtn as System.Windows.Controls.Primitives.ToggleButton;
-                    SnapToGridFeature.Execute(manager, gridToggleBtn);
-                    break;
-                case "BtnReplaceFont": BulkFormatReplacerFeature.Execute(manager); break;
-                case "BtnFormatNumbers": oPenEfficiency.Features.FormatNumbersFeature.Execute(manager); break;
-                case "BtnStyleCheck": oPenEfficiency.Features.StyleCheckFeature.ExecuteDialog(manager, targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnTransparentColor": oPenEfficiency.Features.TransparentColorFeature.Execute(manager); break;
-                case "BtnTagInspector": oPenEfficiency.Features.Utilities.TagInspectorFeature.Execute(manager); break;
-                case "BtnAlignToTableCell": 
-                case "BtnAlignToTable": AlignToTableCellFeature.Execute(manager); break;
-                case "BtnRepeatShape": RepeatShapeFeature.Execute(manager, RepeatShapeFeature.RepeatDirection.Right); break;
-                
-                case "BtnRemoveHorizontalGaps": RemoveHorizontalGapsFeature.Execute(manager); break;
-                case "BtnRemoveVerticalGaps": RemoveVerticalGapsFeature.Execute(manager); break;
-                case "BtnIncreaseHorizontalSpacing": AdjustHorizontalSpacingFeature.Execute(manager, GetSpacingIncrement()); break;
-                case "BtnDecreaseHorizontalSpacing": AdjustHorizontalSpacingFeature.Execute(manager, -GetSpacingIncrement()); break;
-                case "BtnIncreaseVerticalSpacing": AdjustVerticalSpacingFeature.Execute(manager, GetSpacingIncrement()); break;
-                case "BtnDecreaseVerticalSpacing": AdjustVerticalSpacingFeature.Execute(manager, -GetSpacingIncrement()); break;
-                case "BtnUpdateExcelCharts":
-                case "BtnSlideGuidelines":
-                case "BtnAdjustSpacing":
-                case "BtnTableSort": 
-                case "BtnAlignText":
-                //case "BtnSmartCorners":
-                    // Open context menu on click
-                    if (targetBtn != null && targetBtn.ContextMenu != null) targetBtn.ContextMenu.IsOpen = true;
-                    break;
-                case "BtnSlidePaste":
-                    ToggleFloatingWindow("BtnSlidePaste", () => new UI.SlidePasteWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton);
-                    break;
-                case "BtnTableBranding":
-                    var brandingDialog = new TableBrandingDialog();
-                    if (brandingDialog.ShowDialog() == true)
-                    {
-                        if (brandingDialog.Action == "Save" && !string.IsNullOrEmpty(brandingDialog.StyleToSave))
-                        {
-                            TableBrandingFeature.SaveTableStyle(manager, brandingDialog.StyleToSave);
-                        }
-                        else if (brandingDialog.Action == "Apply" && brandingDialog.SelectedStyle != null)
-                        {
-                            TableBrandingFeature.ApplyTableStyle(manager, brandingDialog.SelectedStyle);
-                        }
-                    }
-                    break;
-                case "BtnSyncObjects": SyncObjectsFeature.Execute(manager); break;
-                case "BtnWinnerPicker": oPenEfficiency.Features.LotteryFeature.ExecuteWithToggle(manager, targetBtn as System.Windows.Controls.Primitives.ToggleButton); break;
-                case "BtnNumeration": oPenEfficiency.Features.NumerationFeature.Create(manager); break;
-                case "BtnProgressSeries": oPenEfficiency.Features.ProgressSeriesFeature.Create(manager); break;
-                case "BtnCleaner": // By default, maybe do nothing or show context menu? 
-                case "BtnSettings": OpenSettings(); break;
-                case "BtnConvertTableToShapes": ConvertTableToShapesFeature.Execute(manager); break;
-                case "BtnInsertColumnLeft": InsertTableColumnLeftFeature.Execute(manager, false); break;
-                case "BtnInsertColumnRight": InsertTableColumnRightFeature.Execute(manager, false); break;
-                case "BtnInsertRowTop": InsertTableRowTopFeature.Execute(manager, false); break;
-                case "BtnInsertRowBottom": InsertTableRowBottomFeature.Execute(manager, false); break;
-                case "BtnTableTranspose": TableTransposeFeature.Execute(manager); break;
-                case "BtnTranslate": TranslationFeatures.Execute(manager); break;
-                case "BtnTableSplit": TableSplitFeature.Execute(manager, true); break;
-                case "BtnTableSum": TableSumFeature.Execute(manager, true, false); break;
-                case "BtnToggleSidebar": Globals.ThisAddIn.ToggleSidebar(); break;
-                case "BtnTableDimensions":
-                    if (targetBtn != null && targetBtn.ContextMenu != null) targetBtn.ContextMenu.IsOpen = true;
-                    break;
-                case "BtnApplyTextTool":
-                    ToggleFloatingWindow("BtnApplyTextTool", () => new UI.ApplyTextWindow(manager), targetBtn as System.Windows.Controls.Primitives.ToggleButton);
-                    break;
+        private void OpenApplyTextEditor()
+        {
+            Navigation.OpenApplyTextEditor();
+        }
+
+        private void ApplyTextFromMaster(bool useLastSelected)
+        {
+            Navigation.ApplyTextFromMaster(useLastSelected);
+        }
+
+        private void OpenSettings(int sectionIndex = 0)
+        {
+            Navigation.OpenSettings(sectionIndex);
+        }
+
+        private void OpenStatusStickerSettings()
+        {
+            Navigation.OpenSettings(2);
+        }
+
+        private static void AddStatusStickerMenuItem(ItemsControl parent, string header, Action action)
+        {
+            var item = new MenuItem { Header = header };
+            item.Click += (s, e) => action?.Invoke();
+            parent.Items.Add(item);
+        }
+
+        private static string PromptForStatusStickerText()
+        {
+            using (var form = new System.Windows.Forms.Form())
+            using (var label = new System.Windows.Forms.Label())
+            using (var textBox = new System.Windows.Forms.TextBox())
+            using (var ok = new System.Windows.Forms.Button())
+            using (var cancel = new System.Windows.Forms.Button())
+            {
+                form.Text = "Custom status sticker";
+                form.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+                form.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+                form.MinimizeBox = false;
+                form.MaximizeBox = false;
+                form.ClientSize = new System.Drawing.Size(380, 126);
+
+                label.SetBounds(12, 12, 356, 20);
+                label.Text = "Sticker label";
+                textBox.SetBounds(12, 40, 356, 24);
+
+                ok.SetBounds(200, 82, 80, 28);
+                ok.Text = "OK";
+                ok.DialogResult = System.Windows.Forms.DialogResult.OK;
+                cancel.SetBounds(288, 82, 80, 28);
+                cancel.Text = "Cancel";
+                cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+
+                form.Controls.AddRange(new System.Windows.Forms.Control[] { label, textBox, ok, cancel });
+                form.AcceptButton = ok;
+                form.CancelButton = cancel;
+                return form.ShowDialog() == System.Windows.Forms.DialogResult.OK ? textBox.Text.Trim() : null;
             }
         }
 
-
-
-        private void OpenSettings()
+        private void AttachWidgetContextMenu(FrameworkElement widget, string featureId)
         {
-            var win = new UI.SettingsWindow(GetManager());
-            win.SettingsApplied += (s, args) => RebuildUI();
-            win.ShowDialog();
+            var menu = new ContextMenu();
+            if (featureId == "BtnSearchBar")
+            {
+                var focus = new MenuItem { Header = GetCatalogVariantLabel(featureId, 0, "Focus Command Search") };
+                focus.Click += (s, e) => _searchBar?.FocusSearch();
+                menu.Items.Add(focus);
+                var clear = new MenuItem { Header = GetCatalogVariantLabel(featureId, 1, "Clear Command Search") };
+                clear.Click += (s, e) => _searchBar?.SetSearchText(string.Empty);
+                menu.Items.Add(clear);
+            }
+            else if (featureId == "BtnFontPanel")
+            {
+                var family = new MenuItem { Header = GetCatalogVariantLabel(featureId, 0, "Focus Font Family") };
+                family.Click += (s, e) => _fontPanel?.FocusFontFamily();
+                menu.Items.Add(family);
+                var size = new MenuItem { Header = GetCatalogVariantLabel(featureId, 1, "Focus Font Size") };
+                size.Click += (s, e) => _fontPanel?.FocusFontSize();
+                menu.Items.Add(size);
+            }
+            else if (featureId == "BtnSizePanel")
+            {
+                var width = new MenuItem { Header = GetCatalogVariantLabel(featureId, 0, "Focus Width") };
+                width.Click += (s, e) => _sizePanel?.FocusWidth();
+                menu.Items.Add(width);
+                var height = new MenuItem { Header = GetCatalogVariantLabel(featureId, 1, "Focus Height") };
+                height.Click += (s, e) => _sizePanel?.FocusHeight();
+                menu.Items.Add(height);
+            }
+            widget.ContextMenu = menu;
+        }
+
+        private void OpenTemplateManager()
+        {
+            Navigation.OpenTemplateManager();
         }
 
         private float GetSpacingIncrement()
@@ -1530,10 +1539,10 @@ namespace oPenEfficiency
         {
             try
             {
-                var app = Globals.ThisAddIn?.Application;
-                if (app == null) 
+                var app = _host?.Application;
+                if (app == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("GetManager: Globals.ThisAddIn.Application is null");
+                    System.Diagnostics.Debug.WriteLine("GetManager: Sidebar host application is null");
                     return null;
                 }
                 return _powerPointManager ?? (_powerPointManager = new PowerPointManager(app));
@@ -1552,1059 +1561,46 @@ namespace oPenEfficiency
 
         private void RegisterShortcuts()
         {
-            foreach (var feature in UI.FeatureLibrary.AllFeatures)
+            var shortcutEligibleIds = new HashSet<string>(
+                UI.FeatureLibrary.Catalog
+                    .Where(record => record.SupportsUserShortcut)
+                    .Select(record => record.Id),
+                StringComparer.Ordinal);
+            foreach (var feature in UI.FeatureLibrary.AllFeatures
+                .Where(feature => shortcutEligibleIds.Contains(feature.Id)))
             {
                 string id = feature.Id;
-                ShortcutManager.RegisterHandler(id, () => ExecuteFeature(id, null));
+                ShortcutManager.RegisterHandler(
+                    id,
+                    () => ExecuteFeature(id, null, CommandInvocationSource.Shortcut));
             }
             ShortcutManager.LoadShortcuts();
+        }
+
+        private static string GetCatalogVariantLabel(
+            string featureId,
+            int variantIndex,
+            string fallback)
+        {
+            var variants = UI.FeatureLibrary.Catalog
+                .FirstOrDefault(record =>
+                    string.Equals(record.Id, featureId, StringComparison.Ordinal))
+                ?.Variants;
+            return variants != null &&
+                   variantIndex >= 0 &&
+                   variantIndex < variants.Count &&
+                   !string.IsNullOrWhiteSpace(variants[variantIndex])
+                ? variants[variantIndex]
+                : fallback;
         }
 
         /// <summary>
         /// Attach context menu to a feature button. Works for both Button and ToggleButton.
         /// Only BtnSnapToObjects and BtnSnapToGrid use ToggleButton; all others use Button.
         /// </summary>
-        private void AttachStandardContextMenu(System.Windows.Controls.Primitives.ButtonBase btn)
-        {
-            btn.ContextMenu = new ContextMenu();
-            var item = new MenuItem { Header = "Configure Shortcuts" };
-            item.Click += (s, e) => {
-                var win = new ShortcutConfigWindow(btn.Name);
-                win.ShowDialog();
-            };
-            btn.ContextMenu.Items.Add(item);
-
-            if (btn.Name == "BtnAlignLeft" || btn.Name == "BtnAlignRight" || btn.Name == "BtnAlignTop" || btn.Name == "BtnAlignBottom")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                string direction, label;
-                switch (btn.Name)
-                {
-                    case "BtnAlignLeft":   direction = "left";   label = "Move Left Until Object";  break;
-                    case "BtnAlignRight":  direction = "right";  label = "Move Right Until Object"; break;
-                    case "BtnAlignTop":    direction = "top";    label = "Move Up Until Object";    break;
-                    default:               direction = "bottom"; label = "Move Down Until Object";  break;
-                }
-
-                var miCollision = new MenuItem { Header = label };
-                var capturedDir = direction;
-                miCollision.Click += (s, e) =>
-                {
-                    var mgr = GetManager();
-                    var app = mgr?.GetApplication();
-                    if (app?.ActiveWindow?.Selection?.Type != Microsoft.Office.Interop.PowerPoint.PpSelectionType.ppSelectionShapes) return;
-                    var sr = app.ActiveWindow.Selection.ShapeRange;
-                    if (sr == null || sr.Count == 0) return;
-                    for (int i = 1; i <= sr.Count; i++)
-                        Features.AlignmentHelpers.MoveUntilCollision(app, sr[i], capturedDir);
-                };
-                btn.ContextMenu.Items.Add(miCollision);
-            }
-            else if (btn.Name == "BtnSwapPositions")
-            {
-                var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
-                if (config != null && !config.EnableSwapPositionsContextMenu) return;
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var anchors = new[] {
-                    ("Top Left", SwapPositionsFeature.SwapAnchor.TopLeft),
-                    ("Top Center", SwapPositionsFeature.SwapAnchor.Top),
-                    ("Top Right", SwapPositionsFeature.SwapAnchor.TopRight),
-                    ("Left Center", SwapPositionsFeature.SwapAnchor.Left),
-                    ("Center", SwapPositionsFeature.SwapAnchor.Center),
-                    ("Right Center", SwapPositionsFeature.SwapAnchor.Right),
-                    ("Bottom Left", SwapPositionsFeature.SwapAnchor.BottomLeft),
-                    ("Bottom Center", SwapPositionsFeature.SwapAnchor.Bottom),
-                    ("Bottom Right", SwapPositionsFeature.SwapAnchor.BottomRight)
-                };
-
-                var miList = new System.Collections.Generic.List<MenuItem>();
-                foreach (var anchorInfo in anchors)
-                {
-                    var mi = new MenuItem { Header = anchorInfo.Item1, IsCheckable = true };
-                    var anchorVal = anchorInfo.Item2;
-                    mi.Tag = anchorVal;
-                    
-                    btn.ContextMenu.Opened += (s, e) => {
-                        mi.IsChecked = SwapPositionsFeature.DefaultAnchor == (SwapPositionsFeature.SwapAnchor)mi.Tag;
-                    };
-
-                    mi.Click += (s, e) => {
-                        SwapPositionsFeature.DefaultAnchor = anchorVal;
-                        foreach (var m in miList) m.IsChecked = ((SwapPositionsFeature.SwapAnchor)m.Tag == anchorVal);
-                        SwapPositionsFeature.Execute(GetManager(), anchorVal);
-                    };
-                    miList.Add(mi);
-                    btn.ContextMenu.Items.Add(mi);
-                }
-                btn.ContextMenu.Items.Add(new Separator());
-            }
-            else if (btn.Name == "BtnStoryline")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miCopy = new MenuItem { Header = "Copy Storyline to Clipboard" };
-                miCopy.Click += (s, e) => {
-                    var mgr = GetManager();
-                    var titles = StorylineFeature.ExtractStoryline(mgr);
-                    var sb = new System.Text.StringBuilder();
-                    foreach (var storyLineItem in titles) sb.AppendLine($"{storyLineItem.SlideNumber}: {storyLineItem.TitleText}");
-                    System.Windows.Clipboard.SetText(sb.ToString());
-                    System.Windows.MessageBox.Show("Storyline copied to clipboard.");
-                };
-                btn.ContextMenu.Items.Add(miCopy);
-            }
-            else if (btn.Name == "BtnGlassHide")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miConfig = new MenuItem { Header = "Configure Glass Overlay..." };
-                miConfig.Click += (s, e) => {
-                    var w = new oPenEfficiency.UI.Dialogs.GlassHideConfigWindow(GetManager());
-                    w.ShowDialog();
-                };
-                btn.ContextMenu.Items.Add(miConfig);
-                
-                var miIndiv = new MenuItem { Header = "Individual Shapes Overlay" };
-                miIndiv.Click += (s, e) => {
-                    GlassHideFeature.Execute(GetManager(), GlassHideFeature.GlassMode.Individual);
-                };
-                btn.ContextMenu.Items.Add(miIndiv);
-            }
-            else if (btn.Name == "BtnPasteXY")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miCoords = new MenuItem { Header = "Paste Coordinates (X/Y)" };
-                miCoords.Click += (s, e) => PasteCoordinatesFeature.Execute(GetManager(), PasteCoordinatesFeature.PasteMode.Coordinates);
-                btn.ContextMenu.Items.Add(miCoords);
-
-                var miSize = new MenuItem { Header = "Paste Size (Width/Height)" };
-                miSize.Click += (s, e) => PasteCoordinatesFeature.Execute(GetManager(), PasteCoordinatesFeature.PasteMode.Size);
-                btn.ContextMenu.Items.Add(miSize);
-
-                var miBoth = new MenuItem { Header = "Paste Both (Coordinates & Size)" };
-                miBoth.Click += (s, e) => PasteCoordinatesFeature.Execute(GetManager(), PasteCoordinatesFeature.PasteMode.Both);
-                btn.ContextMenu.Items.Add(miBoth);
-            }
-            else if (btn.Name == "BtnSlideGuidelines")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var mi1 = new MenuItem { Header = "3-Column Layout" };
-                mi1.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.ThreeColumn);
-                btn.ContextMenu.Items.Add(mi1);
-
-                var mi2 = new MenuItem { Header = "4-Column Layout" };
-                mi2.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.FourColumn);
-                btn.ContextMenu.Items.Add(mi2);
-
-                var mi3 = new MenuItem { Header = "5-Column Layout" };
-                mi3.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.FiveColumn);
-                btn.ContextMenu.Items.Add(mi3);
-
-                var mi4 = new MenuItem { Header = "1:2 Column Layout (Asymmetrical)" };
-                mi4.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.OneTwoColumn);
-                btn.ContextMenu.Items.Add(mi4);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miThirds = new MenuItem { Header = "Rule of Thirds (3x3 Composition Grid)" };
-                miThirds.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.RuleOfThirds);
-                btn.ContextMenu.Items.Add(miThirds);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miDefault = new MenuItem { Header = "2-Column Layout" };
-                miDefault.Click += (s, e) => SlideGuidelinesFeature.Execute(GetManager(), SlideGuidelinesFeature.GuidelineLayout.Default);
-                btn.ContextMenu.Items.Add(miDefault);
-            }
-            else if (btn.Name == "BtnCleaner")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miSlides = new MenuItem { Header = "Remove Hidden Slides" };
-                miSlides.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveHiddenSlides);
-                btn.ContextMenu.Items.Add(miSlides);
-
-                var miAnim = new MenuItem { Header = "Remove Animations" };
-                var miAnimAll = new MenuItem { Header = "From All Slides" };
-                miAnimAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveAnimationsAll);
-                var miAnimSel = new MenuItem { Header = "From Selected Slides" };
-                miAnimSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveAnimationsSelected);
-                miAnim.Items.Add(miAnimAll);
-                miAnim.Items.Add(miAnimSel);
-                btn.ContextMenu.Items.Add(miAnim);
-
-                var miTrans = new MenuItem { Header = "Remove Transitions" };
-                var miTransAll = new MenuItem { Header = "From All Slides" };
-                miTransAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveTransitionsAll);
-                var miTransSel = new MenuItem { Header = "From Selected Slides" };
-                miTransSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveTransitionsSelected);
-                miTrans.Items.Add(miTransAll);
-                miTrans.Items.Add(miTransSel);
-                btn.ContextMenu.Items.Add(miTrans);
-
-                var miNotes = new MenuItem { Header = "Remove Speaker Notes" };
-                var miNotesAll = new MenuItem { Header = "From All Slides" };
-                miNotesAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveSpeakerNotesAll);
-                var miNotesSel = new MenuItem { Header = "From Selected Slides" };
-                miNotesSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveSpeakerNotesSelected);
-                miNotes.Items.Add(miNotesAll);
-                miNotes.Items.Add(miNotesSel);
-                btn.ContextMenu.Items.Add(miNotes);
-
-                var miDevNotes = new MenuItem { Header = "Remove Developer Notes" };
-                var miDevNotesAll = new MenuItem { Header = "From All Slides" };
-                miDevNotesAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveDeveloperNotesAll);
-                var miDevNotesSel = new MenuItem { Header = "From Selected Slides" };
-                miDevNotesSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveDeveloperNotesSelected);
-                miDevNotes.Items.Add(miDevNotesAll);
-                miDevNotes.Items.Add(miDevNotesSel);
-                btn.ContextMenu.Items.Add(miDevNotes);
-
-                var miComm = new MenuItem { Header = "Remove Comments" };
-                var miCommAll = new MenuItem { Header = "From All Slides" };
-                miCommAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveCommentsAll);
-                var miCommSel = new MenuItem { Header = "From Selected Slides" };
-                miCommSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveCommentsSelected);
-                miComm.Items.Add(miCommAll);
-                miComm.Items.Add(miCommSel);
-                btn.ContextMenu.Items.Add(miComm);
-
-                var miMasters = new MenuItem { Header = "Remove Unused Masters" };
-                miMasters.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveUnusedMasters);
-                btn.ContextMenu.Items.Add(miMasters);
-
-                var miSticky = new MenuItem { Header = "Delete All Sticky Notes" };
-                miSticky.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.DeleteStickyNotes);
-                btn.ContextMenu.Items.Add(miSticky);
-
-                var miAnon = new MenuItem { Header = "Anonymize Selected Slides (Lorem Ipsum)" };
-                miAnon.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.AnonymizeSelected);
-                btn.ContextMenu.Items.Add(miAnon);
-
-                var miFoot = new MenuItem { Header = "Remove Unedited Footers" };
-                var miFootAll = new MenuItem { Header = "From All Slides" };
-                miFootAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveUneditedFootersAll);
-                var miFootSel = new MenuItem { Header = "From Selected Slides" };
-                miFootSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveUneditedFootersSelected);
-                miFoot.Items.Add(miFootAll);
-                miFoot.Items.Add(miFootSel);
-                btn.ContextMenu.Items.Add(miFoot);
-
-                var miDoubleSpace = new MenuItem { Header = "Remove Double Spaces" };
-                var miDoubleSpaceAll = new MenuItem { Header = "From All Slides" };
-                miDoubleSpaceAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveDoubleSpacesAll);
-                var miDoubleSpaceSel = new MenuItem { Header = "From Selected Slides" };
-                miDoubleSpaceSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.RemoveDoubleSpacesSelected);
-                miDoubleSpace.Items.Add(miDoubleSpaceAll);
-                miDoubleSpace.Items.Add(miDoubleSpaceSel);
-                btn.ContextMenu.Items.Add(miDoubleSpace);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miConvert = new MenuItem { Header = "Convert Slides to Images" };
-                var miConvertAll = new MenuItem { Header = "All Slides" };
-                miConvertAll.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.ConvertSlidesToImagesAll);
-                var miConvertSel = new MenuItem { Header = "Selected Slides" };
-                miConvertSel.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.ConvertSlidesToImagesSelected);
-                miConvert.Items.Add(miConvertAll);
-                miConvert.Items.Add(miConvertSel);
-                btn.ContextMenu.Items.Add(miConvert);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miSuper = new MenuItem { Header = "Detect Superscript Numbers Without Footer" };
-                miSuper.Click += (s, e) => CleanerFeature.Execute(GetManager(), CleanerFeature.CleanAction.DetectSuperscriptWithoutFooter);
-                btn.ContextMenu.Items.Add(miSuper);
-            }
-            else if (btn.Name == "BtnArrangeCircle")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                string[] shapes = { "Circle", "Triangle", "Square", "Star", "Octagon", "Pentagon" };
-                foreach (var sh in shapes) {
-                    var mi = new MenuItem { Header = $"Arrange in {sh}" };
-                    mi.Click += (s, e) => ArrangeInShapeFeature.Execute(GetManager(), sh.ToLower());
-                    btn.ContextMenu.Items.Add(mi);
-                }
-                btn.ContextMenu.Items.Add(new Separator());
-                var miPro = new MenuItem { Header = "Pro..." };
-                miPro.Click += (s, e) => new UI.ArrangeProWindow(GetManager()).Show();
-                btn.ContextMenu.Items.Add(miPro);
-            }
-            else if (btn.Name == "BtnShapeLock")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miT = new MenuItem { Header = "Toggle Lock All Shapes (All Slides)" };
-                miT.Click += (s, e) => ShapeLockingFeature.SetGlobalShapeLock(GetManager(), null);
-                btn.ContextMenu.Items.Add(miT);
-                var miL = new MenuItem { Header = "Lock All Shapes (All Slides)" };
-                miL.Click += (s, e) => ShapeLockingFeature.SetGlobalShapeLock(GetManager(), true);
-                btn.ContextMenu.Items.Add(miL);
-                var miU = new MenuItem { Header = "Unlock All Shapes (All Slides)" };
-                miU.Click += (s, e) => ShapeLockingFeature.SetGlobalShapeLock(GetManager(), false);
-                btn.ContextMenu.Items.Add(miU);
-            }
-            else if (btn.Name == "BtnLockDimensions")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miT = new MenuItem { Header = "Toggle Dimension Lock (All Slides)" };
-                miT.Click += (s, e) => DimensionLockFeature.SetGlobalDimensionLock(GetManager(), null);
-                btn.ContextMenu.Items.Add(miT);
-                var miL = new MenuItem { Header = "Lock Dimensions (All Slides)" };
-                miL.Click += (s, e) => DimensionLockFeature.SetGlobalDimensionLock(GetManager(), true);
-                btn.ContextMenu.Items.Add(miL);
-                var miU = new MenuItem { Header = "Unlock Dimensions (All Slides)" };
-                miU.Click += (s, e) => DimensionLockFeature.SetGlobalDimensionLock(GetManager(), false);
-                btn.ContextMenu.Items.Add(miU);
-            }
-            else if (btn.Name == "BtnIllustrativeSticker")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
-                string defaultLabels = "Work in progress, Updated, For discussion, Backup, Confidential, Strictly confidential";
-                string rawLabels = config?.IllustrativeStickerTexts ?? defaultLabels;
-                var labels = rawLabels.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.Trim()).ToArray();
-                if (labels.Length == 0) labels = defaultLabels.Split(',').Select(l => l.Trim()).ToArray();
-
-                foreach (var l in labels) {
-                    var mi = new MenuItem { Header = l };
-                    mi.Click += (s, e) => IllustrativeStickerFeature.Execute(GetManager(), l);
-                    btn.ContextMenu.Items.Add(mi);
-                }
-            }
-            else if (btn.Name == "BtnHarveyBall")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var levels = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f };
-                foreach (var l in levels) {
-                    var mi = new MenuItem { Header = $"Set {l * 100}%" };
-                    mi.Click += (s, e) => HarveyBallFeature.Execute(GetManager(), l);
-                    btn.ContextMenu.Items.Add(mi);
-                }
-            }
-            else if (btn.Name == "BtnThermometer")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var levels = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f };
-                foreach (var l in levels) {
-                    var mi = new MenuItem { Header = $"Set {l * 100}%" };
-                    mi.Click += (s, e) => ThermometerFeature.Execute(GetManager(), l);
-                    btn.ContextMenu.Items.Add(mi);
-                }
-            }
-            else if (btn.Name == "BtnThemeColor")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Dock to Sidebar" };
-                mi.Click += (s, e) => Globals.ThisAddIn.ToggleThemeColorPane();
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnSpecialChars")
-            {
-                btn.ContextMenu.Items.Clear();
-
-                var symbolsItem = new MenuItem { Header = "Symbols" };
-                foreach (var category in UI.SpecialCharactersWindow.SymbolData)
-                {
-                    var subItem = new MenuItem { Header = category.Key };
-                    subItem.Click += (s, e) => OpenSpecialCharactersWindow(category.Key);
-                    symbolsItem.Items.Add(subItem);
-                }
-                btn.ContextMenu.Items.Add(symbolsItem);
-
-                var languagesItem = new MenuItem { Header = "Languages" };
-                foreach (var lang in UI.SpecialCharactersWindow.LanguageData)
-                {
-                    var subItem = new MenuItem { Header = lang.Key };
-                    subItem.Click += (s, e) => OpenSpecialCharactersWindow(lang.Key);
-                    languagesItem.Items.Add(subItem);
-                }
-                btn.ContextMenu.Items.Add(languagesItem);
-            }
-            else if (btn.Name == "BtnSlideNotes")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                
-                var mi1 = new MenuItem { Header = "Delete notes on this slide" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Utilities.SlideNotesFeature.DeleteNotesOnCurrentSlide(GetManager());
-                btn.ContextMenu.Items.Add(mi1);
-
-                var mi2 = new MenuItem { Header = "Delete all notes in presentation" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Utilities.SlideNotesFeature.DeleteAllNotes(GetManager());
-                btn.ContextMenu.Items.Add(mi2);
-            }
-            else if (btn.Name == "BtnManageStickyNotes")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var mi1 = new MenuItem { Header = "Move notes off this slide" };
-                mi1.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.MoveOff, StickyNoteManagerFeature.Scope.ThisSlide);
-                btn.ContextMenu.Items.Add(mi1);
-
-                var mi2 = new MenuItem { Header = "Move notes back on this slide" };
-                mi2.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.MoveOn, StickyNoteManagerFeature.Scope.ThisSlide);
-                btn.ContextMenu.Items.Add(mi2);
-
-                var mi3 = new MenuItem { Header = "Delete notes on this slide" };
-                mi3.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.Delete, StickyNoteManagerFeature.Scope.ThisSlide);
-                btn.ContextMenu.Items.Add(mi3);
-
-                var mi4 = new MenuItem { Header = "Convert comments on this slide to notes" };
-                mi4.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.ConvertComments, StickyNoteManagerFeature.Scope.ThisSlide);
-                btn.ContextMenu.Items.Add(mi4);
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var mi5 = new MenuItem { Header = "Move notes off selected slides" };
-                mi5.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.MoveOff, StickyNoteManagerFeature.Scope.SelectedSlides);
-                btn.ContextMenu.Items.Add(mi5);
-
-                var mi6 = new MenuItem { Header = "Move notes back on selected slides" };
-                mi6.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.MoveOn, StickyNoteManagerFeature.Scope.SelectedSlides);
-                btn.ContextMenu.Items.Add(mi6);
-
-                var mi7 = new MenuItem { Header = "Delete notes on selected slides" };
-                mi7.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.Delete, StickyNoteManagerFeature.Scope.SelectedSlides);
-                btn.ContextMenu.Items.Add(mi7);
-
-                var mi8 = new MenuItem { Header = "Convert comments on selected slides to notes" };
-                mi8.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.ConvertComments, StickyNoteManagerFeature.Scope.SelectedSlides);
-                btn.ContextMenu.Items.Add(mi8);
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var mi9 = new MenuItem { Header = "Convert selected shapes to StickyNotes (Add prefix)" };
-                mi9.Click += (s, e) => StickyNoteManagerFeature.Execute(GetManager(), StickyNoteManagerFeature.ActionType.PrefixName, StickyNoteManagerFeature.Scope.ThisSlide);
-                btn.ContextMenu.Items.Add(mi9);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miT = new MenuItem { Header = "Convert Sticky Notes to Tags (Selected Slides)" };
-                miT.Click += (s, e) => {
-                    // Similar logic as in TagInspectorWindow
-                    try {
-                        var app = GetManager().GetApplication();
-                        int totalCount = 0;
-                        PowerPoint.SlideRange slideRange = null;
-                        try { slideRange = app.ActiveWindow.Selection.SlideRange; } catch { }
-                        
-                        var slides = new List<PowerPoint.Slide>();
-                        if (slideRange != null && slideRange.Count > 0)
-                        {
-                            for (int x = 1; x <= slideRange.Count; x++) slides.Add(slideRange[x]);
-                        }
-                        else if (app.ActiveWindow.View.Slide is PowerPoint.Slide slide) slides.Add(slide);
-
-                        foreach (var slideItem in slides)
-                        {
-                            int count = 0;
-                            for (int i = 1; i <= slideItem.Shapes.Count; i++)
-                            {
-                                var shape = slideItem.Shapes[i];
-                                if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    string text = "";
-                                    try { text = shape.TextFrame.TextRange.Text; } catch { }
-                                    if (!string.IsNullOrEmpty(text))
-                                    {
-                                        count++;
-                                        slideItem.Tags.Add($"OE_STICKY_NOTE_{count}", text);
-                                    }
-                                }
-                            }
-                            totalCount += count;
-                        }
-                        MessageBox.Show($"Converted {totalCount} sticky note(s) to tags.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                    } catch (Exception ex) {
-                        MessageBox.Show("Error converting sticky notes: " + ex.Message);
-                    }
-                };
-                btn.ContextMenu.Items.Add(miT);
-
-                var miM = new MenuItem { Header = "Manage Tags..." };
-                miM.Click += (s, e) => oPenEfficiency.Features.Utilities.TagInspectorFeature.Execute(GetManager());
-                btn.ContextMenu.Items.Add(miM);
-            }
-            else if (btn.Name == "BtnTableSort")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var mi1 = new MenuItem { Header = "Sort from A to Z" };
-                mi1.Click += (s, e) => TableSortFeature.Execute(GetManager(), TableSortFeature.SortType.AZ_Selection);
-                btn.ContextMenu.Items.Add(mi1);
-
-                var mi2 = new MenuItem { Header = "Sort from Z to A" };
-                mi2.Click += (s, e) => TableSortFeature.Execute(GetManager(), TableSortFeature.SortType.ZA_Selection);
-                btn.ContextMenu.Items.Add(mi2);
-
-                var mi3 = new MenuItem { Header = "Sort from A to Z (whole row)" };
-                mi3.Click += (s, e) => TableSortFeature.Execute(GetManager(), TableSortFeature.SortType.AZ_WholeRow);
-                btn.ContextMenu.Items.Add(mi3);
-
-                var mi4 = new MenuItem { Header = "Sort from Z to A (whole row)" };
-                mi4.Click += (s, e) => TableSortFeature.Execute(GetManager(), TableSortFeature.SortType.ZA_WholeRow);
-                btn.ContextMenu.Items.Add(mi4);
-            }
-            else if (btn.Name == "BtnUpdateExcelCharts")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miUpdate = new MenuItem { Header = "Update Excel Charts in This Slide" };
-                miUpdate.Click += (s, e) => UpdateExcelChartsFeature.Execute(GetManager(), updateAllSlides: false);
-                btn.ContextMenu.Items.Add(miUpdate);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miAll = new MenuItem { Header = "Update All Charts in Presentation" };
-                miAll.Click += (s, e) => UpdateExcelChartsFeature.Execute(GetManager(), updateAllSlides: true);
-                btn.ContextMenu.Items.Add(miAll);
-            }
-            else if (btn.Name == "BtnFlightMode")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miToggle = new MenuItem { Header = "Toggle Flight Mode" };
-                miToggle.Click += (s, e) => FlightModeFeature.Toggle(GetManager());
-                btn.ContextMenu.Items.Add(miToggle);
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miCover = new MenuItem { Header = "Cover Logos Only" };
-                miCover.Click += (s, e) => FlightModeFeature.EnableCoverLogos(GetManager());
-                btn.ContextMenu.Items.Add(miCover);
-
-                var miLight = new MenuItem { Header = "Light Overlay (95% Visible)" };
-                miLight.Click += (s, e) => FlightModeFeature.EnableLightOverlay(GetManager());
-                btn.ContextMenu.Items.Add(miLight);
-
-                var miHeavy = new MenuItem { Header = "Heavy Overlay (85% Visible)" };
-                miHeavy.Click += (s, e) => FlightModeFeature.EnableHeavyOverlay(GetManager());
-                btn.ContextMenu.Items.Add(miHeavy);
-
-                var miHide = new MenuItem { Header = "Hide Master Background" };
-                miHide.Click += (s, e) => FlightModeFeature.EnableHideBackground(GetManager());
-                btn.ContextMenu.Items.Add(miHide);
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miDisable = new MenuItem { Header = "Disable Flight Mode" };
-                miDisable.Click += (s, e) => FlightModeFeature.Disable(GetManager());
-                btn.ContextMenu.Items.Add(miDisable);
-            }
-            else if (btn.Name == "BtnInsertColumnLeft")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Insert Column Left & Preserve Width" };
-                mi.Click += (s, e) => InsertTableColumnLeftFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnInsertColumnRight")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Insert Column Right & Preserve Width" };
-                mi.Click += (s, e) => InsertTableColumnRightFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnInsertRowTop")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Insert Row Top & Preserve Height" };
-                mi.Click += (s, e) => InsertTableRowTopFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnInsertRowBottom")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Insert Row Bottom & Preserve Height" };
-                mi.Click += (s, e) => InsertTableRowBottomFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnRemoveHorizontalGaps")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Horizontal Gaps & Center" };
-                mi.Click += (s, e) => RemoveHorizontalGapsFeature.ExecuteCentered(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnRemoveVerticalGaps")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Vertical Gaps & Center" };
-                mi.Click += (s, e) => RemoveVerticalGapsFeature.ExecuteCentered(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnTableSplit")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Split Table by Row" };
-                mi.Click += (s, e) => TableSplitFeature.Execute(GetManager(), false);
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnTableSum")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Sum Column in Current Selected Cells" };
-                mi1.Click += (s, e) => TableSumFeature.Execute(GetManager(), false, true);
-                btn.ContextMenu.Items.Add(mi1);
-
-                var mi2 = new MenuItem { Header = "Sum Column and Row in Current Selected Cells" };
-                mi2.Click += (s, e) => TableSumFeature.Execute(GetManager(), true, true);
-                btn.ContextMenu.Items.Add(mi2);
-            }
-            else if (btn.Name == "BtnAdjustSpacing")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miIncH = new MenuItem { Header = "Increase Horizontal Spacing" };
-                miIncH.Click += (s, e) => AdjustHorizontalSpacingFeature.Execute(GetManager(), GetSpacingIncrement());
-                btn.ContextMenu.Items.Add(miIncH);
-
-                var miDecH = new MenuItem { Header = "Decrease Horizontal Spacing" };
-                miDecH.Click += (s, e) => AdjustHorizontalSpacingFeature.Execute(GetManager(), -GetSpacingIncrement());
-                btn.ContextMenu.Items.Add(miDecH);
-
-                var miIncV = new MenuItem { Header = "Increase Vertical Spacing" };
-                miIncV.Click += (s, e) => AdjustVerticalSpacingFeature.Execute(GetManager(), GetSpacingIncrement());
-                btn.ContextMenu.Items.Add(miIncV);
-
-                var miDecV = new MenuItem { Header = "Decrease Vertical Spacing" };
-                miDecV.Click += (s, e) => AdjustVerticalSpacingFeature.Execute(GetManager(), -GetSpacingIncrement());
-                btn.ContextMenu.Items.Add(miDecV);
-            }
-            else if (btn.Name == "BtnSnapShape")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Connect Selected Shapes" };
-                mi1.Click += (s, e) => {
-                    ToggleFloatingWindow("BtnSnapShape", () => new UI.ObjectConnectorWindow(GetManager()), null);
-                };
-                btn.ContextMenu.Items.Add(mi1);
-            }
-            else if (btn.Name == "BtnPickColor")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miFill = new MenuItem { Header = "Pick Fill Color (Default)" };
-                miFill.Click += (s, e) => Features.PickColorFeature.Execute(GetManager(), Features.PickColorFeature.ApplyTarget.Fill);
-                btn.ContextMenu.Items.Add(miFill);
-
-                var miLine = new MenuItem { Header = "Pick Line Color" };
-                miLine.Click += (s, e) => Features.PickColorFeature.Execute(GetManager(), Features.PickColorFeature.ApplyTarget.Line);
-                btn.ContextMenu.Items.Add(miLine);
-
-                var miText = new MenuItem { Header = "Pick Text Color" };
-                miText.Click += (s, e) => Features.PickColorFeature.Execute(GetManager(), Features.PickColorFeature.ApplyTarget.Text);
-                btn.ContextMenu.Items.Add(miText);
-            }
-            else if (btn.Name == "BtnRepeatShape")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miRight = new MenuItem { Header = "Repeat to the Right" };
-                miRight.Click += (s, e) => RepeatShapeFeature.Execute(GetManager(), RepeatShapeFeature.RepeatDirection.Right);
-                btn.ContextMenu.Items.Add(miRight);
-
-                var miLeft = new MenuItem { Header = "Repeat to the Left" };
-                miLeft.Click += (s, e) => RepeatShapeFeature.Execute(GetManager(), RepeatShapeFeature.RepeatDirection.Left);
-                btn.ContextMenu.Items.Add(miLeft);
-
-                var miUp = new MenuItem { Header = "Repeat to the Top" };
-                miUp.Click += (s, e) => RepeatShapeFeature.Execute(GetManager(), RepeatShapeFeature.RepeatDirection.Up);
-                btn.ContextMenu.Items.Add(miUp);
-
-                var miDown = new MenuItem { Header = "Repeat to the Bottom" };
-                miDown.Click += (s, e) => RepeatShapeFeature.Execute(GetManager(), RepeatShapeFeature.RepeatDirection.Down);
-                btn.ContextMenu.Items.Add(miDown);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miGrid = new MenuItem { Header = "Arrange in Grid..." };
-                miGrid.Click += (s, e) => {
-                    // Open grid arrangement dialog if available, or use default
-                    RepeatShapeFeature.Execute(GetManager(), RepeatShapeFeature.RepeatDirection.Right);
-                };
-                btn.ContextMenu.Items.Add(miGrid);
-            }
-            else if (btn.Name == "BtnTableBranding")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miSave = new MenuItem { Header = "Save Table Style" };
-                miSave.Click += (s, e) => {
-                    var dialog = new TableBrandingDialog();
-                    dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                    if (dialog.ShowDialog() == true && dialog.Action == "Save" && !string.IsNullOrEmpty(dialog.StyleToSave))
-                    {
-                        TableBrandingFeature.SaveTableStyle(GetManager(), dialog.StyleToSave);
-                    }
-                };
-                btn.ContextMenu.Items.Add(miSave);
-
-                var miLoad = new MenuItem { Header = "Load and Apply Table Style" };
-                miLoad.Click += (s, e) => {
-                    var dialog = new TableBrandingDialog();
-                    dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                    if (dialog.ShowDialog() == true && dialog.Action == "Apply" && dialog.SelectedStyle != null)
-                    {
-                        TableBrandingFeature.ApplyTableStyle(GetManager(), dialog.SelectedStyle);
-                    }
-                };
-                btn.ContextMenu.Items.Add(miLoad);
-
-                btn.ContextMenu.Items.Add(new Separator());
-                var miManage = new MenuItem { Header = "Manage Table Styles..." };
-                miManage.Click += (s, e) => {
-                    var dialog = new TableBrandingDialog();
-                    dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                    dialog.ShowDialog();
-                };
-                btn.ContextMenu.Items.Add(miManage);
-            }
-            else if (btn.Name == "BtnTableDimensions")
-            {
-                var miCopyW = new MenuItem { Header = "Copy Column Width" };
-                miCopyW.Click += (s, e) => TableColumnWidthFeature.Execute(GetManager(), false);
-                btn.ContextMenu.Items.Add(miCopyW);
-
-                var miCopyH = new MenuItem { Header = "Copy Row Height" };
-                miCopyH.Click += (s, e) => TableRowHeightFeature.Execute(GetManager(), false);
-                btn.ContextMenu.Items.Add(miCopyH);
-
-                var miCopyB = new MenuItem { Header = "Copy Both (Width & Height)" };
-                miCopyB.Click += (s, e) => TableDimensionsFeature.Execute(GetManager(), false);
-                btn.ContextMenu.Items.Add(miCopyB);
-
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miPasteW = new MenuItem { Header = "Paste Column Width" };
-                miPasteW.Click += (s, e) => TableColumnWidthFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(miPasteW);
-
-                var miPasteH = new MenuItem { Header = "Paste Row Height" };
-                miPasteH.Click += (s, e) => TableRowHeightFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(miPasteH);
-
-                var miPasteB = new MenuItem { Header = "Paste Both (Width & Height)" };
-                miPasteB.Click += (s, e) => TableDimensionsFeature.Execute(GetManager(), true);
-                btn.ContextMenu.Items.Add(miPasteB);
-            }
-            else if (btn.Name == "BtnSelectSameType")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-
-                var miFill = new MenuItem { Header = "Select shapes with same fill color" };
-                miFill.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.FillColor);
-                btn.ContextMenu.Items.Add(miFill);
-
-                var miLine = new MenuItem { Header = "Select shapes with same line color" };
-                miLine.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.LineColor);
-                btn.ContextMenu.Items.Add(miLine);
-
-                var miBoth = new MenuItem { Header = "Select shapes with same fill and line color" };
-                miBoth.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.FillAndLineColor);
-                btn.ContextMenu.Items.Add(miBoth);
-
-                var miSize = new MenuItem { Header = "Select shapes with same size" };
-                miSize.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.Size);
-                btn.ContextMenu.Items.Add(miSize);
-
-                var miWidth = new MenuItem { Header = "Select shapes with same width" };
-                miWidth.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.Width);
-                btn.ContextMenu.Items.Add(miWidth);
-
-                var miHeight = new MenuItem { Header = "Select shapes with same height" };
-                miHeight.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.Height);
-                btn.ContextMenu.Items.Add(miHeight);
-
-                var miType = new MenuItem { Header = "Select shapes with same type" };
-                miType.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.Type);
-                btn.ContextMenu.Items.Add(miType);
-
-                var miFormatting = new MenuItem { Header = "Select shapes with same type and formatting" };
-                miFormatting.Click += (s, e) => SelectSameTypeFeature.Execute(GetManager(), AdvancedSelectionFeature.SelectSameCriteria.TypeAndFormatting);
-                btn.ContextMenu.Items.Add(miFormatting);
-            }
-            else if (btn.Name == "BtnBringToFront" || btn.Name == "BtnSendToBack" || btn.Name == "BtnBringForward" || btn.Name == "BtnSendBackward")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miRanked = new MenuItem { Header = $"{UI.FeatureLibrary.GetFeatureInfo(btn.Name).Tooltip} (Ranked)" };
-                miRanked.Click += (s, e) =>
-                {
-                    var mgr = GetManager();
-                    if (btn.Name == "BtnBringToFront") BringToFrontFeature.ExecuteRanked(mgr);
-                    else if (btn.Name == "BtnSendToBack") SendToBackFeature.ExecuteRanked(mgr);
-                    else if (btn.Name == "BtnBringForward") BringForwardFeature.ExecuteRanked(mgr);
-                    else if (btn.Name == "BtnSendBackward") SendBackwardFeature.ExecuteRanked(mgr);
-                };
-                btn.ContextMenu.Items.Add(miRanked);
-            }
-            else if (btn.Name == "BtnRotateShape")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Rotate 90° Left" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Visuals.RotateShapeFeature.ExecuteSpecific(GetManager(), -90f);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Rotate 45° Right" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Visuals.RotateShapeFeature.ExecuteSpecific(GetManager(), 45f);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Rotate 45° Left" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Visuals.RotateShapeFeature.ExecuteSpecific(GetManager(), -45f);
-                btn.ContextMenu.Items.Add(mi3);
-            }
-            else if (btn.Name == "BtnChangeCase")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Sentence case." };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Text.ChangeCaseFeature.ExecuteSpecific(GetManager(), PowerPoint.PpChangeCase.ppCaseSentence);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "lowercase" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Text.ChangeCaseFeature.ExecuteSpecific(GetManager(), PowerPoint.PpChangeCase.ppCaseLower);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "UPPERCASE" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Text.ChangeCaseFeature.ExecuteSpecific(GetManager(), PowerPoint.PpChangeCase.ppCaseUpper);
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Capitalize Each Word" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Text.ChangeCaseFeature.ExecuteSpecific(GetManager(), PowerPoint.PpChangeCase.ppCaseTitle);
-                btn.ContextMenu.Items.Add(mi4);
-                var mi5 = new MenuItem { Header = "tOGGLE cASE" };
-                mi5.Click += (s, e) => oPenEfficiency.Features.Text.ChangeCaseFeature.ExecuteSpecific(GetManager(), PowerPoint.PpChangeCase.ppCaseToggle);
-                btn.ContextMenu.Items.Add(mi5);
-            }
-            else if (btn.Name == "BtnFormatBold")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Bold Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatBoldFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnFormatItalic")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Italic Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatItalicFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnFormatUnderline")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Underline Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatUnderlineFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnFormatStrikethrough")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Strikethrough Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatStrikethroughFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnFormatSubscript")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Subscript Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatSubscriptFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnFormatSuperscript")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi = new MenuItem { Header = "Remove Superscript Formatting" };
-                mi.Click += (s, e) => oPenEfficiency.Features.Text.FormatSuperscriptFeature.Remove(GetManager());
-                btn.ContextMenu.Items.Add(mi);
-            }
-            else if (btn.Name == "BtnDistributeHorizontal")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Align to Slide" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeHorizontalFeature.Execute(GetManager(), relativeToSlide: true);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Align Selected Objects" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeHorizontalFeature.Execute(GetManager(), relativeToSlide: false);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Align Middles & Distribute" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeHorizontalFeature.Execute(GetManager(), relativeToSlide: false, alignMiddles: true);
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Align Middles & Distribute (to Slide)" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeHorizontalFeature.Execute(GetManager(), relativeToSlide: true, alignMiddles: true);
-                btn.ContextMenu.Items.Add(mi4);
-            }
-            else if (btn.Name == "BtnDistributeVertical")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Align to Slide" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeVerticalFeature.Execute(GetManager(), relativeToSlide: true);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Align Selected Objects" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeVerticalFeature.Execute(GetManager(), relativeToSlide: false);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Align Centers & Distribute" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeVerticalFeature.Execute(GetManager(), relativeToSlide: false, alignCenters: true);
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Align Centers & Distribute (to Slide)" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Alignment.DistributeVerticalFeature.Execute(GetManager(), relativeToSlide: true, alignCenters: true);
-                btn.ContextMenu.Items.Add(mi4);
-            }
-            else if (btn.Name == "BtnDiagonalAlign")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Align 45° (Anchor: Top/Left-most shape)" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Alignment.DiagonalAlignFeature.ExecuteSpecific(GetManager(), 45f, "First");
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Align 135° (Anchor: Top/Left-most shape)" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Alignment.DiagonalAlignFeature.ExecuteSpecific(GetManager(), 135f, "First");
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Align -45° (Anchor: Top/Left-most shape)" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Alignment.DiagonalAlignFeature.ExecuteSpecific(GetManager(), -45f, "First");
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Align -135° (Anchor: Top/Left-most shape)" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Alignment.DiagonalAlignFeature.ExecuteSpecific(GetManager(), -135f, "First");
-                btn.ContextMenu.Items.Add(mi4);
-            }
-            else if (btn.Name == "BtnAlignText")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miL = new MenuItem { Header = "Left" };
-                miL.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), null, PowerPoint.PpParagraphAlignment.ppAlignLeft);
-                btn.ContextMenu.Items.Add(miL);
-                var miC = new MenuItem { Header = "Center" };
-                miC.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), null, PowerPoint.PpParagraphAlignment.ppAlignCenter);
-                btn.ContextMenu.Items.Add(miC);
-                var miR = new MenuItem { Header = "Right" };
-                miR.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), null, PowerPoint.PpParagraphAlignment.ppAlignRight);
-                btn.ContextMenu.Items.Add(miR);
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Top" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorTop);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Middle" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorMiddle);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Bottom" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorBottom);
-                btn.ContextMenu.Items.Add(mi3);
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi4 = new MenuItem { Header = "Top Centered" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorTop, PowerPoint.PpParagraphAlignment.ppAlignCenter);
-                btn.ContextMenu.Items.Add(mi4);
-                var mi5 = new MenuItem { Header = "Middle Centered" };
-                mi5.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorMiddle, PowerPoint.PpParagraphAlignment.ppAlignCenter);
-                btn.ContextMenu.Items.Add(mi5);
-                var mi6 = new MenuItem { Header = "Bottom Centered" };
-                mi6.Click += (s, e) => oPenEfficiency.Features.Text.AlignTextFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoVerticalAnchor.msoAnchorBottom, PowerPoint.PpParagraphAlignment.ppAlignCenter);
-                btn.ContextMenu.Items.Add(mi6);
-            }
-            else if (btn.Name == "BtnTextDirection")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Horizontal" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Text.TextDirectionFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoTextOrientation.msoTextOrientationHorizontal);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Rotate all text 90°" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Text.TextDirectionFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoTextOrientation.msoTextOrientationDownward);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Rotate all text 270°" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Text.TextDirectionFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoTextOrientation.msoTextOrientationUpward);
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Stacked" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Text.TextDirectionFeature.ExecuteSpecific(GetManager(), Microsoft.Office.Core.MsoTextOrientation.msoTextOrientationVerticalFarEast);
-                btn.ContextMenu.Items.Add(mi4);
-            }
-            else if (btn.Name == "BtnCharacterSpacing")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var mi1 = new MenuItem { Header = "Very Tight" };
-                mi1.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteSpecific(GetManager(), -1.5f);
-                btn.ContextMenu.Items.Add(mi1);
-                var mi2 = new MenuItem { Header = "Tight" };
-                mi2.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteSpecific(GetManager(), -0.75f);
-                btn.ContextMenu.Items.Add(mi2);
-                var mi3 = new MenuItem { Header = "Normal" };
-                mi3.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteSpecific(GetManager(), 0f);
-                btn.ContextMenu.Items.Add(mi3);
-                var mi4 = new MenuItem { Header = "Loose" };
-                mi4.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteSpecific(GetManager(), 1.5f);
-                btn.ContextMenu.Items.Add(mi4);
-                var mi5 = new MenuItem { Header = "Very Loose" };
-                mi5.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteSpecific(GetManager(), 3.0f);
-                btn.ContextMenu.Items.Add(mi5);
-                var mi6 = new MenuItem { Header = "More Spacing..." };
-                mi6.Click += (s, e) => oPenEfficiency.Features.Text.CharacterSpacingFeature.ExecuteMoreSpacing(GetManager());
-                btn.ContextMenu.Items.Add(mi6);
-            }
-            else if (btn.Name == "BtnTranslate")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var miAPI = new MenuItem { Header = "Translate via Configured API" };
-                miAPI.Click += (s, e) => {
-                    var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
-                    bool hasKey = false;
-                    if (config != null)
-                    {
-                        if (config.SelectedTranslationTool == "DeepL" && !string.IsNullOrEmpty(config.DeepLApiKey)) hasKey = true;
-                        else if (config.SelectedTranslationTool == "OpenAI" && !string.IsNullOrEmpty(config.OpenAIApiKey)) hasKey = true;
-                        else if (config.SelectedTranslationTool == "Claude" && !string.IsNullOrEmpty(config.ClaudeApiKey)) hasKey = true;
-                        else if (config.SelectedTranslationTool == "LibreTranslate" && !string.IsNullOrEmpty(config.LibreTranslateBaseUrl)) hasKey = true;
-                    }
-                    if (hasKey) oPenEfficiency.Features.Text.TranslationFeatures.TranslateSelectionSafe(GetManager(), config);
-                    else System.Windows.MessageBox.Show("Please configure an API provider in the settings first.", "Translation", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                };
-                btn.ContextMenu.Items.Add(miAPI);
-
-                var miFree = new MenuItem { Header = "Translate via Free API (MyMemory)" };
-                miFree.Click += (s, e) => {
-                    var config = JsonService.Load<SidebarConfig>("sidebar_config.json");
-                    string lang = config?.TranslationTargetLanguage ?? "EN-US";
-                    oPenEfficiency.Features.Text.TranslationFeatures.TranslateWithFreeApiSafe(GetManager(), lang);
-                };
-                btn.ContextMenu.Items.Add(miFree);
-            }
-            else if (btn.Name == "BtnTransparency")
-            {
-                btn.ContextMenu.Items.Add(new Separator());
-                var levels = new[] { 0f, 0.25f, 0.5f, 0.75f, 1f };
-                foreach (var l in levels) {
-                    var mi = new MenuItem { Header = $"Set {l * 100}%" };
-                    mi.Click += (s, e) => oPenEfficiency.Features.Visuals.TransparencyFeature.SetTransparency(GetManager(), l);
-                    btn.ContextMenu.Items.Add(mi);
-                }
-            }
-        }
-
         private void OpenSpecialCharactersWindow(string selection)
         {
-            try
-            {
-                var sidebarWindow = Window.GetWindow(this);
-
-                if (_specialCharsWindow == null)
-                {
-                    _specialCharsWindow = new UI.SpecialCharactersWindow(GetManager());
-                    if (sidebarWindow != null) _specialCharsWindow.Owner = sidebarWindow;
-                }
-
-                // Ensure it's not minimized and visible
-                if (_specialCharsWindow.WindowState == WindowState.Minimized)
-                    _specialCharsWindow.WindowState = WindowState.Normal;
-
-                _specialCharsWindow.SelectLanguage(selection);
-
-                // Positioning near sidebar
-                if (sidebarWindow != null)
-                {
-                    double targetLeft = sidebarWindow.Left - _specialCharsWindow.Width - 10;
-                    // If it would be off-screen to the left, try the right side
-                    if (targetLeft < 0) targetLeft = sidebarWindow.Left + sidebarWindow.Width + 10;
-                    
-                    _specialCharsWindow.Left = targetLeft;
-                    _specialCharsWindow.Top = sidebarWindow.Top;
-                }
-                else
-                {
-                    _specialCharsWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                }
-
-                _specialCharsWindow.Show();
-                _specialCharsWindow.Activate();
-                _specialCharsWindow.Focus();
-                _specialCharsWindow.Topmost = true;
-            }
-            catch
-            {
-                _specialCharsWindow?.Show();
-            }
+            Navigation.OpenSpecialCharacters(selection);
         }
     }
 }

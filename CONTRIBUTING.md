@@ -27,3 +27,7 @@ See [Development](https://github.com/FabPei/oPenEfficiency/wiki/Development) for
 The project uses **GNU AGPL v3**; read [LICENSE](LICENSE) and the [licensing guide](docs/licensing.md). Submit only material you have the right to contribute under the applicable terms. Preserve third-party authorship, copyright and license notices; document any new external source and its license.
 
 This contribution guide does not transfer copyright ownership or revoke independent licenses already validly granted. Contributions and software are supplied subject to their applicable license terms, without a promise of commercial support.
+
+## Public source checks
+
+Run `./eng/Build.ps1 -Configuration Release -Rebuild -Installer` on Windows with the documented prerequisites. The five test projects use frozen public contracts; no private developer documents are needed. Runtime results and source snapshots have different meanings; do not describe inventory coverage or NotRun checks as passed acceptance. No change to this repository automatically publishes a product release.

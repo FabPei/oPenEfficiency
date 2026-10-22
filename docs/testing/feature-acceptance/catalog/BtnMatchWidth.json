@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnMatchWidth",
+  "title": "Match Width (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Alignment/MatchWidthToFirstFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnMatchWidth-001",
+      "title": "Match Width applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/MatchWidthToFirstFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Match Width (BtnMatchWidth) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnMatchWidth-001",
+      "title": "BtnMatchWidth documented core behavior",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Match Width is enabled at its documented minimum of 2 selected shapes and refused below that and for non-shape selections."
+        }
+      ],
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Match Width is enabled at its documented minimum of 2 selected shapes and refused below that and for non-shape selections.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Alignment/MatchHeightToFirstFeature.cs",
+        "oPenEfficiency.Catalog.Tests/Program.cs"
+      ],
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Catalog.Tests/oPenEfficiency.Catalog.Tests.csproj",
+        "filter": "FullyQualifiedName~Wave1MatchWidthSelectionScopeIsValid"
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic host-free scenario passes; bind-office-evidence-and-reviews (office-only gate) remains until the office leg has real-host evidence and review.",
+          "status": "open",
+          "type": "acceptance",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Catalog.Tests/Program.cs",
+              "line": 1,
+              "item": "Catalog.Tests.Wave1MatchWidthSelectionScopeIsValid",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "acceptance",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "QA9-BtnMatchWidth-002",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnMatchWidth-002",
+      "title": "BtnMatchWidth deterministic Office leg",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Match Width is enabled at its documented minimum of 2 selected shapes and refused below that and for non-shape selections."
+        }
+      ],
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Match Width is enabled at its documented minimum of 2 selected shapes and refused below that and for non-shape selections.",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/AdjustSpacingFeatureHelper.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointSpacingMatch.ps1"
+      ],
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlipRotateStretch.ps1",
+        "arguments": [
+          "-Commands",
+          "match-width"
+        ]
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic Office leg passes against the configured build on an isolated PowerPoint host with zero new error-log entries and full teardown; bind-office-evidence-and-reviews remains until this office scenario has real-host evidence and review.",
+          "status": "open",
+          "type": "evidence",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Catalog.Tests/Program.cs",
+              "line": 1,
+              "item": "Catalog.Tests.Wave1MatchWidthSelectionScopeIsValid",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "evidence",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "real-host run",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -52,11 +52,11 @@ namespace oPenEfficiency.UI.Toolbars
                                     if (shape.Fill != null) { initialTransparency = shape.Fill.Transparency; foundTransparency = true; }
                                 }
                             }
-                            catch { }
+                            catch { /* Optional parent-group detection falls back to the selected shape. */ }
                         }
                     }
                 }
-            } catch { }
+            } catch { /* Initial selection probing falls back to default transparency values. */ }
 
             if (foundTransparency)
             {
@@ -152,7 +152,7 @@ namespace oPenEfficiency.UI.Toolbars
             {
                 this.Close();
             }
-            catch { }
+            catch { /* A stale selection is ignored until the next PowerPoint selection event. */ }
         }
     }
 }

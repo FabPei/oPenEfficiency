@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Globalization;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Services.Attributes;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features
 {
@@ -11,25 +13,25 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnNumeration",
-        Name = "Numeration",
-        Tooltip = "Numeration",
+        Name = "Numbered Marker",
+        Tooltip = "Insert a numbered marker",
+        SearchAliases = new[] { "Numeration" },
         IconData = "M5,3H19V5H5V3M5,7H19V9H5V7M5,11H19V13H5V11M5,15H19V17H5V15M3,21H17L20,21V19H3V21M7,19H9V21H7V19M11,19H13V21H11V19M15,19H17V21H15V19Z",
         Color = "#F43F5E",
-        Description = "Inserts numbered shapes for marking and organizing content.",
-        DetailedHelpText = "### Numeration\nAutomatically numbers all selected shapes sequentially by injecting or overwriting their text content with the configured prefix and number format.",
-        Keywords = "numbers, list, bullet points, numbering, sequence, step",
-        MinSelection = 0)]
+        Description = "Inserts one editable numbered marker on the current slide.",
+        DetailedHelpText = "### Numbered Marker\n\nInsert one circular numbered marker on the current slide. Right-click for direct number 1 through 5 presets. Select the marker to edit its number, size, color, opacity, or shape from the contextual toolbar. The marker stores its settings in openEfficiency metadata and can be changed without overwriting text in other shapes.",
+        MinSelection = 0,
+        RequiredType = OfficeSelectionType.None)]
     public static class NumerationFeature
     {
-        public const string NumerationTag = "oPE_Numeration";
+        public const string NumerationTag = oPenEfficiency.Core.Services.NumerationStatePolicy.NumerationTag;
 
         /// <summary>
         /// Wrapper for auto-discovery - creates numeration marker with default settings.
         /// </summary>
         public static bool Execute(PowerPointManager manager)
         {
-            Create(manager);
-            return true;
+            return Create(manager);
         }
 
         public struct NumerationSettings
@@ -40,85 +42,109 @@ namespace oPenEfficiency.Features
             public string ColorHex;
             public int Alpha; // 0-255
 
-            public static NumerationSettings Default() => new NumerationSettings
+            public static NumerationSettings Default()
             {
-                Number = 1,
-                ShapeType = "Circle",
-                Size = 22.68f, // 0.8cm
-                ColorHex = "#005C94",
-                Alpha = 255
-            };
+                oPenEfficiency.Core.Services.NumerationStatePolicy.Defaults(
+                    out int number, out string shapeType, out float size, out string colorHex, out int alpha);
+                return new NumerationSettings
+                {
+                    Number = number,
+                    ShapeType = shapeType,
+                    Size = size,
+                    ColorHex = colorHex,
+                    Alpha = alpha
+                };
+            }
 
-            public string ToTag() => $"{NumerationTag}|{Number}|{ShapeType}|{Size}|{ColorHex}|{Alpha}";
+            public string ToTag() =>
+                oPenEfficiency.Core.Services.NumerationStatePolicy.FormatTag(Number, ShapeType, Size, ColorHex, Alpha);
 
             public static NumerationSettings FromTag(string tag)
             {
-                var settings = Default();
-                if (string.IsNullOrEmpty(tag) || !tag.StartsWith(NumerationTag)) return settings;
-
-                var parts = tag.Split('|');
-                if (parts.Length >= 2) int.TryParse(parts[1], out settings.Number);
-                if (parts.Length >= 3) settings.ShapeType = parts[2];
-                if (parts.Length >= 4) float.TryParse(parts[3], out settings.Size);
-                if (parts.Length >= 5) settings.ColorHex = parts[4];
-                if (parts.Length >= 6) int.TryParse(parts[5], out settings.Alpha);
-
-                return settings;
+                oPenEfficiency.Core.Services.NumerationStatePolicy.ParseState(
+                    tag, out int number, out string shapeType, out float size, out string colorHex, out int alpha);
+                return new NumerationSettings
+                {
+                    Number = number,
+                    ShapeType = shapeType,
+                    Size = size,
+                    ColorHex = colorHex,
+                    Alpha = alpha
+                };
             }
         }
 
-        public static void Create(PowerPointManager manager)
+        public static bool Create(PowerPointManager manager)
         {
             var settings = NumerationSettings.Default();
-            Execute(manager, null, settings);
+            return Execute(manager, null, settings);
         }
 
-        public static void Execute(PowerPointManager manager, PowerPoint.Shape existingShape, NumerationSettings settings)
+        public static bool Execute(PowerPointManager manager, PowerPoint.Shape existingShape, NumerationSettings settings)
         {
-            var slide = manager.GetCurrentSlide();
-            if (slide == null) return;
+            if (manager == null) return false;
+            PowerPoint.Shape shape = null;
 
-            float left = 100, top = 100;
-            if (existingShape != null)
+            try
             {
-                left = existingShape.Left + (existingShape.Width / 2) - (settings.Size / 2);
-                top = existingShape.Top + (existingShape.Height / 2) - (settings.Size / 2);
+                var slide = manager.GetCurrentSlide();
+                if (slide == null) return false;
+                if (!oPenEfficiency.Core.Services.NumerationStatePolicy.IsValidSize(settings.Size))
+                    throw new ArgumentOutOfRangeException(nameof(settings.Size), "Marker size must be between 5 and 200 points.");
+
+                settings.Alpha = oPenEfficiency.Core.Services.NumerationStatePolicy.ClampAlpha(settings.Alpha);
+                Color markerColor = ColorTranslator.FromHtml(settings.ColorHex ?? "#005C94");
+
+                float left = 100, top = 100;
+                if (existingShape != null)
+                {
+                    oPenEfficiency.Core.Services.NumerationStatePolicy.CenterOnShape(
+                        existingShape.Left, existingShape.Top, existingShape.Width, existingShape.Height, settings.Size,
+                        out left, out top);
+                }
+
+                try { manager.GetApplication()?.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "NumerationFeature.StartNewUndoEntry"); }
+
+                var type = Office.MsoAutoShapeType.msoShapeOval;
+                if (settings.ShapeType == "Square") type = Office.MsoAutoShapeType.msoShapeRectangle;
+                else if (settings.ShapeType == "Diamond") type = Office.MsoAutoShapeType.msoShapeDiamond;
+                else if (settings.ShapeType == "Hexagon") type = Office.MsoAutoShapeType.msoShapeHexagon;
+
+                shape = slide.Shapes.AddShape(type, left, top, settings.Size, settings.Size);
+                shape.Fill.Visible = Office.MsoTriState.msoTrue;
+                shape.Fill.ForeColor.RGB = ColorTranslator.ToWin32(markerColor);
+                shape.Fill.Transparency = 1.0f - (settings.Alpha / 255.0f);
+                shape.Line.Visible = Office.MsoTriState.msoFalse;
+
+                shape.TextFrame.TextRange.Text = settings.Number.ToString(CultureInfo.InvariantCulture);
+                shape.TextFrame.TextRange.Font.Size = 10;
+                shape.TextFrame.TextRange.Font.Bold = Office.MsoTriState.msoTrue;
+                shape.TextFrame.TextRange.Font.Color.RGB = 0xFFFFFF;
+                shape.TextFrame.MarginLeft = 0;
+                shape.TextFrame.MarginRight = 0;
+                shape.TextFrame.MarginTop = 0;
+                shape.TextFrame.MarginBottom = 0;
+                shape.TextFrame.VerticalAnchor = Office.MsoVerticalAnchor.msoAnchorMiddle;
+                shape.TextFrame.TextRange.ParagraphFormat.Alignment = PowerPoint.PpParagraphAlignment.ppAlignCenter;
+                shape.AlternativeText = settings.ToTag();
+                shape.Name = "oPE_Bullet_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+
+                // Delete the predecessor only after its fully formatted replacement exists.
+                if (existingShape != null) existingShape.Delete();
+                shape.Select();
+                return true;
             }
-
-            var type = Office.MsoAutoShapeType.msoShapeOval;
-            if (settings.ShapeType == "Square") type = Office.MsoAutoShapeType.msoShapeRectangle;
-            else if (settings.ShapeType == "Hexagon") type = Office.MsoAutoShapeType.msoShapeHexagon;
-
-            var shape = slide.Shapes.AddShape(type, left, top, settings.Size, settings.Size);
-            
-            // Formatting
-            shape.Fill.Visible = Office.MsoTriState.msoTrue;
-            shape.Fill.ForeColor.RGB = ColorTranslator.ToWin32(ColorTranslator.FromHtml(settings.ColorHex));
-            shape.Fill.Transparency = 1.0f - (settings.Alpha / 255.0f);
-            
-            shape.Line.Visible = Office.MsoTriState.msoFalse;
-
-            // Text
-            shape.TextFrame.TextRange.Text = settings.Number.ToString();
-            shape.TextFrame.TextRange.Font.Size = 10;
-            shape.TextFrame.TextRange.Font.Bold = Office.MsoTriState.msoTrue;
-            shape.TextFrame.TextRange.Font.Color.RGB = 0xFFFFFF; // White
-            shape.TextFrame.MarginLeft = 0;
-            shape.TextFrame.MarginRight = 0;
-            shape.TextFrame.MarginTop = 0;
-            shape.TextFrame.MarginBottom = 0;
-            shape.TextFrame.VerticalAnchor = Office.MsoVerticalAnchor.msoAnchorMiddle;
-            shape.TextFrame.TextRange.ParagraphFormat.Alignment = PowerPoint.PpParagraphAlignment.ppAlignCenter;
-
-            shape.AlternativeText = settings.ToTag();
-            shape.Name = "oPE_Bullet_" + Guid.NewGuid().ToString("N").Substring(0, 8);
-
-            if (existingShape != null)
+            catch (Exception ex)
             {
-                existingShape.Delete();
+                if (shape != null)
+                {
+                    try { shape.Delete(); }
+                    catch (Exception cleanupEx) { ExceptionLogger.Log(cleanupEx, "NumerationFeature.Cleanup"); }
+                }
+                ExceptionLogger.Log(ex, "NumerationFeature.Execute");
+                return false;
             }
-
-            shape.Select();
         }
     }
 }

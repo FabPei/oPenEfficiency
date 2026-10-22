@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnFlightMode",
+  "title": "Master Covers & Overlays (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/FlightModeFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnFlightMode-001",
+      "title": "Master Covers & Overlays applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/FlightModeFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Master Covers & Overlays (BtnFlightMode) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnFlightMode-002",
+      "title": "Master Covers & Overlays state vocabulary and overlay classification are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/FlightModeStatePolicy.cs",
+        "oPenEfficiency/Features/Utilities/FlightModeFeature.cs",
+        "oPenEfficiency.Core.Tests/FlightModeStatePolicyTests.cs"
+      ],
+      "expected": "The persistent tag vocabulary (oPE_FlightMode with ImageCover/Overlay values) is stable; the Light overlay writes 0.95 and the Heavy overlay 0.85 fill transparency, and the classification boundary is inclusive at 0.9, so a freshly written Light overlay reads back as Light and a Heavy one as Heavy.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FlightModeStatePolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnFlightMode-003",
+      "title": "Master Covers and Overlays Light overlay enables and disables cleanly in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Utilities/FlightModeFeature.cs",
+        "eng/Smoke-PowerPointFlightModeBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Master Covers and Overlays Light overlay bounded overload EnableLightOverlay makes the production GetMode read back LightOverlay (measured modeBefore=None modeAfterEnable=LightOverlay), the bounded Disable restores GetMode to None, both dispatches return true, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlightModeBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "light-overlay"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnFlightMode-004",
+      "title": "Master Covers and Overlays Heavy overlay enables and disables cleanly in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "oPenEfficiency/Features/Utilities/FlightModeFeature.cs",
+        "eng/Smoke-PowerPointFlightModeBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Master Covers and Overlays Heavy overlay bounded overload EnableHeavyOverlay makes the production GetMode read back HeavyOverlay (measured modeBefore=None modeAfterEnable=HeavyOverlay), the bounded Disable restores GetMode to None, both dispatches return true, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointFlightModeBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "heavy-overlay"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

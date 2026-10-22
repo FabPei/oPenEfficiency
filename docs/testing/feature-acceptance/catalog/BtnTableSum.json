@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnTableSum",
+  "title": "Calculate Table Totals (Tables)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Tables/TableSumFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnTableSum-001",
+      "title": "Calculate Table Totals applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSumFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.TableAndObject.cs"
+      ],
+      "expected": "Calculate Table Totals (BtnTableSum) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnTableSum-001",
+      "title": "Calculate Table Totals produces column, row and grand totals with the documented cell coordinates",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSumFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives TableTextPlanner.CalculateTotals for Calculate Table Totals: column totals, row totals and the grand total are placed with the documented row/column numbers, and the report stays empty when neither direction is requested.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.TotalsPlannerCalculatesRowsColumnsAndGrandTotal"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSum-002",
+      "title": "Calculate Table Totals supports a single direction (column totals or row totals)",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSumFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives TableTextPlanner.CalculateTotals for Calculate Table Totals: with only column totals requested the planner writes one total per summed column into the last row and none elsewhere, and with only row totals requested it writes one total per summed row into the last column, at the documented cell coordinates.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.TotalsPlannerSupportsSingleDirection"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSum-003",
+      "title": "A non-numeric cell is reported with its exact cell address before any total is written",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSumFeature.cs",
+        "oPenEfficiency.Core/Services/TableTextPlanner.cs",
+        "oPenEfficiency.Core.Tests/TableTextPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives TableTextPlanner.CalculateTotals for Calculate Table Totals: a non-numeric cell aborts the calculation with a FormatException that names the exact cell address (column letters plus row number, honouring the first-row/first-column offsets) and the offending text, before any total is produced.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~TableTextPlannerTests.TotalsPlannerReportsExactInvalidCellBeforeProducingWrites"
+      }
+    },
+    {
+      "id": "QA9-BtnTableSum-004",
+      "title": "Calculate Table Totals interactive range selection",
+      "tier": "owner-manual",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Tables/TableSumFeature.cs"
+      ],
+      "expected": "The interactive multi-cell selection path of the feature behaves as documented on a real PowerPoint host: the selected cell range is processed, one Undo restores the previous state, and refusals report without corrupting the table.",
+      "ownerSteps": [
+        "Open a table, select a rectangular range whose final row and column are reserved for totals.",
+        "Run Calculate Table Totals (both) and then the columns-only context action.",
+        "Verify row/column totals and the grand total are written into the reserved cells, destination formatting stays, and one PowerPoint Undo restores the previous texts. Verify a non-empty unparseable value aborts the whole operation."
+      ],
+      "technicalReason": "Deterministic automation is not feasible for this interactive selection leg: the PowerPoint object model has no multi-cell range selection (Microsoft.Office.Interop.PowerPoint.Cell.Selected is read-only, PIA-verified CanWrite=False; Cell.Select() selects a single cell) while the feature requires a vertical/rectangular multi-cell selection, and its refusal paths run through modal MessageBoxes that block a headless host. The deterministic sorting/totals behavior is covered by the TableTextPlanner core runners; this leg stays a human check until a reviewed seam technique exists."
+    },
+    {
+      "id": "QA9-BtnTableSum-005",
+      "title": "Calculate Table Totals writes harness-computed sums into the totals slots in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Calculate Table Totals with sumRow and sumCol on a 3x3 fixture table whose last row and column are the empty totals slots writes exactly row1=12, row2=12, col1=8 and col2=16 (harness-computed sums of the 5/7/3/9 data), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "table-sum"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

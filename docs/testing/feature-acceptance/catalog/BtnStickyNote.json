@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnStickyNote",
+  "title": "Sticky Note (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnStickyNote-001",
+      "title": "Sticky Note applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Sticky Note (BtnStickyNote) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnStickyNote-001",
+      "title": "The three sticky-note styles keep their documented default palette",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "StickerPreviewModel.CreateStickyNote defaults the Theme style to #FFF494/#323232, Consulting to #FFFF99/#333333 and GreenB to #FFFF00/#575757 when no color is configured.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.StickyPreviewKeepsThreeSupportedVisualStylesDistinct"
+      }
+    },
+    {
+      "id": "QA9-BtnStickyNote-002",
+      "title": "Custom sticky-note colors stay scoped to the selected style",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "SetStickyNoteColors writes a custom pair only into the selected style's slots: after setting Consulting, the Theme and GreenB previews keep their defaults and the Consulting preview shows the custom background and font color.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.CustomColorsAreScopedToSelectedStickyStyle"
+      }
+    },
+    {
+      "id": "QA9-BtnStickyNote-003",
+      "title": "A legacy color pair is retained only for the formerly active style",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "With only the legacy StickyNoteBackgroundColor/StickyNoteFontColor pair present and GreenB active, the GreenB preview keeps the legacy colors while the other styles fall back to their documented defaults.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.LegacyCustomColorIsRetainedForFormerlyActiveStyleOnly"
+      }
+    },
+    {
+      "id": "QA9-BtnStickyNote-004",
+      "title": "Legacy-palette normalization pins the custom pair to the former active style",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Models/StickerPreviewModel.cs",
+        "oPenEfficiency.Core.Tests/StickerPreviewModelTests.cs",
+        "oPenEfficiency/Features/Utilities/StickyNoteFeature.cs",
+        "oPenEfficiency/UI/SettingsViewModel.cs"
+      ],
+      "expected": "NormalizeStickyNoteColors reports a change on a legacy-only configuration, pins the legacy custom colors onto the formerly active style's slots, fills the other styles with their defaults, and switches previews accordingly when the active style changes.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~StickerPreviewModelTests.LegacyPaletteNormalizationPinsCustomColorsToFormerActiveStyle"
+      }
+    },
+    {
+      "id": "QA9-BtnStickyNote-005",
+      "title": "Sticky Note creates one shape carrying the exact text in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointIndicators.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Sticky Note with the bounded text overload on an empty slide adds exactly one shape whose text reads Sticky sample exactly, reports execution, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointIndicators.ps1",
+        "arguments": [
+          "-Mode",
+          "sticky-note"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnExploreFeatures",
+  "title": "Feature Explorer (SettingsAndHelp)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/ThisAddIn.Automation.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnExploreFeatures-001",
+      "title": "Feature Explorer applies its documented behavior",
+      "tier": "visual-review",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/ThisAddIn.Automation.cs"
+      ],
+      "expected": "Feature Explorer (BtnExploreFeatures) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnExploreFeatures-001",
+      "title": "Explorer overflow uses the no-chrome host capacity and collapses when the row fits",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureExplorerNavigationPlanner.cs",
+        "oPenEfficiency.Core.Tests/FeatureExplorerNavigationPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml.cs"
+      ],
+      "expected": "FeatureExplorerNavigationPlanner.Create reports no navigation when the full category row fits the host capacity, reports navigation past the tolerance, and collapses navigation - with a zero offset - once the row fits again even while the rendered viewport still reflects the chevron reduction.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureExplorerNavigationPlannerTests.OverflowUsesTheNoChromeHostCapacityInBothDirections"
+      }
+    },
+    {
+      "id": "QA9-BtnExploreFeatures-002",
+      "title": "The overflow threshold is stable at the tolerance boundary",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureExplorerNavigationPlanner.cs",
+        "oPenEfficiency.Core.Tests/FeatureExplorerNavigationPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml.cs"
+      ],
+      "expected": "A content width exactly within the documented tolerance of the host capacity does not request navigation, while the first width beyond it does.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureExplorerNavigationPlannerTests.OverflowThresholdIsStableAtTheToleranceBoundary"
+      }
+    },
+    {
+      "id": "QA9-BtnExploreFeatures-003",
+      "title": "Navigation availability follows the clamped scroll offset",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureExplorerNavigationPlanner.cs",
+        "oPenEfficiency.Core.Tests/FeatureExplorerNavigationPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml.cs"
+      ],
+      "expected": "The state's CanScrollLeft/CanScrollRight reflect start, middle and end offsets, and an out-of-range offset is clamped to the scrollable width.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureExplorerNavigationPlannerTests.NavigationButtonsReflectStartMiddleAndEndOffsets"
+      }
+    },
+    {
+      "id": "QA9-BtnExploreFeatures-004",
+      "title": "Revealing a category moves the offset only for items outside the viewport",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureExplorerNavigationPlanner.cs",
+        "oPenEfficiency.Core.Tests/FeatureExplorerNavigationPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml.cs"
+      ],
+      "expected": "CalculateRevealOffset returns the smallest valid offset that exposes an off-screen category item, leaves an already visible item untouched and reveals a partially visible item to its far edge.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureExplorerNavigationPlannerTests.RevealOffsetMovesOnlyItemsOutsideTheViewport"
+      }
+    },
+    {
+      "id": "QA9-BtnExploreFeatures-005",
+      "title": "Reveal offsets are clamped and content that fits never scrolls",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/UI/FeatureExplorerNavigationPlanner.cs",
+        "oPenEfficiency.Core.Tests/FeatureExplorerNavigationPlannerTests.cs",
+        "oPenEfficiency/UI/Dialogs/FeatureExplorerWindow.xaml.cs"
+      ],
+      "expected": "CalculateRevealOffset clamps into the scrollable range and returns zero when the content fits the viewport or the viewport is unusable.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~FeatureExplorerNavigationPlannerTests.RevealOffsetClampsAndDoesNotScrollWhenContentFits"
+      }
+    },
+    {
+      "id": "REG-SIDEBAR-ICONS-001-TREE",
+      "title": "Sidebar and Settings feature list icons render",
+      "tier": "visual-review",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "*Icon*",
+        "*Sidebar*",
+        "*Settings*"
+      ],
+      "expected": "Every entry of the Sidebar and Settings feature lists renders its catalog icon in Light and Dark mode, including sources with a 256-unit viewBox (BtnChartOverlay, BtnAddSticker, BtnTransparency).",
+      "ownerSteps": [
+        "Open the Sidebar and the Settings window in Light mode and confirm every feature row shows its icon.",
+        "Switch to Dark mode and repeat the visual check.",
+        "Confirm BtnChartOverlay, BtnAddSticker and BtnTransparency render at normal icon size instead of being clipped."
+      ]
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

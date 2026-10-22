@@ -1,7 +1,7 @@
 using System;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Controls;
+using System.Windows.Input;
 using oPenEfficiency.Features;
 
 namespace oPenEfficiency.UI
@@ -21,7 +21,7 @@ namespace oPenEfficiency.UI
             InitializeComponent();
             _manager = manager;
 
-            // Parse state from alt text
+            // Parse state from the latest persisted metadata.
             // Tag format: oPE_TrafficLight|stateInt|orientation(H/V)|hasBorder(0/1)|borderWeight
             var parts = altText.Split('|');
             _currentState = TrafficLightFeature.TrafficLightState.Red;
@@ -31,14 +31,18 @@ namespace oPenEfficiency.UI
 
             if (parts.Length >= 5)
             {
-                if (int.TryParse(parts[1], out int stateInt)) _currentState = (TrafficLightFeature.TrafficLightState)stateInt;
+                if (int.TryParse(parts[1], System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int stateInt) &&
+                    Enum.IsDefined(typeof(TrafficLightFeature.TrafficLightState), stateInt))
+                    _currentState = (TrafficLightFeature.TrafficLightState)stateInt;
                 _isHorizontal = parts[2] == "H";
                 _hasBorder = parts[3] == "1";
-                if (float.TryParse(parts[4], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float weight))
+                string normalizedWeight = parts[4].Replace(',', '.');
+                if (float.TryParse(normalizedWeight, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float weight))
                     _borderWeight = weight;
             }
 
             UpdateButtonStates();
+            Loaded += (sender, args) => GetCurrentStateButton().Focus();
         }
 
         private void UpdateButtonStates()
@@ -50,7 +54,9 @@ namespace oPenEfficiency.UI
             IconOff.Opacity = _currentState == TrafficLightFeature.TrafficLightState.Off ? 1.0 : 0.3;
 
             TxtOrientation.Text = _isHorizontal ? "Horiz." : "Vert.";
-            TxtBorder.Foreground = new SolidColorBrush(_hasBorder ? (Color)ColorConverter.ConvertFromString("#F9FAFB") : (Color)ColorConverter.ConvertFromString("#6B7280"));
+            TxtBorder.SetResourceReference(
+                TextBlock.ForegroundProperty,
+                _hasBorder ? "TextPrimaryBrush" : "TextMutedBrush");
 
             ComboWeight.Text = _borderWeight.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
@@ -61,7 +67,7 @@ namespace oPenEfficiency.UI
             {
                 TrafficLightFeature.Execute(_manager, _currentState, _isHorizontal, _hasBorder, _borderWeight);
             }
-            catch { }
+            catch { /* Initial selection probing is optional; commands validate the target again. */ }
         }
 
         private void BtnRed_Click(object sender, RoutedEventArgs e)
@@ -120,17 +126,29 @@ namespace oPenEfficiency.UI
             this.Focus();
         }
 
-        private void Window_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private Button GetCurrentStateButton()
         {
-            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
-                this.DragMove();
+            switch (_currentState)
+            {
+                case TrafficLightFeature.TrafficLightState.Yellow: return BtnYellow;
+                case TrafficLightFeature.TrafficLightState.Green: return BtnGreen;
+                case TrafficLightFeature.TrafficLightState.Off: return BtnOff;
+                default: return BtnRed;
+            }
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Escape) return;
+            e.Handled = true;
+            Close();
         }
 
         private void Window_Deactivated(object sender, EventArgs e)
         {
             if (!_isDialogOpened)
             {
-                try { this.Close(); } catch { }
+                try { this.Close(); } catch { /* Closing an already-closed context window is idempotent. */ }
             }
         }
     }

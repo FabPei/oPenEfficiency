@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnAdjustSpacing",
+  "title": "Adjust Spacing (AlignAndSize)",
+  "sourcePaths": [
+    "oPenEfficiency/UI/FeatureLibrary.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnAdjustSpacing-001",
+      "title": "Adjust Spacing applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/UI/FeatureLibrary.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.Commands.cs"
+      ],
+      "expected": "Adjust Spacing (BtnAdjustSpacing) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnAdjustSpacing-001",
+      "title": "BtnAdjustSpacing documented core behavior",
+      "requirements": [
+        {
+          "id": "FR-P0-ALIGN",
+          "text": "Adjust spacing uses the spatial neighbour order and can preserve the selection center while the outer shapes move equally."
+        }
+      ],
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "variants": [
+        {
+          "type": "baseline",
+          "position": "primary"
+        }
+      ],
+      "styleBlocks": [],
+      "baselineAlternatives": [
+        {
+          "name": "documented behavior",
+          "position": "primary"
+        }
+      ],
+      "reviewEvidence": "docs/product/qa-001-feature-acceptance-harness-todo.md",
+      "expected": "Adjust spacing uses the spatial neighbour order and can preserve the selection center while the outer shapes move equally.",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency/Features/Visuals/AdjustSpacingFeatureHelper.cs",
+        "oPenEfficiency.Core.Tests/SpacingAdjustmentAcceptanceTests.cs"
+      ],
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ShapeGeometryPlannerTests.SpacingAdjustmentUsesSpatialOrderAndCanPreserveCenter"
+      },
+      "status": "open",
+      "done": [
+        {
+          "statement": "The deterministic host-free scenario passes; bind-office-evidence-and-reviews (office-only gate) remains until the office leg has real-host evidence and review.",
+          "status": "open",
+          "type": "acceptance",
+          "bind-office-evidence-and-reviews": true,
+          "doDRefs": [
+            {
+              "file": "oPenEfficiency.Core.Tests/ShapeGeometryPlannerTests.cs",
+              "line": 1,
+              "item": "ShapeGeometryPlannerTests.SpacingAdjustmentUsesSpatialOrderAndCanPreserveCenter",
+              "type": "test"
+            }
+          ]
+        }
+      ],
+      "tasks": [
+        {
+          "type": "acceptance",
+          "plan": [
+            {
+              "sequence": 1,
+              "item": "QA9-BtnAdjustSpacing-002",
+              "type": "evidence"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "QA9-BtnAdjustSpacing-002",
+      "title": "Adjust Horizontal Spacing shifts the second selected shape by exactly the increment in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Adjust Horizontal Spacing with increment 5 on two side-by-side rectangles moves the right shape exactly +5 pt on Left (measured 200 to 205), keeps the left shape and both Top values and all sizes unchanged, returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "adjust-spacing-h"
+        ]
+      }
+    },
+    {
+      "id": "QA9-BtnAdjustSpacing-003",
+      "title": "Adjust Vertical Spacing shifts the second selected shape by exactly the increment in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointGeometryBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Adjust Vertical Spacing with increment 5 on two stacked rectangles moves the lower shape exactly +5 pt on Top (measured 200 to 205), keeps the upper shape and both Left values and all sizes unchanged, returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointGeometryBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "adjust-spacing-v"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

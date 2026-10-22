@@ -1,7 +1,7 @@
 <Window x:Class="oPenEfficiency.UI.LotteryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Lottery" Width="400" Height="280"
+        Title="Random Winner Picker" Width="400" Height="280"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -45,7 +45,7 @@
 
             <!-- Header -->
             <Grid Grid.Row="0" Margin="0,0,0,15">
-                <TextBlock Text="LOTTERY" Style="{StaticResource DialogTitleText}"/>
+                <TextBlock Text="RANDOM WINNER PICKER" Style="{StaticResource DialogTitleText}"/>
                 <Button Style="{StaticResource WindowCloseButton}" Click="BtnCancel_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
             </Grid>
 

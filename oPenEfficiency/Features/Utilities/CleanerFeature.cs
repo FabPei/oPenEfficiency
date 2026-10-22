@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Utils;
+using oPenEfficiency.Services;
 using oPenEfficiency.Services.Attributes;
+using CleanAction = oPenEfficiency.Core.Services.CleanerActionPolicy.CleanerAction;
 
 namespace oPenEfficiency.Features
 {
@@ -12,42 +14,17 @@ namespace oPenEfficiency.Features
     /// </summary>
     [FeatureMetadata(
         Id = "BtnCleaner",
-        Name = "Cleaner",
-        Tooltip = "Cleaner",
+        Name = "Presentation Cleaner",
+        Tooltip = "Review and clean presentation content",
+        SearchAliases = new[] { "Deep Presentation Cleaner", "Cleaner" },
         IconData = "M19.36,2.72L20.78,4.14L15.06,9.85C15.5,10.5 15.81,11.23 15.96,12.03L19.09,8.91L20.5,10.32L16.04,14.78C15.16,15.66 13.94,16.24 12.61,16.37L10.38,18.6L8.96,17.18L11.19,14.95C11.06,13.62 11.64,12.4 12.52,11.52L16.98,7.06L18.39,8.47L15.27,11.6C15.47,10.27 15.08,8.87 14.2,8L19.36,2.72M5.21,10C4.71,10.81 4.35,11.7 4.15,12.65L2.74,11.24L1.32,12.65L5.21,16.54L9.1,12.65L7.68,11.24L6.28,12.65C6.18,11.85 6.22,11.05 6.4,10.27L5.21,10Z",
         Color = "#F43F5E",
-        Description = "Cleans up presentations by removing hidden slides, animations, notes, and comments.",
-        DetailedHelpText = "### Cleaner\nPerforms a comprehensive cleanup of the presentation. Left-click to open the main cleanup dialog.\n\n**Right-Click Options:**\n* **Remove Hidden Slides**: Deletes all slides marked as hidden.\n* **Remove Animations**: Strip all animations (All Slides / Selected).\n* **Remove Notes**: Wipe Speaker or Developer notes.\n* **Anonymize**: Remove all personal metadata and author tags.",
-        Keywords = "tidy, remove, sweep, hidden, anonymize, notes",
+        Description = "Reviews, sanitizes, or removes presentation artifacts with explicit scope and confirmation for destructive actions.",
+        DetailedHelpText = "### Presentation Cleaner\nOpens cleanup and review actions for hidden slides, animations, transitions, notes, comments, unused masters and layouts, sticky notes, footers, repeated spaces, accessibility text, shape locks, ink, external data links, invisible or off-slide objects, document information, unprotected custom XML, and visible numbers. Destructive actions show their scope and require confirmation; PowerPoint Undo is started where supported. Shape cleanup and XML cleanup preserve oPE-owned objects and recognizable Efficient Elements or think-cell content. Convert Slides to Images creates a separate presentation and leaves the source unchanged. Anonymization and number sanitization have separate confirmations.",
         MinSelection = 0,
-        RequiredType = PpSelectionType.ppSelectionNone)]
+        RequiredType = OfficeSelectionType.None)]
     public static class CleanerFeature
     {
-        public enum CleanAction
-        {
-            RemoveHiddenSlides,
-            RemoveAnimationsAll,
-            RemoveAnimationsSelected,
-            RemoveTransitionsAll,
-            RemoveTransitionsSelected,
-            RemoveSpeakerNotesAll,
-            RemoveSpeakerNotesSelected,
-            RemoveCommentsAll,
-            RemoveCommentsSelected,
-            RemoveUnusedMasters,
-            DeleteStickyNotes,
-            AnonymizeSelected,
-            RemoveUneditedFootersAll,
-            RemoveUneditedFootersSelected,
-            DetectSuperscriptWithoutFooter,
-            RemoveDoubleSpacesAll,
-            RemoveDoubleSpacesSelected,
-            ConvertSlidesToImagesAll,
-            ConvertSlidesToImagesSelected,
-            RemoveDeveloperNotesAll,
-            RemoveDeveloperNotesSelected
-        }
-
         /// <summary>
         /// Wrapper for auto-discovery - returns false as Cleaner requires dialog for action selection.
         /// Manual switch in MainSidebar.xaml.cs handles opening the Cleaner dialog.
@@ -55,13 +32,26 @@ namespace oPenEfficiency.Features
         public static bool Execute(PowerPointManager manager)
         {
             // Requires dialog for clean action selection
-            // Handled by manual switch in MainSidebar.xaml.cs
+            // Handled by the command registry in MainSidebar.Commands.cs.
             return false;
         }
 
         public static bool Execute(PowerPointManager manager, CleanAction action)
         {
             if (manager == null) return false;
+
+            if (RequiresConfirmation(action))
+            {
+                var result = System.Windows.Forms.MessageBox.Show(
+                    GetConfirmationText(action),
+                    "Presentation Cleaner",
+                    System.Windows.Forms.MessageBoxButtons.YesNo,
+                    System.Windows.Forms.MessageBoxIcon.Warning);
+                if (result != System.Windows.Forms.DialogResult.Yes) return false;
+
+                try { manager.GetApplication().StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "CleanerFeature.StartNewUndoEntry"); }
+            }
 
             switch (action)
             {
@@ -86,8 +76,35 @@ namespace oPenEfficiency.Features
                 case CleanAction.ConvertSlidesToImagesSelected: return ConvertSlidesToImages(manager, true);
                 case CleanAction.RemoveDeveloperNotesAll: return RemoveDeveloperNotes(manager, false);
                 case CleanAction.RemoveDeveloperNotesSelected: return RemoveDeveloperNotes(manager, true);
+                case CleanAction.RemoveAlternativeTextAll: return RemoveAlternativeText(manager, false);
+                case CleanAction.RemoveAlternativeTextSelected: return RemoveAlternativeText(manager, true);
+                case CleanAction.UnlockShapesAll: return UnlockShapes(manager, false);
+                case CleanAction.UnlockShapesSelected: return UnlockShapes(manager, true);
+                case CleanAction.RemoveInkAll: return RemoveInk(manager, false);
+                case CleanAction.RemoveInkSelected: return RemoveInk(manager, true);
+                case CleanAction.BreakDataLinksAll: return BreakDataLinks(manager, false);
+                case CleanAction.BreakDataLinksSelected: return BreakDataLinks(manager, true);
+                case CleanAction.RemoveInvisibleOrOffSlideAll: return RemoveInvisibleOrOffSlide(manager, false);
+                case CleanAction.RemoveInvisibleOrOffSlideSelected: return RemoveInvisibleOrOffSlide(manager, true);
+                case CleanAction.RemoveDocumentInformation: return RemoveDocumentInformation(manager);
+                case CleanAction.RemoveUnusedLayouts: return RemoveUnusedLayouts(manager);
+                case CleanAction.RemoveNonOpeCustomXml: return RemoveNonOpeCustomXml(manager);
+                case CleanAction.MakeInvisibleShapesVisibleAll: return MakeInvisibleShapesVisible(manager, false);
+                case CleanAction.MakeInvisibleShapesVisibleSelected: return MakeInvisibleShapesVisible(manager, true);
+                case CleanAction.SanitizeNumbersAll: return SanitizeNumbers(manager, false);
+                case CleanAction.SanitizeNumbersSelected: return SanitizeNumbers(manager, true);
                 default: return false;
             }
+        }
+
+        private static bool RequiresConfirmation(CleanAction action)
+        {
+            return oPenEfficiency.Core.Services.CleanerActionPolicy.RequiresConfirmation(action);
+        }
+
+        private static string GetConfirmationText(CleanAction action)
+        {
+            return oPenEfficiency.Core.Services.CleanerActionPolicy.GetConfirmationText(action);
         }
 
         public static bool RemoveDeveloperNotes(PowerPointManager manager, bool selectedOnly)
@@ -114,7 +131,7 @@ namespace oPenEfficiency.Features
 
                 foreach (Slide slide in slides)
                 {
-                    try { slide.Tags.Delete("oPE_SlideNotes"); } catch { }
+                    PrivateCommentsService.DeleteForSlides(app.ActivePresentation, new[] { slide });
                 }
                 return true;
             }
@@ -233,7 +250,28 @@ namespace oPenEfficiency.Features
             try
             {
                 var pres = manager.GetApplication().ActivePresentation;
-                pres.RemoveDocumentInformation(PpRemoveDocInfoType.ppRDIAll);
+                var usedDesignNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (Slide slide in pres.Slides)
+                {
+                    if (slide.Design != null) usedDesignNames.Add(slide.Design.Name);
+                }
+
+                int deletedCount = 0;
+                for (int i = pres.Designs.Count; i >= 1; i--)
+                {
+                    var design = pres.Designs[i];
+                    if (!usedDesignNames.Contains(design.Name))
+                    {
+                        design.Delete();
+                        deletedCount++;
+                    }
+                }
+
+                System.Windows.Forms.MessageBox.Show(
+                    deletedCount == 0 ? "No unused slide masters were found." : $"Removed {deletedCount} unused slide master(s).",
+                    "Presentation Cleaner",
+                    System.Windows.Forms.MessageBoxButtons.OK,
+                    System.Windows.Forms.MessageBoxIcon.Information);
                 return true;
             }
             catch (Exception ex)
@@ -291,7 +329,7 @@ namespace oPenEfficiency.Features
                     for (int i = slide.Shapes.Count; i >= 1; i--)
                     {
                         var shape = slide.Shapes[i];
-                        if (shape.Name.StartsWith("StickyNote", StringComparison.OrdinalIgnoreCase))
+                                if (StickyNoteFeature.IsStickyNote(shape))
                             shape.Delete();
                     }
                 }
@@ -326,6 +364,269 @@ namespace oPenEfficiency.Features
                     yield return (Slide)app.ActiveWindow.View.Slide;
                 }
             }
+        }
+
+        public static bool RemoveAlternativeText(PowerPointManager manager, bool selectedOnly)
+        {
+            return ProcessShapes(manager, selectedOnly, "CleanerFeature.RemoveAlternativeText", shape =>
+            {
+                if (IsProtectedShape(shape)) return 0;
+                int changed = 0;
+                if (!string.IsNullOrEmpty(shape.AlternativeText)) { shape.AlternativeText = string.Empty; changed = 1; }
+                if (!string.IsNullOrEmpty(shape.Title)) { shape.Title = string.Empty; changed = 1; }
+                return changed;
+            }, "Removed accessibility text from {0} shape(s); protected smart objects were preserved.");
+        }
+
+        public static bool UnlockShapes(PowerPointManager manager, bool selectedOnly)
+        {
+            return ProcessShapes(manager, selectedOnly, "CleanerFeature.UnlockShapes", shape =>
+            {
+                if (IsProtectedShape(shape)) return 0;
+                try
+                {
+                    dynamic candidate = shape;
+                    if ((int)candidate.Locked == 0) return 0;
+                    candidate.Locked = Office.MsoTriState.msoFalse;
+                    ShapeMetadataService.RemoveTag(shape, "oPE_Locked");
+                    return 1;
+                }
+                catch (System.Runtime.InteropServices.COMException) { return 0; }
+                catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { return 0; }
+            }, "Unlocked {0} shape(s); protected third-party objects were preserved.");
+        }
+
+        public static bool RemoveInk(PowerPointManager manager, bool selectedOnly)
+        {
+            return ProcessTopLevelShapesReverse(manager, selectedOnly, "CleanerFeature.RemoveInk", shape =>
+            {
+                int type = (int)shape.Type;
+                if (type != 22 && type != 23) return 0; // Office.MsoShapeType.msoInk / msoInkComment
+                if (IsProtectedShape(shape)) return 0;
+                shape.Delete();
+                return 1;
+            }, "Removed {0} ink object(s).");
+        }
+
+        public static bool BreakDataLinks(PowerPointManager manager, bool selectedOnly)
+        {
+            return ProcessShapes(manager, selectedOnly, "CleanerFeature.BreakDataLinks", shape =>
+            {
+                if (IsProtectedShape(shape)) return 0;
+                if (shape.Type != Office.MsoShapeType.msoLinkedOLEObject &&
+                    shape.Type != Office.MsoShapeType.msoLinkedPicture) return 0;
+                shape.LinkFormat.BreakLink();
+                return 1;
+            }, "Converted {0} externally linked object(s) to local content.");
+        }
+
+        public static bool RemoveInvisibleOrOffSlide(PowerPointManager manager, bool selectedOnly)
+        {
+            var presentation = manager?.GetApplication()?.ActivePresentation;
+            if (presentation == null) return false;
+            float width = presentation.PageSetup.SlideWidth;
+            float height = presentation.PageSetup.SlideHeight;
+            return ProcessTopLevelShapesReverse(manager, selectedOnly, "CleanerFeature.RemoveInvisibleOrOffSlide", shape =>
+            {
+                if (IsProtectedShape(shape)) return 0;
+                bool invisible = shape.Visible == Office.MsoTriState.msoFalse;
+                bool offSlide = shape.Left + shape.Width <= 0 || shape.Top + shape.Height <= 0 ||
+                                shape.Left >= width || shape.Top >= height;
+                if (!invisible && !offSlide) return 0;
+                shape.Delete();
+                return 1;
+            }, "Removed {0} invisible or fully off-slide object(s); protected smart objects were preserved.");
+        }
+
+        public static bool RemoveDocumentInformation(PowerPointManager manager)
+        {
+            try
+            {
+                dynamic presentation = manager?.GetApplication()?.ActivePresentation;
+                if (presentation == null) return false;
+                presentation.RemoveDocumentInformation(99); // PpRemoveDocInfoType.ppRDIAll
+                ShowCleanerResult("Removed document properties and personal information.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "CleanerFeature.RemoveDocumentInformation");
+                return false;
+            }
+        }
+
+        public static bool RemoveUnusedLayouts(PowerPointManager manager)
+        {
+            try
+            {
+                var presentation = manager?.GetApplication()?.ActivePresentation;
+                if (presentation == null) return false;
+                var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (Slide slide in presentation.Slides)
+                    used.Add((slide.Design?.Name ?? string.Empty) + "\n" + (slide.CustomLayout?.Name ?? string.Empty));
+
+                int removed = 0;
+                foreach (Design design in presentation.Designs)
+                {
+                    var layouts = design.SlideMaster.CustomLayouts;
+                    for (int index = layouts.Count; index >= 1; index--)
+                    {
+                        if (layouts.Count <= 1) break;
+                        var layout = layouts[index];
+                        if (used.Contains((design.Name ?? string.Empty) + "\n" + (layout.Name ?? string.Empty))) continue;
+                        layout.Delete();
+                        removed++;
+                    }
+                }
+                ShowCleanerResult($"Removed {removed} unused custom layout(s).");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "CleanerFeature.RemoveUnusedLayouts");
+                return false;
+            }
+        }
+
+        public static bool RemoveNonOpeCustomXml(PowerPointManager manager)
+        {
+            try
+            {
+                var presentation = manager?.GetApplication()?.ActivePresentation;
+                if (presentation == null) return false;
+                int removed = 0;
+                for (int index = presentation.CustomXMLParts.Count; index >= 1; index--)
+                {
+                    var part = presentation.CustomXMLParts[index];
+                    string xml = part.XML ?? string.Empty;
+                    if (xml.IndexOf("urn:oPenEfficiency:", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        xml.IndexOf("think-cell", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        xml.IndexOf("EE4P", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                    part.Delete();
+                    removed++;
+                }
+                ShowCleanerResult($"Removed {removed} unprotected custom XML part(s).");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "CleanerFeature.RemoveNonOpeCustomXml");
+                return false;
+            }
+        }
+
+        public static bool MakeInvisibleShapesVisible(PowerPointManager manager, bool selectedOnly)
+        {
+            return ProcessShapes(manager, selectedOnly, "CleanerFeature.MakeInvisibleShapesVisible", shape =>
+            {
+                if (IsProtectedShape(shape) || shape.Visible != Office.MsoTriState.msoFalse) return 0;
+                shape.Visible = Office.MsoTriState.msoTrue;
+                return 1;
+            }, "Made {0} invisible shape(s) visible.");
+        }
+
+        public static bool SanitizeNumbers(PowerPointManager manager, bool selectedOnly)
+        {
+            var random = new Random();
+            return ProcessShapes(manager, selectedOnly, "CleanerFeature.SanitizeNumbers", shape =>
+            {
+                if (IsProtectedShape(shape)) return 0;
+                int changed = 0;
+                if (shape.HasTable == Office.MsoTriState.msoTrue)
+                {
+                    for (int row = 1; row <= shape.Table.Rows.Count; row++)
+                        for (int column = 1; column <= shape.Table.Columns.Count; column++)
+                            changed += SanitizeTextRange(shape.Table.Cell(row, column).Shape.TextFrame.TextRange, random);
+                }
+                else if (shape.HasTextFrame == Office.MsoTriState.msoTrue &&
+                         shape.TextFrame.HasText == Office.MsoTriState.msoTrue)
+                {
+                    changed += SanitizeTextRange(shape.TextFrame.TextRange, random);
+                }
+                return changed > 0 ? 1 : 0;
+            }, "Sanitized visible numbers in {0} shape(s).");
+        }
+
+        private static int SanitizeTextRange(TextRange range, Random random)
+        {
+            int changed = 0;
+            string text = range?.Text ?? string.Empty;
+            for (int index = 1; index <= text.Length; index++)
+            {
+                if (!char.IsDigit(text[index - 1])) continue;
+                range.Characters(index, 1).Text = random.Next(0, 10).ToString();
+                changed++;
+            }
+            return changed;
+        }
+
+        private static bool IsProtectedShape(Shape shape)
+        {
+            return ShapeMetadataService.HasOpeTags(shape) || ShapeMetadataService.HasThirdPartyTags(shape);
+        }
+
+        private static bool ProcessShapes(
+            PowerPointManager manager,
+            bool selectedOnly,
+            string context,
+            Func<Shape, int> process,
+            string resultFormat)
+        {
+            try
+            {
+                int changed = 0;
+                foreach (Slide slide in GetTargetSlides(manager, selectedOnly))
+                    for (int index = 1; index <= slide.Shapes.Count; index++)
+                        changed += ProcessShapeRecursive(slide.Shapes[index], process);
+                ShowCleanerResult(string.Format(resultFormat, changed));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, context);
+                return false;
+            }
+        }
+
+        private static int ProcessShapeRecursive(Shape shape, Func<Shape, int> process)
+        {
+            int changed = process(shape);
+            if (shape.Type != Office.MsoShapeType.msoGroup) return changed;
+            for (int index = 1; index <= shape.GroupItems.Count; index++)
+                changed += ProcessShapeRecursive(shape.GroupItems[index], process);
+            return changed;
+        }
+
+        private static bool ProcessTopLevelShapesReverse(
+            PowerPointManager manager,
+            bool selectedOnly,
+            string context,
+            Func<Shape, int> process,
+            string resultFormat)
+        {
+            try
+            {
+                int changed = 0;
+                foreach (Slide slide in GetTargetSlides(manager, selectedOnly))
+                    for (int index = slide.Shapes.Count; index >= 1; index--)
+                        changed += process(slide.Shapes[index]);
+                ShowCleanerResult(string.Format(resultFormat, changed));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, context);
+                return false;
+            }
+        }
+
+        private static void ShowCleanerResult(string message)
+        {
+            System.Windows.Forms.MessageBox.Show(
+                message,
+                "Presentation Cleaner",
+                System.Windows.Forms.MessageBoxButtons.OK,
+                System.Windows.Forms.MessageBoxIcon.Information);
         }
 
         /// <summary>
@@ -452,7 +753,7 @@ namespace oPenEfficiency.Features
                                     }
                                 }
                             }
-                            catch { }
+                            catch { /* A stale shape is skipped while cleaning the remaining slide content. */ }
                         }
                     }
                 }
@@ -582,97 +883,70 @@ namespace oPenEfficiency.Features
         /// </summary>
         public static bool ConvertSlidesToImages(PowerPointManager manager, bool selectedOnly)
         {
+            string tempFolder = null;
+            string outputPath = null;
+            Presentation newPres = null;
+            bool completed = false;
             try
             {
                 var app = manager.GetApplication();
                 var pres = app.ActivePresentation;
                 var slides = GetTargetSlides(manager, selectedOnly);
-
-                // Get temp folder for exporting images
-                string tempFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "oPenEfficiency_SlideImages");
-                if (!System.IO.Directory.Exists(tempFolder))
-                {
-                    System.IO.Directory.CreateDirectory(tempFolder);
-                }
-
-                // Create a new presentation for the uneditable version
-                Presentation newPres = app.Presentations.Add(Office.MsoTriState.msoFalse);
-                int processedCount = 0;
                 var slideList = new List<Slide>();
                 foreach (Slide s in slides) slideList.Add(s);
+                if (slideList.Count == 0)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "No slides are available in the selected scope.",
+                        "Convert Slides to Images",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Information);
+                    return false;
+                }
 
-                // Process slides in order
+                tempFolder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "oPenEfficiency_SlideImages_" + Guid.NewGuid().ToString("N"));
+                System.IO.Directory.CreateDirectory(tempFolder);
+                newPres = app.Presentations.Add(Office.MsoTriState.msoFalse);
+                newPres.PageSetup.SlideWidth = pres.PageSetup.SlideWidth;
+                newPres.PageSetup.SlideHeight = pres.PageSetup.SlideHeight;
+                int processedCount = 0;
+
                 foreach (Slide slide in slideList)
                 {
                     int slideIndex = slide.SlideNumber;
+                    string imagePath = System.IO.Path.Combine(tempFolder, $"slide_{processedCount + 1:D4}_{slideIndex}.png");
+                    slide.Export(imagePath, "PNG", (int)pres.PageSetup.SlideWidth * 3, (int)pres.PageSetup.SlideHeight * 3);
 
-                    try
-                    {
-                        // Export slide as high-res PNG (3x scale for ~300 DPI)
-                        string imagePath = System.IO.Path.Combine(tempFolder, $"slide_{slideIndex}.png");
-
-                        // Export the slide as PNG
-                        slide.Export(imagePath, "PNG", (int)pres.PageSetup.SlideWidth * 3, (int)pres.PageSetup.SlideHeight * 3);
-
-                        // Get slide dimensions (from original presentation)
-                        float slideWidth = pres.PageSetup.SlideWidth;
-                        float slideHeight = pres.PageSetup.SlideHeight;
-
-                        // Copy page setup to new presentation
-                        newPres.PageSetup.SlideWidth = slideWidth;
-                        newPres.PageSetup.SlideHeight = slideHeight;
-
-                        // Add a blank slide and insert the image
-                        var newSlide = newPres.Slides.Add(newPres.Slides.Count + 1, PpSlideLayout.ppLayoutBlank);
-                        var picture = newSlide.Shapes.AddPicture(
-                            imagePath,
-                            Office.MsoTriState.msoFalse,
-                            Office.MsoTriState.msoCTrue,
-                            0,
-                            0,
-                            slideWidth,
-                            slideHeight);
-
-                        // Lock the image position and aspect ratio
-                        picture.LockAspectRatio = Office.MsoTriState.msoTrue;
-
-                        processedCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        ExceptionLogger.Log(ex, $"CleanerFeature.ConvertSlidesToImages.Slide{slideIndex}");
-                    }
+                    var newSlide = newPres.Slides.Add(newPres.Slides.Count + 1, PpSlideLayout.ppLayoutBlank);
+                    newSlide.Shapes.AddPicture(
+                        imagePath,
+                        Office.MsoTriState.msoFalse,
+                        Office.MsoTriState.msoTrue,
+                        0,
+                        0,
+                        pres.PageSetup.SlideWidth,
+                        pres.PageSetup.SlideHeight);
+                    processedCount++;
                 }
 
-                // Clean up temp files
-                try
-                {
-                    if (System.IO.Directory.Exists(tempFolder))
-                    {
-                        System.IO.Directory.Delete(tempFolder, true);
-                    }
-                }
-                catch { }
-
-                // Generate output filename based on original presentation
-                string originalPath = pres.FullName;
-                string originalDir = System.IO.Path.GetDirectoryName(originalPath);
-                string originalName = System.IO.Path.GetFileNameWithoutExtension(originalPath);
-                string uneditablePath = System.IO.Path.Combine(originalDir, $"{originalName}_UNEDITABLE.pptx");
-
-                // Handle case where file already exists
-                if (System.IO.File.Exists(uneditablePath))
+                string originalDir = string.IsNullOrWhiteSpace(pres.Path)
+                    ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+                    : pres.Path;
+                string originalName = System.IO.Path.GetFileNameWithoutExtension(pres.Name);
+                if (string.IsNullOrWhiteSpace(originalName)) originalName = "Presentation";
+                outputPath = System.IO.Path.Combine(originalDir, $"{originalName}_UNEDITABLE.pptx");
+                if (System.IO.File.Exists(outputPath))
                 {
                     string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                    uneditablePath = System.IO.Path.Combine(originalDir, $"{originalName}_UNEDITABLE_{timestamp}.pptx");
+                    outputPath = System.IO.Path.Combine(originalDir, $"{originalName}_UNEDITABLE_{timestamp}.pptx");
                 }
 
-                // Save the new presentation
-                newPres.SaveAs(uneditablePath);
+                newPres.SaveAs(outputPath);
+                completed = true;
 
                 System.Windows.Forms.MessageBox.Show(
                     $"Created uneditable presentation with {processedCount} slide(s) converted to images.\n\n" +
-                    $"Saved to:\n{uneditablePath}\n\n" +
+                    $"Saved to:\n{outputPath}\n\n" +
                     $"Original presentation remains unchanged.",
                     "Conversion Complete",
                     System.Windows.Forms.MessageBoxButtons.OK,
@@ -689,6 +963,26 @@ namespace oPenEfficiency.Features
                     System.Windows.Forms.MessageBoxButtons.OK,
                     System.Windows.Forms.MessageBoxIcon.Error);
                 return false;
+            }
+            finally
+            {
+                if (!completed && newPres != null)
+                {
+                    try { newPres.Close(); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "CleanerFeature.ConvertSlidesToImages.CloseFailedPresentation"); }
+                }
+
+                if (!completed && !string.IsNullOrWhiteSpace(outputPath) && System.IO.File.Exists(outputPath))
+                {
+                    try { System.IO.File.Delete(outputPath); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "CleanerFeature.ConvertSlidesToImages.DeletePartialOutput"); }
+                }
+
+                if (!string.IsNullOrWhiteSpace(tempFolder) && System.IO.Directory.Exists(tempFolder))
+                {
+                    try { System.IO.Directory.Delete(tempFolder, true); }
+                    catch (Exception ex) { ExceptionLogger.Log(ex, "CleanerFeature.ConvertSlidesToImages.Cleanup"); }
+                }
             }
         }
     }

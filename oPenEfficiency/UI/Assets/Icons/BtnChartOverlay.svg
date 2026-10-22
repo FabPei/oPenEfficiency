@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+<path d="M3 3V20H12"/><rect x="6" y="12" width="3" height="5" rx="0.6"/><rect x="11" y="8" width="3" height="9" rx="0.6"/><rect x="16" y="5" width="3" height="6" rx="0.6"/><path d="M5 2H20" data-oe-role="accent" data-oe-accent-role="ActionBlue"/><path d="M16 19H22M19 16V22" data-oe-role="accent" data-oe-accent-role="CreateGreen"/>
+</svg>

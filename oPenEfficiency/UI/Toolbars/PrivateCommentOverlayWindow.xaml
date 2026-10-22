@@ -1,0 +1,38 @@
+<Window x:Class="oPenEfficiency.UI.Toolbars.PrivateCommentOverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Private Review Note" Width="340" SizeToContent="Height" MaxHeight="260"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="Manual" MouseDown="Window_MouseDown"
+        FontFamily="Segoe UI Variable Small, Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Styles/Controls.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border Background="{DynamicResource WindowBackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24" ShadowDepth="8" Opacity="0.5" Color="Black"/>
+        </Border.Effect>
+        <Grid Margin="{StaticResource CompactWindowPadding}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" Height="18" Margin="0,0,0,2">
+                <TextBlock Text="PRIVATE REVIEW NOTE" Style="{StaticResource DialogTitleText}" FontSize="12" Margin="0"/>
+                <Button DockPanel.Dock="Right" Style="{StaticResource WindowCloseButton}" Width="18" Height="18" Click="BtnClose_Click" ToolTip="Hide comment"/>
+                <Button x:Name="DoneButton" DockPanel.Dock="Right" Content="Done" Visibility="Collapsed" Padding="5,0" Margin="0,0,4,0" Click="DoneButton_Click" ToolTip="Mark displayed comment as done"/>
+            </DockPanel>
+            <TextBlock Grid.Row="1" x:Name="MetadataText" Style="{StaticResource ContextMetaText}" Margin="0,0,0,3"/>
+            <ScrollViewer Grid.Row="2" MaxHeight="160" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <TextBlock x:Name="CommentText" TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12"/>
+            </ScrollViewer>
+        </Grid>
+    </Border>
+</Window>

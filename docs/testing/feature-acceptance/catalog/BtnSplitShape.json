@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSplitShape",
+  "title": "Split Shape into Grid (VisualElements)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Visuals/SplitShapeToGridFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSplitShape-001",
+      "title": "Split Shape into Grid applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/SplitShapeToGridFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.Layout.cs"
+      ],
+      "expected": "Split Shape into Grid (BtnSplitShape) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSplitShape-001",
+      "title": "Split Shape plan tiles the selected bounds without overlap",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Visuals/SplitShapeToGridFeature.cs",
+        "oPenEfficiency.Core/Services/ShapeGeometryPlanner.cs",
+        "oPenEfficiency.Core.Tests/GridArrangeAcceptanceTests.cs"
+      ],
+      "expected": "A 2x3 split with spacing 5 of the bounds 10/20 100x50 produces six 30x22.5 cells whose outer edges land exactly on the bounds, whose neighbours are exactly 5 apart and never overlap; the documented default 2x2 with no spacing quarter-tiles the bounds; spacing that leaves no positive cell area is refused.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~GridArrangeAcceptanceTests.SplitShapePlanTilesTheBoundsWithoutOverlap"
+      }
+    },
+    {
+      "id": "QA9-BtnSplitShape-002",
+      "title": "Split Shape replaces the original with a covering 2x2 grid in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointRepeatSelectSplit.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Split Shape 2x2 preset on a single 400x300 rectangle deletes the original and leaves exactly four pieces of half width and half height (within 0.5 pt) whose combined bounding box equals the original box on all four sides (within 0.5 pt), the feature reports execution, no new entry appears in the oPenEfficiency error log of the run day, and the host stays stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointRepeatSelectSplit.ps1",
+        "arguments": [
+          "-Mode",
+          "split-2x2"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

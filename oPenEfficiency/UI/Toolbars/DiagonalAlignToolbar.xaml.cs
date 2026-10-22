@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Microsoft.Office.Interop.PowerPoint;
 using Shape = Microsoft.Office.Interop.PowerPoint.Shape;
 using oPenEfficiency.Services;
+using oPenEfficiency.Utils;
+using DiagonalPlacementPolicy = oPenEfficiency.Core.Services.DiagonalPlacementPolicy;
 
 namespace oPenEfficiency.UI.Toolbars
 {
@@ -34,10 +35,9 @@ namespace oPenEfficiency.UI.Toolbars
 
         private void LoadShapes()
         {
-            var app = _manager.GetApplication();
-            if (app?.ActiveWindow?.Selection?.Type == PpSelectionType.ppSelectionShapes)
+            var sr = _manager.GetSelectedShapes();
+            if (sr != null)
             {
-                var sr = app.ActiveWindow.Selection.ShapeRange;
                 for (int i = 1; i <= sr.Count; i++)
                 {
                     var s = sr[i];
@@ -53,14 +53,33 @@ namespace oPenEfficiency.UI.Toolbars
 
                 if (_shapes.Count >= 2)
                 {
-                    // Basic ordering to determine endpoints for initial angle estimation
-                    var sortedShapes = _shapes.OrderBy(s => s.OrigCenterX + s.OrigCenterY).ToList();
-                    var first = sortedShapes.First();
-                    var last = sortedShapes.Last();
+                    float dx = 0f;
+                    float dy = 0f;
+                    float maxDistanceSquared = 0f;
+                    for (int i = 0; i < _shapes.Count - 1; i++)
+                    {
+                        for (int j = i + 1; j < _shapes.Count; j++)
+                        {
+                            float candidateDx = _shapes[j].OrigCenterX - _shapes[i].OrigCenterX;
+                            float candidateDy = _shapes[j].OrigCenterY - _shapes[i].OrigCenterY;
+                            float candidateDistanceSquared = candidateDx * candidateDx + candidateDy * candidateDy;
+                            if (candidateDistanceSquared > maxDistanceSquared)
+                            {
+                                maxDistanceSquared = candidateDistanceSquared;
+                                dx = candidateDx;
+                                dy = candidateDy;
+                            }
+                        }
+                    }
 
-                    float dx = last.OrigCenterX - first.OrigCenterX;
-                    float dy = last.OrigCenterY - first.OrigCenterY;
-                    float dist = (float)Math.Sqrt(dx * dx + dy * dy);
+                    // Keep the initial direction stable regardless of PowerPoint's selection order.
+                    if (dx < 0f || (Math.Abs(dx) < 0.01f && dy < 0f))
+                    {
+                        dx = -dx;
+                        dy = -dy;
+                    }
+
+                    float dist = (float)Math.Sqrt(maxDistanceSquared);
                     float avgSpacing = dist / (_shapes.Count - 1);
                     
                     float angleRad = (float)Math.Atan2(dy, dx);
@@ -129,54 +148,40 @@ namespace oPenEfficiency.UI.Toolbars
 
             float angleDeg = (float)AngleSlider.Value;
             float spacing = (float)SpacingSlider.Value;
-            float angleRad = (float)(angleDeg * Math.PI / 180f);
-
-            float dirX = (float)Math.Cos(angleRad);
-            float dirY = (float)Math.Sin(angleRad);
-
-            // First project shapes based on the generic center (0,0) or average center to get the order right.
-            float avgX = _shapes.Average(s => s.OrigCenterX);
-            float avgY = _shapes.Average(s => s.OrigCenterY);
-
-            var projectedShapes = _shapes.Select(s => new
-            {
-                Data = s,
-                Proj = (s.OrigCenterX - avgX) * dirX + (s.OrigCenterY - avgY) * dirY
-            }).OrderBy(x => x.Proj).ToList();
 
             // Determine Anchor Center Point
             string anchorType = (CmbAnchor?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "Center";
-            float anchorOrigX = avgX;
-            float anchorOrigY = avgY;
-            float anchorIndex = (projectedShapes.Count - 1) / 2f;
 
-            if (anchorType == "First")
+            // Read every shape's captured bounds, then delegate the placement (projection,
+            // ordering and anchor arithmetic) to the host-free policy.
+            var centerX = new float[_shapes.Count];
+            var centerY = new float[_shapes.Count];
+            var width = new float[_shapes.Count];
+            var height = new float[_shapes.Count];
+            for (int i = 0; i < _shapes.Count; i++)
             {
-                anchorOrigX = projectedShapes.First().Data.OrigCenterX;
-                anchorOrigY = projectedShapes.First().Data.OrigCenterY;
-                anchorIndex = 0;
-            }
-            else if (anchorType == "Last")
-            {
-                anchorOrigX = projectedShapes.Last().Data.OrigCenterX;
-                anchorOrigY = projectedShapes.Last().Data.OrigCenterY;
-                anchorIndex = projectedShapes.Count - 1;
+                centerX[i] = _shapes[i].OrigCenterX;
+                centerY[i] = _shapes[i].OrigCenterY;
+                width[i] = _shapes[i].OrigWidth;
+                height[i] = _shapes[i].OrigHeight;
             }
 
-            for (int i = 0; i < projectedShapes.Count; i++)
-            {
-                var item = projectedShapes[i];
-                float offset = (i - anchorIndex) * spacing;
-                
-                float newCenterX = anchorOrigX + offset * dirX;
-                float newCenterY = anchorOrigY + offset * dirY;
+            DiagonalPlacementPolicy.ComputePlacementsWithSpacing(
+                centerX, centerY, width, height,
+                angleDeg, spacing, DiagonalPlacementPolicy.ResolveAnchor(anchorType),
+                out float[] newLeft, out float[] newTop);
 
+            for (int i = 0; i < _shapes.Count; i++)
+            {
                 try
                 {
-                    item.Data.Shape.Left = newCenterX - (item.Data.OrigWidth / 2f);
-                    item.Data.Shape.Top = newCenterY - (item.Data.OrigHeight / 2f);
+                    _shapes[i].Shape.Left = newLeft[i];
+                    _shapes[i].Shape.Top = newTop[i];
                 }
-                catch { } // Ignore if shape was deleted
+                catch (Exception ex)
+                {
+                    ExceptionLogger.Log(ex, "DiagonalAlignToolbar.ApplyAlignment.MoveShape");
+                }
             }
         }
         

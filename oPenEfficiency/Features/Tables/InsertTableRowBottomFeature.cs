@@ -12,8 +12,7 @@ namespace oPenEfficiency.Features
         IconData = "M3,3H21V21H3V3M5,5V19H19V5H5M7,7H17V9H7V7M7,11H17V13H7V11M7,15H17V19H7V15Z",
         Color = "#F43F5E",
         Description = "Inserts a new row below the selected row.",
-        DetailedHelpText = "### Insert Row Below\nInserts a new empty row directly below the currently selected table row.",
-        Keywords = "add, row, table, bottom, below, insert",
+        DetailedHelpText = "### Insert Row Below\n\nInserts one row after the bottommost selected table row. Right-click to preserve the total table height, duplicate the selected row's basic formatting into an empty row, or insert 2–50 rows. Multiple insertion can optionally preserve the total height.",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableRowBottomFeature
@@ -30,5 +29,8 @@ namespace oPenEfficiency.Features
         {
             return TableRowInsertionFeature.Execute(manager, false, preserveHeight);
         }
+
+        public static bool ExecuteMultiple(PowerPointManager manager, int count, bool preserveHeight) => TableRowInsertionFeature.ExecuteMultiple(manager, false, preserveHeight, count);
+        public static bool DuplicateFormatOnly(PowerPointManager manager) => TableRowInsertionFeature.DuplicateRowFormat(manager, false);
     }
 }

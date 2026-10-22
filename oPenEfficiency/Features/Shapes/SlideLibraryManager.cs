@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -38,9 +38,9 @@ namespace oPenEfficiency.Features
                     _settings.LibraryFolders = new System.Collections.Specialized.StringCollection();
                     _settings.Save();
                 }
-                
+
                 var list = new List<string>();
-                
+
                 // Always add the user's personal "Favorites" folder
                 string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 string myAssetsPath = Path.Combine(appDataPath, "oPenEfficiency", "favorites", "slides");
@@ -49,7 +49,7 @@ namespace oPenEfficiency.Features
 
                 foreach (var path in _settings.LibraryFolders)
                 {
-                    if (path is string s && !list.Contains(s, StringComparer.OrdinalIgnoreCase)) 
+                    if (path is string s && !list.Contains(s, StringComparer.OrdinalIgnoreCase))
                         list.Add(s);
                 }
                 return list;
@@ -105,7 +105,7 @@ namespace oPenEfficiency.Features
 
                                 scannedFiles.Add(new PresentationFile
                                 {
-                                    FilePath = fullPath, 
+                                    FilePath = fullPath,
                                     FileName = Path.GetFileNameWithoutExtension(file),
                                     FolderName = new DirectoryInfo(folder).Name,
                                     RootFolder = folder,
@@ -233,7 +233,7 @@ namespace oPenEfficiency.Features
         }
 
         // --- Step 2: Thumbnail Generation ---
-        
+
         public List<SlideTemplate> GetSlidesFromFile(string filePath)
         {
             var slides = new List<SlideTemplate>();
@@ -583,7 +583,7 @@ namespace oPenEfficiency.Features
 
                 for (int i = 1; i <= count; i++)
                 {
-                    try 
+                    try
                     {
                         string thumbPath = Path.Combine(cacheDir, $"s{i}.jpg");
                         pres.Slides[i].Export(thumbPath, "JPG", 640, 360);
@@ -599,7 +599,7 @@ namespace oPenEfficiency.Features
                             onSlideReady(i, img);
                         }
                         successCount++;
-                        
+
                         // Yield slightly to keep the UI thread responsive
                         if (i % 3 == 0) await Task.Delay(1);
                     }
@@ -611,7 +611,7 @@ namespace oPenEfficiency.Features
 
                 // Register source path and write timestamp via cache service
                 _cacheService.RegisterSourcePath(filePath, cacheDir);
-                
+
                 if (successCount > 0 || count == 0)
                 {
                     _cacheService.WriteTimestamp(filePath);
@@ -623,7 +623,7 @@ namespace oPenEfficiency.Features
             }
             finally
             {
-                try { pres?.Close(); } catch { }
+                try { pres?.Close(); } catch { /* Temporary source presentation may already be closed after failure. */ }
                 if (pres != null) System.Runtime.InteropServices.Marshal.ReleaseComObject(pres);
             }
         }
@@ -643,7 +643,7 @@ namespace oPenEfficiency.Features
             try
             {
                 var app = _manager.GetApplication();
-                
+
                 // Check if PowerPoint application is accessible
                 if (app == null)
                 {
@@ -688,7 +688,7 @@ namespace oPenEfficiency.Features
                         Microsoft.Office.Core.MsoTriState.msoFalse); // WithWindow = hidden
                     actualSlideCount = sourcePres.Slides.Count;
                     System.Diagnostics.Debug.WriteLine($"Source file verification: {sourcePath} has {actualSlideCount} slides");
-                    
+
                     // Unhide all hidden slides to workaround InsertFromFile limitations
                     int hiddenCount = 0;
                     foreach (Slide slide in sourcePres.Slides)
@@ -705,9 +705,9 @@ namespace oPenEfficiency.Features
                         // Save the unhidden state back to the file
                         sourcePres.Save();
                     }
-                    
+
                     sourcePres.Close();
-                    
+
                     // Validate requested slide index against actual count
                     if (slideIndex > 0 && slideIndex > actualSlideCount)
                     {
@@ -716,7 +716,7 @@ namespace oPenEfficiency.Features
                         System.Diagnostics.Debug.WriteLine($"Insert Error: {error}");
                         return (false, error);
                     }
-                    
+
                     // If verification succeeded but actualSlideCount is 0, something went wrong
                     if (actualSlideCount == 0)
                     {
@@ -757,9 +757,9 @@ namespace oPenEfficiency.Features
                         insertIndex = app.ActivePresentation.Slides.Count + 1;
                     }
                 }
-                catch 
-                { 
-                    insertIndex = app.ActivePresentation.Slides.Count + 1; 
+                catch
+                {
+                    insertIndex = app.ActivePresentation.Slides.Count + 1;
                 }
 
                 // For InsertFromFile, the slideIndex parameter is 1-based for the source presentation
@@ -776,16 +776,16 @@ namespace oPenEfficiency.Features
                         System.Diagnostics.Debug.WriteLine($"Insert Error: {error}");
                         return (false, error);
                     }
-                    
+
                     // PowerPoint InsertFromFile uses 0-based indexing for slide ranges (0 to slideCount-1)
                     // But our library uses 1-based indexing (1 to slideCount)
                     // So we need to convert: 1-based index -> 0-based index
                     int ppSlideIndex = slideIndex > 0 ? slideIndex - 1 : slideIndex;
-                    
+
                     // If we verified the actual slide count and it's different from what InsertFromFile might expect,
                     // we should still try with the original index first, as InsertFromFile may see a different structure
                     System.Diagnostics.Debug.WriteLine($"InsertFromFile Debug: sourcePath={sourcePath}, insertIndex={insertIndex}, slideIndex={slideIndex}, ppSlideIndex={ppSlideIndex}, verifiedCount={actualSlideCount}");
-                    
+
                     // Insert only the target slide (or all if slideIndex == -1)
                     try
                     {
@@ -802,7 +802,7 @@ namespace oPenEfficiency.Features
                     {
                         string error = $"Failed to insert slide from file: {ex.Message}";
                         System.Diagnostics.Debug.WriteLine($"InsertFromFile Error: {ex.Message}");
-                        
+
                         // Try fallback using copy-paste method if InsertFromFile fails
                         if (ex.Message.Contains("Integer out of range") || ex.Message.Contains("unknown member"))
                         {
@@ -813,7 +813,7 @@ namespace oPenEfficiency.Features
                                 return (true, null);
                             }
                         }
-                        
+
                         // Add helpful context for common errors
                         if (ex.Message.Contains("Integer out of range"))
                         {
@@ -829,7 +829,7 @@ namespace oPenEfficiency.Features
                                      "2. Using a different template file\n" +
                                      "3. Inserting all slides instead of a specific one";
                         }
-                        
+
                         return (false, error);
                     }
                 }
@@ -839,7 +839,7 @@ namespace oPenEfficiency.Features
                     // 1. Insert slide
                     // InsertFromFile always keeps source formatting initially in recent PPT versions unless pasted.
                     // But we can clean it up.
-                    
+
                     int countBefore = app.ActivePresentation.Slides.Count;
                     try
                     {
@@ -858,7 +858,7 @@ namespace oPenEfficiency.Features
                     {
                         string error = $"Failed to insert slide from file: {ex.Message}";
                         System.Diagnostics.Debug.WriteLine($"InsertFromFile Error: {ex.Message}");
-                        
+
                         // Try fallback using copy-paste method if InsertFromFile fails
                         if (ex.Message.Contains("Integer out of range") || ex.Message.Contains("unknown member"))
                         {
@@ -869,7 +869,7 @@ namespace oPenEfficiency.Features
                                 return (true, null);
                             }
                         }
-                        
+
                         // Add helpful context for common errors
                         if (ex.Message.Contains("Integer out of range"))
                         {
@@ -877,10 +877,10 @@ namespace oPenEfficiency.Features
                             error += $"\n\nThis usually means the slide index {slideIndex} (0-based: {ppSlideIndex}) doesn't exist in the source file. " +
                                      "The source file might have fewer slides than expected, or the slide numbering might be different.";
                         }
-                        
+
                         return (false, error);
                     }
-                    
+
                     int countAfter = app.ActivePresentation.Slides.Count;
                     int insertedCount = countAfter - countBefore;
 
@@ -889,7 +889,7 @@ namespace oPenEfficiency.Features
                         try
                         {
                             var insertedSlide = app.ActivePresentation.Slides[insertIndex];
-                            
+
                             // 2. Layout Cleaning & Theme Matching
                             // Find a layout in the current presentation that matches the inserted slide's layout name
                             CustomLayout targetLayout = null;
@@ -908,14 +908,14 @@ namespace oPenEfficiency.Features
                             {
                                 insertedSlide.CustomLayout = targetLayout;
                             }
-                            
+
                             // 3. Color/Font Sync
                             // Resetting the theme to the destination master
                             insertedSlide.Design = app.ActivePresentation.SlideMaster.Design;
                             insertedSlide.ColorScheme = app.ActivePresentation.SlideMaster.ColorScheme;
-                            
+
                             // Clean up: If the insertion created a new Master (common with InsertFromFile), delete it if unused
-                            // This is complex because we just reassigned the layout. 
+                            // This is complex because we just reassigned the layout.
                             // The old master might now be unused.
                             CleanupUnusedMasters(app.ActivePresentation);
                         }
@@ -976,7 +976,7 @@ namespace oPenEfficiency.Features
             try
             {
                 System.Diagnostics.Debug.WriteLine($"Fallback: Opening source presentation: {sourcePath}");
-                
+
                 // Open source presentation
                 sourcePres = app.Presentations.Open(
                     sourcePath,
@@ -992,17 +992,17 @@ namespace oPenEfficiency.Features
                 }
 
                 System.Diagnostics.Debug.WriteLine($"Fallback: Copying slide {slideIndex} of {sourcePres.Slides.Count}");
-                
+
                 // Select and copy the slide from source
                 var sourceSlide = sourcePres.Slides[slideIndex];
-                
+
                 // Copy the slide (no need to select first for Copy)
                 sourceSlide.Copy();
                 System.Diagnostics.Debug.WriteLine($"Fallback: Slide copied to clipboard");
 
                 // Paste into target presentation
                 var targetPres = app.ActivePresentation;
-                
+
                 // Validate insertIndex - ensure it's within valid range
                 if (insertIndex > targetPres.Slides.Count)
                     insertIndex = targetPres.Slides.Count + 1;
@@ -1010,10 +1010,10 @@ namespace oPenEfficiency.Features
                     insertIndex = 1;
 
                 System.Diagnostics.Debug.WriteLine($"Fallback: Pasting at position {insertIndex} in target presentation with {targetPres.Slides.Count} slides");
-                
+
                 // Paste the slide
                 SlideRange pastedSlides = targetPres.Slides.Paste(insertIndex);
-                
+
                 if (pastedSlides != null && pastedSlides.Count > 0)
                 {
                     System.Diagnostics.Debug.WriteLine($"Fallback: Successfully pasted {pastedSlides.Count} slide(s) using copy-paste method");
@@ -1036,11 +1036,11 @@ namespace oPenEfficiency.Features
                 // Always close source presentation
                 if (sourcePres != null)
                 {
-                    try 
-                    { 
+                    try
+                    {
                         sourcePres.Close();
                         System.Diagnostics.Debug.WriteLine($"Fallback: Source presentation closed");
-                    } 
+                    }
                     catch (Exception closeEx)
                     {
                         System.Diagnostics.Debug.WriteLine($"Fallback: Error closing source presentation: {closeEx.Message}");

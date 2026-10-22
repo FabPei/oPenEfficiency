@@ -49,9 +49,9 @@ namespace oPenEfficiency.Utils
                         pending.Push(subdir);
                     }
                 }
-                catch (UnauthorizedAccessException) { }
-                catch (PathTooLongException) { }
-                catch (Exception) { }
+                catch (UnauthorizedAccessException) { /* Skip protected folders while enumerating accessible assets. */ }
+                catch (PathTooLongException) { /* Skip paths the current .NET Framework APIs cannot represent. */ }
+                catch (Exception) { /* A single unreadable directory must not abort discovery in remaining folders. */ }
             }
 
             return new List<string>(files);

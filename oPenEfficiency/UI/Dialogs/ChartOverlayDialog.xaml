@@ -37,7 +37,6 @@
             <Grid Grid.Row="0" Margin="0,0,0,20">
                 <StackPanel>
                     <TextBlock Text="CHART OVERLAY" Style="{StaticResource DialogTitleText}"/>
-                    <TextBlock Text="Add analytical overlays to native charts." Margin="0,4,0,0" Style="{StaticResource DialogSubtitleText}"/>
                 </StackPanel>
                 <Button Style="{StaticResource WindowCloseButton}" Click="CancelButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
             </Grid>

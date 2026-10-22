@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnPropertyExtraction",
+  "title": "Inspect Fonts & Colors (DataAndAutomation)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/PropertyExtractionFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnPropertyExtraction-001",
+      "title": "Inspect Fonts & Colors applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/PropertyExtractionFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.GeneratedCommands.cs"
+      ],
+      "expected": "Inspect Fonts & Colors (BtnPropertyExtraction) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnPropertyExtraction-002",
+      "title": "Property report normalization, hex conversion and layout are pinned host-free",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency.Core/Services/PropertyReportPolicy.cs",
+        "oPenEfficiency/Features/Utilities/PropertyExtractionFeature.cs",
+        "oPenEfficiency.Core.Tests/PropertyReportPolicyTests.cs"
+      ],
+      "expected": "COLORREF values decode to #RRGGBB with the low byte as red; font names drop blanks then deduplicate and sort, sizes drop non-positive values, colors drop negative values (all deduplicated and sorted); the report line layout is 'Scope:', 'Fonts:', 'Font sizes:' (sizes suffixed ' pt', rendered in the current culture), 'Text colors:', 'Fill colors:', 'Line colors:' with 'None' for empty groups and trailing whitespace trimmed.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~PropertyReportPolicyTests"
+      }
+    },
+    {
+      "id": "QA9-BtnPropertyExtraction-003",
+      "title": "Inspect Fonts and Colors copies the real report to the clipboard in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointDialogBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Inspect Fonts and Colors on one bold text box shows its report plus the YesNo copy confirmation (the driver measures dialogSeen=True and dismisses with a synthetic key press), copies the report to the clipboard (measured clipHasReport=True, the clipboard carries the Fonts and Colors report for the fixture (the report lists font names/colors - e.g. the fixtures Verdana - and does NOT contain the shape text, measured)) and returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointDialogBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "property-extraction"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

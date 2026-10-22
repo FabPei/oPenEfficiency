@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -7,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
+using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.UI
 {
@@ -14,12 +16,38 @@ namespace oPenEfficiency.UI
     {
         private readonly PowerPointManager _manager;
         private bool _isUpdating = false;
+        private string _displayedFontName;
+        private string _displayedFontSize;
 
         public FontPanel(PowerPointManager manager)
         {
             InitializeComponent();
             _manager = manager;
             LoadData();
+        }
+
+        public void FocusFontFamily()
+        {
+            FocusComboBox(ComboFont);
+        }
+
+        public void FocusFontSize()
+        {
+            FocusComboBox(ComboFontSize);
+        }
+
+        private void FocusComboBox(ComboBox comboBox)
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                comboBox.Focus();
+                Keyboard.Focus(comboBox);
+                if (comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox editor)
+                {
+                    editor.Focus();
+                    editor.SelectAll();
+                }
+            }), System.Windows.Threading.DispatcherPriority.Input);
         }
 
         public void OnSelectionChange(Selection sel)
@@ -29,44 +57,30 @@ namespace oPenEfficiency.UI
             _isUpdating = true;
             try
             {
-                string fontName = null;
-                float fontSize = 0;
+                var ranges = GetTextRanges(sel);
+                IsEnabled = ranges.Count > 0;
+                string fontName = ranges.Count > 0 ? ranges[0].Font.Name : null;
+                float fontSize = ranges.Count > 0 ? ranges[0].Font.Size : 0;
+                bool mixedName = ranges.Skip(1).Any(range =>
+                    !string.Equals(range.Font.Name, fontName, StringComparison.OrdinalIgnoreCase));
+                bool mixedSize = ranges.Skip(1).Any(range =>
+                    Math.Abs(range.Font.Size - fontSize) > 0.01f);
 
-                // 1. Determine target range
-                if (sel.Type == PpSelectionType.ppSelectionText)
-                {
-                    fontName = sel.TextRange.Font.Name;
-                    fontSize = sel.TextRange.Font.Size;
-                }
-                else if (sel.Type == PpSelectionType.ppSelectionShapes || sel.Type == PpSelectionType.ppSelectionNone)
-                {
-                    ShapeRange range = null;
-                    try { if (sel.HasChildShapeRange) range = sel.ChildShapeRange; } catch { }
-                    if (range == null) try { range = sel.ShapeRange; } catch { }
-
-                    if (range != null && range.Count > 0)
-                    {
-                        var shape = range[1];
-                        if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
-                        {
-                            fontName = shape.TextFrame.TextRange.Font.Name;
-                            fontSize = shape.TextFrame.TextRange.Font.Size;
-                        }
-                    }
-                }
-
-                // 2. Update UI
-                if (!string.IsNullOrEmpty(fontName) && fontName != "Mixed")
-                    ComboFont.Text = fontName;
-                else
-                    ComboFont.Text = "";
-
-                if (fontSize > 0 && fontSize < 1000) // 999999 means mixed
-                    ComboFontSize.Text = fontSize.ToString();
-                else
-                    ComboFontSize.Text = "";
+                _displayedFontName = !mixedName && !string.IsNullOrEmpty(fontName) && fontName != "Mixed"
+                    ? fontName
+                    : "";
+                _displayedFontSize = !mixedSize && fontSize > 0 && fontSize < 4000
+                    ? fontSize.ToString(CultureInfo.CurrentCulture)
+                    : "";
+                ComboFont.Text = _displayedFontName;
+                ComboFontSize.Text = _displayedFontSize;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "FontPanel.OnSelectionChange");
+                IsEnabled = false;
+                ClearDisplay();
+            }
             finally { _isUpdating = false; }
         }
 
@@ -93,60 +107,194 @@ namespace oPenEfficiency.UI
         private void ComboFont_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isUpdating || _manager == null) return;
-            if (ComboFont.SelectedItem is string fontName) ApplyProperty("Name", fontName);
+            if (ComboFont.SelectedItem is string fontName) ApplyFontName(fontName);
         }
 
         private void ComboFontSize_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (_isUpdating || _manager == null) return;
-            if (ComboFontSize.SelectedItem is string s && float.TryParse(s, out float v)) ApplyProperty("Size", v);
+            if (ComboFontSize.SelectedItem is string s && Core.Services.FontEditPolicy.TryParseSize(s, out float value))
+                ApplyFontSize(value);
+        }
+
+        private void ComboFont_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ApplyFontName(ComboFont.Text);
+                e.Handled = true;
+                Keyboard.ClearFocus();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                RefreshFromSelection();
+                e.Handled = true;
+            }
+        }
+
+        private void ComboFont_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdating) ApplyFontName(ComboFont.Text);
         }
 
         private void ComboFontSize_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
             {
-                if (float.TryParse(ComboFontSize.Text, out float val))
-                {
-                    ApplyProperty("Size", val);
-                    e.Handled = true;
-                    Keyboard.ClearFocus();
-                }
+                ApplySizeFromText();
+                e.Handled = true;
+                Keyboard.ClearFocus();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                RefreshFromSelection();
+                e.Handled = true;
             }
         }
 
         private void ComboFontSize_LostFocus(object sender, RoutedEventArgs e)
         {
             if (_isUpdating) return;
-            if (float.TryParse(ComboFontSize.Text, out float val)) ApplyProperty("Size", val);
+            ApplySizeFromText();
         }
 
-        private void ApplyProperty(string prop, object val)
+        private void ApplyFontName(string fontName)
         {
+            fontName = fontName?.Trim();
+            if (string.IsNullOrEmpty(fontName) ||
+                string.Equals(fontName, _displayedFontName, StringComparison.Ordinal)) return;
+            ApplyProperty("Name", fontName);
+        }
+
+        private void ApplySizeFromText()
+        {
+            if (string.Equals(ComboFontSize.Text, _displayedFontSize, StringComparison.Ordinal)) return;
+            if (Core.Services.FontEditPolicy.TryParseSize(ComboFontSize.Text, out float value))
+                ApplyFontSize(value);
+            else
+                RefreshFromSelection();
+        }
+
+        private void ApplyFontSize(float value)
+        {
+            if (!Core.Services.FontEditPolicy.IsValidFontSize(value))
+            {
+                RefreshFromSelection();
+                return;
+            }
+            ApplyProperty("Size", value);
+        }
+
+        private bool ApplyProperty(string property, object value)
+        {
+            var states = new List<FontState>();
             try
             {
                 var app = _manager.GetApplication();
-                if (app.ActiveWindow == null) return;
+                if (app.ActiveWindow?.Selection == null) return false;
                 var selection = app.ActiveWindow.Selection;
+                var ranges = GetTextRanges(selection);
+                if (ranges.Count == 0) return false;
 
-                if (selection.Type == PpSelectionType.ppSelectionText)
+                foreach (var range in ranges)
                 {
-                    if (prop == "Name") selection.TextRange.Font.Name = (string)val;
-                    else if (prop == "Size") selection.TextRange.Font.Size = (float)val;
+                    var state = new FontState(range);
+                    bool changes = property == "Name"
+                        ? Core.Services.FontEditPolicy.NeedsNameChange(state.Name, (string)value)
+                        : Core.Services.FontEditPolicy.NeedsSizeChange(state.Size, (float)value);
+                    if (changes) states.Add(state);
                 }
-                else if (selection.Type == PpSelectionType.ppSelectionShapes)
+                if (states.Count == 0)
                 {
-                    foreach (Shape shape in selection.ShapeRange)
-                    {
-                        if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
-                        {
-                            if (prop == "Name") shape.TextFrame.TextRange.Font.Name = (string)val;
-                            else if (prop == "Size") shape.TextFrame.TextRange.Font.Size = (float)val;
-                        }
-                    }
+                    RefreshFromSelection();
+                    return false;
                 }
+
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "FontPanel.StartNewUndoEntry"); }
+
+                foreach (var state in states)
+                {
+                    if (property == "Name") state.Range.Font.Name = (string)value;
+                    else state.Range.Font.Size = (float)value;
+                }
+                RefreshFromSelection();
+                return true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                foreach (var state in states)
+                {
+                    try
+                    {
+                        state.Range.Font.Name = state.Name;
+                        state.Range.Font.Size = state.Size;
+                    }
+                    catch (Exception rollbackEx) { ExceptionLogger.Log(rollbackEx, "FontPanel.Rollback"); }
+                }
+                ExceptionLogger.Log(ex, "FontPanel.ApplyProperty");
+                RefreshFromSelection();
+                return false;
+            }
+        }
+
+        private static List<TextRange> GetTextRanges(Selection selection)
+        {
+            var ranges = new List<TextRange>();
+            if (selection == null) return ranges;
+            if (selection.Type == PpSelectionType.ppSelectionText)
+            {
+                if (selection.TextRange != null) ranges.Add(selection.TextRange);
+                return ranges;
+            }
+            if (selection.Type != PpSelectionType.ppSelectionShapes) return ranges;
+
+            ShapeRange shapes = null;
+            try { if (selection.HasChildShapeRange) shapes = selection.ChildShapeRange; }
+            catch { /* Non-group selections do not expose ChildShapeRange. */ }
+            if (shapes == null)
+            {
+                try { shapes = selection.ShapeRange; }
+                catch { /* Selection types without ShapeRange yield no font targets. */ }
+            }
+            if (shapes == null) return ranges;
+            for (int index = 1; index <= shapes.Count; index++)
+            {
+                var shape = shapes[index];
+                if (shape.HasTextFrame == Office.MsoTriState.msoTrue)
+                    ranges.Add(shape.TextFrame.TextRange);
+            }
+            return ranges;
+        }
+
+        private void RefreshFromSelection()
+        {
+            try { OnSelectionChange(_manager?.GetApplication()?.ActiveWindow?.Selection); }
+            catch (Exception ex) { ExceptionLogger.Log(ex, "FontPanel.RefreshFromSelection"); }
+        }
+
+        private void ClearDisplay()
+        {
+            _isUpdating = true;
+            _displayedFontName = "";
+            _displayedFontSize = "";
+            ComboFont.Text = "";
+            ComboFontSize.Text = "";
+            _isUpdating = false;
+        }
+
+        private sealed class FontState
+        {
+            public FontState(TextRange range)
+            {
+                Range = range;
+                Name = range.Font.Name;
+                Size = range.Font.Size;
+            }
+
+            public TextRange Range { get; }
+            public string Name { get; }
+            public float Size { get; }
         }
     }
 }

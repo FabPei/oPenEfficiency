@@ -12,8 +12,7 @@ namespace oPenEfficiency.Features
         IconData = "M3,3H21V21H3V3M7,5V19H9V5H7M11,5V19H13V5H11M15,5V19H19V5H15Z",
         Color = "#F43F5E",
         Description = "Inserts a new column to the left of the selected column.",
-        DetailedHelpText = "### Insert Column Left\nInserts a new empty column immediately to the left of the currently selected table column, preserving all existing formatting.",
-        Keywords = "add, column, table, left, insert, grid",
+        DetailedHelpText = "### Insert Column Left\n\nInserts one column before the leftmost selected table column. Right-click to preserve the total table width, duplicate the selected column's basic formatting into an empty column, or insert 2–50 columns. Multiple insertion can optionally preserve the total width.",
         MinSelection = 0,
         RequiresTable = true)]
     public static class InsertTableColumnLeftFeature
@@ -36,5 +35,8 @@ namespace oPenEfficiency.Features
         {
             return TableColumnInsertionFeature.Execute(manager, true, preserveWidth);
         }
+
+        public static bool ExecuteMultiple(PowerPointManager manager, int count, bool preserveWidth) => TableColumnInsertionFeature.ExecuteMultiple(manager, true, preserveWidth, count);
+        public static bool DuplicateFormatOnly(PowerPointManager manager) => TableColumnInsertionFeature.DuplicateColumnFormat(manager, true);
     }
 }

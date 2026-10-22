@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSwapTextPlain",
+  "title": "Swap Text (Plain) (TextAndFormat)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Text/SwapTextPlainFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSwapTextPlain-001",
+      "title": "Swap Text (Plain) applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SwapTextPlainFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Swap Text (Plain) (BtnSwapTextPlain) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSwapTextPlain-001",
+      "title": "The paragraph chooser labels paragraphs with their index and text, marks blanks and truncates at the documented budget",
+      "tier": "core-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Text/SwapTextPlainFeature.cs",
+        "oPenEfficiency.Core/Services/ParagraphFlowPlanner.cs",
+        "oPenEfficiency.Core.Tests/ParagraphFlowPlannerTests.cs"
+      ],
+      "expected": "oPenEfficiency.Core.Tests drives ParagraphFlowPlanner for Swap Text (Plain): a paragraph's trailing paragraph mark never leaks into the chooser label, interior breaks become spaces, a blank paragraph gets the documented placeholder, and a label longer than 100 characters is truncated to 97 characters plus an ellipsis.",
+      "runner": {
+        "kind": "dotnet-test",
+        "path": "oPenEfficiency.Core.Tests/oPenEfficiency.Core.Tests.csproj",
+        "filter": "FullyQualifiedName~ParagraphFlowPlannerTests.ParagraphChoicesDescribeAndTruncateLabels"
+      }
+    },
+    {
+      "id": "QA9-BtnSwapTextPlain-002",
+      "title": "Swap Text Plain exchanges the two texts in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointTextSwap.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Swap Text Plain on two text boxes containing Alpha and Beta exchanges the texts exactly (first box reads Beta, second reads Alpha), reports execution, keeps the shape count and geometry unchanged, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointTextSwap.ps1",
+        "arguments": [
+          "-Mode",
+          "swap-plain"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "featureId": "BtnSlideGuidelines",
+  "title": "Create Slide Guide Grid (StorylineAndReview)",
+  "sourcePaths": [
+    "oPenEfficiency/Features/Utilities/SlideGuidelinesFeature.cs",
+    "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+    "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+  ],
+  "scenarios": [
+    {
+      "id": "CAT-BtnSlideGuidelines-001",
+      "title": "Create Slide Guide Grid applies its documented behavior",
+      "tier": "office-automated",
+      "automationStatus": "planned",
+      "changedPathPatterns": [
+        "oPenEfficiency/Features/Utilities/SlideGuidelinesFeature.cs",
+        "oPenEfficiency.Core/UI/FeatureCatalogPolicy.cs",
+        "oPenEfficiency/UI/Panels/MainSidebar.ContextMenus.WorkflowAndVisual.cs"
+      ],
+      "expected": "Create Slide Guide Grid (BtnSlideGuidelines) is invoked on the documented fixture deck and produces its documented effect on the selection or presentation, leaves no new entry in %TEMP%\\oPenEfficiency\\error_YYYYMMDD.log and does not leave PowerPoint or the add-in in an unstable state."
+    },
+    {
+      "id": "QA9-BtnSlideGuidelines-002",
+      "title": "Create Slide Guidelines adds the measured default-layout guideline shapes in real PowerPoint",
+      "tier": "office-automated",
+      "automationStatus": "ready",
+      "changedPathPatterns": [
+        "oPenEfficiency/ThisAddIn.Automation.cs",
+        "eng/Smoke-PowerPointVisualBatch.ps1"
+      ],
+      "expected": "In an isolated real PowerPoint host, the deployed Create Slide Guidelines with the Default layout on an empty slide adds exactly 8 guideline shapes (measured delta=8 from 0 to 8), returns true, writes no new entry in the oPenEfficiency error log of the run day, and leaves the host stable.",
+      "runner": {
+        "kind": "powershell-script",
+        "path": "eng/Smoke-PowerPointVisualBatch.ps1",
+        "arguments": [
+          "-Mode",
+          "slide-guidelines"
+        ]
+      }
+    }
+  ],
+  "snapshotNotice": "Source scenario inventory only; ready/planned/blocked are planning states, not passing results. Office runner scripts and maintainer release evidence are not distributed with this source snapshot."
+}

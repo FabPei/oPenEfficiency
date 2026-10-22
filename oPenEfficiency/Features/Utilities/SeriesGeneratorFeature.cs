@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Windows.Controls.Primitives;
+using System.Windows.Interop;
 using Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using oPenEfficiency.Models;
@@ -11,23 +13,121 @@ using oPenEfficiency.Utils;
 
 namespace oPenEfficiency.Features.Utilities
 {
-    [FeatureMetadata(Id = "BtnSeriesGenerator", Name = "Series Generator", Tooltip = "Generate Series (Numbers, Dates, Letters)", IconData = "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-7-2h2v-2h2v-2h-2V8h-2v2h-2v2h2v2z", Color = "#3B82F6", Description = "Generates a sequence of numbers, letters, dates, or quarters based on a template shape.", Keywords = "series, sequence, timeline, dates, quarters, generate", MinSelection = 0, RequiredType = PpSelectionType.ppSelectionNone)]
+    [FeatureMetadata(
+        Id = "BtnSeriesGenerator",
+        Name = "Generate Shape Series",
+        SearchAliases = new[] { "Series Generator" },
+        Tooltip = "Generate a formatted shape series",
+        IconData = "M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zm-7-2h2v-2h2v-2h-2V8h-2v2h-2v2h2v2z",
+        Color = "#3B82F6",
+        Description = "Creates or updates a horizontal, vertical, or matrix series of numbered, lettered, dated, or quarter-labeled shapes.",
+        DetailedHelpText = "### Generate Shape Series\n\nOptionally select a template shape first, then create up to 1,000 number, letter, day, month, year, or quarter labels. Right-click opens common 1–5 number, A–E letter, vertical, or 3×3 matrix presets while keeping the preview editable. Choose a horizontal, vertical, or matrix layout and optionally fit it to the slide or a second selected boundary shape. Generated shapes retain series metadata, and a complete generation or update creates one PowerPoint Undo entry.",
+        MinSelection = 0,
+        RequiredType = OfficeSelectionType.None,
+        IsToggle = true)]
     public static class SeriesGeneratorFeature
     {
-        public const string TagSeriesId = "OPE_SERIES_ID";
-        public const string TagSeriesConfig = "OPE_SERIES_CONFIG";
+        private const int MaximumSeriesItems = 1000;
+        public const string TagSeriesId = "oPE_SeriesId";
+        public const string TagSeriesConfig = "oPE_SeriesConfig";
+        private const string LegacyTagSeriesId = "OPE_SERIES_ID";
+        private const string LegacyTagSeriesConfig = "OPE_SERIES_CONFIG";
+        private static UI.Dialogs.SeriesGeneratorWindow _window;
+        private static ToggleButton _toggleButton;
 
         public static bool Execute(PowerPointManager manager)
         {
-            var window = new UI.Dialogs.SeriesGeneratorWindow(manager);
-            window.Show();
-            return true;
+            return Execute(manager, null);
+        }
+
+        public static bool Execute(PowerPointManager manager, ToggleButton toggleButton)
+        {
+            return ExecuteInternal(manager, toggleButton, null);
+        }
+
+        public static bool ExecutePreset(
+            PowerPointManager manager,
+            string seriesType,
+            string direction,
+            int count,
+            int matrixColumns = 3)
+        {
+            string startValue = string.Equals(seriesType, "Letters", StringComparison.Ordinal)
+                ? "A"
+                : "1";
+            var config = new SeriesConfig
+            {
+                SeriesType = seriesType,
+                Language = "en-US",
+                StartValue = startValue,
+                EndValue = string.Empty,
+                Count = count,
+                Step = 1,
+                FormatString = string.Equals(seriesType, "Letters", StringComparison.Ordinal) ? string.Empty : "0",
+                Direction = direction,
+                MatrixColumns = matrixColumns,
+                SpacingX = 15,
+                SpacingY = 15,
+                AutoFitToBounds = true,
+                BoundaryType = "Slide"
+            };
+            return ExecuteInternal(manager, null, config);
+        }
+
+        private static bool ExecuteInternal(
+            PowerPointManager manager,
+            ToggleButton toggleButton,
+            SeriesConfig initialConfig)
+        {
+            if (manager == null) return false;
+            try
+            {
+                if (toggleButton != null && toggleButton.IsChecked == false)
+                {
+                    _window?.Close();
+                    return true;
+                }
+
+                if (_window != null && _window.IsLoaded)
+                {
+                    if (toggleButton != null)
+                    {
+                        _toggleButton = toggleButton;
+                        toggleButton.IsChecked = true;
+                    }
+                    if (initialConfig != null) _window.SetPreset(initialConfig);
+                    _window.Activate();
+                    return true;
+                }
+
+                _toggleButton = toggleButton;
+                _window = new UI.Dialogs.SeriesGeneratorWindow(manager, initialConfig);
+                var app = manager.GetApplication();
+                if (app != null) new WindowInteropHelper(_window).Owner = (IntPtr)app.HWND;
+                _window.Closed += (sender, args) =>
+                {
+                    if (_toggleButton != null) _toggleButton.IsChecked = false;
+                    _toggleButton = null;
+                    _window = null;
+                };
+                if (toggleButton != null) toggleButton.IsChecked = true;
+                _window.Show();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ExceptionLogger.Log(ex, "SeriesGeneratorFeature.Execute");
+                if (toggleButton != null) toggleButton.IsChecked = false;
+                return false;
+            }
         }
 
         public static List<string> GenerateSeriesData(SeriesConfig config)
         {
             var result = new List<string>();
-            if (config.Count <= 0 && string.IsNullOrWhiteSpace(config.EndValue)) return result;
+            if (config == null || config.Step == 0 ||
+                (config.Count <= 0 && string.IsNullOrWhiteSpace(config.EndValue)))
+                return result;
 
             try
             {
@@ -49,14 +149,14 @@ namespace oPenEfficiency.Features.Utilities
                                 }
                                 result.Add(FormatNumber(val, config.FormatString));
                                 i++;
-                                if (i > 1000) break; // sanity cap
+                                if (i >= MaximumSeriesItems) break;
                             }
                         }
                         break;
 
                     case "Letters":
-                        char startChar = config.StartValue.Length > 0 ? config.StartValue[0] : 'A';
-                        if (!char.IsLetter(startChar)) startChar = 'A';
+                        char startChar = !string.IsNullOrEmpty(config.StartValue) ? config.StartValue[0] : 'A';
+                        if (!IsAsciiLetter(startChar)) startChar = 'A';
                         bool isLower = char.IsLower(startChar);
                         int startCode = char.ToUpper(startChar) - 64; // A=1
                         
@@ -65,7 +165,7 @@ namespace oPenEfficiency.Features.Utilities
                         if (!string.IsNullOrEmpty(config.EndValue))
                         {
                             string ev = config.EndValue.Trim();
-                            if (ev.Length > 0 && char.IsLetter(ev[0]))
+                            if (ev.Length > 0 && IsAsciiLetter(ev[0]))
                             {
                                 endCode = char.ToUpper(ev[0]) - 64;
                                 useEndStr = true;
@@ -86,7 +186,7 @@ namespace oPenEfficiency.Features.Utilities
                             if (isLower) letterStr = letterStr.ToLowerInvariant();
                             result.Add(FormatString(letterStr, config.FormatString));
                             iL++;
-                            if (iL > 1000) break;
+                            if (iL >= MaximumSeriesItems) break;
                         }
                         break;
 
@@ -113,7 +213,7 @@ namespace oPenEfficiency.Features.Utilities
 
                                 result.Add(FormatDate(dt, config.FormatString, config.Language));
                                 iD++;
-                                if (iD > 1000) break;
+                                if (iD >= MaximumSeriesItems) break;
                             }
                         }
                         break;
@@ -121,18 +221,31 @@ namespace oPenEfficiency.Features.Utilities
                     case "Quarters":
                         int startQ = 1;
                         int startY = DateTime.Now.Year;
-                        var parts = config.StartValue.Split('-');
-                        if (parts.Length >= 1) int.TryParse(parts[0], out startY);
-                        if (parts.Length >= 2) int.TryParse(parts[1].Replace("Q", "").Replace("q", ""), out startQ);
+                        var parts = (config.StartValue ?? string.Empty).Split('-');
+                        int parsedValue;
+                        if (parts.Length >= 1 && int.TryParse(parts[0], out parsedValue) && parsedValue >= 1)
+                            startY = parsedValue;
+                        if (parts.Length >= 2 &&
+                            int.TryParse(parts[1].Replace("Q", "").Replace("q", ""), out parsedValue) &&
+                            parsedValue >= 1 && parsedValue <= 4)
+                            startQ = parsedValue;
 
                         bool useEndQ = false;
                         int endY = 9999, endQ = 4;
                         if (!string.IsNullOrEmpty(config.EndValue))
                         {
                             var eParts = config.EndValue.Split('-');
-                            if (eParts.Length >= 1) int.TryParse(eParts[0], out endY);
-                            if (eParts.Length >= 2) int.TryParse(eParts[1].Replace("Q", "").Replace("q", ""), out endQ);
-                            useEndQ = true;
+                            int parsedEndYear;
+                            int parsedEndQuarter;
+                            if (eParts.Length >= 2 &&
+                                int.TryParse(eParts[0], out parsedEndYear) && parsedEndYear >= 1 &&
+                                int.TryParse(eParts[1].Replace("Q", "").Replace("q", ""), out parsedEndQuarter) &&
+                                parsedEndQuarter >= 1 && parsedEndQuarter <= 4)
+                            {
+                                endY = parsedEndYear;
+                                endQ = parsedEndQuarter;
+                                useEndQ = true;
+                            }
                         }
                         
                         int iQ = 0;
@@ -152,7 +265,7 @@ namespace oPenEfficiency.Features.Utilities
                             int q = (totalQs % 4) + 1;
                             result.Add(FormatQuarter(y, q, config.FormatString));
                             iQ++;
-                            if (iQ > 1000) break;
+                            if (iQ >= MaximumSeriesItems) break;
                         }
                         break;
                 }
@@ -166,7 +279,7 @@ namespace oPenEfficiency.Features.Utilities
 
         private static string FormatNumber(int value, string format)
         {
-            if (string.IsNullOrWhiteSpace(format)) return value.ToString();
+            if (string.IsNullOrWhiteSpace(format)) return value.ToString(CultureInfo.InvariantCulture);
             try { return string.Format(CultureInfo.InvariantCulture, format.Contains("{0") ? format : "{0:" + format + "}", value); }
             catch { return value.ToString(); } // Fallback
         }
@@ -183,7 +296,7 @@ namespace oPenEfficiency.Features.Utilities
             var culture = CultureInfo.CurrentCulture;
             if (!string.IsNullOrWhiteSpace(language))
             {
-                try { culture = CultureInfo.GetCultureInfo(language); } catch { }
+                try { culture = CultureInfo.GetCultureInfo(language); } catch { /* Unknown language identifiers use invariant series formatting. */ }
             }
             if (string.IsNullOrWhiteSpace(format)) return dt.ToString("d", culture);
             try { return dt.ToString(format, culture); }
@@ -217,14 +330,45 @@ namespace oPenEfficiency.Features.Utilities
             return result;
         }
 
-        public static void GenerateShapes(PowerPointManager manager, SeriesConfig config, Shape templateShape = null, Shape boundaryShape = null)
+        public static string GetSeriesConfigTag(Shape shape)
         {
-            var app = manager.GetApplication();
-            if (app == null || app.ActiveWindow == null || app.ActiveWindow.View.Slide == null) return;
-            Slide slide = (Slide)app.ActiveWindow.View.Slide;
+            return GetTagValue(shape, TagSeriesConfig, LegacyTagSeriesConfig);
+        }
 
-            var data = GenerateSeriesData(config);
-            if (data.Count == 0) return;
+        private static string GetTagValue(Shape shape, string tagName, string legacyTagName)
+        {
+            if (shape == null) return string.Empty;
+            try
+            {
+                string value = shape.Tags[tagName];
+                if (!string.IsNullOrEmpty(value)) return value;
+            }
+            catch { /* Missing current tag falls back to the supported legacy tag. */ }
+            try { return shape.Tags[legacyTagName] ?? string.Empty; }
+            catch { return string.Empty; }
+        }
+
+        private static bool IsAsciiLetter(char value)
+        {
+            char upper = char.ToUpperInvariant(value);
+            return upper >= 'A' && upper <= 'Z';
+        }
+
+        public static bool GenerateShapes(PowerPointManager manager, SeriesConfig config, Shape templateShape = null, Shape boundaryShape = null)
+        {
+            var createdShapes = new List<Shape>();
+            bool oldSeriesDeletionStarted = false;
+            try
+            {
+                if (manager == null || config == null) return false;
+                var app = manager.GetApplication();
+                if (app == null || app.ActiveWindow == null || app.ActiveWindow.View.Slide == null) return false;
+                Slide slide = (Slide)app.ActiveWindow.View.Slide;
+
+                var data = GenerateSeriesData(config);
+                if (data.Count == 0) return false;
+                try { app.StartNewUndoEntry(); }
+                catch (Exception ex) { ExceptionLogger.Log(ex, "SeriesGeneratorFeature.StartNewUndoEntry"); }
 
             string configJson = JsonService.Serialize(config);
 
@@ -237,8 +381,7 @@ namespace oPenEfficiency.Features.Utilities
                     Shape s = slide.Shapes[i];
                     if (s.Tags != null)
                     {
-                        string id = "";
-                        try { id = s.Tags[TagSeriesId]; } catch { }
+                        string id = GetTagValue(s, TagSeriesId, LegacyTagSeriesId);
                         if (id == config.SeriesId)
                         {
                             existingShapes.Add(s);
@@ -274,7 +417,8 @@ namespace oPenEfficiency.Features.Utilities
                 height = activeTemplate.Height;
                 if (activeTemplate.HasTextFrame == Office.MsoTriState.msoTrue)
                 {
-                    fontSize = activeTemplate.TextFrame.TextRange.Font.Size;
+                    float templateFontSize = activeTemplate.TextFrame.TextRange.Font.Size;
+                    if (templateFontSize > 0) fontSize = templateFontSize;
                 }
             }
 
@@ -285,27 +429,9 @@ namespace oPenEfficiency.Features.Utilities
 
             if (config.AutoFitToBounds)
             {
-                float reqWidth = 0f;
-                float reqHeight = 0f;
-                int c = data.Count;
-
-                if (config.Direction == "Horizontal")
-                {
-                    reqWidth = (c * width) + ((c - 1) * spacingX);
-                    reqHeight = height;
-                }
-                else if (config.Direction == "Vertical")
-                {
-                    reqWidth = width;
-                    reqHeight = (c * height) + ((c - 1) * spacingY);
-                }
-                else if (config.Direction == "Matrix" && config.MatrixColumns > 0)
-                {
-                    int cols = Math.Min(c, config.MatrixColumns);
-                    int rows = (int)Math.Ceiling(c / (double)config.MatrixColumns);
-                    reqWidth = (cols * width) + ((cols - 1) * spacingX);
-                    reqHeight = (rows * height) + ((rows - 1) * spacingY);
-                }
+                oPenEfficiency.Core.Services.SeriesLayoutPlanner.RequiredSize(
+                    config.Direction, data.Count, config.MatrixColumns, width, height, spacingX, spacingY,
+                    out float reqWidth, out float reqHeight);
 
                 float availWidth = app.ActivePresentation.PageSetup.SlideWidth - startX;
                 float availHeight = app.ActivePresentation.PageSetup.SlideHeight - startY;
@@ -318,12 +444,8 @@ namespace oPenEfficiency.Features.Utilities
                     availHeight = boundaryShape.Height;
                 }
 
-                float scaleX = reqWidth > availWidth && reqWidth > 0 ? availWidth / reqWidth : 1f;
-                float scaleY = reqHeight > availHeight && reqHeight > 0 ? availHeight / reqHeight : 1f;
-                scaleFactor = Math.Min(scaleX, scaleY);
-                
-                // Cap to max 1f (we don't want to enlarge, only shrink)
-                scaleFactor = Math.Min(1f, scaleFactor);
+                // Shrinks only on the binding axis; never enlarges.
+                scaleFactor = oPenEfficiency.Core.Services.SeriesLayoutPlanner.AutoFitScale(reqWidth, reqHeight, availWidth, availHeight);
 
                 if (scaleFactor < 1f)
                 {
@@ -335,17 +457,7 @@ namespace oPenEfficiency.Features.Utilities
                 }
             }
             // --- End Auto-Fit Math ---
-
-            // Delete old shapes if updating
-            foreach (var s in existingShapes)
-            {
-                if (s != activeTemplate && s != boundaryShape) // Don't delete the template or boundary
-                {
-                    try { s.Delete(); } catch { }
-                }
-            }
-
-            var createdShapes = new List<Shape>();
+            bool resizeTemplateFont = activeTemplate != null && scaleFactor < 1f && fontSize > 0f;
 
             // Generate new ones
             for (int i = 0; i < data.Count; i++)
@@ -360,7 +472,8 @@ namespace oPenEfficiency.Features.Utilities
                         newShape = sr[1];
                         newShape.Width = width;
                         newShape.Height = height;
-                        if (newShape.HasTextFrame == Office.MsoTriState.msoTrue) newShape.TextFrame.TextRange.Font.Size = fontSize;
+                        if (resizeTemplateFont && newShape.HasTextFrame == Office.MsoTriState.msoTrue)
+                            newShape.TextFrame.TextRange.Font.Size = fontSize;
                     }
                     catch
                     {
@@ -377,26 +490,12 @@ namespace oPenEfficiency.Features.Utilities
                     newShape.TextFrame.TextRange.ParagraphFormat.Alignment = PpParagraphAlignment.ppAlignCenter;
                     newShape.TextFrame.VerticalAnchor = Office.MsoVerticalAnchor.msoAnchorMiddle;
                 }
+                createdShapes.Add(newShape);
 
                 // Position logic
-                float x = startX;
-                float y = startY;
-
-                if (config.Direction == "Horizontal")
-                {
-                    x = startX + (i * (width + spacingX));
-                }
-                else if (config.Direction == "Vertical")
-                {
-                    y = startY + (i * (height + spacingY));
-                }
-                else if (config.Direction == "Matrix" && config.MatrixColumns > 0)
-                {
-                    int col = i % config.MatrixColumns;
-                    int row = i / config.MatrixColumns;
-                    x = startX + (col * (width + spacingX));
-                    y = startY + (row * (height + spacingY));
-                }
+                oPenEfficiency.Core.Services.SeriesLayoutPlanner.PlaceItem(
+                    config.Direction, i, config.MatrixColumns, startX, startY, width, height, spacingX, spacingY,
+                    out float x, out float y);
 
                 newShape.Left = x;
                 newShape.Top = y;
@@ -410,14 +509,14 @@ namespace oPenEfficiency.Features.Utilities
                 // Add tags
                 newShape.Tags.Add(TagSeriesId, config.SeriesId);
                 newShape.Tags.Add(TagSeriesConfig, configJson);
-                
-                createdShapes.Add(newShape);
             }
 
-            // Cleanup template if we duplicated it during an update and it wasn't part of the newly generated list
-            if (activeTemplate != null && existingShapes.Contains(activeTemplate))
+            // Keep the old series intact until all replacement shapes exist.
+            oldSeriesDeletionStarted = existingShapes.Count > 0;
+            foreach (var existingShape in existingShapes)
             {
-                try { activeTemplate.Delete(); } catch { }
+                if (existingShape == boundaryShape) continue;
+                existingShape.Delete();
             }
 
             // Select new shapes
@@ -428,7 +527,25 @@ namespace oPenEfficiency.Features.Utilities
                     var arr = createdShapes.Select(s => s.Name).ToArray();
                     slide.Shapes.Range(arr).Select();
                 }
-                catch { }
+                catch { /* A stale generated shape is skipped while restoring series metadata. */ }
+            }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (!oldSeriesDeletionStarted)
+                {
+                    foreach (var createdShape in createdShapes)
+                    {
+                        try { createdShape.Delete(); }
+                        catch (Exception cleanupEx)
+                        {
+                            ExceptionLogger.Log(cleanupEx, "SeriesGeneratorFeature.GenerateShapes.Cleanup");
+                        }
+                    }
+                }
+                ExceptionLogger.Log(ex, "SeriesGeneratorFeature.GenerateShapes");
+                return false;
             }
         }
     }
