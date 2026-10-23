@@ -1,6 +1,6 @@
 # openEfficiency feature reference
 
-> **Source reference.** This page documents the PowerPoint commands and widgets in this source checkout. The published June 2026 installer and a newer source checkout can differ; use release notes for the features in your installed version.
+> **Source reference.** This page documents the PowerPoint commands and widgets in this source checkout. Published releases and a newer source checkout can differ; match the release tag and notes to your installed version. The current MSI release is [v26.10.23](https://github.com/FabPei/oPenEfficiency/releases/tag/v26.10.23).
 
 Use the [release notes](https://github.com/FabPei/oPenEfficiency/releases) for the features available in your installed build. Find commands through Feature Explorer, Command Search or Settings; catalog-only tools may need to be added to your sidebar. The three widgets are embedded sidebar controls. Labs tools are experimental. Selection and context-menu options depend on the command.
 

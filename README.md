@@ -17,7 +17,7 @@ Built for Windows desktop PowerPoint with VSTO and .NET Framework 4.8. Maintaine
 
 ## Current public status
 
-The latest published release checked on **22 October 2026** is [v2026.06.04.34](https://github.com/FabPei/oPenEfficiency/releases/tag/v2026.06.04.34), published on 4 June 2026. Its downloads are a ClickOnce installer ZIP and a setup executable. The public source branch and a downloaded release can differ; use the source tag and instructions for the version you intend to build or install.
+The current release is [openEfficiency V0.9 - 26.10.23](https://github.com/FabPei/oPenEfficiency/releases/tag/v26.10.23). It provides x86/x64 MSI installers and matching SHA-256 files. The public source branch and a downloaded release can differ; use the source tag and instructions for the version you intend to build or install.
 
 This documentation update does not publish a new product version. Features described in the source reference may differ from the build you have installed. Check the [release notes](https://github.com/FabPei/oPenEfficiency/releases) for your version.
 
@@ -38,7 +38,7 @@ See the [detailed feature reference](https://github.com/FabPei/oPenEfficiency/wi
 
 The source snapshot adds a PowerPoint **Home** tab launcher and a customizable sidebar as the primary PowerPoint command surface. PowerPoint intentionally uses the Home-tab Sidebar launcher. Choose **Consulting Standard**, **All Features**, **Minimal** or **Labs** in Settings. The source configuration ships with no default feature shortcuts; assign your own in Settings.
 
-The optional Excel companion uses a dedicated **openEfficiency** Excel ribbon tab. Its source is included here; this does not add an Excel add-in to the older June 2026 download.
+The optional Excel companion uses a dedicated **openEfficiency** Excel ribbon tab. Its source is included here; select it as an optional component in the current MSI; older June 2026 downloads use a different package.
 
 The complete [source feature reference](docs/Features.md) covers the current commands and widgets. Examples include **Insert Linked Text Label**, which connects a PowerPoint label to a supported source, and chart overlays for a selected native chart or one group containing exactly one native chart. Outputs use native PowerPoint shapes, tables and text where supported; color erasing deliberately replaces a shape with a raster image.
 
@@ -53,11 +53,11 @@ Use Windows, Visual Studio with Office/VSTO tools and the .NET Framework 4.8 SDK
 You need Windows desktop PowerPoint, .NET Framework 4.8 and the Microsoft VSTO runtime. PowerPoint 2016 and later is the project's compatibility target; this is not a claim that every Office/Windows combination has been verified. PowerPoint for the web and PowerPoint for macOS do not load Windows VSTO add-ins.
 
 1. Open [Releases](https://github.com/FabPei/oPenEfficiency/releases) and choose a published version.
-2. Read its release notes and download the listed installer package. For the current legacy ClickOnce release, use the complete ZIP package when its deployment files are needed; a setup executable alone may require the associated deployment location.
-3. Save your work, close PowerPoint, extract the package if applicable and follow its setup instructions.
+2. Read the release notes and download the MSI matching your **Office architecture** (x86 for 32-bit Office, x64 for 64-bit Office), plus its `.msi.sha256` file. Compare the SHA-256 hash before installation.
+3. Save your work, close PowerPoint and Excel, then run the selected MSI and follow its setup instructions. Older ClickOnce releases retain their own version-specific instructions.
 4. Reopen PowerPoint and look for the add-in's ribbon tab or sidebar.
 
-Windows or Office may show publisher/trust warnings or apply organizational restrictions. A GitHub download does not by itself prove a trusted Authenticode signature. Follow your organization's policy; do not disable Office security settings to force installation. See [Installation and troubleshooting](https://github.com/FabPei/oPenEfficiency/wiki/Installation).
+All openEfficiency MSI releases are intentionally unsigned; Authenticode signing is not planned. Windows may show **Unknown publisher** or SmartScreen warnings, and managed devices may block installation. Published SHA-256 files verify bytes, not publisher identity. Technically required self-signed VSTO manifest signatures do not sign the MSI. Follow your organization's policy; do not disable Office security settings to force installation. See [Installation and troubleshooting](https://github.com/FabPei/oPenEfficiency/wiki/Installation).
 
 Developers can build the public source with a Visual Studio version that supports the project format and has Office/VSTO development tools and the .NET Framework 4.8 SDK. A successful compile is not an installation procedure. See [Development](https://github.com/FabPei/oPenEfficiency/wiki/Development).
 
