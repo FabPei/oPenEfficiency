@@ -71,6 +71,8 @@ Most editing commands work inside PowerPoint. Optional translation integrations 
 
 ## Help and contributions
 
+For a focused AI-assisted contribution, follow the [clone-to-PR guide](docs/development/ai-feature-contribution.md) and fill in the [feature brief](docs/development/templates/ai-feature-request.md).
+
 For bugs, include the add-in version, Windows and PowerPoint versions, Office bitness, selection details and steps to reproduce. Remove customer data, file paths and credentials from logs or screenshots before posting them publicly.
 
 [Open an issue](https://github.com/FabPei/oPenEfficiency/issues/new/choose) · [Contribution guide](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md)

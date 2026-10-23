@@ -1,26 +1,37 @@
-## Purpose
+## Purpose and scope
 
-Describe what changed and why. Link a related issue if there is one.
+Describe the user problem, observable result and non-goals. Link an issue only when one exists.
 
-## Scope
+- Change type: documentation / product behavior / UI / tests / build tooling
+- Feature ID and affected discovery surfaces, or why they do not apply:
+- Existing implementation reused:
 
-- [ ] Documentation only
-- [ ] Product behavior or UI
-- [ ] Build or packaging
-- [ ] Other (describe)
+## Selection, UI and stored state
 
-## Verification
+Describe applicable selection/anchor rules, unsupported objects, empty/error/cancel cases,
+Undo, persistence and compatibility. For UI changes, name the UI family and shared styles;
+include relevant theme, keyboard, text-growth, DPI and Office-window ownership observations.
+For documentation-only work, explain which parts do not apply.
 
-List the checks you actually performed and their results. State what was not run and why. For documentation-only changes, include link/example checks; a product build or PowerPoint run is not automatically needed for prose.
+## Checks and independent review
 
-For product changes, describe the relevant selection, empty/error cases, Office version/bitness and any remaining manual checks. Do not mark an unrun check as passed.
+List checks actually performed with results and evidence paths/CI links. Record unrun checks,
+missing environments and remaining limitations explicitly. No mandatory detailed numerical
+report; never mark a prepared, skipped or unrun check as passed.
 
-## Documentation and licensing
+- Targeted checks:
+- Final code/build/installer checkpoint, or why prose-only work does not require it:
+- Real Office/UI checks, or what remains unrun:
+- Independent reviewer and disposition, or pending review:
 
-- [ ] Relevant user guidance is updated, or no change is needed (explain).
+## Documentation and contribution boundaries
+
+- [ ] Names, help, relevant discovery surfaces and user documentation are consistent,
+      or the change does not affect them (explain).
 - [ ] New external material has a recorded source/license, or none was added.
-- [ ] No credentials, confidential presentations or unredacted logs are included.
+- [ ] The patch contains no credentials, signing keys, confidential presentations or private history.
+- [ ] The branch and PR target are the intended repositories; unrelated edits are excluded.
 
-## Screenshots or examples
+## Examples or screenshots
 
-Include only when useful, with confidential data removed.
+Include only when useful, with confidential data removed. State any intentional omissions.

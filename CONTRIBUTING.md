@@ -14,6 +14,8 @@ Explain the task you are trying to complete, the current workaround and the expe
 
 ## Pull requests
 
+For a complete workflow, use the [AI-assisted feature guide](docs/development/ai-feature-contribution.md) and its [copyable feature brief](docs/development/templates/ai-feature-request.md). They cover fresh setup, actual public source paths, UI families, checks, independent review and an explicitly authorized draft PR without private tooling.
+
 1. Start from the public branch or release tag relevant to the change. Keep the patch focused and explain its purpose.
 2. Follow the nearby C#/WPF conventions. Use the existing PowerPoint access wrappers and take care with selection, COM object lifetimes, startup and shutdown.
 3. Keep command names, descriptions, tooltips and relevant documentation consistent. Update user-facing documentation when behavior changes.
