@@ -413,7 +413,7 @@
     },
     {
       "path": "tools/icon-composer/package.json",
-      "sha256": "3fb2656d4469e859c1436c82c614ccabc0cb96427a82d13a6aaf0010b677b62c"
+      "sha256": "f294996e18ce21ea4b2d3cebd7047e7a99c29dcf54002653f5957e8524b2709e"
     },
     {
       "path": "tools/icon-composer/README.md",
@@ -480,8 +480,16 @@
       "sha256": "6822a48a1b00579bbc973cce91d72c35e81e682a96e106bb787b7cd0094cc9d5"
     },
     {
+      "path": "tools/icon-composer/tests/temp-directory.mjs",
+      "sha256": "89b890b85bffb17e7858a23fcd67c3525be07a42043797a498ec2b197c426297"
+    },
+    {
+      "path": "tools/icon-composer/tests/temp-directory.test.mjs",
+      "sha256": "407029545f7bd1ad126ef2dc3b52b94b5e5ce82b0f1a2c03be3b9628a63c24b8"
+    },
+    {
       "path": "tools/icon-composer/tests/validate.mjs",
-      "sha256": "f75432fc271f4bb0aa63dd89a3b7f6158c8aaff6a2be07c1948d3216c10914e9"
+      "sha256": "8810b0b63afc578ec6ad7d56cffd44ac806869fe30cc71fb6435ca51373a72b9"
     },
     {
       "path": "tools/icon-composer/THIRD_PARTY_NOTICES.md",

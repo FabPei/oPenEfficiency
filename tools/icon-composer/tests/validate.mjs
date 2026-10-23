@@ -1,16 +1,16 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { lstat, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { lstat, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createUniqueOutputDirectory, ensureSafeDirectory, resolveApprovedFilePath, resolveApprovedOutputBase } from '../scripts/output-safety.mjs';
+import { createTemporaryTestDirectory } from './temp-directory.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const startedAt = new Date();
 const started = Date.now();
 const cli = [join(root, 'node_modules/tsx/dist/cli.mjs'), 'scripts/editor-cli.ts'];
-const temp = await mkdtemp(join(tmpdir(), 'oe-icon-composer-test-'));
+const temp = await createTemporaryTestDirectory();
 const run = (args) => spawnSync(process.execPath, [...cli, ...args], { cwd: root, encoding: 'utf8', windowsHide: true });
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const repositoryRoot = resolve(root, '../..');

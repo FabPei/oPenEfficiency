@@ -35,7 +35,8 @@ jobs:
           $env:OE_ICON_PRODUCTION_DIR = Join-Path $pwd 'artifacts/icon-composer-bundle/production'
           $env:OE_ICON_ARTIFACTS_DIR = Join-Path $pwd 'artifacts/icon-composer-bundle/previews'
           $env:OE_ICON_EVIDENCE_PATH = Join-Path $pwd 'artifacts/icon-composer-bundle/light-dark-size.json'
-          npm.cmd --prefix tools/icon-composer test
+          New-Item -ItemType Directory -Force -Path artifacts/icon-composer-bundle | Out-Null
+          npm.cmd --prefix tools/icon-composer test 2>&1 | Tee-Object -FilePath artifacts/icon-composer-bundle/ci-validation.log
           if ($LASTEXITCODE -ne 0) { throw 'Icon authoring regressions failed.' }
           $run = Get-Content $env:OE_ICON_EVIDENCE_PATH -Raw | ConvertFrom-Json
           ./eng/Test-IconComposerExport.ps1 -ProductionDirectory $run.outputDirectories.production

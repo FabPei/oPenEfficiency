@@ -7,7 +7,7 @@
   "scripts": {
     "editor": "tsx scripts/editor-cli.ts",
     "typecheck": "tsc --project tsconfig.cli.json",
-    "test": "npm run typecheck && node tests/validate.mjs"
+    "test": "npm run typecheck && node --test tests/temp-directory.test.mjs && node tests/validate.mjs"
   },
   "dependencies": {
     "@resvg/resvg-js": "2.6.2",
