@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 1,
+  "scope": "public-icon-authoring-tool",
+  "authorship": {
+    "maintainer": "FabPei",
+    "origin": "Bounded extraction of the maintainer-authored SVG editor and project-owned export pipeline.",
+    "authorizationDate": "2026-10-23",
+    "authorization": "Maintainer confirms ownership of the extracted code and delivery under the existing openEfficiency AGPL v3 license.",
+    "license": "See ../../LICENSE; third-party inputs retain separate notices."
+  },
+  "dependencies": [
+    {
+      "license": "MIT",
+      "name": "jsdom",
+      "source": "npm registry; exact lockfile",
+      "role": "headless DOM parser",
+      "version": "29.1.1"
+    },
+    {
+      "license": "MPL-2.0",
+      "name": "@resvg/resvg-js",
+      "source": "npm registry; exact lockfile",
+      "role": "optional preview PNG rasterization",
+      "version": "2.6.2"
+    },
+    {
+      "license": "MIT",
+      "name": "tsx",
+      "source": "npm registry; exact lockfile",
+      "role": "TypeScript CLI runtime",
+      "version": "4.23.15"
+    },
+    {
+      "version": "6.0.2",
+      "devDependency": true,
+      "role": "type checking",
+      "name": "typescript",
+      "license": "Apache-2.0",
+      "source": "npm registry; exact lockfile"
+    },
+    {
+      "version": "24.13.2",
+      "devDependency": true,
+      "role": "Node type declarations",
+      "name": "@types/node",
+      "license": "MIT",
+      "source": "npm registry; exact lockfile"
+    },
+    {
+      "version": "30.0.0",
+      "devDependency": true,
+      "role": "jsdom type declarations",
+      "name": "@types/jsdom",
+      "license": "MIT",
+      "source": "npm registry; exact lockfile"
+    }
+  ],
+  "kit": {
+    "version": 19,
+    "entries": 74,
+    "manifest": "kit/kit.json",
+    "excludedIds": [
+      "font",
+      "language"
+    ],
+    "exclusionReason": "Reuse grant for individual Windows-font glyph outlines is not established; no approved geometry is redrawn.",
+    "notices": "THIRD_PARTY_NOTICES.md"
+  },
+  "bundleFiles": [
+    {
+      "path": "tools/icon-composer/.gitattributes",
+      "sha256": "5e2b9f872510ffe0a708265f9a65441fc61ed2a36e0efb39abdd645b3e1f3950"
+    },
+    {
+      "path": "tools/icon-composer/examples/create-slide-add.recipe.json",
+      "sha256": "d1bdbcede7fe0d80532a91fb7e2a3b1464c7d01ab0b71e87b3e4a7d6240371bc"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/add.svg",
+      "sha256": "53cdac73ead8419ac1e973960202b8b8d3ad5c87b1af38a87ac16540c5c7c225"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/anonymize.svg",
+      "sha256": "e88f8f563853b674327f19b11bbcf0223e869de8a8decfc04fa68744fd5b71d8"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/convert.svg",
+      "sha256": "40ae80873893615aae0ca01e09acb38506e32cbec864e36b515257e9995ca812"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/copy.svg",
+      "sha256": "aaf4f98bc501bd8e2949929fce0aec420c7ecabeb8dad1290c1e9fdcd0d6d2b8"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/delete.svg",
+      "sha256": "2e3d7dc11b5bcc4e4579921f34c847b3bbf97947e42b14c27fababdf4724a8b0"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/done.svg",
+      "sha256": "6dd0fd7f98f9a6d48760e2677289678a3887054e04008ed527d7e95937a550db"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/edit.svg",
+      "sha256": "14832573fddc7b96247e089f76c90342912e40aeb986be7768aab2bf2925e6c3"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/export.svg",
+      "sha256": "e4ff1c560df4d39b475faf4d027ab91e0064f17036ad8f8088fecd248aaa5f3b"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/filter.svg",
+      "sha256": "73a25929b9cea3bb10764d7bcf60c648b591f1b689c9d19ddd43c460a710e1cc"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/hide.svg",
+      "sha256": "43227ff1de802465cec46f24963d534fbde2cd46119a1c6be48cc67f320de3fe"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/import.svg",
+      "sha256": "64c32f0be3d7684f8a873076a99cfb068d86502068ba45e0231905ef496cac17"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/inspect.svg",
+      "sha256": "55d3e4231241a48df820d8c647cfb9d673dc377b1b838d996a3068387e3f112d"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/link.svg",
+      "sha256": "59375ad9df3573f01c22d8fcae8e61a6b8c91dbebbc20793e9a0d6ae46161dde"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/lock.svg",
+      "sha256": "faede6a72349a3f7e7e943dba5706ff412d27613c71282469d4461272a5c0ca3"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/merge.svg",
+      "sha256": "a2dc5f0f2696d565d6994dde6d2934275300d7ab310929b4efc3c211d2abc74c"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/move.svg",
+      "sha256": "e9c46fcfefd43555285807e6d6bf1d5462258cb2b4f0af5ce734882d1122c508"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/paste.svg",
+      "sha256": "e5d5629ddac267ee7525e7c5b09224c3bf304fbb49b1647aeef468794d843bbc"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/pause.svg",
+      "sha256": "6822a48a1b00579bbc973cce91d72c35e81e682a96e106bb787b7cd0094cc9d5"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/refresh.svg",
+      "sha256": "17875ef6bcd19dda626bb96b3cfac05d09e3635efce7109d13cbd23a01d60843"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/replace.svg",
+      "sha256": "4dedde9eccedf0d85828730545e9e50f94af0c682bc63d85a485850158db6dfa"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/reset.svg",
+      "sha256": "e072b1c44d72533eef3238967e67dd700aa917eef45303c2197d8e427f99ff35"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/resume.svg",
+      "sha256": "f885ce49d9aba4081a3eef33c01931e55e2a747a528b820aacf6ea834ac793d5"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/rotate.svg",
+      "sha256": "8a0049ac357410b48a031da0994bc054664be142f316746b580332507d759b61"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/save.svg",
+      "sha256": "abb342dae9fd76235f4a97bcb23fbeb94f7f40dfb44769f7f2e48722b6b76c39"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/show.svg",
+      "sha256": "b13c649f5468134f5a19be93837cc438245427c4cac893001f690876a4eb51aa"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/sort-up.svg",
+      "sha256": "293bfcb46c3f676c307e80636460e29094c625779ad474599b25a5519838819c"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/sort.svg",
+      "sha256": "b233d2723817ee958663dcb683e7d63f7bf25587c50872b659facb0054803038"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/split.svg",
+      "sha256": "fc3a724800a5ff1f68c6e546cefa697a2338973172d69d7e0db1205a632b4547"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/swap.svg",
+      "sha256": "0434a966d03dc0fa724fabcf67f213e8e78414e960415b160d38b0fe47d75e13"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/unlink.svg",
+      "sha256": "35599adccfa86f510b8a1b28ad95ad0d38a8cfa4de6448fb7c8da4411d0de661"
+    },
+    {
+      "path": "tools/icon-composer/kit/actions/unlock.svg",
+      "sha256": "14caa895c11090a01aecfc3449fc8ad3b08927cbae82cdce31070288b319d672"
+    },
+    {
+      "path": "tools/icon-composer/kit/kit.json",
+      "sha256": "ef0a827a5fbdc700395f543ef7deb8b438e71a8f87c8d598c6b0d49d8c4fb6d9"
+    },
+    {
+      "path": "tools/icon-composer/kit/notices/APACHE-2.0.txt",
+      "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+    },
+    {
+      "path": "tools/icon-composer/kit/notices/FLUENT-LICENSE.txt",
+      "sha256": "9be360c19bf5502c7927a6ca365a7504b620b408cdf6e3e2413fa63a325bd381"
+    },
+    {
+      "path": "tools/icon-composer/kit/notices/LUCIDE-LICENSE.txt",
+      "sha256": "6fc5b7332939dd5c61af3a5f97450f7bc05d4a396dd0bc21ac341716b3b05096"
+    },
+    {
+      "path": "tools/icon-composer/kit/notices/MDI-LICENSE.txt",
+      "sha256": "f3bc8715bad84b26396bb42d2abd11f919cf58163be158eab79ecbaabf84cdf2"
+    },
+    {
+      "path": "tools/icon-composer/kit/notices/NOTO-OFL.txt",
+      "sha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/adjustment.svg",
+      "sha256": "5a2dc21e563af901d330b0f4e6b631500f30efe50aed07d42b97ee9fbd66a421"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/back.svg",
+      "sha256": "63c5dc6303b8d092be6ae0a48336610d04ad8653b407e15df41a2ddc98a56536"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/backup.svg",
+      "sha256": "2e2da7b9c760626297c3e6b49d00b7e00719f91a15fdac87dec7cbbb9a22d620"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/brush.svg",
+      "sha256": "8f62eac8f1d0e8ba386f4bbdef3b8b292f8dd7877da7ff9771f791ea5001a6c6"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/chart.svg",
+      "sha256": "a279e130dd5f92104d10b632ced784dc95dc6b45d903b50bf6656956b04baf20"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/clean.svg",
+      "sha256": "51a39c15d2b4e095648b6c5b8f4f971b036183fd890114194cc66a5c09a607cb"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/clock.svg",
+      "sha256": "1b1328a425e023bb33163f9420ea59dbf959b022e21293893ac296173fbcce6b"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/collection.svg",
+      "sha256": "86abd5f3c9faebe19b461053ef5d78c0f521ad496f74629df28c6ee5a6c292db"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/column.svg",
+      "sha256": "1e8ccf15f5fde7417a283b1a60845a07fe62f601605eb36baddf3b9544516f54"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/connector.svg",
+      "sha256": "c530d8a40a54e3182b07444d4454ac7fbc79b2aec882f95029eb049ce6921b45"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/file.svg",
+      "sha256": "5e792901d31bcb9d6ac231c6f98cf2d1f78062b7acbce23eed0d048bd65a1a83"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/flip-horizontal.svg",
+      "sha256": "a644020f8aef222d0f01e9ec2e99e91f12e6716b179c3c2e5807f85a8fa6c8fc"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/flip-vertical.svg",
+      "sha256": "57648a2550d016c7f751238fd45af63ef03f61e130c3e2716c8dc79026be80e8"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/folder.svg",
+      "sha256": "d57d100bedd038b395e57c9a6274fae456dcf89d2c669f957c1faf15eab16584"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/freeform-nodes.svg",
+      "sha256": "15286cc52fe947dfb7d1be89b0c944da9f08df0442f1782daf7a36011a3f41f4"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/front.svg",
+      "sha256": "82bcdc616a74421bcc7f12423c823a592ef53ef0208c435bebea2adf79af09b1"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/gear.svg",
+      "sha256": "f4e9c56f72ae7b9e0838079bd86298557a89f59939db8b04b12a4dcbdb91aee9"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/grid.svg",
+      "sha256": "dd895f4f59466d2a561e23cbb17fdc8df2280db3e3426c4bce2a468d3628d840"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/margins.svg",
+      "sha256": "233ef49e51e428084447c361b15d2996d85cca290c3b68ded357be6359cd1a8e"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/motion-path.svg",
+      "sha256": "addd72d35aed528137a719524dcbaa8ea04f303023481e64f3a2e3650bf331bf"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/note.svg",
+      "sha256": "dd1cfbd525010dab2fd818d8589e9a6d2c20277c3f210e1a8d43ca4204e425b2"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/number-format.svg",
+      "sha256": "d487e5d66c7a38f96678767175fee303956bb9aa3484dcbd8b0fcc75e4af18e7"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/opacity.svg",
+      "sha256": "4e5376acc240190bf951be566c4649b69936c928f679eba6793412295bb90736"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/outline.svg",
+      "sha256": "188d91243d7fbe7211bd2bb3948cb6ef6a0f126b4b03021868b63d05da9e4ec1"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/palette-fill.svg",
+      "sha256": "35456ddac3f99813bf623047622d14967290e086928e3ae9a79b1c3cd07a938f"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/paragraph-list.svg",
+      "sha256": "5c125b53c484f7cc02af659a496dfb44b92011cc28e90734a05248e9e86a5248"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/picture.svg",
+      "sha256": "b0bc739763ab96d629de874a35311fbe80be310b2a371795bb578b9ca9beb9de"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/pipette.svg",
+      "sha256": "1b1c2a0a14ac4410fccaffa7395129c5ca763bb891b54027ea4ad8a09bffb0b3"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/private-review-note.svg",
+      "sha256": "3ba01281d60b22c7529abff38e3984b1789e87c0902bac99a05a609703471ad2"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/row.svg",
+      "sha256": "419424512d043ffbc7237a88b72af22250e923531adaa1fd95b5d6a612221d9f"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/selection.svg",
+      "sha256": "647f0e2b89475634a4fd9f690bbc2b8ac54f7797d0d12d47e002c94640e930dd"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/shape.svg",
+      "sha256": "f7741ad2fcb6955d3bf0cc6e4e5353f2f6f1b95f40b4e90e334ea5da77fc07d2"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/size.svg",
+      "sha256": "7341e2df21ae05f60a80b07fa055467daea367602372abd7740b911968f9cdc1"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/slide-master.svg",
+      "sha256": "bf6aef09dcaedf0972706b095ade76686e8ad11253e5e6d441a5036344d83776"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/slide.svg",
+      "sha256": "d4f183dcb55514381e26872a03d986110df64f2edf1b674082bbe585e6b1ed5d"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/slides.svg",
+      "sha256": "cfd55b11ac4b507d3c2455c94c4a87a97418d69440993fa83290a6d378bd09d5"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/spreadsheet.svg",
+      "sha256": "7f1920ec9206b0a3c89d92ae21c8222ae08c15f4cf28c15ce3d7fa7a64922992"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/sum.svg",
+      "sha256": "76c6b15558777b0ed7365af18c52d9d28fa27cc080dac2a3a9680963b79a52b0"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/table.svg",
+      "sha256": "7d872f80905eefcc08c3fa36848add9680fdcafc8a6e481d1edd81122e2910e9"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/tag.svg",
+      "sha256": "45ec47b8bca8d6e4e05d796c83db96f344734d425c179c37c6aa852f926462cd"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/text-box.svg",
+      "sha256": "156ea3a43cb24d9ab471877bcf8433bdd28f71fa37b6458551a6714dac978dcc"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/timeline.svg",
+      "sha256": "de9a63f792451f9a629ed0f801c97466781128ba47e44b3048c86645d7bdcd74"
+    },
+    {
+      "path": "tools/icon-composer/kit/objects/xy.svg",
+      "sha256": "a1f44868e966b2fcb9fa5f4c44657c6553f1468f912941f5816d7ee0534df9d3"
+    },
+    {
+      "path": "tools/icon-composer/kit/provenance/audit-next-library-sources.json",
+      "sha256": "122294c09cc1b60dc126f2a1d3035f269dd5d9f67250d1a1c55fac2f387901ef"
+    },
+    {
+      "path": "tools/icon-composer/kit/provenance/building-blocks-more-library-sources.json",
+      "sha256": "378268ee43c8a76c625ad7292bd4028d3af2500fa7ee8a49383dd41e2648c8ef"
+    },
+    {
+      "path": "tools/icon-composer/kit/provenance/noto-number-outlines.json",
+      "sha256": "2a4a403de0ebfe605658b0be3e6ae7bb86915a16e8956adddcd20fc74a46339b"
+    },
+    {
+      "path": "tools/icon-composer/package-lock.json",
+      "sha256": "4f1c1409d2bf1203306e7d95acd52ab342f8ee05d1309cb8cc99ccbcb4be9fde"
+    },
+    {
+      "path": "tools/icon-composer/package.json",
+      "sha256": "3fb2656d4469e859c1436c82c614ccabc0cb96427a82d13a6aaf0010b677b62c"
+    },
+    {
+      "path": "tools/icon-composer/README.md",
+      "sha256": "85d5a2e8d2e0cf9dbf2e042bc02f6b31f1a66bc1aad296717e4c4440424a5868"
+    },
+    {
+      "path": "tools/icon-composer/scripts/editor-cli.ts",
+      "sha256": "4ee5e37a968ec9b19fc32f015fa25b6db252e440b51095d28a7dddd13115128d"
+    },
+    {
+      "path": "tools/icon-composer/scripts/openefficiency-export.ts",
+      "sha256": "742db3aa9c271dc20047ce472642284d3b35105b1299c3c08a57a4282dc32717"
+    },
+    {
+      "path": "tools/icon-composer/scripts/output-safety.mjs",
+      "sha256": "6aa97b86d7bef4dc46d2b2e3ee7f242f2808a1659c2543e2d63861aeef154363"
+    },
+    {
+      "path": "tools/icon-composer/src/composer/compose.ts",
+      "sha256": "ed9af00a5c58cbe45dbc18d0f521720e887eb4d513a2e77aa07cb261f6d4ff49"
+    },
+    {
+      "path": "tools/icon-composer/src/composer/geometry.ts",
+      "sha256": "6006fff28e81f7eec7e502319f02fed2a054db771fc5358b6d577d93f073ffca"
+    },
+    {
+      "path": "tools/icon-composer/src/composer/tokens.ts",
+      "sha256": "a063ae5ba901c6ead61b21f132d395ca6f2c3a133910a785b77420848347a345"
+    },
+    {
+      "path": "tools/icon-composer/src/composer/types.ts",
+      "sha256": "61ffb6add37be4b94396333eba8fbb738e67082203391279936c8b7a7c9e9ab2"
+    },
+    {
+      "path": "tools/icon-composer/src/data/projectIconLibrary.ts",
+      "sha256": "fbfa425de7d943ccda230183df80a0999c67e1493414b4a22b194310c2fb52e6"
+    },
+    {
+      "path": "tools/icon-composer/src/editor/commands.ts",
+      "sha256": "43647b2e0dcbed9b0124a1677d896c42c3ec55db27bd0f917852c3617bd5ea2f"
+    },
+    {
+      "path": "tools/icon-composer/src/editor/driver.ts",
+      "sha256": "7640ae3c309b5b0a7bb84260611779f5f81bfaa53c41bfaf594cd49f586e5c98"
+    },
+    {
+      "path": "tools/icon-composer/src/editor/index.ts",
+      "sha256": "a3df1ef0e921627184490c1002872b3359e1d28eeb26e7115dd92d31c212046b"
+    },
+    {
+      "path": "tools/icon-composer/src/editor/model.ts",
+      "sha256": "05627ce8c84362e7f81841b4dfcca973c9861301aabadc38263dcf05d20f6d12"
+    },
+    {
+      "path": "tools/icon-composer/src/types/svg.ts",
+      "sha256": "a075231ae2730adb1eb859ece79946e6592348ffcfe85d0ba7db6648dea05536"
+    },
+    {
+      "path": "tools/icon-composer/src/utils/svg.ts",
+      "sha256": "cc0669fc16d4dcb251c4df17bf50a0907b2d841a14a2f3b3df371ced4d6b795b"
+    },
+    {
+      "path": "tools/icon-composer/tests/fixtures/pause-resume-A.svg",
+      "sha256": "6822a48a1b00579bbc973cce91d72c35e81e682a96e106bb787b7cd0094cc9d5"
+    },
+    {
+      "path": "tools/icon-composer/tests/validate.mjs",
+      "sha256": "f75432fc271f4bb0aa63dd89a3b7f6158c8aaff6a2be07c1948d3216c10914e9"
+    },
+    {
+      "path": "tools/icon-composer/THIRD_PARTY_NOTICES.md",
+      "sha256": "9ae01950a1d66079f395f38cfe291c41dd18aeaa0c43f963e8392991f4ff310f"
+    },
+    {
+      "path": "tools/icon-composer/tsconfig.cli.json",
+      "sha256": "6b6f94bc9bcb4caddde4ef6b85eb7946b485ea9bef143f315b52443585fdd0a6"
+    }
+  ]
+}

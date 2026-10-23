@@ -1,0 +1,28 @@
+{
+  "id": "number-format",
+  "originalRecipeId": "number-C",
+  "text": "123",
+  "weight": "SemiBold",
+  "fontSha256": "87a8b90ece1e89746b544e4e086f85a3710e41485a8078f9be874837dfad45d5",
+  "fontRevision": "ffebf8c1ee449e544955a7e813c54f9b73848eac",
+  "license": "SIL OFL 1.1",
+  "sourceUrl": "https://github.com/notofonts/noto-fonts/tree/ffebf8c1ee449e544955a7e813c54f9b73848eac",
+  "method": "fontTools SVGPathPen + affine fit; no hand-authored paths; no font installation or fallback",
+  "fontToolsVersion": "4.62.1",
+  "layout": {
+    "maxWidth": 19,
+    "maxHeight": 16,
+    "center": [
+      12,
+      12
+    ],
+    "glyphAdvance": "font hmtx, unkerned",
+    "scale": 0.011875,
+    "translate": [
+      1.6687499999999993,
+      16.239375
+    ]
+  },
+  "approval": "Owner-selected approved kit v19 entry; geometry unchanged.",
+  "included": "SVG outline graphic only. No font file or font installation."
+}

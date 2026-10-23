@@ -1,0 +1,90 @@
+{
+  "sources": [
+    {
+      "repository": "Templarian/MaterialDesign",
+      "sha256": "956382c177c70189bcd90c22ee8e1a68f4b06c3034313d9a83682d101115d0ff",
+      "license": "Apache-2.0",
+      "commit": "2424e748e0cc63ab7b9c095a099b9fe239b737c0",
+      "retrieved": "2026-10-11",
+      "id": "mdi-format-paint",
+      "upstreamUrl": "https://raw.githubusercontent.com/Templarian/MaterialDesign/2424e748e0cc63ab7b9c095a099b9fe239b737c0/svg/format-paint.svg",
+      "file": "mdi-format-paint.svg"
+    },
+    {
+      "repository": "microsoft/fluentui-system-icons",
+      "sha256": "afbac2dbe8474f7893aebfebb5e2dae4c944ee4aef065b8518f58103bb2c0fe6",
+      "license": "MIT",
+      "commit": "a347af95478f989038cccbf085978865264c048a",
+      "retrieved": "2026-10-11",
+      "id": "fluent-paint-brush",
+      "upstreamUrl": "https://raw.githubusercontent.com/microsoft/fluentui-system-icons/a347af95478f989038cccbf085978865264c048a/assets/Paint%20Brush/SVG/ic_fluent_paint_brush_24_regular.svg",
+      "file": "fluent-paint-brush.svg"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "sha256": "dad18ee11312000529dbfaa6c60fa8da00773eebe91e23633d8f4baca8421cdc",
+      "license": "ISC",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "retrieved": "2026-10-11",
+      "id": "lucide-pipette",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/pipette.svg",
+      "file": "lucide-pipette.svg"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "sha256": "16501b23a40f7d446d4047deaaa92b99236ae4caebe5b2e9eb47169a12a6a4a1",
+      "license": "ISC",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "retrieved": "2026-10-11",
+      "id": "lucide-brush-cleaning",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/brush-cleaning.svg",
+      "file": "lucide-brush-cleaning.svg"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "sha256": "838d4355dd49340523c38a22a2d23f1aca72ef42f8eba79f6a0c84bf6e27b929",
+      "license": "ISC",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "retrieved": "2026-10-11",
+      "id": "lucide-eraser",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/eraser.svg",
+      "file": "lucide-eraser.svg"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "sha256": "a87128b1d33024c22ab598d1ce313081ce8942efd1a70274215bcc53421b7c7e",
+      "license": "ISC",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "retrieved": "2026-10-11",
+      "id": "lucide-mouse-pointer-2",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/mouse-pointer-2.svg",
+      "file": "lucide-mouse-pointer-2.svg"
+    },
+    {
+      "repository": "lucide-icons/lucide",
+      "sha256": "9541b5c7cbf62f65801a1e6206db1290f077556ea9a9abb87a1ae497980eaf8e",
+      "license": "ISC",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "retrieved": "2026-10-11",
+      "id": "lucide-mouse-pointer",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/mouse-pointer.svg",
+      "file": "lucide-mouse-pointer.svg"
+    },
+    {
+      "id": "lucide-paintbrush",
+      "repository": "lucide-icons/lucide",
+      "commit": "70562c1ee1c4fdcf736fe97bc893fb8511927934",
+      "upstreamUrl": "https://raw.githubusercontent.com/lucide-icons/lucide/70562c1ee1c4fdcf736fe97bc893fb8511927934/icons/paintbrush.svg",
+      "file": "lucide-paintbrush.svg",
+      "sha256": "b0a958ba9889f89c40df6e1c168b8a7aa20f6309780e795c5bce00a4bc11bff6",
+      "license": "ISC",
+      "retrieved": "2026-10-11"
+    }
+  ],
+  "licenses": [
+    "LUCIDE-LICENSE.txt",
+    "FLUENT-LICENSE.txt",
+    "MDI-LICENSE.txt",
+    "APACHE-2.0.txt"
+  ]
+}

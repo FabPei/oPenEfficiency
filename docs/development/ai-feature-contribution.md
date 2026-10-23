@@ -122,12 +122,12 @@ Support Light/Dark, keyboard/visible focus, accessible control names, text growt
 Floating surfaces need the actual Office HWND as owner, proper cleanup, focus restoration and
 monitor-clamped DPI-aware placement. `Topmost` is not a replacement for ownership.
 
-**Icons today:** reuse a suitable approved existing icon unchanged, recording its source.
-The minimal standalone icon Composer is not bundled in the public clone yet. Creation or
-redrawing of project icons still needs the maintainer's approved Composer/export process.
-Do not hand-draw replacement SVG/path geometry or pretend a private sibling tool is available.
-Request the missing authoring input if the task cannot use an existing icon. This limitation
-does not prevent code and documentation work that needs no new icon geometry.
+**Icons:** reuse a suitable approved existing icon unchanged, or use the bundled
+[Composer and authoring guide](icon-authoring-for-ai.md). Keep the recipe, use approved
+geometry and semantic colors, and export with the documented WPF profile. The public kit
+is a reviewed subset; Font and Language glyph primitives are intentionally excluded
+pending source-rights clarification. Do not hand-draw replacements or assume a missing
+private tool exists. Record the authoring, preview and parser checks with the PR.
 
 ## 5. Check the work at the right level
 

@@ -1,0 +1,12 @@
+{
+  "id": "example-slide-add-v1",
+  "name": "New Slide",
+  "main": "slide",
+  "action": "add",
+  "params": {
+    "actionType": "add",
+    "position": "bottom-right",
+    "autoColor": true,
+    "tokenTheme": "light"
+  }
+}

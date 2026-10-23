@@ -1,0 +1,22 @@
+{
+  "name": "@openefficiency/icon-composer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "^22.13.0 || >=24.0.0" },
+  "scripts": {
+    "editor": "tsx scripts/editor-cli.ts",
+    "typecheck": "tsc --project tsconfig.cli.json",
+    "test": "npm run typecheck && node tests/validate.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "jsdom": "29.1.1",
+    "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "@types/jsdom": "30.0.0",
+    "@types/node": "24.13.2",
+    "typescript": "6.0.2"
+  }
+}

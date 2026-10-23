@@ -30,6 +30,10 @@ The project uses **GNU AGPL v3**; read [LICENSE](LICENSE) and the [licensing gui
 
 This contribution guide does not transfer copyright ownership or revoke independent licenses already validly granted. Contributions and software are supplied subject to their applicable license terms, without a promise of commercial support.
 
+## Icon authoring
+
+Use the bundled [Coding-AI icon Composer](docs/development/icon-authoring-for-ai.md) for new project-style icons. Preserve approved geometry, recipes and third-party notices; the guide identifies the intentionally excluded glyph sources.
+
 ## Public source checks
 
 Run `./eng/Build.ps1 -Configuration Release -Rebuild -Installer` on Windows with the documented prerequisites. The five test projects use frozen public contracts; no private developer documents are needed. Runtime results and source snapshots have different meanings; do not describe inventory coverage or NotRun checks as passed acceptance. No change to this repository automatically publishes a product release.

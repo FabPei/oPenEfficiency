@@ -61,3 +61,8 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Preserve the extracted WPF exporter source bytes.
+eng/Export-IconComposerSvg.ps1 text eol=lf
+eng/IconComposerSvgExporter.cs text eol=lf
+eng/IconComposer.Export.Tests.csproj text eol=lf

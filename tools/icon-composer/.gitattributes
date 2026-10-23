@@ -1,0 +1,13 @@
+# Preserve manifest byte hashes across fresh Windows checkouts.
+* text eol=crlf
+# Approved SVG sources and extracted LF files retain their original bytes.
+kit/**/*.svg text eol=lf
+.gitattributes text eol=lf
+examples/create-slide-add.recipe.json text eol=lf
+kit/notices/NOTO-OFL.txt text eol=lf
+package-lock.json text eol=lf
+package.json text eol=lf
+scripts/openefficiency-export.ts text eol=lf
+src/data/projectIconLibrary.ts text eol=lf
+tsconfig.cli.json text eol=lf
+tests/fixtures/*.svg text eol=lf

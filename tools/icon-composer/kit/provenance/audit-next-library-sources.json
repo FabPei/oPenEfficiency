@@ -1,0 +1,8 @@
+{
+  "url": "https://github.com/lucide-icons/lucide/blob/0b8f99326cd93720a024594cdb65d4bfd5416f80/icons/paint-bucket.svg",
+  "commit": "0b8f99326cd93720a024594cdb65d4bfd5416f80",
+  "license": "LUCIDE-LICENSE.txt",
+  "sha256": "456e35597fb306f3e0e97d6e1b091df371cfe546854f2444da8063c89cca7a9c",
+  "name": "Lucide Paint Bucket",
+  "adaptation": "Original paths retained; stroke calibrated to1.5; bucket bottom fill or drop gets ActionBlue role."
+}
